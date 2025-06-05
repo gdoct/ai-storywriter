@@ -33,7 +33,7 @@ The backend is built with Python and Flask, offering a REST API for handling req
 
 1. **Clone the repository:**
    ```bash
-   git clone <your-repo-url>
+   git clone https://github.com/gdoct/ai-storywriter
    cd storywriter
    ```
 2. **Create a virtual environment:**
