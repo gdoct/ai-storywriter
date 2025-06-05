@@ -1,0 +1,120 @@
+/* Import Modal Styles */
+.import-modal-content {
+  margin-bottom: 16px;
+}
+
+.scenario-select-container {
+  margin-bottom: 20px;
+}
+
+.scenario-select-container label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.scenario-select-container select {
+  width: 100%;
+  padding: 8px;
+  border-radius: 4px;
+  border: 1px solid #ddd;
+  font-size: 1rem;
+}
+
+.loading-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #666;
+}
+
+.spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(0, 0, 0, 0.1);
+  border-left-color: #09f;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Checkbox list styling */
+.checkbox-list {
+  margin-top: 16px;
+}
+
+.checkbox-list h4 {
+  margin-top: 0;
+  margin-bottom: 12px;
+}
+
+/* Make checkboxes inline with character info */
+.checkbox-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+  padding: 8px;
+  border-radius: 4px;
+  background-color: #f8f8f8;
+  transition: background-color 0.2s ease;
+}
+
+.checkbox-item:hover {
+  background-color: #f0f0f0;
+}
+
+.checkbox-item input[type="checkbox"] {
+  margin-right: 12px;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+/* Style for character item labels */
+.character-item-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.character-item-icon {
+  font-size: 1.2rem;
+  width: 24px;
+  text-align: center;
+}
+
+.character-item-name {
+  font-weight: 500;
+  margin-right: 8px;
+}
+
+.character-item-role {
+  color: #666;
+  font-style: italic;
+}
+
+/* Content preview styles */
+.content-preview {
+  margin-top: 16px;
+}
+
+.content-preview h4 {
+  margin-top: 0;
+  margin-bottom: 8px;
+}
+
+.preview-text {
+  padding: 12px;
+  background-color: #f8f8f8;
+  border-radius: 4px;
+  border: 1px solid #eee;
+  font-family: monospace;
+  white-space: pre-wrap;
+  max-height: 200px;
+  overflow-y: auto;
+}

@@ -1,0 +1,321 @@
+.reading-pane {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background-color: #f9f7f1;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.reading-controls {
+  display: flex;
+  padding: 12px 16px;
+  background-color: #f1efeb;
+  border-bottom: 1px solid #e0e0e0;
+  align-items: center;
+  flex-wrap: wrap; /* Allow controls to wrap on small screens */
+  gap: 8px; /* Add spacing between wrapped items */
+}
+
+.reading-submit-btn {
+  padding: 8px 20px;
+  font-size: 1.25rem;
+  border-radius: 6px;
+  border: none;
+  background: #222;
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.2s;
+  margin-right: 20px;
+}
+
+.reading-submit-btn:disabled {
+  background: #888;
+  cursor: not-allowed;
+}
+
+.cancel-btn {
+  padding: 8px 20px;
+  font-size: 1.25rem;
+  border-radius: 6px;
+  border: none;
+  background: #c62828;
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.2s;
+  margin-right: 20px;
+}
+
+.cancel-btn:hover {
+  background: #b71c1c;
+}
+
+.upload-btn {
+  padding: 8px 20px;
+  font-size: 1.25rem;
+  border-radius: 6px;
+  border: none;
+  background: #2e7d32;
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.2s;
+  margin-right: 20px;
+}
+
+.upload-btn:hover {
+  background: #1b5e20;
+}
+
+.upload-btn:disabled {
+  background: #a5d6a7;
+  cursor: not-allowed;
+}
+
+.save-error {
+  color: #d32f2f;
+  font-size: 0.875rem;
+  margin-right: 20px;
+}
+
+.control-group {
+  display: flex;
+  align-items: center;
+  margin-right: 20px;
+}
+
+.control-group label {
+  margin-right: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #555;
+}
+
+.control-group select {
+  padding: 4px 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background-color: white;
+  font-size: 14px;
+  min-width: 180px; /* Make dropdown wider for dates */
+}
+
+.reading-content {
+  flex: 1;
+  padding: 30px;
+  overflow-y: scroll; /* Changed from 'auto' to 'scroll' to always show scrollbar */
+  scrollbar-width: thin; /* For Firefox */
+  scrollbar-color: #ccc #f1f1f1; /* For Firefox */
+  line-height: 1.6;
+  color: #333;
+  height: auto;
+}
+
+.reading-content p {
+  margin-bottom: 16px;
+}
+
+.placeholder-text {
+  color: #999;
+  font-style: italic;
+  text-align: center;
+  margin-top: 40px;
+}
+
+.generated-story-badge {
+  background-color: #4c9aff;
+  color: white;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  margin-bottom: 16px;
+  display: inline-block;
+}
+
+.saved-story-badge {
+  background-color: #4caf50;
+  color: white;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  margin-bottom: 16px;
+  display: inline-block;
+}
+
+.markdown-content {
+  width: 100%;
+  white-space: pre-wrap;
+}
+
+/* Markdown specific styles */
+.markdown-content h1, 
+.markdown-content h2, 
+.markdown-content h3, 
+.markdown-content h4, 
+.markdown-content h5, 
+.markdown-content h6 {
+  margin-top: 1.5em;
+  margin-bottom: 0.5em;
+  font-weight: 600;
+}
+
+.markdown-content h1 {
+  font-size: 1.8em;
+  border-bottom: 1px solid #eaecef;
+  padding-bottom: 0.3em;
+}
+
+.markdown-content h2 {
+  font-size: 1.5em;
+  border-bottom: 1px solid #eaecef;
+  padding-bottom: 0.3em;
+}
+
+.markdown-content p {
+  margin: 1em 0;
+  line-height: 1.8;
+}
+
+.markdown-content ul, 
+.markdown-content ol {
+  margin: 1em 0;
+  padding-left: 2em;
+}
+
+.markdown-content blockquote {
+  margin: 1em 0;
+  padding: 0 1em;
+  color: #6a737d;
+  border-left: 0.25em solid #dfe2e5;
+}
+
+.markdown-content code {
+  padding: 0.2em 0.4em;
+  margin: 0;
+  font-size: 85%;
+  background-color: rgba(27, 31, 35, 0.05);
+  border-radius: 3px;
+  font-family: 'Courier New', Courier, monospace;
+}
+
+.markdown-content pre {
+  padding: 16px;
+  overflow: auto;
+  font-size: 85%;
+  line-height: 1.45;
+  background-color: #f6f8fa;
+  border-radius: 3px;
+}
+
+.markdown-content pre code {
+  background-color: transparent;
+  padding: 0;
+}
+
+/* Style the scrollbar */
+.reading-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.reading-content::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+.reading-content::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 4px;
+}
+
+.reading-content::-webkit-scrollbar-thumb:hover {
+  background: #aaa;
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+  .reading-controls {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .reading-submit-btn,
+  .cancel-btn,
+  .upload-btn,
+  .control-group {
+    margin-right: 0;
+    margin-bottom: 10px;
+    width: 100%;
+  }
+  
+  .control-group {
+    justify-content: space-between;
+  }
+}
+
+/* Loading text styles */
+.loading-text {
+  font-size: 0.9rem;
+  font-style: italic;
+  color: #666;
+  padding: 0 10px;
+}
+
+/* No versions available text */
+.no-versions {
+  font-size: 0.9rem;
+  color: #666;
+  padding: 0 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background-color: #f8f8f8;
+  display: inline-block;
+  padding: 4px 8px;
+  min-width: 150px;
+}
+
+/* Style for saved story dropdowns */
+.control-group select {
+  padding: 4px 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background-color: white;
+  font-size: 14px;
+  min-width: 180px; /* Make dropdown wider for dates */
+}
+
+/* Style for saved stories section */
+.saved-stories-section {
+  margin-left: 10px;
+  display: flex;
+  align-items: center;
+}
+
+.saved-stories-dropdown {
+  margin-right: 20px;
+}
+
+.story-selector {
+  min-width: 200px;
+  background-color: white;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 14px;
+}
+
+/* Style specifically for the DB stories dropdown */
+#db-version-selector {
+  border: 1px solid #4caf50;
+}
+
+/* Style the option for "Select a saved story" placeholder */
+#db-version-selector option:first-child {
+  font-style: italic;
+  color: #777;
+}
+
+.story-status-indicator {
+  font-size: 0.8rem;
+  color: #666;
+  margin-left: 10px;
+  font-style: italic;
+}

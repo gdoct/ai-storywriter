@@ -1,0 +1,62 @@
+.content-card {
+  transition: all 0.3s ease;
+  position: relative;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 12px;
+  background-color: #fff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.content-card:hover {
+  background-color: #f8f9ff;
+  border-color: #c5d0f6;
+  box-shadow: 0 4px 12px rgba(67, 90, 201, 0.1);
+}
+
+/* Scene text highlight effect */
+.content-card:hover .scene-text {
+  color: #2c3e50;
+  text-shadow: 0 0 1px rgba(44, 62, 80, 0.1);
+  transition: all 0.3s ease;
+}
+
+.scene-title:hover {
+  color: #3498db;
+}
+
+.scene-description, .scene-location, .scene-time, .scene-notes {
+  transition: color 0.3s ease;
+}
+
+.content-card:hover .scene-description,
+.content-card:hover .scene-location,
+.content-card:hover .scene-time,
+.content-card:hover .scene-notes {
+  color: #34495e;
+}
+
+/* Subtle glow effect for the whole card */
+.content-card:hover::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: 8px;
+  box-shadow: 0 0 15px rgba(52, 152, 219, 0.2);
+  opacity: 0;
+  animation: glow 1.5s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+
+@keyframes glow {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}

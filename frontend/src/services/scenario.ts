@@ -1,0 +1,134 @@
+import { Scenario } from '../types/ScenarioTypes';
+import axios from './http';
+
+export const fetchAllScenarios = async (): Promise<{ id: string; title: string; synopsis: string }[]> => {
+  try {
+    const response = await axios.get('/api/scenario');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching scenarios:', error);
+    throw error;
+  }
+};
+
+export const fetchScenarioById = async (id: string): Promise<Scenario> => {
+  try {
+    const response = await axios.get(`/api/scenario/${id}`);
+    return response.data;
+  } catch (error) {
+    console.error(`Error fetching scenario ${id}:`, error);
+    throw error;
+  }
+};
+
+export const createScenario = async (scenario: Scenario): Promise<Scenario> => {
+  try {
+    const response = await axios.post('/api/scenario', scenario);
+    return response.data;
+  } catch (error) {
+    console.error('Error creating scenario:', error);
+    throw error;
+  }
+};
+
+export const updateScenario = async (scenario: Scenario): Promise<Scenario> => {
+  try {
+    const response = await axios.put(`/api/scenario/${scenario.id}`, scenario);
+    return response.data;
+  } catch (error) {
+    console.error(`Error updating scenario ${scenario.id}:`, error);
+    throw error;
+  }
+};
+
+export const deleteScenario = async (id: string): Promise<void> => {
+  try {
+    await axios.delete(`/api/scenario/${id}`);
+  } catch (error) {
+    console.error(`Error deleting scenario ${id}:`, error);
+    throw error;
+  }
+};
+
+interface StoryResponse {
+  content: string;
+  timestamp: string;
+}
+
+export const fetchGeneratedStory = async (scenarioId: string, timestamp?: string): Promise<StoryResponse | null> => {
+  try {
+    const params = timestamp ? { timestamp } : {};
+    const response = await axios.get(`/api/story/${scenarioId}`, { params });
+    return response.data;
+  } catch (error) {
+    // If error is 404, just return null (no story found)
+    if (axios.isAxiosError(error) && error.response?.status === 404) {
+      return null;
+    }
+    console.error(`Error fetching generated story for scenario ${scenarioId}:`, error);
+    throw error;
+  }
+};
+
+export interface StoryVersion {
+  timestamp: string;
+  formattedDate: string;
+}
+
+export const fetchScenarioStoryList = async (scenarioId: string): Promise<StoryVersion[]> => {
+  try {
+    const response = await axios.get(`/api/story/${scenarioId}/list`);
+    return response.data;
+  } catch (error) {
+    // If error is 404, return empty array (no stories found)
+    if (axios.isAxiosError(error) && error.response?.status === 404) {
+      return [];
+    }
+    console.error(`Error fetching story list for scenario ${scenarioId}:`, error);
+    throw error;
+  }
+};
+
+export const saveGeneratedStory = async (scenarioId: string, content: string): Promise<void> => {
+  try {
+    await axios.post(`/api/story/${scenarioId}`, { content });
+  } catch (error) {
+    console.error(`Error saving generated story for scenario ${scenarioId}:`, error);
+    throw error;
+  }
+};
+
+export interface DBStory {
+  id: number;
+  text: string;
+  created_at: string;
+}
+
+export const fetchDBStories = async (scenarioId: number | string): Promise<DBStory[]> => {
+  try {
+    console.log(`Fetching stories for scenario ${scenarioId} (type: ${typeof scenarioId})`);
+    const response = await axios.get(`/api/story/${scenarioId}`);
+    console.log("API response for stories:", response.data);
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 404) {
+      console.log(`No stories found for scenario ${scenarioId} (404)`);
+      return [];
+    }
+    console.error(`Error fetching DB stories for scenario ${scenarioId}:`, error);
+    throw error;
+  }
+};
+
+export const saveDBStory = async (scenarioId: number | string, text: string): Promise<DBStory> => {
+  try {
+    console.log(`Saving story for scenario ${scenarioId} (type: ${typeof scenarioId})`);
+    // Send the story with key "content" as expected by the backend
+    const response = await axios.post(`/api/story/${scenarioId}`, { content: text });
+    console.log("API response for save:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error(`Error saving DB story for scenario ${scenarioId}:`, error);
+    throw error;
+  }
+};

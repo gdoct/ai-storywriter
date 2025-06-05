@@ -1,0 +1,205 @@
+/* Scene cards styling */
+.scenes-tab-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow-y: auto;
+  padding: 1rem;
+  /* Prevent layout flickering */
+  min-height: 400px;
+  will-change: contents;
+}
+
+.scenes-actions {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.add-scene-btn,
+.generate-scenes-btn,
+.delete-all-scenes-btn {
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.2s ease;
+}
+
+.add-scene-btn {
+  background-color: #4285f4;
+  color: white;
+  border: none;
+}
+
+.generate-scenes-btn {
+  background-color: #34a853;
+  color: white;
+  border: none;
+}
+
+.delete-all-scenes-btn {
+  background-color: #ea4335;
+  color: white;
+  border: none;
+}
+
+.add-scene-btn:hover,
+.generate-scenes-btn:hover,
+.delete-all-scenes-btn:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.scene-cards-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  /* Prevent layout flickering */
+  position: relative;
+  contain: content;
+}
+
+.scene-card {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 16px;
+  background-color: white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.scene-card:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.scene-card h3 {
+  margin-top: 0;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #eee;
+}
+
+.scene-card-actions {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  gap: 5px;
+}
+
+.move-up-btn,
+.move-down-btn,
+.edit-btn,
+.delete-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.move-up-btn:hover,
+.move-down-btn:hover,
+.edit-btn:hover,
+.delete-btn:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.scene-field {
+  margin-bottom: 12px;
+}
+
+.scene-field-label {
+  font-weight: bold;
+  font-size: 0.9rem;
+  color: #555;
+  margin-bottom: 3px;
+}
+
+.scene-field-value {
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+
+/* Scene form styling */
+.scene-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.scene-form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.scene-form-field label {
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.scene-form-field input,
+.scene-form-field textarea {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  font-family: inherit;
+}
+
+.scene-form-field textarea {
+  min-height: 80px;
+  resize: vertical;
+}
+
+.scene-form-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.save-btn,
+.cancel-btn,
+.confirm-delete-btn,
+.cancel-delete-btn,
+.confirm-generate-btn,
+.cancel-generate-btn {
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.save-btn,
+.confirm-generate-btn {
+  background-color: #4285f4;
+  color: white;
+  border: none;
+}
+
+.confirm-delete-btn {
+  background-color: #ea4335;
+  color: white;
+  border: none;
+}
+
+.cancel-btn,
+.cancel-delete-btn,
+.cancel-generate-btn {
+  background-color: #f1f1f1;
+  color: #333;
+  border: 1px solid #ddd;
+}
