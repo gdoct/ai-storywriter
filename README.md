@@ -8,6 +8,8 @@ The application is built with a modern tech stack, featuring a React frontend an
 The frontend is developed using React and TypeScript. 
 The backend is built with Python and Flask, offering a REST API for handling requests and managing data.
 
+![image](https://github.com/user-attachments/assets/df144fcc-21e9-41f1-8b1e-339e7448d5af)
+
 ## Features
 - **Scenario Creation & Editing:** Build detailed scenarios with a user-friendly interface.
 - **AI Story Generation:** Send your scenarios to an AI model and receive unique stories based on your input.
