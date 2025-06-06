@@ -29,11 +29,6 @@ const getDefaultSceneTitle = (index: number): string => {
   return `Scene ${index + 1}`;
 };
 
-const generateIcon = (
-  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path d="M8 1V15M1 8H15M4 4L12 12M12 4L4 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-  </svg>
-);
 
 const ScenesTab: React.FC<TabProps> = ({ content, updateContent, currentScenario }) => {
   const [scenes, setScenes] = useState<Scene[]>([]);
@@ -455,12 +450,6 @@ const ScenesTab: React.FC<TabProps> = ({ content, updateContent, currentScenario
     </svg>
   );
 
-   const generateIcon = (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M8 1V15M1 8H15M4 4L12 12M12 4L4 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-    </svg>
-  );
-
   const deleteIcon = (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
       <path d="M2 4h12M5 4v10h6V4M6 2h4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -472,19 +461,18 @@ const ScenesTab: React.FC<TabProps> = ({ content, updateContent, currentScenario
       <div className="tab-actions">
         <div className="tab-actions-primary">
           <ActionButton
+            onClick={handleGenerateRequest}
+            label={isGenerating ? "✨ Generating..." : "✨ Generate Scenes"}
+            variant="success"
+            title="Generate scenes based on your story"
+            disabled={isGenerating}
+          />
+          <ActionButton
             onClick={handleAddScene}
             label="Add Scene"
             icon={addIcon}
             variant="primary"
             title="Add a new scene"
-          />
-          <ActionButton
-            onClick={handleGenerateRequest}
-            label={isGenerating ? "Generating..." : "Generate Scenes"}
-            icon={generateIcon}
-            variant="success"
-            title="Generate scenes based on your story"
-            disabled={isGenerating}
           />
           {scenes.length > 0 && (
             <ActionButton

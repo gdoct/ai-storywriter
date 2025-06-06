@@ -6,10 +6,13 @@ import { ChatCompletionChunk, ChatCompletionRequest, ChatCompletionResponse, Cha
 export class LMStudioAPI {
   private baseUrl: string;
   private modelName: string;
+  private seed: number | null;
 
-  constructor(baseUrl: string = 'http://localhost:1234', modelName: string = 'default') {
+  // Switch default baseUrl to use the backend proxy
+  constructor(baseUrl: string = '/proxy/lmstudio', modelName: string = 'default', seed: number | null = null) {
     this.baseUrl = baseUrl;
     this.modelName = modelName;
+    this.seed = seed;
   }
 
   /**
@@ -44,16 +47,18 @@ export class LMStudioAPI {
       max_tokens?: number;
       top_p?: number;
       stop?: string | string[] | null;
+      seed?: number | null;
     } = {}
   ): Promise<ChatCompletionResponse | null> {
     const requestBody: ChatCompletionRequest = {
       model: this.modelName,
       messages: messages,
-      temperature: options.temperature ?? 0.7,
+      // Remove temperature parameter as requested
       max_tokens: options.max_tokens ?? 1000,
       top_p: options.top_p ?? 0.95,
       stop: options.stop ?? null,
       stream: false,
+      seed: options.seed ?? this.seed,
     };
 
     try {
@@ -97,6 +102,7 @@ export class LMStudioAPI {
       max_tokens?: number;
       top_p?: number;
       stop?: string | string[] | null;
+      seed?: number | null;
     } = {}
   ): { abort: () => void } {
     const controller = new AbortController();
@@ -105,11 +111,12 @@ export class LMStudioAPI {
     const requestBody: ChatCompletionRequest = {
       model: this.modelName,
       messages: messages,
-      temperature: options.temperature ?? 0.7,
+      // Remove temperature parameter as requested
       max_tokens: options.max_tokens ?? 1000,
       top_p: options.top_p ?? 0.95,
       stop: options.stop ?? null,
       stream: true,
+      seed: options.seed ?? this.seed,
     };
 
     let fullText = '';
@@ -202,7 +209,8 @@ export class LMStudioAPI {
 export const lmStudioAPI = new LMStudioAPI();
 
 // Export a function to configure the API with custom settings
-export function configureLMStudioAPI(baseUrl: string, modelName: string = 'default'): void {
+export function configureLMStudioAPI(baseUrl: string, modelName: string = 'default', seed: number | null = null): void {
   (lmStudioAPI as any).baseUrl = baseUrl;
   (lmStudioAPI as any).modelName = modelName;
+  (lmStudioAPI as any).seed = seed;
 }

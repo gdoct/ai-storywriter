@@ -1,20 +1,20 @@
 // filepath: /home/guido/storywriter/frontend/src/components/ScenarioWriter.tsx
 import React, { useEffect, useRef, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { createScenario, fetchGeneratedStory, updateScenario } from '../services/scenario';
+import { createScenario, fetchGeneratedStory, updateScenario } from '../../services/scenario';
 import './ScenarioWriter.css';
 
 // Import tab components
-import { Scenario } from '../types/ScenarioTypes';
-import ReadingPane from './ReadingPane';
-import BackstoryTab from './tabs/BackstoryTab';
-import CharactersTab from './tabs/CharactersTab';
-import FileTab from './tabs/FileTab';
-import NotesTab from './tabs/NotesTab';
-import PromptPreviewTab from './tabs/PromptPreviewTab';
-import ScenesTab from './tabs/ScenesTab';
-import StoryArcTab from './tabs/StoryArcTab';
-import StoryStyleTab from './tabs/StoryStyleTab';
+import { Scenario } from '../../types/ScenarioTypes';
+import ReadingPane from '../ReadingPane/ReadingPane';
+import BackstoryTab from '../tabs/BackstoryTab';
+import CharactersTab from '../tabs/CharactersTab';
+import FileTab from '../tabs/FileTab';
+import NotesTab from '../tabs/NotesTab';
+import PromptPreviewTab from '../tabs/PromptPreviewTab';
+import ScenesTab from '../tabs/ScenesTab';
+import StoryArcTab from '../tabs/StoryArcTab';
+import StoryStyleTab from '../tabs/StoryStyleTab';
 
 interface ScenarioWriterProps {
   value: string;
@@ -207,7 +207,7 @@ const ScenarioWriter: React.FC<ScenarioWriterProps> = ({ value, onChange, onSubm
     }
     
     setCurrentScenario(scenario);
-    setIsDirty(false);
+    setIsDirty(false); // Only set dirty to false after everything is loaded
   };
 
   const handleSaveScenario = async (scenario: Scenario) => {
@@ -337,13 +337,15 @@ const ScenarioWriter: React.FC<ScenarioWriterProps> = ({ value, onChange, onSubm
             onLoadScenario={handleLoadScenario}
             onSaveScenario={handleSaveScenario}
             onNewScenario={handleNewScenario}
+            onSwitchTab={setActiveTab}
           />
         );
       case 'main':
         return (
           <StoryStyleTab 
             content={mainContent} 
-            updateContent={(content: string) => updateContent('main', content)} 
+            updateContent={(content: string) => updateContent('main', content)}
+            currentScenario={currentScenario}
           />
         );
       case 'characters':
@@ -351,6 +353,7 @@ const ScenarioWriter: React.FC<ScenarioWriterProps> = ({ value, onChange, onSubm
           <CharactersTab 
             content={characters} 
             updateContent={(content) => updateContent('characters', content)} 
+            currentScenario={currentScenario}
           />
         );
       case 'scenes':
@@ -381,7 +384,8 @@ const ScenarioWriter: React.FC<ScenarioWriterProps> = ({ value, onChange, onSubm
         return (
           <NotesTab 
             content={notes} 
-            updateContent={(content) => updateContent('notes', content)} 
+            updateContent={(content) => updateContent('notes', content)}
+            currentScenario={currentScenario}
           />
         );
       case 'preview':
@@ -427,7 +431,7 @@ const ScenarioWriter: React.FC<ScenarioWriterProps> = ({ value, onChange, onSubm
           style={{ flex: `0 0 ${100 - splitPosition}%` }}
         >
           <ReadingPane 
-            content={generatedStory || (generatedStory === null ? "" : mainContent)}
+            content={generatedStory === null ? '' : generatedStory || ''}
             onSubmit={onSubmit}
             canSubmit={!!mainContent.trim() && !!currentScenario}
             isGeneratedStory={!!generatedStory}

@@ -142,18 +142,6 @@ const BackstoryTab: React.FC<TabProps> = ({ content, updateContent, currentScena
     updateContent(importedContent);
   };
   
-  const generateIcon = (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M8 1V15M1 8H15M4 4L12 12M12 4L4 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-    </svg>
-  );
-  
-  const rewriteIcon = (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M2 4H14M2 8H14M2 12H10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-    </svg>
-  );
-  
   const cancelIcon = (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
       <path d="M4 4L12 12M12 4L4 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
@@ -168,16 +156,14 @@ const BackstoryTab: React.FC<TabProps> = ({ content, updateContent, currentScena
             <>
               <ActionButton 
                 onClick={handleGenerateRandomBackstory}
-                label="Generate Random Backstory"
-                icon={generateIcon}
+                label="✨ Generate Random Backstory"
                 variant="success"
                 title="Generate a random backstory using AI"
                 disabled={isGenerating}
               />
               <ActionButton 
                 onClick={handleRewriteBackstory}
-                label="Rewrite Backstory"
-                icon={rewriteIcon}
+                label="✨ Rewrite Backstory"
                 variant="primary"
                 title="Rewrite and improve the current backstory"
                 disabled={isGenerating || !content || content.trim() === ''}

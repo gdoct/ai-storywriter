@@ -1,5 +1,6 @@
 import React, { Dispatch, SetStateAction, useState } from 'react';
-import ScenarioWriter from '../components/ScenarioWriter';
+
+import ScenarioWriter from '../components/ScenarioWriter/ScenarioWriter';
 import './Home.css';
 
 interface HomeProps {

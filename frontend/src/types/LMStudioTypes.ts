@@ -25,6 +25,7 @@ export interface ChatCompletionRequest {
   stop?: string | string[] | null;
   presence_penalty?: number;
   frequency_penalty?: number;
+  seed?: number | null;  // Added seed parameter for consistent outputs
 }
 
 export interface ChatCompletionChoice {
@@ -82,4 +83,5 @@ export interface ChatCompletionChunk {
 export interface LMStudioConfig {
   baseUrl: string;
   modelName: string;
+  seed?: number | null; // Added seed parameter for reproducible generation
 }

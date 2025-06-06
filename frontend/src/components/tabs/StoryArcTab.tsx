@@ -147,18 +147,6 @@ const StoryArcTab: React.FC<TabProps> = ({ content, updateContent, currentScenar
     updateContent(importedContent);
   };
 
-  const generateIcon = (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M8 1V15M1 8H15M4 4L12 12M12 4L4 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-    </svg>
-  );
-
-  const rewriteIcon = (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M2 4H14M2 8H14M2 12H10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-    </svg>
-  );
-
   const cancelIcon = (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
       <path d="M4 4L12 12M12 4L4 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
@@ -173,16 +161,14 @@ const StoryArcTab: React.FC<TabProps> = ({ content, updateContent, currentScenar
             <>
               <ActionButton 
                 onClick={handleGenerateRandomStoryArc}
-                label="Generate Random Story Arc"
-                icon={generateIcon}
+                label="✨ Generate Random Story Arc"
                 variant="success"
                 title="Generate a random story arc using AI"
                 disabled={isGenerating}
               />
               <ActionButton 
                 onClick={handleRewriteStoryArc}
-                label="Rewrite Story Arc"
-                icon={rewriteIcon}
+                label="✨ Rewrite Story Arc"
                 variant="primary"
                 title="Rewrite and improve the current story arc"
                 disabled={isGenerating || !content || content.trim() === ''}

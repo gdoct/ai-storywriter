@@ -1,5 +1,7 @@
 // filepath: /home/guido/storywriter/frontend/src/components/tabs/StoryStyleTab.tsx
 import React, { useState } from 'react';
+import { generateRandomWritingStyle } from '../../services/storyGenerator';
+import ActionButton from '../common/ActionButton';
 import ImportButton from '../common/ImportButton';
 import ImportModal from '../common/ImportModal';
 import { TabProps } from './TabInterface';
@@ -54,6 +56,8 @@ const StyleDropdown: React.FC<{
 
 const StoryStyleTab: React.FC<TabProps> = ({ content, updateContent }) => {
   const [showImportModal, setShowImportModal] = useState(false);
+  const [styleGenerationInProgress, setStyleGenerationInProgress] = useState(false);
+  
   // Define default empty style settings
   const defaultStyleSettings = {
     style: '',
@@ -124,11 +128,72 @@ const StoryStyleTab: React.FC<TabProps> = ({ content, updateContent }) => {
     updateContent(JSON.stringify(normalizedSettings));
   };
 
+  // Handler for generating a random writing style
+  const handleGenerateRandomStyle = async () => {
+    console.log('Generate random style button clicked');
+    
+    try {
+      setStyleGenerationInProgress(true);
+      
+      // Generate a random writing style
+      const generationResult = await generateRandomWritingStyle({
+        onProgress: (generatedText) => {
+          // For JSON results, we don't need to update intermediate progress
+          // as it might not be valid JSON until complete
+          console.log('Generating writing style...');
+        }
+      });
+
+      // Wait for the generation to complete
+      try {
+        const randomStyle = await generationResult.result;
+        
+        // Update the style settings with the generated style
+        const newSettings = {
+          style: randomStyle.style || '',
+          genre: randomStyle.genre || '',
+          tone: randomStyle.tone || '',
+          language: randomStyle.language || '',
+          theme: randomStyle.theme || '',
+          other: randomStyle.other || ''
+        };
+        
+        setStyleSettings(newSettings);
+        
+        // Save as JSON string
+        updateContent(JSON.stringify(newSettings));
+        
+        console.log('Random style generated:', newSettings);
+      } catch (error) {
+        console.log('Style generation was interrupted or invalid:', error);
+      }
+    } catch (error) {
+      console.error('Error generating random style:', error);
+    } finally {
+      setStyleGenerationInProgress(false);
+    }
+  };
+
   return (
     <div className="tab-container">
       <div className="tab-actions">
         <div className="tab-actions-primary">
-          <h3 className="tab-section-title">Story Style Settings</h3>
+          {!styleGenerationInProgress ? (
+            <ActionButton 
+              onClick={handleGenerateRandomStyle}
+              label="✨ Generate Random Style"
+              variant="success"
+              title="Generate a random writing style using AI"
+              disabled={styleGenerationInProgress}
+            />
+          ) : (
+            <ActionButton 
+              onClick={() => {}}
+              label="✨ Generating Style..."
+              variant="default"
+              disabled={true}
+            />
+          )}
         </div>
         <div className="tab-actions-secondary">
           <ImportButton
@@ -189,6 +254,15 @@ const StoryStyleTab: React.FC<TabProps> = ({ content, updateContent }) => {
             className="form-textarea"
           />
         </div>
+      </div>
+
+      <div className="style-actions-container">
+        <ActionButton
+          onClick={handleGenerateRandomStyle}
+          label={styleGenerationInProgress ? 'Generating...' : 'Generate Random Style'}
+          disabled={styleGenerationInProgress}
+          className="generate-style-button"
+        />
       </div>
       </div>
       

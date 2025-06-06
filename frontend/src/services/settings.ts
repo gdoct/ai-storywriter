@@ -9,8 +9,9 @@ interface Settings {
 
 const defaultSettings: Settings = {
   lmStudio: {
-    baseUrl: 'http://localhost:1234',
-    modelName: 'default'
+    baseUrl: '/proxy/lmstudio',
+    modelName: 'default',
+    seed: null
   }
 };
 

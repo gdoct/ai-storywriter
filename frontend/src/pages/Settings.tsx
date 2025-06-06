@@ -4,8 +4,10 @@ import { getLMStudioConfig, updateLMStudioConfig } from '../services/settings';
 import './Settings.css';
 
 const Settings: React.FC = () => {
-  const [baseUrl, setBaseUrl] = useState('http://localhost:1234');
+  const [baseUrl, setBaseUrl] = useState('/proxy/lmstudio');
   const [modelName, setModelName] = useState('default');
+  const [seed, setSeed] = useState<number | null>(null);
+  const [useRandomSeed, setUseRandomSeed] = useState(true);
   const [availableModels, setAvailableModels] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [saveMessage, setSaveMessage] = useState('');
@@ -17,6 +19,8 @@ const Settings: React.FC = () => {
     const config = getLMStudioConfig();
     setBaseUrl(config.baseUrl);
     setModelName(config.modelName);
+    setSeed(config.seed ?? null);
+    setUseRandomSeed(config.seed === null);
   }, []);
 
   // Fetch available models
@@ -54,6 +58,10 @@ const Settings: React.FC = () => {
     } else {
       setTestMessage('Connection failed. Make sure LM Studio is running and Server is enabled.');
       setTestStatus('error');
+      // CORS warning
+      setTimeout(() => {
+        setTestMessage(prev => prev + '\nIf you see a CORS error in the browser console, you must enable CORS for http://localhost:3000 in LM Studio settings or use a proxy.');
+      }, 100);
     }
   };
 
@@ -61,7 +69,8 @@ const Settings: React.FC = () => {
   const saveSettings = () => {
     updateLMStudioConfig({
       baseUrl,
-      modelName
+      modelName,
+      seed: useRandomSeed ? null : seed
     });
     setSaveMessage('Settings saved successfully!');
     
@@ -85,7 +94,7 @@ const Settings: React.FC = () => {
             id="baseUrl"
             value={baseUrl}
             onChange={(e) => setBaseUrl(e.target.value)}
-            placeholder="http://localhost:1234"
+            placeholder="/proxy/lmstudio"
           />
         </div>
         
@@ -103,6 +112,35 @@ const Settings: React.FC = () => {
               <option key={model} value={model}>{model}</option>
             ))}
           </select>
+        </div>
+        
+        <div className="form-row">
+          <label htmlFor="seedSettings">Random Seed:</label>
+          <div className="seed-controls">
+            <input 
+              type="checkbox" 
+              id="useRandomSeed" 
+              checked={useRandomSeed} 
+              onChange={(e) => setUseRandomSeed(e.target.checked)} 
+            />
+            <label htmlFor="useRandomSeed">Use random seeds (recommended)</label>
+            
+            {!useRandomSeed && (
+              <div className="fixed-seed-input">
+                <input
+                  type="number"
+                  id="seed"
+                  value={seed !== null ? seed : ""}
+                  onChange={(e) => setSeed(e.target.value ? parseInt(e.target.value) : null)}
+                  placeholder="Enter seed number"
+                  disabled={useRandomSeed}
+                />
+                <div className="seed-description">
+                  Using a fixed seed will make all generations predictable
+                </div>
+              </div>
+            )}
+          </div>
         </div>
         
         <div className="button-row">

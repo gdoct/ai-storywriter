@@ -90,7 +90,7 @@ export function scenarioScenesToMarkdown(scenario: Scenario): string {
 
 export function scenarioStoryArcToMarkdown(scenario: Scenario): string {
     if (scenario.storyarc) {
-        return `# Story Arc\n` + `${scenario.storyarc}\n---\n\n`;
+        return `# Story Arc\n${scenario.storyarc}\n---\n\n`;
     } else {
         return '';
     }
@@ -98,7 +98,7 @@ export function scenarioStoryArcToMarkdown(scenario: Scenario): string {
 
 export function scenarioNotesToMarkdown(scenario: Scenario): string {
     if (scenario.notes) {
-        return `# Notes\n` + `${scenario.notes}\n---\n\n`;
+        return `# Notes\n${scenario.notes}\n---\n\n`;
     } else {
         return '';
     }
@@ -106,7 +106,7 @@ export function scenarioNotesToMarkdown(scenario: Scenario): string {
 
 export function scenarioBackstoryToMarkdown(scenario: Scenario): string {
     if (scenario.backstory) {
-        return `# Backstory\n` + `${scenario.backstory}\n---\n\n`;
+        return `# Backstory\n${scenario.backstory}\n---\n\n`;
     } else {
         return '';
     }

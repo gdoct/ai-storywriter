@@ -11,6 +11,40 @@ function getStoredTemperature(): number {
 }
 
 /**
+ * Generate a random seed for consistent generation but varied results
+ * @returns A random integer seed
+ */
+function generateRandomSeed(): number {
+  return Math.floor(Math.random() * 1000000);
+}
+
+/**
+ * Creates a prompt specifically for generating a random writing style
+ */
+export function createWritingStylePrompt(): string {
+  let prompt = "You are an expert in literary styles and genres. Create a random writing style configuration for a story.\n\n";
+  prompt += "Provide a JSON object with the following fields:\n";
+  prompt += "- style: a literary style (e.g., 'Modern')\n";
+  prompt += "- genre: a specific writing genre \n";
+  prompt += "- tone: the emotional tone of the writing in one word\n";
+  prompt += "- language: the type of language used (e.g., 'Elaborate')\n";
+  prompt += "- theme: a central theme of the story\n";
+  prompt += "- other: additional specific instructions for the writing style\n\n";
+  prompt += "Format your response as a valid JSON object WITHOUT any explanation or additional text.\n\n";
+  prompt += "IMPORTANT: Your response must be in JSON format ONLY with the following structure:\n";
+  prompt += "{\n";
+  prompt += '  "style": "(style)",\n';
+  prompt += '  "genre": "(genre)",\n';
+  prompt += '  "tone": "(tone)",\n';
+  prompt += '  "language": "(language)",\n';
+  prompt += '  "theme": "(theme)",\n';
+  prompt += '  "other": "(other)"\n';
+  prompt += "}";
+  
+  return prompt;
+}
+
+/**
  * Creates a prompt specifically for generating a backstory based on the scenario
  */
 export function createBackstoryPrompt(scenario: Scenario): string {
@@ -159,12 +193,13 @@ export async function generateChapter(
   previousChapters: string = '',
   options: {
     onProgress?: (text: string) => void,
-    temperature?: number
+    temperature?: number,
+    seed?: number | null
   } = {}
 ): Promise<string> {
   // Configure the API with the latest settings
   const config = getLMStudioConfig();
-  configureLMStudioAPI(config.baseUrl, config.modelName);
+  configureLMStudioAPI(config.baseUrl, config.modelName, config.seed);
 
   // Convert the scenario to a chapter prompt
   const messages = scenarioToChapterPrompt(scenario, chapterNumber, previousChapters);
@@ -173,7 +208,7 @@ export async function generateChapter(
   return new Promise<string>((resolve, reject) => {
     let chapterText = '';
     
-    const abortController = lmStudioAPI.streamChatCompletion(
+    lmStudioAPI.streamChatCompletion(
       messages,
       {
         onChunk: (chunk, currentText) => {
@@ -191,7 +226,8 @@ export async function generateChapter(
       },
       {
         temperature: options.temperature ?? getStoredTemperature(),
-        max_tokens: 2000
+        max_tokens: 2000,
+        seed: options.seed
       }
     );
   });
@@ -208,7 +244,7 @@ export async function generateChapterSummary(
   } = {}
 ): Promise<string> {
   const config = getLMStudioConfig();
-  configureLMStudioAPI(config.baseUrl, config.modelName);
+  configureLMStudioAPI(config.baseUrl, config.modelName, config.seed);
 
   const prompt = `Summarize the following chapter in 2-3 sentences, focusing on the main events and character developments. Do not include any meta-commentary or formatting.\n\nChapter:\n${chapterText}`;
 
@@ -245,12 +281,6 @@ export async function generateChapterSummary(
   });
 }
 
-// Helper to get the last N sentences from a text
-function getLastSentences(text: string, n: number = 2): string {
-  const sentences = text.match(/[^.!?]+[.!?]+/g) || [];
-  return sentences.slice(-n).join(' ').trim();
-}
-
 /**
  * Generate a story from a scenario using the LM Studio API (single call, no chapters)
  */
@@ -259,23 +289,21 @@ export async function generateStory(
   options: { 
     onProgress?: (text: string) => void,
     temperature?: number,
-    numberOfChapters?: number // ignored, kept for compatibility
+    numberOfChapters?: number, // ignored, kept for compatibility
+    seed?: number | null
   } = {}
 ): Promise<{ result: Promise<GeneratedStory>; cancelGeneration: () => void }> {
   // Configure the API with the latest settings
   const config = getLMStudioConfig();
-  configureLMStudioAPI(config.baseUrl, config.modelName);
-
-  let isCancelled = false;
+  configureLMStudioAPI(config.baseUrl, config.modelName, config.seed);
 
   const resultPromise = new Promise<GeneratedStory>(async (resolve, reject) => {
     try {
       let completeStory = '';
       const messages: ChatMessage[] = scenarioToPrompt(scenario);
-      let abortController: { abort: () => void } | null = null;
 
       await new Promise<void>((resolveStory, rejectStory) => {
-        abortController = lmStudioAPI.streamChatCompletion(
+        lmStudioAPI.streamChatCompletion(
           messages,
           {
             onChunk: (chunk, currentText) => {
@@ -294,7 +322,8 @@ export async function generateStory(
           },
           {
             temperature: options.temperature ?? getStoredTemperature(),
-            max_tokens: 6000
+            max_tokens: 6000,
+            seed: options.seed
           }
         );
       });
@@ -309,7 +338,6 @@ export async function generateStory(
   });
 
   const cancelGeneration = () => {
-    isCancelled = true;
     // If abortController exists, abort the request
     // (abortController is only set after streamChatCompletion is called)
   };
@@ -324,7 +352,8 @@ export async function generateBackstory(
   scenario: Scenario,
   options: {
     onProgress?: (text: string) => void,
-    temperature?: number
+    temperature?: number,
+    seed?: number | null
   } = {}
 ): Promise<{ result: Promise<string>; cancelGeneration: () => void }> {
   // Configure the API with the latest settings
@@ -363,7 +392,8 @@ export async function generateBackstory(
       },
       {
         temperature: options.temperature ?? getStoredTemperature(),
-        max_tokens: 1000
+        max_tokens: 1000,
+        seed: options.seed
       }
     );
   });
@@ -431,12 +461,13 @@ export async function generateStoryArc(
   scenario: Scenario,
   options: {
     onProgress?: (text: string) => void,
-    temperature?: number
+    temperature?: number,
+    seed?: number | null
   } = {}
 ): Promise<{ result: Promise<string>; cancelGeneration: () => void }> {
   // Configure the API with the latest settings
   const config = getLMStudioConfig();
-  configureLMStudioAPI(config.baseUrl, config.modelName);
+  configureLMStudioAPI(config.baseUrl, config.modelName, config.seed);
 
   // Create the messages for story arc generation
   const messages: ChatMessage[] = [
@@ -470,7 +501,8 @@ export async function generateStoryArc(
       },
       {
         temperature: options.temperature ?? getStoredTemperature(),
-        max_tokens: 1000
+        max_tokens: 1000,
+        seed: options.seed
       }
     );
   });
@@ -552,7 +584,8 @@ export async function generateScenes(
   scenario: Scenario,
   options: {
     onProgress?: (text: string) => void,
-    temperature?: number
+    temperature?: number,
+    seed?: number | null
   } = {}
 ): Promise<{ result: Promise<string>; cancelGeneration: () => void }> {
   // Configure the API with the latest settings
@@ -591,7 +624,8 @@ export async function generateScenes(
       },
       {
         temperature: options.temperature ?? getStoredTemperature(),
-        max_tokens: 2000
+        max_tokens: 2000,
+        seed: options.seed
       }
     );
   });
@@ -625,7 +659,7 @@ export function createRewriteBackstoryPrompt(scenario: Scenario): string {
   const writingStyle = scenario.writingStyle || { genre: "General Fiction" };
   
   // Create the rewrite prompt
-  let prompt = "You are a masterful storyteller specializing in improving existing content. Rewrite the following backstory:\n\n";
+  let prompt = "You are a masterful storyteller specializing in improving existing content in the genre " + writingStyle.genre + ". Rewrite the following backstory:\n\n";
   prompt += "\"" + currentBackstory + "\"\n\n";
   prompt += "Keep the core elements of the backstory but make it short and high-level. improve it by:\n";
   prompt += "- Making it clear and structured\n";
@@ -644,12 +678,13 @@ export async function rewriteBackstory(
   scenario: Scenario,
   options: {
     onProgress?: (text: string) => void,
-    temperature?: number
+    temperature?: number,
+    seed?: number | null
   } = {}
 ): Promise<{ result: Promise<string>; cancelGeneration: () => void }> {
   // Configure the API with the latest settings
   const config = getLMStudioConfig();
-  configureLMStudioAPI(config.baseUrl, config.modelName);
+  configureLMStudioAPI(config.baseUrl, config.modelName, config.seed);
 
   // Create the messages for backstory rewriting
   const messages: ChatMessage[] = [
@@ -683,7 +718,8 @@ export async function rewriteBackstory(
       },
       {
         temperature: options.temperature ?? getStoredTemperature(),
-        max_tokens: 1000
+        max_tokens: 1000,
+        seed: options.seed
       }
     );
   });
@@ -738,7 +774,8 @@ export async function rewriteStoryArc(
   scenario: Scenario,
   options: {
     onProgress?: (text: string) => void,
-    temperature?: number
+    temperature?: number,
+    seed?: number | null
   } = {}
 ): Promise<{ result: Promise<string>; cancelGeneration: () => void }> {
   // Configure the API with the latest settings
@@ -777,7 +814,8 @@ export async function rewriteStoryArc(
       },
       {
         temperature: options.temperature ?? getStoredTemperature(),
-        max_tokens: 1000
+        max_tokens: 1000,
+        seed: options.seed
       }
     );
   });
@@ -789,4 +827,448 @@ export async function rewriteStoryArc(
   };
   
   return { result: resultPromise, cancelGeneration };
+}
+
+/**
+ * Generate a random writing style using the LM Studio API
+ */
+export async function generateRandomWritingStyle(
+  options: {
+    onProgress?: (text: string) => void,
+    temperature?: number,
+    seed?: number | null
+  } = {}
+): Promise<{ result: Promise<any>; cancelGeneration: () => void }> {
+  // Configure the API with the latest settings
+  const config = getLMStudioConfig();
+  configureLMStudioAPI(config.baseUrl, config.modelName, options.seed);
+
+  // Create the messages for writing style generation
+  const messages: ChatMessage[] = [
+    {
+      role: 'user',
+      content: createWritingStylePrompt()
+    }
+  ];
+
+  console.log('Generated messages for writing style generation:', messages);
+  let abortController: { abort: () => void } | null = null;
+  
+  const resultPromise = new Promise<any>((resolve, reject) => {
+    let jsonText = '';
+    
+    abortController = lmStudioAPI.streamChatCompletion(
+      messages,
+      {
+        onChunk: (chunk, currentText) => {
+          jsonText = currentText;
+          if (options.onProgress) {
+            try {
+              // Try to parse the current text as JSON if possible
+              // This might fail during streaming if the JSON is incomplete
+              const parsedJson = JSON.parse(jsonText);
+              options.onProgress(JSON.stringify(parsedJson, null, 2));
+            } catch (e) {
+              // If parsing fails, just return the raw text
+              options.onProgress(jsonText);
+            }
+          }
+        },
+        onComplete: (fullText) => {
+          try {
+            // Remove Markdown code block markers if present
+            let cleanedText = fullText.trim();
+            if (cleanedText.startsWith('```json')) {
+              cleanedText = cleanedText.replace(/^```json/, '').trim();
+            }
+            if (cleanedText.startsWith('```')) {
+              cleanedText = cleanedText.replace(/^```/, '').trim();
+            }
+            if (cleanedText.endsWith('```')) {
+              cleanedText = cleanedText.replace(/```$/, '').trim();
+            }
+            // Try to parse the cleaned response as JSON
+            const parsedJson = JSON.parse(cleanedText);
+            resolve(parsedJson);
+          } catch (error) {
+            console.error('Failed to parse writing style JSON:', error, fullText);
+            reject(error);
+          }
+        },
+        onError: (error) => {
+          reject(error);
+        }
+      },
+      {
+        temperature: options.temperature ?? getStoredTemperature(),
+        max_tokens: 500,
+        seed: options.seed
+      }
+    );
+  });
+  
+  const cancelGeneration = () => {
+    if (abortController) {
+      abortController.abort();
+    }
+  };
+  
+  return { result: resultPromise, cancelGeneration };
+}
+
+/**
+ * Creates a prompt specifically for generating a character
+ * @param scenario The current scenario for context
+ * @param characterType The type of character to generate: "protagonist", "antagonist", or "supporting"
+ */
+export function createCharacterPrompt(scenario: Scenario, characterType: string): string {
+  // Verify scenario is not null or undefined
+  if (!scenario) {
+    console.error("Error: scenario is null or undefined");
+    scenario = {
+      id: 'error-fallback',
+      userId: 'system',
+      createdAt: new Date(),
+      writingStyle: { genre: "General Fiction" }
+    };
+  }
+
+  // Get writing style and other details from scenario
+  const writingStyle = scenario.writingStyle || { genre: "General Fiction" };
+  const genre = writingStyle.genre || "General Fiction";
+  const existingCharacters = Array.isArray(scenario.characters) ? scenario.characters : [];
+  
+  // Create a prompt based on character type
+  let prompt = `You are an expert character creator for ${genre} stories. Create a ${characterType} character with depth and interesting traits.\n\n`;
+  
+  if (characterType === "protagonist") {
+    prompt += "Create a compelling protagonist who will engage readers and drive the story forward.\n";
+    prompt += "The character should have clear motivations, flaws, strengths, and a strong narrative voice.\n";
+  } else if (characterType === "antagonist") {
+    prompt += "Create a nuanced antagonist who provides meaningful opposition to the protagonist.\n";
+    prompt += "The character should have understandable motivations, complexity, and not be purely evil without reason.\n";
+  } else if (characterType === "supporting") {
+    prompt += "Create a memorable supporting character who adds depth to the story world.\n";
+    prompt += "The character should have their own goals and personality while complementing the main characters.\n";
+  }
+
+  // Add context from existing characters, if any
+  if (existingCharacters.length > 0) {
+    prompt += "\nConsider these existing characters in the story:\n";
+    existingCharacters.forEach((char, index) => {
+      prompt += `Character ${index + 1}: ${char.name || char.alias || 'Unnamed'} - ${char.role || 'No specified role'}\n`;
+    });
+    prompt += "\nCreate a character that would interact well with these existing characters.\n";
+  }
+
+  // Request specific details
+  prompt += "\nProvide the following information in JSON format:\n";
+  prompt += "- name: A fitting name for this character\n";
+  prompt += "- alias: An optional nickname or alias (can be empty string)\n";
+  prompt += "- gender: The character's gender\n";
+  prompt += "- role: Their specific role ('Protagonist', 'Antagonist', or 'Supporting')\n";
+  prompt += "- appearance: A concise description of their physical appearance\n";
+  prompt += "- backstory: A brief but compelling backstory for the character\n";
+  prompt += "- extraInfo: Any additional traits, skills, or information\n\n";
+  
+  prompt += "Format your response as a valid JSON object WITHOUT any explanation or additional text.\n\n";
+  prompt += "Ensure the JSON is well-formed and includes all required fields.\n";
+  prompt += "Make sure that quotes inside the JSON string are properly escaped:\n";
+  prompt += "IMPORTANT: Your response must be in JSON format ONLY with the following structure:\n";
+  prompt += "{\n";
+  prompt += '  "name": "(name)",\n';
+  prompt += '  "alias": "(alias)",\n';
+  prompt += '  "gender": "(gender)",\n';
+  prompt += '  "role": "(role)",\n';
+  prompt += '  "appearance": "(appearance)",\n';
+  prompt += '  "backstory": "(backstory)",\n';
+  prompt += '  "extraInfo": "(extraInfo)"\n';
+  prompt += "}";
+  
+  return prompt;
+}
+
+/**
+ * Generate a random character using the LM Studio API
+ */
+export async function generateRandomCharacter(
+  scenario: Scenario,
+  characterType: string,
+  options: {
+    onProgress?: (text: string) => void,
+    temperature?: number,
+    seed?: number | null
+  } = {}
+): Promise<{ result: Promise<any>; cancelGeneration: () => void }> {
+  // Configure the API with the latest settings
+  const config = getLMStudioConfig();
+  configureLMStudioAPI(config.baseUrl, config.modelName, options.seed);
+
+  // Create the messages for character generation
+  const messages: ChatMessage[] = [
+    {
+      role: 'user',
+      content: createCharacterPrompt(scenario, characterType)
+    }
+  ];
+
+  console.log('Generated messages for character generation:', messages);
+  let abortController: { abort: () => void } | null = null;
+  
+  const resultPromise = new Promise<any>((resolve, reject) => {
+    let jsonText = '';
+    
+    abortController = lmStudioAPI.streamChatCompletion(
+      messages,
+      {
+        onChunk: (chunk, currentText) => {
+          jsonText = currentText;
+          if (options.onProgress) {
+            try {
+              // Try to parse the current text as JSON if possible
+              // This might fail during streaming if the JSON is incomplete
+              const parsedJson = JSON.parse(jsonText);
+              options.onProgress(JSON.stringify(parsedJson, null, 2));
+            } catch (e) {
+              // If parsing fails, just return the raw text
+              options.onProgress(jsonText);
+            }
+          }
+        },
+        onComplete: (fullText) => {
+            // Remove Markdown code block markers if present
+          let cleanedText = fullText.trim();
+          try {
+            
+            if (cleanedText.startsWith('```json')) {
+              cleanedText = cleanedText.replace(/^```json/, '').trim();
+            }
+            if (cleanedText.startsWith('```')) {
+              cleanedText = cleanedText.replace(/^```/, '').trim();
+            }
+            if (cleanedText.endsWith('```')) {
+              cleanedText = cleanedText.replace(/```$/, '').trim();
+            }
+            // Clean up common JSON issues: replace smart quotes, remove bad control characters
+            cleanedText = cleanedText
+              .replace(/[\u201c\u201d\u201e\u201f\u2033\u2036]/g, '"') // smart double quotes
+              .replace(/[\u2018\u2019\u201a\u201b\u2032\u2035]/g, "'") // smart single quotes
+              .split('').map(c => {
+                const code = c.charCodeAt(0);
+                if ((code >= 0 && code <= 31 && c !== '\n' && c !== '\r' && c !== '\t') || code === 127) {
+                  return ' ';
+                }
+                return c;
+              }).join('');
+            // Log the cleaned text for debugging
+            console.log('Attempting to parse character JSON:', cleanedText);
+            
+            // Try to parse the cleaned response as JSON
+            const parsedJson = JSON.parse(cleanedText);
+            console.log('Successfully parsed character JSON:', parsedJson);
+            resolve(parsedJson);
+          } catch (error) {
+            console.error('Failed to parse character JSON:', error);
+            console.error('Raw JSON text that failed to parse:', fullText);
+            console.error('Cleaned JSON text that failed to parse:', cleanedText);
+            reject(error);
+          }
+        },
+        onError: (error) => {
+          console.error('LM Studio API error during character generation:', error);
+          reject(error);
+        }
+      },
+      {
+        temperature: options.temperature ?? getStoredTemperature(),
+        max_tokens: 800,
+        seed: options.seed
+      }
+    );
+  });
+  
+  const cancelGeneration = () => {
+    if (abortController) {
+      abortController.abort();
+    }
+  };
+  
+  return { result: resultPromise, cancelGeneration };
+}
+
+/**
+ * Creates a prompt specifically for generating a random scenario name
+ */
+export function createScenarioNamePrompt(options?: {theme?: string, genre?: string}): string {
+  const theme = options?.theme || '';
+  const genre = options?.genre || '';
+  
+  let prompt = "You are an expert storyteller. Create a compelling and creative title for a new story.\n\n";
+  
+  if (genre) {
+    prompt += `The story will be in the ${genre} genre.\n\n`;
+  }
+  
+  if (theme) {
+    prompt += `The story will explore the theme of ${theme}.\n\n`;
+  }
+  
+  prompt += "Give me only the title, without quotes, explanation, or any additional text.\n";
+  prompt += "The title should be between 2-6 words, and be intriguing and memorable.\n";
+  
+  return prompt;
+}
+
+/**
+ * Generate a random scenario title
+ */
+export async function generateRandomScenarioName(
+  options?: {
+    theme?: string,
+    genre?: string,
+    onProgress?: (text: string) => void,
+    temperature?: number,
+    seed?: number | null
+  }
+): Promise<{ result: Promise<string>; cancelGeneration: () => void }> {
+  // Configure the API with the latest settings
+  const config = getLMStudioConfig();
+  // Ensure we have a seed - either use the provided one or generate a new one
+  const effectiveSeed = options?.seed !== undefined ? options.seed : generateRandomSeed();
+  configureLMStudioAPI(config.baseUrl, config.modelName, effectiveSeed);
+
+  // Create the messages for title generation
+  const messages: ChatMessage[] = [
+    {
+      role: 'user',
+      content: createScenarioNamePrompt(options)
+    }
+  ];
+
+  console.log('Generated messages for scenario name generation');
+  let abortController: { abort: () => void } | null = null;
+  
+  const resultPromise = new Promise<string>((resolve, reject) => {
+    let titleText = '';
+    
+    abortController = lmStudioAPI.streamChatCompletion(
+      messages,
+      {
+        onChunk: (chunk, currentText) => {
+          titleText = currentText.trim();
+          if (options?.onProgress) {
+            options.onProgress(titleText);
+          }
+        },
+        onComplete: (fullText) => {
+          resolve(fullText.trim());
+        },
+        onError: (error) => {
+          reject(error);
+        }
+      },
+      {
+        temperature: options?.temperature ?? getStoredTemperature(),
+        max_tokens: 100,
+        seed: options?.seed
+      }
+    );
+  });
+  
+  const cancelGeneration = () => {
+    if (abortController) {
+      abortController.abort();
+    }
+  };
+  
+  return { result: resultPromise, cancelGeneration };
+}
+
+/**
+ * Randomize and overwrite the characters in the current scenario.
+ * Replaces scenario.characters with a new array of random characters.
+ * @param scenario The scenario object to update
+ * @param count Number of characters to generate (default: 3)
+ * @param options Optional: onProgress, temperature
+ */
+export async function randomizeScenarioCharacters(
+  scenario: Scenario,
+  count: number = 3,
+  options: {
+    onProgress?: (text: string) => void,
+    temperature?: number,
+    seed?: number | null
+  } = {}
+): Promise<{ result: Promise<any[]>; cancelGeneration: () => void }> {
+  let cancelled = false;
+  const characterTypes = ["protagonist", "antagonist", "supporting"];
+  while (characterTypes.length < count) characterTypes.push("supporting");
+
+  // Prepare all character generation promises
+  const charPromises: Array<Promise<any>> = [];
+  const cancelFns: Array<() => void> = [];
+
+  for (let i = 0; i < count; i++) {
+    // Create a new options object with a unique seed for each character
+    // If seed is provided, create variation by adding the index
+    // If no seed is provided, generate a random one for each character
+    const characterOptions = {
+      ...options,
+      seed: options.seed !== undefined ? 
+        (options.seed === null ? generateRandomSeed() + i : options.seed + i) : 
+        generateRandomSeed() + i
+    };
+    
+    const genPromise = generateRandomCharacter(scenario, characterTypes[i], characterOptions);
+    charPromises.push(
+      genPromise.then(({ result, cancelGeneration }) => {
+        cancelFns.push(cancelGeneration);
+        return result;
+      })
+    );
+  }
+
+  const resultPromise = Promise.all(charPromises).then(async (results) => {
+    // Each result is a Promise<any> (the .result from generateRandomCharacter)
+    const characters = await Promise.all(results);
+    if (!cancelled) {
+      scenario.characters = characters;
+    }
+    return characters;
+  });
+
+  const cancelGeneration = () => {
+    cancelled = true;
+    cancelFns.forEach((fn) => fn());
+  };
+
+  return { result: resultPromise, cancelGeneration };
+}
+
+/**
+ * Randomize and overwrite the writing style in the current scenario.
+ * Replaces scenario.writingStyle with a new random writing style.
+ * @param scenario The scenario object to update
+ * @param options Optional: onProgress, temperature, seed
+ */
+export async function randomizeScenarioWritingStyle(
+  scenario: Scenario,
+  options: {
+    onProgress?: (text: string) => void,
+    temperature?: number,
+    seed?: number | null
+  } = {}
+): Promise<{ result: Promise<any>; cancelGeneration: () => void }> {
+  // If no seed is provided, generate a random one to ensure uniqueness
+  const effectiveOptions = {
+    ...options,
+    seed: options.seed !== undefined ? options.seed : generateRandomSeed()
+  };
+  
+  const { result, cancelGeneration } = await generateRandomWritingStyle(effectiveOptions);
+  const wrappedResult = result.then((writingStyle) => {
+    scenario.writingStyle = writingStyle;
+    return writingStyle;
+  });
+  return { result: wrappedResult, cancelGeneration };
 }

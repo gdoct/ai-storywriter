@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { generateRandomCharacter } from '../../services/storyGenerator';
 import { Character } from '../../types/ScenarioTypes';
 import ActionButton from '../common/ActionButton';
 import ImportButton from '../common/ImportButton';
@@ -11,7 +12,7 @@ const generateUniqueId = (): string => {
   return Date.now().toString(36) + Math.random().toString(36).substr(2);
 };
 
-const CharactersTab: React.FC<TabProps> = ({ content, updateContent }) => {
+const CharactersTab: React.FC<TabProps> = ({ content, updateContent, currentScenario }) => {
   const [characters, setCharacters] = useState<Character[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -21,6 +22,14 @@ const CharactersTab: React.FC<TabProps> = ({ content, updateContent }) => {
     id: '',
     name: ''
   });
+  
+  // Debug: Log when currentScenario changes
+  useEffect(() => {
+    console.log("CharactersTab: currentScenario updated:", currentScenario);
+  }, [currentScenario]);
+  const [showCharacterTypeDropdown, setShowCharacterTypeDropdown] = useState(false);
+  const [characterGenerationInProgress, setCharacterGenerationInProgress] = useState(false);
+  const [cancelGeneration, setCancelGeneration] = useState<(() => void) | null>(null);
 
   // Parse stored characters JSON when component mounts or content changes
   useEffect(() => {
@@ -41,6 +50,24 @@ const CharactersTab: React.FC<TabProps> = ({ content, updateContent }) => {
       }
     }
   }, [content]);
+  
+  // Add click outside handler to close dropdown
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (showCharacterTypeDropdown) {
+        const target = e.target as HTMLElement;
+        if (!target.closest('.character-type-dropdown-container')) {
+          setShowCharacterTypeDropdown(false);
+        }
+      }
+    };
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showCharacterTypeDropdown]);
 
   // Update the JSON string whenever characters change, but use a ref to avoid circular updates
   const initialRender = React.useRef(true);
@@ -138,24 +165,195 @@ const CharactersTab: React.FC<TabProps> = ({ content, updateContent }) => {
     setCharacters(prev => [...prev, ...charactersWithNewIds]);
   };
 
-  // Icon for add character button
+  // Handler for character type dropdown
+  const handleGenerateButtonClick = () => {
+    console.log("Generate button clicked, currentScenario:", currentScenario);
+    if (!currentScenario) {
+      alert("Please create or select a scenario first before generating a character.");
+      return;
+    }
+    setShowCharacterTypeDropdown(true);
+  };
+
+  // Handler for character generation
+  const handleGenerateCharacter = async (characterType: string) => {
+    if (!currentScenario) {
+      console.error("No current scenario available for character generation");
+      alert("Please create or select a scenario first before generating a character.");
+      setShowCharacterTypeDropdown(false);
+      return;
+    }
+
+    try {
+      setCharacterGenerationInProgress(true);
+      setShowCharacterTypeDropdown(false);
+      
+      console.log(`Generating ${characterType} character...`);
+      
+      const generationResult = await generateRandomCharacter(
+        currentScenario,
+        characterType,
+        {
+          onProgress: (generatedText) => {
+            // For JSON results, we don't need to update intermediate progress
+            console.log('Generating character...');
+          }
+        }
+      );
+
+      // Store the cancel function to enable cancellation
+      setCancelGeneration(() => generationResult.cancelGeneration);
+      
+      try {
+        // Wait for the generation to complete
+        const randomCharacter = await generationResult.result;
+        
+        // Add the character with a unique ID
+        const newCharacterWithId = {
+          ...randomCharacter,
+          id: generateUniqueId()
+        };
+        
+        setCharacters(prev => [...prev, newCharacterWithId]);
+        console.log('Random character generated:', newCharacterWithId);
+      } catch (error) {
+        console.log('Character generation was interrupted or failed:', error);
+      }
+    } catch (error) {
+      console.error('Error generating random character:', error);
+    } finally {
+      setCharacterGenerationInProgress(false);
+      setCancelGeneration(null);
+    }
+  };
+
+  // Handle cancellation of character generation
+  const handleCancelGeneration = () => {
+    if (cancelGeneration) {
+      cancelGeneration();
+      setCancelGeneration(null);
+      setCharacterGenerationInProgress(false);
+    }
+  };
+
+  // Icons for buttons
   const addIcon = (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
       <path d="M8 2V14M2 8H14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
     </svg>
   );
+  
+  
+  const cancelIcon = (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M4 4L12 12M12 4L4 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  );
+
+  // Styles for character type dropdown
+  const dropdownStyles = {
+    position: 'absolute' as const,
+    top: '100%',
+    left: '0',
+    backgroundColor: '#fff',
+    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
+    borderRadius: '4px',
+    overflow: 'hidden',
+    zIndex: 10,
+    width: '200px',
+    marginTop: '5px'
+  };
+  
+  const dropdownOptionStyles = {
+    padding: '10px 15px',
+    cursor: 'pointer',
+    transition: 'background-color 0.2s',
+    display: 'flex',
+    alignItems: 'center',
+    borderLeft: '4px solid transparent'
+  };
+
+  const protagonistOptionStyles = {
+    ...dropdownOptionStyles,
+    borderLeftColor: '#4caf50',
+    color: '#4caf50'
+  };
+  
+  const antagonistOptionStyles = {
+    ...dropdownOptionStyles,
+    borderLeftColor: '#f44336',
+    color: '#f44336'
+  };
+  
+  const supportingOptionStyles = {
+    ...dropdownOptionStyles,
+    borderLeftColor: '#2196f3',
+    color: '#2196f3'
+  };
 
   return (
     <div className="tab-container">
       <div className="tab-actions">
         <div className="tab-actions-primary">
-          <ActionButton 
-            onClick={handleAddCharacter} 
-            label="Add Character" 
-            icon={addIcon}
-            variant="primary"
-            title="Add a new character"
-          />
+          {!characterGenerationInProgress ? (
+            <div style={{ position: 'relative' }} className="character-type-dropdown-container">
+              <ActionButton 
+                onClick={handleGenerateButtonClick} 
+                label="✨ Generate Character" 
+                variant="success"
+                title="Generate a random character using AI"
+                disabled={!currentScenario}
+              />
+              
+              {showCharacterTypeDropdown && (
+                <div style={dropdownStyles} className="character-type-dropdown">
+                  <div 
+                    style={protagonistOptionStyles}
+                    onClick={() => handleGenerateCharacter('protagonist')}
+                    onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#f0f8f0'}
+                    onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                  >
+                    <span style={{ marginRight: '10px' }}>👤</span>
+                    Protagonist
+                  </div>
+                  <div 
+                    style={antagonistOptionStyles}
+                    onClick={() => handleGenerateCharacter('antagonist')}
+                    onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#fff5f5'}
+                    onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                  >
+                    <span style={{ marginRight: '10px' }}>😈</span>
+                    Antagonist
+                  </div>
+                  <div 
+                    style={supportingOptionStyles}
+                    onClick={() => handleGenerateCharacter('supporting')}
+                    onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#f0f7ff'}
+                    onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                  >
+                    <span style={{ marginRight: '10px' }}>🧩</span>
+                    Supporting
+                  </div>
+                </div>
+              )}
+              &nbsp;
+              <ActionButton 
+                onClick={handleAddCharacter} 
+                label="Add Character" 
+                icon={addIcon}
+                variant="primary"
+                title="Add a new character"
+              />
+            </div>
+          ) : (
+            <ActionButton 
+              onClick={handleCancelGeneration}
+              label="Cancel Generation"
+              icon={cancelIcon}
+              variant="danger"
+              title="Cancel the character generation"
+            />
+          )}
         </div>
         <div className="tab-actions-secondary">
           <ImportButton

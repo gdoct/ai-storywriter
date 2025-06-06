@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 from flask import Flask, send_from_directory
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
+from lmstudio_proxy_controller import lmstudio_proxy  # <-- Add this import
 from scenario_controller import scenario_bp
 
 # Load environment variables (if any)
@@ -27,6 +28,7 @@ CORS(app, resources={r"/api/*": {"origins": "*"}})  # Configure CORS for API end
 # Register blueprints
 app.register_blueprint(auth_bp)
 app.register_blueprint(scenario_bp)
+app.register_blueprint(lmstudio_proxy)  # <-- Register the LM Studio proxy blueprint
 
 # Initialize DB on app startup
 init_db()

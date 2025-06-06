@@ -70,7 +70,6 @@ const ImportModal: React.FC<ImportModalProps> = ({
 
   // Only fetch content when a scenario is selected and not already loading
   useEffect(() => {
-    let isMounted = true;
     
     const loadScenarioIfNeeded = async () => {
       if (show && selectedScenarioId && !loading && !scenarioContent) {
@@ -81,7 +80,6 @@ const ImportModal: React.FC<ImportModalProps> = ({
     loadScenarioIfNeeded();
     
     return () => {
-      isMounted = false;
     };
   }, [selectedScenarioId, show, loading, scenarioContent, fetchScenarioContent]);
 

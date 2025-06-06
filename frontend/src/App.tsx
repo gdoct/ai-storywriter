@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { BrowserRouter as Router, useRoutes } from 'react-router-dom';
 import './App.css';
-import Footer from './components/Footer';
+import Footer from './components/Footer/Footer';
 import TopBar from './components/TopBar';
 import { SceneHoverProvider } from './context/SceneHoverContext';
 import getRoutes from './routes';

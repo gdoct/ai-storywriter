@@ -1,0 +1,138 @@
+/* Toggle switch styles */
+.toggle-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  padding: 8px;
+  border-radius: 6px;
+  transition: background-color 0.2s ease;
+}
+
+.toggle-option:hover {
+  background-color: rgba(0, 0, 0, 0.03);
+}
+
+.option-label {
+  font-size: 1rem;
+  font-weight: 500;
+  color: #333;
+  margin-right: 15px;
+}
+
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 48px;
+  height: 24px;
+  margin-left: auto;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  border-radius: 24px;
+  transition: 0.3s;
+}
+
+.toggle-slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  border-radius: 50%;
+  transition: 0.3s;
+}
+
+input:checked + .toggle-slider {
+  background-color: #4285f4;
+}
+
+input:focus + .toggle-slider {
+  box-shadow: 0 0 1px #4285f4;
+}
+
+input:checked + .toggle-slider:before {
+  transform: translateX(24px);
+}
+
+/* Status icons for the generation modal */
+.generation-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16px;
+  padding: 10px 12px;
+  border-radius: 6px;
+  background-color: rgba(255, 255, 255, 0.7);
+}
+
+.item-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  margin-right: 15px;
+  border-radius: 50%;
+}
+
+.item-icon.completed {
+  background-color: #34a853;
+  color: white;
+}
+
+.item-icon.in-progress {
+  background-color: #9c27b0;
+  color: white;
+}
+
+.item-icon.waiting {
+  background-color: #ea4335;
+  color: white;
+}
+
+.item-content {
+  flex: 1;
+}
+
+.item-title {
+  font-weight: 600;
+  margin-bottom: 2px;
+  color: #333;
+}
+
+.item-value {
+  font-size: 0.9rem;
+  color: #666;
+  margin: 0;
+}
+
+/* Progress bar styles */
+.progress-container {
+  width: 100%;
+  background-color: #f1f1f1;
+  border-radius: 5px;
+  margin: 20px 0;
+  overflow: hidden;
+}
+
+.progress-bar {
+  height: 10px;
+  border-radius: 5px;
+  background-color: #4285f4;
+  transition: width 0.3s ease;
+}

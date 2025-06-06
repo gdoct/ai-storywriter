@@ -52,6 +52,12 @@
   background-color: #F44336;
 }
 
+.model-controls {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
 .temperature-control {
   display: flex;
   align-items: center;
@@ -67,6 +73,33 @@
   background: #d3d3d3;
   border-radius: 3px;
   outline: none;
+}
+
+.seed-control {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  color: #333;
+}
+
+.seed-control input[type="number"] {
+  width: 100px;
+  padding: 3px 5px;
+  border: 1px solid #d3d3d3;
+  border-radius: 3px;
+  font-size: 14px;
+}
+
+.seed-control input[type="number"]:disabled {
+  background-color: #f0f0f0;
+  color: #888;
+}
+
+.seed-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 5px;
 }
 
 .temperature-control input[type="range"]::-webkit-slider-thumb {
