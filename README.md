@@ -9,6 +9,7 @@ The frontend is developed using React and TypeScript.
 The backend is built with Python and Flask, offering a REST API for handling requests and managing data.
 
 ## Screenshot
+(this gif is in ultra low visual quality to save bandwidth)
 ![StoryWriter Screenshot](frontend/img/screen-recording.gif)
 
 ## Features
