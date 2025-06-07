@@ -1,5 +1,6 @@
 // filepath: /home/guido/storywriter/frontend/src/components/ScenarioWriter.tsx
 import React, { useEffect, useRef, useState } from 'react';
+import { FaBookOpen, FaEye, FaFileAlt, FaFont, FaListUl, FaProjectDiagram, FaStickyNote, FaUserFriends } from 'react-icons/fa';
 import { v4 as uuidv4 } from 'uuid';
 import { createScenario, fetchGeneratedStory, updateScenario } from '../../services/scenario';
 import './ScenarioWriter.css';
@@ -7,14 +8,14 @@ import './ScenarioWriter.css';
 // Import tab components
 import { Scenario } from '../../types/ScenarioTypes';
 import ReadingPane from '../ReadingPane/ReadingPane';
-import BackstoryTab from '../tabs/BackstoryTab';
-import CharactersTab from '../tabs/CharactersTab';
-import FileTab from '../tabs/FileTab';
-import NotesTab from '../tabs/NotesTab';
-import PromptPreviewTab from '../tabs/PromptPreviewTab';
-import ScenesTab from '../tabs/ScenesTab';
-import StoryArcTab from '../tabs/StoryArcTab';
-import StoryStyleTab from '../tabs/StoryStyleTab';
+import BackstoryTab from './BackstoryTab/BackstoryTab';
+import CharactersTab from './CharactersTab/CharactersTab';
+import FileTab from './FileTab/FileTab';
+import NotesTab from './NotesTab/NotesTab';
+import PromptPreviewTab from './PromptPreviewTab/PromptPreviewTab';
+import ScenesTab from './ScenesTab/ScenesTab';
+import StoryArcTab from './StoryArcTab/StoryArcTab';
+import StoryStyleTab from './StoryStyleTab/StoryStyleTab';
 
 interface ScenarioWriterProps {
   value: string;
@@ -317,14 +318,14 @@ const ScenarioWriter: React.FC<ScenarioWriterProps> = ({ value, onChange, onSubm
   };
 
   const tabs = [
-    { id: 'file', label: 'File' },
-    { id: 'main', label: 'Story Style' },
-    { id: 'characters', label: 'Characters' },
-    { id: 'backstory', label: 'Backstory' },
-    { id: 'storyArc', label: 'Story Arc' },
-    { id: 'scenes', label: 'Scenes' },
-    { id: 'notes', label: 'Notes' },
-    { id: 'preview', label: 'Prompt Preview' },
+    { id: 'file', label: 'File', icon: <FaFileAlt /> },
+    { id: 'main', label: 'Story Style', icon: <FaFont /> },
+    { id: 'characters', label: 'Characters', icon: <FaUserFriends /> },
+    { id: 'backstory', label: 'Backstory', icon: <FaBookOpen /> },
+    { id: 'storyArc', label: 'Story Arc', icon: <FaProjectDiagram /> },
+    { id: 'scenes', label: 'Scenes', icon: <FaListUl /> },
+    { id: 'notes', label: 'Notes', icon: <FaStickyNote /> },
+    { id: 'preview', label: 'Prompt Preview', icon: <FaEye /> },
   ];
 
   const renderTabContent = () => {
@@ -401,23 +402,27 @@ const ScenarioWriter: React.FC<ScenarioWriterProps> = ({ value, onChange, onSubm
 
   return (
     <div className="scenario-writer-container">
-      <div className="scenario-tabs">
-        {tabs.map((tab) => (
-          <button
-            key={tab.id}
-            className={`scenario-tab-btn ${activeTab === tab.id ? 'active' : ''}`}
-            onClick={() => setActiveTab(tab.id)}
-          >
-            {tab.label}
-          </button>
-        ))}
+      <div className="scenario-sidebar">
+        <div className="scenario-sidebar-tabs"> {/* Added scrollable container */}
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              className={`scenario-sidebar-btn ${activeTab === tab.id ? 'active' : ''}`}
+              onClick={() => setActiveTab(tab.id)}
+              title={tab.label}
+            >
+              {tab.icon}
+            </button>
+          ))}
+        </div>
       </div>
       <div className="scenario-workspace" ref={containerRef}>
         <div 
-          className="scenario-editor-panel" 
-          style={{ flex: `0 0 ${splitPosition}%` }}
+          className="scenario-editor-panel scenario-editor-panel-scroll" 
+          style={{ flex: `0 0 ${splitPosition}%`, overflowY: 'scroll' }}
         >
           {renderTabContent()}
+
         </div>
         <div 
           className="splitter" 

@@ -1,5 +1,5 @@
-import { deleteScenario, fetchAllScenarios, fetchGeneratedStory, fetchScenarioById, updateScenario } from '../../services/scenario';
-import { Scenario } from '../../types/ScenarioTypes';
+import { deleteScenario, fetchAllScenarios, fetchGeneratedStory, fetchScenarioById, updateScenario } from '../../../services/scenario';
+import { Scenario } from '../../../types/ScenarioTypes';
 
 export async function fetchScenarios(setScenarios: (scenarios: {id: string, title: string, synopsis: string}[]) => void) {
   try {

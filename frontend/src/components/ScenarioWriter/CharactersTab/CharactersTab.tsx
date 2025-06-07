@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { generateRandomCharacter } from '../../services/storyGenerator';
-import { Character } from '../../types/ScenarioTypes';
-import ActionButton from '../common/ActionButton';
-import ImportButton from '../common/ImportButton';
-import ImportModal from '../common/ImportModal';
-import Modal from '../common/Modal';
-import { TabProps } from './TabInterface';
-import './TabStylesNew.css';
+import { generateRandomCharacter } from '../../../services/storyGenerator';
+import { Character } from '../../../types/ScenarioTypes';
+import ActionButton from '../../common/ActionButton';
+import ImportButton from '../../common/ImportButton';
+import ImportModal from '../../common/ImportModal';
+import Modal from '../../common/Modal';
+import { TabProps } from '../tabs/TabInterface';
+import '../tabs/TabStylesNew.css';
 
 const generateUniqueId = (): string => {
   return Date.now().toString(36) + Math.random().toString(36).substr(2);
@@ -255,44 +255,53 @@ const CharactersTab: React.FC<TabProps> = ({ content, updateContent, currentScen
     position: 'absolute' as const,
     top: '100%',
     left: '0',
-    backgroundColor: '#fff',
-    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
-    borderRadius: '4px',
+    backgroundColor: '#23272e',
+    color: '#e6e6e6',
+    boxShadow: '0 6px 24px rgba(0,0,0,0.32)',
+    borderRadius: '10px',
+    border: '1.5px solid #353b45',
     overflow: 'hidden',
-    zIndex: 10,
-    width: '200px',
-    marginTop: '5px'
+    zIndex: 20,
+    width: '220px',
+    marginTop: '8px',
+    fontSize: '1rem',
+    fontFamily: 'inherit',
+    padding: '0.5rem 0',
+    transition: 'box-shadow 0.2s',
   };
   
   const dropdownOptionStyles = {
-    padding: '10px 15px',
+    padding: '12px 20px',
     cursor: 'pointer',
-    transition: 'background-color 0.2s',
+    transition: 'background 0.18s, color 0.18s',
     display: 'flex',
     alignItems: 'center',
-    borderLeft: '4px solid transparent'
+    borderLeft: '4px solid transparent',
+    fontWeight: 500,
+    color: '#e6e6e6',
+    background: 'none',
   };
 
   const protagonistOptionStyles = {
     ...dropdownOptionStyles,
     borderLeftColor: '#4caf50',
-    color: '#4caf50'
   };
   
   const antagonistOptionStyles = {
     ...dropdownOptionStyles,
-    borderLeftColor: '#f44336',
-    color: '#f44336'
+    borderLeftColor: '#ff6b6b',
   };
   
   const supportingOptionStyles = {
     ...dropdownOptionStyles,
-    borderLeftColor: '#2196f3',
-    color: '#2196f3'
+    borderLeftColor: '#61dafb',
   };
 
   return (
-    <div className="tab-container">
+    <div className="tab-container scenario-editor-panel">
+      <div className="scenario-tab-title">
+        Characters
+      </div>
       <div className="tab-actions">
         <div className="tab-actions-primary">
           {!characterGenerationInProgress ? (
@@ -310,8 +319,8 @@ const CharactersTab: React.FC<TabProps> = ({ content, updateContent, currentScen
                   <div 
                     style={protagonistOptionStyles}
                     onClick={() => handleGenerateCharacter('protagonist')}
-                    onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#f0f8f0'}
-                    onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                    onMouseOver={e => e.currentTarget.style.background = '#263040'}
+                    onMouseOut={e => e.currentTarget.style.background = 'none'}
                   >
                     <span style={{ marginRight: '10px' }}>👤</span>
                     Protagonist
@@ -319,8 +328,8 @@ const CharactersTab: React.FC<TabProps> = ({ content, updateContent, currentScen
                   <div 
                     style={antagonistOptionStyles}
                     onClick={() => handleGenerateCharacter('antagonist')}
-                    onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#fff5f5'}
-                    onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                    onMouseOver={e => e.currentTarget.style.background = '#402626'}
+                    onMouseOut={e => e.currentTarget.style.background = 'none'}
                   >
                     <span style={{ marginRight: '10px' }}>😈</span>
                     Antagonist
@@ -328,8 +337,8 @@ const CharactersTab: React.FC<TabProps> = ({ content, updateContent, currentScen
                   <div 
                     style={supportingOptionStyles}
                     onClick={() => handleGenerateCharacter('supporting')}
-                    onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#f0f7ff'}
-                    onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                    onMouseOver={e => e.currentTarget.style.background = '#22303a'}
+                    onMouseOut={e => e.currentTarget.style.background = 'none'}
                   >
                     <span style={{ marginRight: '10px' }}>🧩</span>
                     Supporting
@@ -365,11 +374,18 @@ const CharactersTab: React.FC<TabProps> = ({ content, updateContent, currentScen
       </div>
 
       {showForm && (
-        <div className="form-container">
-          <h3 className="form-title">{isEditing ? 'Edit Character' : 'New Character'}</h3>
+        <div className="form-container" style={{
+          background: '#181a20',
+          borderRadius: '12px',
+          boxShadow: '0 2px 12px rgba(0,0,0,0.18)',
+          border: '1.5px solid #353b45',
+          padding: '2rem 2rem 1.5rem 2rem',
+          marginBottom: '2rem',
+        }}>
+          <h3 className="form-title" style={{ color: '#e6e6e6', fontWeight: 700 }}>{isEditing ? 'Edit Character' : 'New Character'}</h3>
 
           <div className="form-field">
-            <label htmlFor="name">Name (or leave blank for random name)</label>
+            <label htmlFor="name" style={{ color: '#bfc7d5', fontWeight: 600 }}>Name (or leave blank for random name)</label>
             <input
               type="text"
               id="name"
@@ -378,9 +394,11 @@ const CharactersTab: React.FC<TabProps> = ({ content, updateContent, currentScen
               onChange={handleFormChange}
               placeholder="Character name"
               className="form-input"
+              style={{ background: '#23272e', color: '#e6e6e6', border: '1px solid #353b45' }}
             />
-          </div><div className="form-field">
-            <label htmlFor="alias">Alias (use this if no name given)</label>
+          </div>
+          <div className="form-field">
+            <label htmlFor="alias" style={{ color: '#bfc7d5', fontWeight: 600 }}>Alias (use this if no name given)</label>
             <input
               type="text"
               id="alias"
@@ -389,11 +407,12 @@ const CharactersTab: React.FC<TabProps> = ({ content, updateContent, currentScen
               onChange={handleFormChange}
               placeholder="Character alias"
               className="form-input"
+              style={{ background: '#23272e', color: '#e6e6e6', border: '1px solid #353b45' }}
             />
           </div>
 
           <div className="form-field">
-            <label htmlFor="role">Role (optional)</label>
+            <label htmlFor="role" style={{ color: '#bfc7d5', fontWeight: 600 }}>Role (optional)</label>
             <input
               type="text"
               id="role"
@@ -403,6 +422,7 @@ const CharactersTab: React.FC<TabProps> = ({ content, updateContent, currentScen
               placeholder="Select or type a role"
               list="role-options"
               className="form-input"
+              style={{ background: '#23272e', color: '#e6e6e6', border: '1px solid #353b45' }}
             />
             <datalist id="role-options">
               <option value="Protagonist" />
@@ -413,7 +433,7 @@ const CharactersTab: React.FC<TabProps> = ({ content, updateContent, currentScen
           </div>
 
           <div className="form-field">
-            <label htmlFor="gender">Gender (optional)</label>
+            <label htmlFor="gender" style={{ color: '#bfc7d5', fontWeight: 600 }}>Gender (optional)</label>
             <input
               type="text"
               id="gender"
@@ -423,6 +443,7 @@ const CharactersTab: React.FC<TabProps> = ({ content, updateContent, currentScen
               placeholder="Select or type a gender"
               list="gender-options"
               className="form-input"
+              style={{ background: '#23272e', color: '#e6e6e6', border: '1px solid #353b45' }}
             />
             <datalist id="gender-options">
               <option value="Male" />
@@ -433,7 +454,7 @@ const CharactersTab: React.FC<TabProps> = ({ content, updateContent, currentScen
           </div>
 
           <div className="form-field">
-            <label htmlFor="appearance">Physical Appearance (optional)</label>
+            <label htmlFor="appearance" style={{ color: '#bfc7d5', fontWeight: 600 }}>Physical Appearance (optional)</label>
             <textarea
               id="appearance"
               name="appearance"
@@ -441,11 +462,12 @@ const CharactersTab: React.FC<TabProps> = ({ content, updateContent, currentScen
               onChange={handleFormChange}
               placeholder="Describe how this character looks..."
               className="form-textarea"
+              style={{ background: '#23272e', color: '#e6e6e6', border: '1px solid #353b45' }}
             />
           </div>
 
           <div className="form-field">
-            <label htmlFor="backstory">Backstory (optional)</label>
+            <label htmlFor="backstory" style={{ color: '#bfc7d5', fontWeight: 600 }}>Backstory (optional)</label>
             <textarea
               id="backstory"
               name="backstory"
@@ -453,11 +475,12 @@ const CharactersTab: React.FC<TabProps> = ({ content, updateContent, currentScen
               onChange={handleFormChange}
               placeholder="Character's history and background..."
               className="form-textarea"
+              style={{ background: '#23272e', color: '#e6e6e6', border: '1px solid #353b45' }}
             />
           </div>
 
           <div className="form-field">
-            <label htmlFor="extraInfo">Extra Information (optional)</label>
+            <label htmlFor="extraInfo" style={{ color: '#bfc7d5', fontWeight: 600 }}>Extra Information (optional)</label>
             <textarea
               id="extraInfo"
               name="extraInfo"
@@ -465,6 +488,7 @@ const CharactersTab: React.FC<TabProps> = ({ content, updateContent, currentScen
               onChange={handleFormChange}
               placeholder="Any additional details about this character..."
               className="form-textarea"
+              style={{ background: '#23272e', color: '#e6e6e6', border: '1px solid #353b45' }}
             />
           </div>
 
@@ -544,14 +568,31 @@ const CharacterCard: React.FC<{
   onDelete: (id: string) => void;
 }> = React.memo(({ character, onEdit, onDelete }) => {
   return (
-    <div className="content-card">
-      <div className="content-card-actions">
+    <div className="content-card" style={{
+      background: '#181a20', // darker for better contrast
+      border: '1.5px solid #353b45',
+      borderRadius: '12px',
+      color: '#e6e6e6',
+      boxShadow: '0 4px 16px rgba(0,0,0,0.22)',
+      marginBottom: '22px',
+      padding: '22px 18px',
+      minWidth: '220px',
+      maxWidth: '340px',
+      fontSize: '1.08rem',
+      fontFamily: 'inherit',
+      transition: 'box-shadow 0.2s',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '10px',
+    }}>
+      <div className="content-card-actions" style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
         <button
           className="card-btn card-btn-edit"
           onClick={() => onEdit(character)}
           title="Edit character"
+          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
         >
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <svg width="20" height="20" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ color: '#61dafb' }}>
             <path d="M10 3L13 6M2 14H5L13 6L10 3L2 11V14Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
         </button>
@@ -559,32 +600,25 @@ const CharacterCard: React.FC<{
           className="card-btn card-btn-delete"
           onClick={() => onDelete(character.id)}
           title="Delete character"
+          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
         >
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <svg width="20" height="20" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ color: '#ff6b6b' }}>
             <path d="M2 4h12M5 4v10h6V4M6 2h4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
         </button>
       </div>
 
-      <h3>{character.name || character.alias + " (random name)"}</h3>
+      <h3 style={{ color: '#fff', fontWeight: 700, margin: '0 0 6px 0', fontSize: '1.18rem', letterSpacing: '0.01em' }}>{character.name || character.alias + " (random name)"}</h3>
 
-      <div className="character-field">
+      <div className="character-field" style={{ color: '#e6e6e6', fontSize: '1rem' }}>
         {character.role && (
           <>
-            <div className="character-field-label">Role</div>
-            <div className="character-field-value">{character.role}</div>
+            <div className="character-field-label" style={{ fontWeight: 600, color: '#61dafb', marginBottom: 2 }}>Role</div>
+            <div className="character-field-value" style={{ fontWeight: 500 }}>{character.role}</div>
           </>
         )}
-        
-        <div className="character-field-label">Gender</div>
-        <div className="character-field-value">{character.gender || "Random"}</div>
-        
-        {/* {character.appearance && (
-          <>
-            <div className="character-field-label">Appearance</div>
-            <div className="character-field-value">{character.appearance}</div>
-          </>
-        )} */}
+        <div className="character-field-label" style={{ fontWeight: 600, color: '#61dafb', marginTop: 6 }}>Gender</div>
+        <div className="character-field-value" style={{ fontWeight: 500 }}>{character.gender || "Random"}</div>
       </div>
     </div>
   );

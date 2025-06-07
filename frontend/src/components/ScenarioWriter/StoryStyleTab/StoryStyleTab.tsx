@@ -1,11 +1,11 @@
 // filepath: /home/guido/storywriter/frontend/src/components/tabs/StoryStyleTab.tsx
 import React, { useState } from 'react';
-import { generateRandomWritingStyle } from '../../services/storyGenerator';
-import ActionButton from '../common/ActionButton';
-import ImportButton from '../common/ImportButton';
-import ImportModal from '../common/ImportModal';
-import { TabProps } from './TabInterface';
-import './TabStylesNew.css';
+import { generateRandomWritingStyle } from '../../../services/storyGenerator';
+import ActionButton from '../../common/ActionButton';
+import ImportButton from '../../common/ImportButton';
+import ImportModal from '../../common/ImportModal';
+import { TabProps } from '../tabs/TabInterface';
+import '../tabs/TabStylesNew.css';
 
 // Define the suggestion options for each dropdown
 const styleOptions = ['Modern', 'Classic', 'Minimalist', 'Baroque', 'Gothic', 'Stream of consciousness', 'Epistolary', 'Journalistic', 'Academic', 'Poetic'];
@@ -20,13 +20,14 @@ const StyleDropdown: React.FC<{
   value: string;
   onChange: (value: string) => void;
   options: string[];
-}> = ({ label, value, onChange, options }) => {
+  labelStyle?: React.CSSProperties; // Optional custom style for the label
+}> = ({ label, value, onChange, options, labelStyle }) => {
   // Track if dropdown is showing or not
   const [isOpen, setIsOpen] = useState(false);
 
   return (
     <div className="form-field">
-      <label>{label}</label>
+      <label style={labelStyle}>{label}</label>
       <div className="custom-dropdown">
         <input
           type="text"
@@ -54,7 +55,7 @@ const StyleDropdown: React.FC<{
   );
 };
 
-const StoryStyleTab: React.FC<TabProps> = ({ content, updateContent }) => {
+const StoryStyleTab: React.FC<TabProps> = ({ content, updateContent, currentScenario }) => {
   const [showImportModal, setShowImportModal] = useState(false);
   const [styleGenerationInProgress, setStyleGenerationInProgress] = useState(false);
   
@@ -175,7 +176,13 @@ const StoryStyleTab: React.FC<TabProps> = ({ content, updateContent }) => {
   };
 
   return (
-    <div className="tab-container">
+    <div className="tab-container scenario-editor-panel">
+      <div className="scenario-tab-title">
+        Story Style
+      </div>
+      <div className="tab-description" style={{ color: '#bfc7d5', fontWeight: 500, marginBottom: 32 }}>
+          Use these options to influence the style of your story. All fields are optional.
+      </div>
       <div className="tab-actions">
         <div className="tab-actions-primary">
           {!styleGenerationInProgress ? (
@@ -204,17 +211,40 @@ const StoryStyleTab: React.FC<TabProps> = ({ content, updateContent }) => {
         </div>
       </div>
       
-      <div className="tab-section">
-        <p className="tab-description">
-          Use these options to influence the style of your story. All fields are optional.
-        </p>
+      <div className="tab-section" style={{
+        background: '#181b20',
+        borderRadius: '12px',
+        padding: '36px 0 48px 0',
+        margin: '0',
+        boxShadow: 'none',
+        minHeight: '480px',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+      }}>
 
-      <div className="style-options-container">
+      <div className="style-options-container" style={{
+        background: '#23272f',
+        border: '1.5px solid #444',
+        borderRadius: '10px',
+        color: '#fff',
+        boxShadow: '0 4px 16px rgba(0,0,0,0.18)',
+        margin: '0 auto 24px auto',
+        padding: '32px 32px 22px 32px',
+        minWidth: '580px',
+        maxWidth: '820px',
+        fontSize: '1.08rem',
+        fontFamily: 'inherit',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '22px',
+      }}>
         <StyleDropdown
           label="Style"
           value={styleSettings.style}
           onChange={(value) => handleSettingChange('style', value)}
           options={styleOptions}
+          labelStyle={{ color: '#90caf9', fontWeight: 600, fontSize: '1.04rem', marginBottom: 4 }}
         />
 
         <StyleDropdown
@@ -222,6 +252,7 @@ const StoryStyleTab: React.FC<TabProps> = ({ content, updateContent }) => {
           value={styleSettings.genre}
           onChange={(value) => handleSettingChange('genre', value)}
           options={genreOptions}
+          labelStyle={{ color: '#90caf9', fontWeight: 600, fontSize: '1.04rem', marginBottom: 4 }}
         />
 
         <StyleDropdown
@@ -229,6 +260,7 @@ const StoryStyleTab: React.FC<TabProps> = ({ content, updateContent }) => {
           value={styleSettings.tone}
           onChange={(value) => handleSettingChange('tone', value)}
           options={toneOptions}
+          labelStyle={{ color: '#90caf9', fontWeight: 600, fontSize: '1.04rem', marginBottom: 4 }}
         />
 
         <StyleDropdown
@@ -236,6 +268,7 @@ const StoryStyleTab: React.FC<TabProps> = ({ content, updateContent }) => {
           value={styleSettings.language}
           onChange={(value) => handleSettingChange('language', value)}
           options={languageOptions}
+          labelStyle={{ color: '#90caf9', fontWeight: 600, fontSize: '1.04rem', marginBottom: 4 }}
         />
 
         <StyleDropdown
@@ -243,27 +276,31 @@ const StoryStyleTab: React.FC<TabProps> = ({ content, updateContent }) => {
           value={styleSettings.theme}
           onChange={(value) => handleSettingChange('theme', value)}
           options={themeOptions}
+          labelStyle={{ color: '#90caf9', fontWeight: 600, fontSize: '1.04rem', marginBottom: 4 }}
         />
 
         <div className="form-field">
-          <label>Other Instructions</label>
+          <label style={{ color: '#90caf9', fontWeight: 600, fontSize: '1.04rem', marginBottom: 4 }}>Other Instructions</label>
           <textarea
             value={styleSettings.other}
             onChange={(e) => handleSettingChange('other', e.target.value)}
             placeholder="Add any additional style instructions here..."
             className="form-textarea"
+            style={{
+              background: '#181b20',
+              color: '#fff',
+              border: '1px solid #444',
+              borderRadius: '6px',
+              fontSize: '1rem',
+              padding: '10px',
+              marginTop: '4px',
+              minHeight: '96px',
+            }}
           />
         </div>
       </div>
 
-      <div className="style-actions-container">
-        <ActionButton
-          onClick={handleGenerateRandomStyle}
-          label={styleGenerationInProgress ? 'Generating...' : 'Generate Random Style'}
-          disabled={styleGenerationInProgress}
-          className="generate-style-button"
-        />
-      </div>
+      
       </div>
       
       <ImportModal

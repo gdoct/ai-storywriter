@@ -1,6 +1,6 @@
 import React from 'react';
-import ActionButton from '../common/ActionButton';
-import Modal from '../common/Modal';
+import ActionButton from '../../common/ActionButton';
+import Modal from '../../common/Modal';
 
 interface UnsavedChangesModalProps {
   show: boolean;

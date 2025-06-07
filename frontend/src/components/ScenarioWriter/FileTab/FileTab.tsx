@@ -1,18 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { generateBackstory, generateRandomCharacter, generateRandomScenarioName, generateRandomWritingStyle, generateStoryArc } from '../../services/storyGenerator';
-import { Scenario } from '../../types/ScenarioTypes';
-import ActionButton from '../common/ActionButton';
-import CreateScenarioModal from './CreateScenarioModal';
-import DeleteScenarioModal from './DeleteScenarioModal';
-import RandomScenarioModal from './RandomScenarioModal';
-import RenameScenarioModal from './RenameScenarioModal';
-import SaveAsModal from './SaveAsModal';
-import SaveChangesModal from './SaveChangesModal';
-import './TabStylesNew.css';
-import './TabStylesRandom.css';
-import './TabStylesSpinner.css';
-import './ToggleButtonStyles.css';
-import UnsavedChangesModal from './UnsavedChangesModal';
+import { generateBackstory, generateRandomCharacter, generateRandomScenarioName, generateRandomWritingStyle, generateStoryArc } from '../../../services/storyGenerator';
+import { Scenario } from '../../../types/ScenarioTypes';
+import ActionButton from '../../common/ActionButton';
+import CreateScenarioModal from '../tabs/CreateScenarioModal';
+import DeleteScenarioModal from '../tabs/DeleteScenarioModal';
+import RandomScenarioModal from '../tabs/RandomScenarioModal';
+import RenameScenarioModal from '../tabs/RenameScenarioModal';
+import SaveAsModal from '../tabs/SaveAsModal';
+import SaveChangesModal from '../tabs/SaveChangesModal';
 import {
   confirmDeleteScenario as confirmDeleteScenarioService,
   confirmRenameScenario as confirmRenameScenarioService,
@@ -21,7 +16,12 @@ import {
   handleDiscardAndLoad as handleDiscardAndLoadService,
   handleSaveAndLoad as handleSaveAndLoadService,
   loadScenario as loadScenarioService
-} from './scenarioTabService';
+} from '../tabs/scenarioTabService';
+import '../tabs/TabStylesNew.css';
+import '../tabs/TabStylesRandom.css';
+import '../tabs/TabStylesSpinner.css';
+import '../tabs/ToggleButtonStyles.css';
+import UnsavedChangesModal from '../tabs/UnsavedChangesModal';
 
 interface FileTabProps {
   currentScenario: Scenario | null;
@@ -30,6 +30,7 @@ interface FileTabProps {
   onSaveScenario: (scenario: Scenario) => void;
   onNewScenario: (title: string) => void;
   onSwitchTab?: (tabId: string) => void;
+  onSaveComplete?: () => void; // <-- Added
 }
 
 const FileTab: React.FC<FileTabProps> = ({ 
@@ -38,7 +39,8 @@ const FileTab: React.FC<FileTabProps> = ({
   onLoadScenario, 
   onSaveScenario, 
   onNewScenario,
-  onSwitchTab 
+  onSwitchTab,
+  onSaveComplete // <-- Added
 }) => {
   const [scenarios, setScenarios] = useState<{id: string, title: string, synopsis: string}[]>([]);
   const [selectedScenarioId, setSelectedScenarioId] = useState<string>(currentScenario?.id || '');
@@ -423,6 +425,7 @@ const FileTab: React.FC<FileTabProps> = ({
     
     try {
       await onSaveScenario(currentScenario);
+      if (onSaveComplete) onSaveComplete(); // <-- Notify parent to reset isDirty
     } catch (error) {
       console.error('Failed to save scenario:', error);
     }
@@ -445,9 +448,10 @@ const FileTab: React.FC<FileTabProps> = ({
     try {
       if (currentScenario) {
         const updatedScenario = { ...currentScenario, title: saveAsTitle.trim(), id: '' };
-        await onSaveScenarioAsync(updatedScenario);
+        await onSaveScenario(updatedScenario);
         setShowSaveAsInput(false);
         fetchScenarios(); // Refresh the list
+        if (onSaveComplete) onSaveComplete(); // <-- Notify parent to reset isDirty
       }
     } catch (error) {
       console.error('Failed to save scenario as:', error);
@@ -495,7 +499,10 @@ const FileTab: React.FC<FileTabProps> = ({
   };
 
   return (
-    <div className="tab-container">
+    <div className="tab-container scenario-editor-panel">
+      <div className="scenario-tab-title">
+        Manage Scenarios
+      </div>
       <UnsavedChangesModal
         show={showConfirm}
         onClose={() => setShowConfirm(false)}
@@ -566,44 +573,74 @@ const FileTab: React.FC<FileTabProps> = ({
       />
 
       <div className="tab-actions file-tab-actions">
-        <div className="tab-section">
-          <h3 className="tab-section-title">Manage Scenarios</h3>
-          
+        <div className="scenario-card">
           <div className="form-field">
-            <label htmlFor="scenario-select">Select Scenario:</label>
+            <div>Load Scenario:</div>
             <div className="scenario-select-wrapper">
               <div className="custom-dropdown" ref={dropdownRef}>
-                <button className="dropdown-toggle tab-btn tab-btn-default" onClick={() => setIsDropdownOpen(!isDropdownOpen)}>
-                  {selectedScenarioId ? scenarios.find(s => s.id === selectedScenarioId)?.title : "Select a scenario"} ▼
+                <button
+                  className="dropdown-toggle tab-btn tab-btn-default"
+                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                >
+                  {selectedScenarioId
+                    ? scenarios.find(s => s.id === selectedScenarioId)?.title
+                    : "Select a scenario"}
+                  <span style={{ marginLeft: 8, color: '#90caf9' }}>▼</span>
                 </button>
                 {isDropdownOpen && (
-                  <div className="dropdown-menu">
+                  <div className="dropdown-menu" style={{
+                    background: '#23272e',
+                    color: '#e6e6e6',
+                    border: '1.5px solid #353b45',
+                    borderRadius: '10px',
+                    boxShadow: '0 6px 24px rgba(0,0,0,0.32)',
+                    marginTop: '6px',
+                    minWidth: '220px',
+                    zIndex: 30,
+                  }}>
                     {scenarios.length === 0 && (
-                      <div className="dropdown-item disabled">
+                      <div className="dropdown-item disabled" style={{ color: '#888', background: 'none' }}>
                         No scenarios found
                       </div>
                     )}
                     {scenarios.map(scenario => (
-                      <div 
-                        key={scenario.id} 
+                      <div
+                        key={scenario.id}
                         className={`dropdown-item ${scenario.id === selectedScenarioId ? 'active' : ''}`}
+                        style={{
+                          background: scenario.id === selectedScenarioId ? '#353b45' : 'none',
+                          color: '#e6e6e6',
+                          padding: '12px 18px',
+                          cursor: 'pointer',
+                          fontWeight: scenario.id === selectedScenarioId ? 600 : 500,
+                          borderLeft: scenario.id === selectedScenarioId ? '4px solid #61dafb' : '4px solid transparent',
+                          transition: 'background 0.15s, color 0.15s',
+                        }}
                         onClick={() => {
                           if (scenario.id !== selectedScenarioId) {
                             setSelectedScenarioId(scenario.id);
                           }
                           setIsDropdownOpen(false);
                         }}
+                        onMouseOver={e => {
+                          e.currentTarget.style.background = '#353b45';
+                          e.currentTarget.style.color = '#61dafb';
+                        }}
+                        onMouseOut={e => {
+                          e.currentTarget.style.background = scenario.id === selectedScenarioId ? '#353b45' : 'none';
+                          e.currentTarget.style.color = '#e6e6e6';
+                        }}
                       >
-                        {scenario.title || "(Untitled)"}
-                        <button 
+                        <span>{scenario.title || "(Untitled)"}</span>
+                        <button
                           className="card-btn card-btn-delete"
-                          onClick={(e) => {
+                          onClick={e => {
                             e.stopPropagation();
                             handleDeleteRequest(scenario.id);
                           }}
                           title="Delete scenario"
                         >
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
                             <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" fill="currentColor"/>
                           </svg>
                         </button>
@@ -615,35 +652,31 @@ const FileTab: React.FC<FileTabProps> = ({
             </div>
           </div>
           <div className="tab-actions-group">
-            <ActionButton 
+            <ActionButton
               onClick={handleRandomizeScenario}
               label="✨ Randomize current scenario"
               variant="success"
               title="Completely randomize the current scenario with customizable options"
             />
-
-            <ActionButton 
+            <ActionButton
               onClick={handleCreateNewScenario}
               label="Create New Scenario"
               variant="primary"
             />
-            
-            <ActionButton 
-              onClick={handleSaveScenario} 
+            <ActionButton
+              onClick={handleSaveScenario}
               label="Save Scenario"
               variant="primary"
               className={!currentScenario || !isDirty ? "disabled" : ""}
             />
-            
-            <ActionButton 
-              onClick={handleSaveAsScenario} 
+            <ActionButton
+              onClick={handleSaveAsScenario}
               label="Save As..."
               variant="default"
               className={!currentScenario ? "disabled" : ""}
             />
-
-            <ActionButton 
-              onClick={handleRenameScenario} 
+            <ActionButton
+              onClick={handleRenameScenario}
               label="Rename"
               variant="default"
               className={!currentScenario || !currentScenario.id ? "disabled" : ""}

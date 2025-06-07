@@ -1,6 +1,7 @@
 /* Import Modal Styles */
 .import-modal-content {
   margin-bottom: 16px;
+  color: #e6e6e6;
 }
 
 .scenario-select-container {
@@ -17,15 +18,17 @@
   width: 100%;
   padding: 8px;
   border-radius: 4px;
-  border: 1px solid #ddd;
+  border: 1px solid #353b45;
   font-size: 1rem;
+  background: #23272e;
+  color: #e6e6e6;
 }
 
 .loading-indicator {
   display: flex;
   align-items: center;
   gap: 8px;
-  color: #666;
+  color: #bfc7d5;
 }
 
 .spinner {
@@ -59,12 +62,14 @@
   margin-bottom: 8px;
   padding: 8px;
   border-radius: 4px;
-  background-color: #f8f8f8;
+  background-color: #23272e;
+  color: #e6e6e6;
+  border: 1px solid #353b45;
   transition: background-color 0.2s ease;
 }
 
 .checkbox-item:hover {
-  background-color: #f0f0f0;
+  background-color: #353b45;
 }
 
 .checkbox-item input[type="checkbox"] {
@@ -110,9 +115,10 @@
 
 .preview-text {
   padding: 12px;
-  background-color: #f8f8f8;
+  background-color: #181a20;
+  color: #e6e6e6;
+  border: 1px solid #353b45;
   border-radius: 4px;
-  border: 1px solid #eee;
   font-family: monospace;
   white-space: pre-wrap;
   max-height: 200px;

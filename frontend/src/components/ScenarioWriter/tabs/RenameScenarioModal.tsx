@@ -1,21 +1,21 @@
 import React from 'react';
-import ActionButton from '../common/ActionButton';
-import Modal from '../common/Modal';
+import ActionButton from '../../common/ActionButton';
+import Modal from '../../common/Modal';
 
-interface SaveAsModalProps {
+interface RenameScenarioModalProps {
   show: boolean;
   onClose: () => void;
-  onSave: () => void;
-  saveAsTitle: string;
-  setSaveAsTitle: (title: string) => void;
+  onRename: () => void;
+  renameTitle: string;
+  setRenameTitle: (title: string) => void;
   errorMessage: string;
 }
 
-const SaveAsModal: React.FC<SaveAsModalProps> = ({ show, onClose, onSave, saveAsTitle, setSaveAsTitle, errorMessage }) => (
+const RenameScenarioModal: React.FC<RenameScenarioModalProps> = ({ show, onClose, onRename, renameTitle, setRenameTitle, errorMessage }) => (
   <Modal
     show={show}
     onClose={onClose}
-    title="Save Scenario As"
+    title="Rename Scenario"
     footer={
       <div className="form-buttons">
         <ActionButton 
@@ -23,7 +23,7 @@ const SaveAsModal: React.FC<SaveAsModalProps> = ({ show, onClose, onSave, saveAs
           label="Cancel" 
           variant="default" 
         />
-        <ActionButton onClick={onSave} label="Save" variant="primary" />
+        <ActionButton onClick={onRename} label="Rename" variant="primary" />
       </div>
     }
   >
@@ -31,8 +31,8 @@ const SaveAsModal: React.FC<SaveAsModalProps> = ({ show, onClose, onSave, saveAs
       {errorMessage && <p className="error-message">{errorMessage}</p>}
       <input
         type="text"
-        value={saveAsTitle}
-        onChange={(e) => setSaveAsTitle(e.target.value)}
+        value={renameTitle}
+        onChange={(e) => setRenameTitle(e.target.value)}
         placeholder="Enter new title"
         autoFocus
         className="form-input"
@@ -41,4 +41,4 @@ const SaveAsModal: React.FC<SaveAsModalProps> = ({ show, onClose, onSave, saveAs
   </Modal>
 );
 
-export default SaveAsModal;
+export default RenameScenarioModal;

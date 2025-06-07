@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { Scenario } from '../../types/ScenarioTypes';
-import ActionButton from '../common/ActionButton';
-import Modal from '../common/Modal';
+import { Scenario } from '../../../types/ScenarioTypes';
+import ActionButton from '../../common/ActionButton';
+import Modal from '../../common/Modal';
 import './TabStylesRandom.css';
 import './TabStylesSpinner.css';
 import './ToggleSwitch.css';
@@ -264,7 +264,7 @@ const RandomScenarioModal: React.FC<RandomScenarioModalProps> = ({
 
     setGenerationStatus(newStatus);
     setCompletionPercent(percent);
-  }, [generationProgress, isGeneratingScenario, randomScenarioName, randomScenarioOptions, generationStatus]);
+  }, [generationProgress, isGeneratingScenario, randomScenarioName, randomScenarioOptions]);
 
   // Generate SVG icon based on status
   const renderStatusIcon = (status: GenerationStage) => {

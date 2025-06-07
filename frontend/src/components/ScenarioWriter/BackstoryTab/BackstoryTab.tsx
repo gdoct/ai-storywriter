@@ -1,23 +1,22 @@
 import React, { useState } from 'react';
-import { generateStoryArc, rewriteStoryArc } from '../../services/storyGenerator';
-import { Character, Scenario } from '../../types/ScenarioTypes';
-import ActionButton from '../common/ActionButton';
-import ImportButton from '../common/ImportButton';
-import ImportModal from '../common/ImportModal';
-import TabContentArea, { TabProps } from './TabInterface';
-import './TabStylesNew.css';
+import { generateBackstory, rewriteBackstory } from '../../../services/storyGenerator';
+import { Character, Scenario } from '../../../types/ScenarioTypes';
+import ActionButton from '../../common/ActionButton';
+import ImportButton from '../../common/ImportButton';
+import ImportModal from '../../common/ImportModal';
+import TabContentArea, { TabProps } from '../tabs/TabInterface';
+import '../tabs/TabStylesNew.css';
 
-const StoryArcTab: React.FC<TabProps> = ({ content, updateContent, currentScenario }) => {
+const BackstoryTab: React.FC<TabProps> = ({ content, updateContent, currentScenario }) => {
   const [showImportModal, setShowImportModal] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [cancelGeneration, setCancelGeneration] = useState<(() => void) | null>(null);
-
+  
   // Helper to create a temporary scenario object
   const createTemporaryScenario = (): Scenario => {
     // Use characters and notes from the current scenario if available
     let characters: Character[] = [];
     let notes = '';
-    let backstory = '';
     let writingStyle = { genre: "General Fiction" };
     let title = 'Temporary Scenario';
     
@@ -26,8 +25,6 @@ const StoryArcTab: React.FC<TabProps> = ({ content, updateContent, currentScenar
       characters = currentScenario.characters || [];
       // Use actual notes from current scenario
       notes = currentScenario.notes || '';
-      // Use actual backstory from current scenario
-      backstory = currentScenario.backstory || '';
       // Use actual writing style from current scenario
       writingStyle = currentScenario.writingStyle || { genre: "General Fiction" };
       // Use actual title from current scenario
@@ -39,29 +36,27 @@ const StoryArcTab: React.FC<TabProps> = ({ content, updateContent, currentScenar
       id: 'temp-id',
       userId: 'user',
       createdAt: new Date(),
-      storyarc: content || '',
-      backstory: backstory,
+      backstory: content || '',
       writingStyle: writingStyle,
       characters: characters,
       notes: notes,
       title: title
     };
   };
-
-  const handleGenerateRandomStoryArc = async () => {
-    console.log('Generate random story arc button clicked');
-    
+  
+  const handleGenerateRandomBackstory = async () => {
+    console.log('Generate random backstory button clicked');
     const temporaryScenario = createTemporaryScenario();
 
     try {
       setIsGenerating(true);
       
       // Debug: Log the scenario to verify it has all required fields
-      console.log('Generating story arc with scenario:', temporaryScenario);
+      console.log('Generating backstory with scenario:', temporaryScenario);
       
-      const generationResult = await generateStoryArc(temporaryScenario, {
+      const generationResult = await generateBackstory(temporaryScenario, {
         onProgress: (generatedText) => {
-          // Update the story arc text while it's being generated
+          // Update the backstory text while it's being generated
           updateContent(generatedText);
         }
       });
@@ -71,30 +66,30 @@ const StoryArcTab: React.FC<TabProps> = ({ content, updateContent, currentScenar
       
       try {
         // Wait for the generation to complete
-        const generatedStoryArc = await generationResult.result;
+        const generatedBackstory = await generationResult.result;
         
-        // Update the content with the generated story arc
-        updateContent(generatedStoryArc);
+        // Update the content with the generated backstory
+        updateContent(generatedBackstory);
       } catch (error) {
         // If we get an error, it might be due to cancellation
         // In that case, we keep the partially generated text that was 
         // already updated through onProgress
-        console.log('Story arc generation was interrupted:', error);
+        console.log('Backstory generation was interrupted:', error);
       }
     } catch (error) {
-      console.error('Error generating story arc:', error);
+      console.error('Error generating backstory:', error);
     } finally {
       setIsGenerating(false);
       setCancelGeneration(null);
     }
   };
-  
-  const handleRewriteStoryArc = async () => {
-    console.log('Rewrite story arc button clicked');
+
+  const handleRewriteBackstory = async () => {
+    console.log('Rewrite backstory button clicked');
     
     // Only proceed if there's actual content to rewrite
     if (!content || content.trim() === '') {
-      console.log('No story arc to rewrite');
+      console.log('No backstory to rewrite');
       return;
     }
     
@@ -104,11 +99,11 @@ const StoryArcTab: React.FC<TabProps> = ({ content, updateContent, currentScenar
       setIsGenerating(true);
       
       // Debug: Log the scenario to verify it has all required fields
-      console.log('Rewriting story arc with scenario:', temporaryScenario);
+      console.log('Rewriting backstory with scenario:', temporaryScenario);
       
-      const generationResult = await rewriteStoryArc(temporaryScenario, {
+      const generationResult = await rewriteBackstory(temporaryScenario, {
         onProgress: (generatedText) => {
-          // Update the story arc text while it's being rewritten
+          // Update the backstory text while it's being rewritten
           updateContent(generatedText);
         }
       });
@@ -118,18 +113,18 @@ const StoryArcTab: React.FC<TabProps> = ({ content, updateContent, currentScenar
       
       try {
         // Wait for the generation to complete
-        const rewrittenStoryArc = await generationResult.result;
+        const rewrittenBackstory = await generationResult.result;
         
-        // Update the content with the rewritten story arc
-        updateContent(rewrittenStoryArc);
+        // Update the content with the rewritten backstory
+        updateContent(rewrittenBackstory);
       } catch (error) {
         // If we get an error, it might be due to cancellation
         // In that case, we keep the partially generated text that was 
         // already updated through onProgress
-        console.log('Story arc rewriting was interrupted:', error);
+        console.log('Backstory rewriting was interrupted:', error);
       }
     } catch (error) {
-      console.error('Error rewriting story arc:', error);
+      console.error('Error rewriting backstory:', error);
     } finally {
       setIsGenerating(false);
       setCancelGeneration(null);
@@ -139,38 +134,41 @@ const StoryArcTab: React.FC<TabProps> = ({ content, updateContent, currentScenar
   const handleCancelGeneration = () => {
     if (cancelGeneration) {
       cancelGeneration();
-      // The rest will be handled in the try-catch block of handleGenerateRandomStoryArc
+      // The rest will be handled in the try-catch block of handleGenerateRandomBackstory
     }
   };
   
   const handleImport = (importedContent: string) => {
     updateContent(importedContent);
   };
-
+  
   const cancelIcon = (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
       <path d="M4 4L12 12M12 4L4 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
     </svg>
   );
-
+  
   return (
-    <div className="tab-container">
+    <div className="tab-container scenario-editor-panel">
+      <div className="scenario-tab-title">
+        Backstory
+      </div>
       <div className="tab-actions">
         <div className="tab-actions-primary">
           {!isGenerating ? (
             <>
               <ActionButton 
-                onClick={handleGenerateRandomStoryArc}
-                label="✨ Generate Random Story Arc"
+                onClick={handleGenerateRandomBackstory}
+                label="✨ Generate Random Backstory"
                 variant="success"
-                title="Generate a random story arc using AI"
+                title="Generate a random backstory using AI"
                 disabled={isGenerating}
               />
               <ActionButton 
-                onClick={handleRewriteStoryArc}
-                label="✨ Rewrite Story Arc"
+                onClick={handleRewriteBackstory}
+                label="✨ Rewrite Backstory"
                 variant="primary"
-                title="Rewrite and improve the current story arc"
+                title="Rewrite and improve the current backstory"
                 disabled={isGenerating || !content || content.trim() === ''}
               />
             </>
@@ -180,34 +178,34 @@ const StoryArcTab: React.FC<TabProps> = ({ content, updateContent, currentScenar
               label="Cancel Generation"
               icon={cancelIcon}
               variant="danger"
-              title="Cancel the story arc generation and keep the text generated so far"
+              title="Cancel the backstory generation and keep the text generated so far"
             />
           )}
         </div>
         <div className="tab-actions-secondary">
           <ImportButton 
-            onClick={() => setShowImportModal(true)}
-            title="Import story arc from another scenario"
-            label="Import Story Arc"
+            onClick={() => setShowImportModal(true)} 
+            title="Import backstory from another scenario"
+            label="Import Backstory"
           />
         </div>
       </div>
-      <h3>Story Arc</h3>
-      <p className="style-tab-description">Define the path your story will take. What are the main plot points? How will the narrative develop from beginning to end?</p>
+      <p className="style-tab-description">Provide context and background information for your story here. When does the story happen? Where does it take place? Is there history to consider?</p>
       <TabContentArea 
         content={content} 
         updateContent={updateContent}
-        placeholder="Outline your story arc here..."
+        placeholder="Write your backstory here... (optional)"
       />
       
       <ImportModal
         show={showImportModal}
         onClose={() => setShowImportModal(false)}
-        title="Import Story Arc"
+        title="Import Backstory"
         onImport={handleImport}
-        extractContent={(scenario) => scenario.storyarc || ''}
+        extractContent={(scenario) => scenario.backstory || ''}
       />
     </div>
   );
 };
-export default StoryArcTab;
+
+export default BackstoryTab;

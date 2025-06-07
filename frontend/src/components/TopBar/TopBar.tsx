@@ -1,8 +1,8 @@
 // filepath: /home/guido/storywriter/frontend/src/components/TopBar.tsx
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../services/AuthContext';
-import { logout } from '../services/security';
+import { useAuth } from '../../services/AuthContext';
+import { logout } from '../../services/security';
 import './TopBar.css';
 
 const TopBar: React.FC = () => {

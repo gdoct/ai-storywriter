@@ -60,3 +60,50 @@
     opacity: 1;
   }
 }
+
+/* --- Scene Form Dark Mode Styling (like CharactersTab) --- */
+.form-container {
+  background: #181a20;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.18);
+  border: 1.5px solid #353b45;
+  padding: 2rem 2rem 1.5rem 2rem;
+  margin-bottom: 2rem;
+}
+
+.form-title {
+  color: #e6e6e6;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+}
+
+.form-field label {
+  color: #bfc7d5;
+  font-weight: 600;
+}
+
+.form-input,
+.form-textarea {
+  background: #23272e;
+  color: #e6e6e6;
+  border: 1px solid #353b45;
+  border-radius: 4px;
+  padding: 8px;
+  width: 100%;
+  margin-top: 4px;
+  margin-bottom: 12px;
+  font-size: 1rem;
+}
+
+.form-textarea {
+  min-height: 80px;
+  resize: vertical;
+}
+
+.form-buttons {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+/* End Scene Form Styling */

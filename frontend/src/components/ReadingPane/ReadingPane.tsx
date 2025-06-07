@@ -28,9 +28,8 @@ const ReadingPane: React.FC<ReadingPaneProps> = ({
   const [fontSize, setFontSize] = useState<string>('16px');
   const [fontFamily, setFontFamily] = useState<string>('Georgia');
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
-  const [displayContent, setDisplayContent] = useState<string>(content || '');
-  const [generatedContent, setGeneratedContent] = useState<string>('');
   const [cancelGeneration, setCancelGeneration] = useState<(() => void) | null>(null);
+  const [displayContent, setDisplayContent] = useState<string>(content || '');
   const [displaySource, setDisplaySource] = useState<'generated' | 'database' | 'none'>('none');
 
   const contentRef = useRef<HTMLDivElement>(null);
@@ -41,13 +40,6 @@ const ReadingPane: React.FC<ReadingPaneProps> = ({
       setDisplaySource('generated');
     }
   }, [content]);
-
-  useEffect(() => {
-    if (isGenerating && generatedContent) {
-      setDisplayContent(generatedContent);
-      setDisplaySource('generated');
-    }
-  }, [generatedContent, isGenerating]);
 
   const handleCancelGeneration = () => {
     if (cancelGeneration) {
@@ -63,10 +55,9 @@ const ReadingPane: React.FC<ReadingPaneProps> = ({
     setDisplaySource('generated');
     setCancelGeneration(null);
     try {
-      setGeneratedContent('');
       const { result, cancelGeneration: newCancel } = await generateStory(currentScenario, {
         onProgress: (text: string) => {
-          setGeneratedContent(text);
+          setDisplayContent(text);
         }
       });
       setCancelGeneration(() => newCancel);

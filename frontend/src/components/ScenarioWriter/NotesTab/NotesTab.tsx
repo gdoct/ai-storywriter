@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import ImportButton from '../common/ImportButton';
-import ImportModal from '../common/ImportModal';
-import TabContentArea, { TabProps } from './TabInterface';
-import './TabStylesNew.css';
+import ImportButton from '../../common/ImportButton';
+import ImportModal from '../../common/ImportModal';
+import TabContentArea, { TabProps } from '../tabs/TabInterface';
+import '../tabs/TabStylesNew.css';
 
 const NotesTab: React.FC<TabProps> = ({ content, updateContent }) => {
   const [showImportModal, setShowImportModal] = useState(false);
@@ -12,7 +12,10 @@ const NotesTab: React.FC<TabProps> = ({ content, updateContent }) => {
   };
 
   return (
-    <div className="tab-container">
+    <div className="tab-container scenario-editor-panel">
+      <div className="scenario-tab-title">
+        Notes
+      </div>
       <div className="tab-actions">
         <div className="tab-actions-primary">
           {/* Primary actions would go here */}
@@ -25,7 +28,6 @@ const NotesTab: React.FC<TabProps> = ({ content, updateContent }) => {
           />
         </div>
       </div>
-      <h3>Notes</h3>
       <p className="style-tab-description">Provide additional notes for the story writer here. These could be instructions for how to make up facts or names, transition between styles, or other technical settings.</p>
 
       <TabContentArea

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { createScenarioPrompt } from '../../services/storyGenerator';
-import { Scenario } from '../../types/ScenarioTypes';
-import './TabStylesNew.css';
+import { createScenarioPrompt } from '../../../services/storyGenerator';
+import { Scenario } from '../../../types/ScenarioTypes';
+import '../tabs/TabStylesNew.css';
 
 interface PromptPreviewTabProps {
   currentScenario: Scenario | null;
@@ -25,7 +25,10 @@ const PromptPreviewTab: React.FC<PromptPreviewTabProps> = ({ currentScenario }) 
   }, [currentScenario]);
 
   return (
-    <div className="tab-container">
+    <div className="tab-container scenario-editor-panel">
+      <div className="scenario-tab-title">
+        Prompt Preview
+      </div>
       <div className="tab-description">
         <h3>Story Generation Prompt</h3>
         <p>This is the exact prompt that will be sent to the AI model to generate your story.</p>

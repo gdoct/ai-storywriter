@@ -1,5 +1,5 @@
 import React from 'react';
-import { Scenario } from '../../types/ScenarioTypes';
+import { Scenario } from '../../../types/ScenarioTypes';
 import './TabStylesNew.css';
 
 export interface TabProps {

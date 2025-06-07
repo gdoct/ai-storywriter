@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { useSceneHover } from '../../context/SceneHoverContext';
-import { generateScenes } from '../../services/storyGenerator';
-import { Scenario } from '../../types/ScenarioTypes';
-import ActionButton from '../common/ActionButton';
-import ImportButton from '../common/ImportButton';
-import ImportModal from '../common/ImportModal';
-import Modal from '../common/Modal';
+import { useSceneHover } from '../../../context/SceneHoverContext';
+import { generateScenes } from '../../../services/storyGenerator';
+import { Scenario } from '../../../types/ScenarioTypes';
+import ActionButton from '../../common/ActionButton';
+import ImportButton from '../../common/ImportButton';
+import ImportModal from '../../common/ImportModal';
+import Modal from '../../common/Modal';
+import { TabProps } from '../tabs/TabInterface';
+import '../tabs/TabStylesNew.css'; // For standardized tab styles
 import './ScenesTab.css';
-import { TabProps } from './TabInterface';
-import './TabStylesNew.css'; // For standardized tab styles
 
 interface Scene {
   id: string; // We need this for UI operations, not in the type definition
@@ -457,7 +457,10 @@ const ScenesTab: React.FC<TabProps> = ({ content, updateContent, currentScenario
   );
 
   return (
-    <div className="tab-container">
+    <div className="tab-container scenario-editor-panel">
+      <div className="scenario-tab-title">
+        Scenes
+      </div>
       <div className="tab-actions">
         <div className="tab-actions-primary">
           <ActionButton
