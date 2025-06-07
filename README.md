@@ -8,7 +8,8 @@ The application is built with a modern tech stack, featuring a React frontend an
 The frontend is developed using React and TypeScript. 
 The backend is built with Python and Flask, offering a REST API for handling requests and managing data.
 
-
+## Screenshot
+![StoryWriter Screenshot](frontend/img/screen-recording.gif)
 
 ## Features
 - **Scenario Creation & Editing:** Build detailed scenarios with a user-friendly interface.
