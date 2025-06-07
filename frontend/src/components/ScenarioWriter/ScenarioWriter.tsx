@@ -35,6 +35,7 @@ const ScenarioWriter: React.FC<ScenarioWriterProps> = ({ value, onChange, onSubm
   const [currentScenario, setCurrentScenario] = useState<Scenario | null>(null);
   const [generatedStory, setGeneratedStory] = useState<string | null>(null);
   const [currentStoryTimestamp, setCurrentStoryTimestamp] = useState<string | null>(null);
+  const [isStoryDropdownDisabled, setIsStoryDropdownDisabled] = useState(false);
   
   // Splitter state and refs
   const [isDragging, setIsDragging] = useState(false);
@@ -448,6 +449,8 @@ const ScenarioWriter: React.FC<ScenarioWriterProps> = ({ value, onChange, onSubm
               setIsDirty(true);
             }}
             scenes={currentScenario?.scenes || []}
+            onDisableStoryDropdown={setIsStoryDropdownDisabled}
+            isStoryDropdownDisabled={isStoryDropdownDisabled}
           />
         </div>
       </div>

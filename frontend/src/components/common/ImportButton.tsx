@@ -1,5 +1,5 @@
 import React from 'react';
-import '../ScenarioWriter/tabs/TabStylesNew.css';
+import '../ScenarioWriter/common/TabStylesNew.css';
 
 interface ImportButtonProps {
   onClick: () => void;

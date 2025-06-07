@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import ImportButton from '../../common/ImportButton';
 import ImportModal from '../../common/ImportModal';
-import TabContentArea, { TabProps } from '../tabs/TabInterface';
-import '../tabs/TabStylesNew.css';
+import TabContentArea, { TabProps } from '../common/TabInterface';
+import '../common/TabStylesNew.css';
 
 const NotesTab: React.FC<TabProps> = ({ content, updateContent }) => {
   const [showImportModal, setShowImportModal] = useState(false);

@@ -15,6 +15,9 @@ interface ReadingPaneHeaderProps {
   onSubmit?: () => void;
   isGeneratedStory?: boolean;
   displaySource: 'generated' | 'database' | 'none';
+  isStoryDropdownDisabled?: boolean;
+  // Force reset the dropdown by providing a new value
+  resetStorySelection?: boolean; 
 }
 
 const fontOptions = [
@@ -44,6 +47,8 @@ const ReadingPaneHeader: React.FC<ReadingPaneHeaderProps> = ({
   onSubmit,
   isGeneratedStory,
   displaySource,
+  isStoryDropdownDisabled = false,
+  resetStorySelection = false,
 }) => {
   const [fontFamily, setFontFamily] = useState<string>('Georgia');
   const [fontSize, setFontSize] = useState<string>('16px');
@@ -63,7 +68,13 @@ const ReadingPaneHeader: React.FC<ReadingPaneHeaderProps> = ({
         setLoadingVersions(true);
         const stories = await fetchDBStories(scenarioId);
         setDbStories(stories);
-        if (stories.length > 0) {
+        
+        // If we are generating, don't auto-select a story
+        if (isGenerating) {
+          setSelectedDbStoryId(null);
+        } 
+        // Otherwise, auto-select the first story if available
+        else if (stories.length > 0) {
           setSelectedDbStoryId(stories[0].id);
         } else {
           setSelectedDbStoryId(null);
@@ -76,7 +87,7 @@ const ReadingPaneHeader: React.FC<ReadingPaneHeaderProps> = ({
       }
     };
     fetchStories();
-  }, [currentScenario]);
+  }, [currentScenario, isGenerating]);
 
   // Update content when DB story selection changes
   useEffect(() => {
@@ -96,6 +107,21 @@ const ReadingPaneHeader: React.FC<ReadingPaneHeaderProps> = ({
   useEffect(() => {
     setHasUnsavedChanges(true);
   }, [displayContent]);
+  
+  // Reset story selection when generating a new story
+  useEffect(() => {
+    // Reset dropdown when starting story generation
+    if (isGenerating) {
+      setSelectedDbStoryId(null);
+    }
+  }, [isGenerating]);
+  
+  // Also reset selection when display source changes to generated
+  useEffect(() => {
+    if (displaySource === 'generated') {
+      setSelectedDbStoryId(null);
+    }
+  }, [displaySource]);
 
   // Format date for display
   const formatDate = (dateString: string): string => {
@@ -222,9 +248,11 @@ const ReadingPaneHeader: React.FC<ReadingPaneHeaderProps> = ({
                       setSelectedDbStoryId(Number(value));
                     } else {
                       setSelectedDbStoryId(null);
-                      if (onStoryGenerated) onStoryGenerated(displayContent);
+                      // Clear the story content when selection is reset
+                      if (onStoryGenerated) onStoryGenerated(null);
                     }
                   }}
+                  disabled={isStoryDropdownDisabled}
                 >
                   <option value="">Select a saved story...</option>
                   {dbStories.map(story => (

@@ -6,8 +6,8 @@ import ActionButton from '../../common/ActionButton';
 import ImportButton from '../../common/ImportButton';
 import ImportModal from '../../common/ImportModal';
 import Modal from '../../common/Modal';
-import { TabProps } from '../tabs/TabInterface';
-import '../tabs/TabStylesNew.css'; // For standardized tab styles
+import { TabProps } from '../common/TabInterface';
+import '../common/TabStylesNew.css'; // For standardized tab styles
 import './ScenesTab.css';
 
 interface Scene {
@@ -460,6 +460,12 @@ const ScenesTab: React.FC<TabProps> = ({ content, updateContent, currentScenario
     <div className="tab-container scenario-editor-panel">
       <div className="scenario-tab-title">
         Scenes
+      </div>
+      <div className="tab-description">
+        <h3>Scenes are an experimental feature. Add, edit, and organize scenes to create a compelling narrative.</h3>
+        <p>Using scenes in combination with a detailed story arc can cause the context to become too large, leading to incomplete stories.</p>
+        <p>For best results, generate scenes from a detailed story arc and character information, and then remove the story arc or summarize it.</p>
+        <p>Scenes are not saved automatically. Make sure to save your scenario after making changes.</p>
       </div>
       <div className="tab-actions">
         <div className="tab-actions-primary">

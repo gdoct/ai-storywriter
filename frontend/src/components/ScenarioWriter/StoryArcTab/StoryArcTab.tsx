@@ -4,8 +4,8 @@ import { Character, Scenario } from '../../../types/ScenarioTypes';
 import ActionButton from '../../common/ActionButton';
 import ImportButton from '../../common/ImportButton';
 import ImportModal from '../../common/ImportModal';
-import TabContentArea, { TabProps } from '../tabs/TabInterface';
-import '../tabs/TabStylesNew.css';
+import TabContentArea, { TabProps } from '../common/TabInterface';
+import '../common/TabStylesNew.css';
 
 const StoryArcTab: React.FC<TabProps> = ({ content, updateContent, currentScenario }) => {
   const [showImportModal, setShowImportModal] = useState(false);

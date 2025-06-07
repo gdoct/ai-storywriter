@@ -2,26 +2,26 @@ import React, { useEffect, useRef, useState } from 'react';
 import { generateBackstory, generateRandomCharacter, generateRandomScenarioName, generateRandomWritingStyle, generateStoryArc } from '../../../services/storyGenerator';
 import { Scenario } from '../../../types/ScenarioTypes';
 import ActionButton from '../../common/ActionButton';
-import CreateScenarioModal from '../tabs/CreateScenarioModal';
-import DeleteScenarioModal from '../tabs/DeleteScenarioModal';
-import RandomScenarioModal from '../tabs/RandomScenarioModal';
-import RenameScenarioModal from '../tabs/RenameScenarioModal';
-import SaveAsModal from '../tabs/SaveAsModal';
-import SaveChangesModal from '../tabs/SaveChangesModal';
+import CreateScenarioModal from '../common/CreateScenarioModal';
+import DeleteScenarioModal from '../common/DeleteScenarioModal';
+import RandomScenarioModal from '../common/RandomScenarioModal';
+import RenameScenarioModal from '../common/RenameScenarioModal';
+import SaveAsModal from '../common/SaveAsModal';
+import SaveChangesModal from '../common/SaveChangesModal';
 import {
-  confirmDeleteScenario as confirmDeleteScenarioService,
-  confirmRenameScenario as confirmRenameScenarioService,
-  fetchScenarios as fetchScenariosService,
-  handleCancelSwitch as handleCancelSwitchService,
-  handleDiscardAndLoad as handleDiscardAndLoadService,
-  handleSaveAndLoad as handleSaveAndLoadService,
-  loadScenario as loadScenarioService
-} from '../tabs/scenarioTabService';
-import '../tabs/TabStylesNew.css';
-import '../tabs/TabStylesRandom.css';
-import '../tabs/TabStylesSpinner.css';
-import '../tabs/ToggleButtonStyles.css';
-import UnsavedChangesModal from '../tabs/UnsavedChangesModal';
+    confirmDeleteScenario as confirmDeleteScenarioService,
+    confirmRenameScenario as confirmRenameScenarioService,
+    fetchScenarios as fetchScenariosService,
+    handleCancelSwitch as handleCancelSwitchService,
+    handleDiscardAndLoad as handleDiscardAndLoadService,
+    handleSaveAndLoad as handleSaveAndLoadService,
+    loadScenario as loadScenarioService
+} from '../common/scenarioTabService';
+import '../common/TabStylesNew.css';
+import '../common/TabStylesRandom.css';
+import '../common/TabStylesSpinner.css';
+import '../common/ToggleButtonStyles.css';
+import UnsavedChangesModal from '../common/UnsavedChangesModal';
 
 interface FileTabProps {
   currentScenario: Scenario | null;

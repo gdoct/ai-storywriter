@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { createScenarioPrompt } from '../../../services/storyGenerator';
 import { Scenario } from '../../../types/ScenarioTypes';
-import '../tabs/TabStylesNew.css';
+import '../common/TabStylesNew.css';
 
 interface PromptPreviewTabProps {
   currentScenario: Scenario | null;

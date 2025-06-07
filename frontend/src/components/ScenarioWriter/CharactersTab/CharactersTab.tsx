@@ -5,8 +5,8 @@ import ActionButton from '../../common/ActionButton';
 import ImportButton from '../../common/ImportButton';
 import ImportModal from '../../common/ImportModal';
 import Modal from '../../common/Modal';
-import { TabProps } from '../tabs/TabInterface';
-import '../tabs/TabStylesNew.css';
+import { TabProps } from '../common/TabInterface';
+import '../common/TabStylesNew.css';
 
 const generateUniqueId = (): string => {
   return Date.now().toString(36) + Math.random().toString(36).substr(2);
@@ -22,6 +22,9 @@ const CharactersTab: React.FC<TabProps> = ({ content, updateContent, currentScen
     id: '',
     name: ''
   });
+  const [showGenerateModal, setShowGenerateModal] = useState(false);
+  const [generateFormCharacter, setGenerateFormCharacter] = useState<Character>({ id: '', name: '' });
+  const [generateFormError, setGenerateFormError] = useState<string | null>(null);
   
   // Debug: Log when currentScenario changes
   useEffect(() => {
@@ -167,60 +170,68 @@ const CharactersTab: React.FC<TabProps> = ({ content, updateContent, currentScen
 
   // Handler for character type dropdown
   const handleGenerateButtonClick = () => {
-    console.log("Generate button clicked, currentScenario:", currentScenario);
     if (!currentScenario) {
       alert("Please create or select a scenario first before generating a character.");
       return;
     }
-    setShowCharacterTypeDropdown(true);
+    setGenerateFormCharacter({ id: generateUniqueId(), name: '' });
+    setShowGenerateModal(true);
+    setGenerateFormError(null);
   };
 
-  // Handler for character generation
-  const handleGenerateCharacter = async (characterType: string) => {
+  // Handler for changes in the generate form
+  const handleGenerateFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setGenerateFormCharacter(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  // Handler for generating character from modal form
+  const handleGenerateCharacterFromModal = async () => {
     if (!currentScenario) {
-      console.error("No current scenario available for character generation");
-      alert("Please create or select a scenario first before generating a character.");
-      setShowCharacterTypeDropdown(false);
+      setGenerateFormError("No scenario selected.");
       return;
     }
-
+    setCharacterGenerationInProgress(true);
+    setGenerateFormError(null);
     try {
-      setCharacterGenerationInProgress(true);
-      setShowCharacterTypeDropdown(false);
-      
-      console.log(`Generating ${characterType} character...`);
-      
+      // Compose a temporary scenario with up-to-date characters
+      const scenarioForPrompt = {
+        ...currentScenario,
+        characters: characters
+      };
+      // Use the form fields to determine which are missing
+      const filledFields = generateFormCharacter;
+      // Find the first missing field to use as the 'characterType' (fallback to 'supporting')
+      let characterType = filledFields.role?.toLowerCase() || 'supporting';
+      // If user provided a role, use it; otherwise, let the backend decide
+      // Call backend to generate missing fields
       const generationResult = await generateRandomCharacter(
-        currentScenario,
+        scenarioForPrompt,
         characterType,
         {
-          onProgress: (generatedText) => {
-            // For JSON results, we don't need to update intermediate progress
-            console.log('Generating character...');
-          }
+          onProgress: () => {}
         }
       );
-
-      // Store the cancel function to enable cancellation
       setCancelGeneration(() => generationResult.cancelGeneration);
-      
       try {
-        // Wait for the generation to complete
         const randomCharacter = await generationResult.result;
-        
-        // Add the character with a unique ID
+        // Merge user input with generated fields (user input takes precedence)
         const newCharacterWithId = {
           ...randomCharacter,
-          id: generateUniqueId()
+          ...generateFormCharacter,
+          id: generateFormCharacter.id || generateUniqueId()
         };
-        
         setCharacters(prev => [...prev, newCharacterWithId]);
-        console.log('Random character generated:', newCharacterWithId);
+        setShowGenerateModal(false);
+        setGenerateFormCharacter({ id: '', name: '' });
       } catch (error) {
-        console.log('Character generation was interrupted or failed:', error);
+        setGenerateFormError('Character generation was interrupted or failed.');
       }
     } catch (error) {
-      console.error('Error generating random character:', error);
+      setGenerateFormError('Error generating random character.');
     } finally {
       setCharacterGenerationInProgress(false);
       setCancelGeneration(null);
@@ -305,7 +316,7 @@ const CharactersTab: React.FC<TabProps> = ({ content, updateContent, currentScen
       <div className="tab-actions">
         <div className="tab-actions-primary">
           {!characterGenerationInProgress ? (
-            <div style={{ position: 'relative' }} className="character-type-dropdown-container">
+            <div style={{ position: 'relative' }}>
               <ActionButton 
                 onClick={handleGenerateButtonClick} 
                 label="✨ Generate Character" 
@@ -313,38 +324,6 @@ const CharactersTab: React.FC<TabProps> = ({ content, updateContent, currentScen
                 title="Generate a random character using AI"
                 disabled={!currentScenario}
               />
-              
-              {showCharacterTypeDropdown && (
-                <div style={dropdownStyles} className="character-type-dropdown">
-                  <div 
-                    style={protagonistOptionStyles}
-                    onClick={() => handleGenerateCharacter('protagonist')}
-                    onMouseOver={e => e.currentTarget.style.background = '#263040'}
-                    onMouseOut={e => e.currentTarget.style.background = 'none'}
-                  >
-                    <span style={{ marginRight: '10px' }}>👤</span>
-                    Protagonist
-                  </div>
-                  <div 
-                    style={antagonistOptionStyles}
-                    onClick={() => handleGenerateCharacter('antagonist')}
-                    onMouseOver={e => e.currentTarget.style.background = '#402626'}
-                    onMouseOut={e => e.currentTarget.style.background = 'none'}
-                  >
-                    <span style={{ marginRight: '10px' }}>😈</span>
-                    Antagonist
-                  </div>
-                  <div 
-                    style={supportingOptionStyles}
-                    onClick={() => handleGenerateCharacter('supporting')}
-                    onMouseOver={e => e.currentTarget.style.background = '#22303a'}
-                    onMouseOut={e => e.currentTarget.style.background = 'none'}
-                  >
-                    <span style={{ marginRight: '10px' }}>🧩</span>
-                    Supporting
-                  </div>
-                </div>
-              )}
               &nbsp;
               <ActionButton 
                 onClick={handleAddCharacter} 
@@ -372,6 +351,138 @@ const CharactersTab: React.FC<TabProps> = ({ content, updateContent, currentScen
           />
         </div>
       </div>
+
+      {/* Generate Character Modal */}
+      <Modal
+        show={showGenerateModal}
+        onClose={() => { setShowGenerateModal(false); setGenerateFormError(null); }}
+        title="Generate New Character"
+      >
+        <div className="form-container" style={{
+          background: '#181a20',
+          borderRadius: '12px',
+          boxShadow: '0 2px 12px rgba(0,0,0,0.18)',
+          border: '1.5px solid #353b45',
+          padding: '2rem 2rem 1.5rem 2rem',
+          marginBottom: '2rem',
+        }}>
+          <h3 className="form-title" style={{ color: '#e6e6e6', fontWeight: 700 }}>New Character</h3>
+          <div className="form-field">
+            <label htmlFor="name" style={{ color: '#bfc7d5', fontWeight: 600 }}>Name (or leave blank for random name)</label>
+            <input
+              type="text"
+              id="name"
+              name="name"
+              value={generateFormCharacter.name || ''}
+              onChange={handleGenerateFormChange}
+              placeholder="Character name"
+              className="form-input"
+              style={{ background: '#23272e', color: '#e6e6e6', border: '1px solid #353b45' }}
+            />
+          </div>
+          <div className="form-field">
+            <label htmlFor="alias" style={{ color: '#bfc7d5', fontWeight: 600 }}>Alias (use this if no name given)</label>
+            <input
+              type="text"
+              id="alias"
+              name="alias"
+              value={generateFormCharacter.alias || ''}
+              onChange={handleGenerateFormChange}
+              placeholder="Character alias"
+              className="form-input"
+              style={{ background: '#23272e', color: '#e6e6e6', border: '1px solid #353b45' }}
+            />
+          </div>
+          <div className="form-field">
+            <label htmlFor="role" style={{ color: '#bfc7d5', fontWeight: 600 }}>Role (optional)</label>
+            <input
+              type="text"
+              id="role"
+              name="role"
+              value={generateFormCharacter.role || ''}
+              onChange={handleGenerateFormChange}
+              placeholder="Select or type a role"
+              list="role-options"
+              className="form-input"
+              style={{ background: '#23272e', color: '#e6e6e6', border: '1px solid #353b45' }}
+            />
+            <datalist id="role-options">
+              <option value="Protagonist" />
+              <option value="Antagonist" />
+              <option value="Supporting" />
+              <option value="Background" />
+            </datalist>
+          </div>
+          <div className="form-field">
+            <label htmlFor="gender" style={{ color: '#bfc7d5', fontWeight: 600 }}>Gender (optional)</label>
+            <input
+              type="text"
+              id="gender"
+              name="gender"
+              value={generateFormCharacter.gender || ''}
+              onChange={handleGenerateFormChange}
+              placeholder="Select or type a gender"
+              list="gender-options"
+              className="form-input"
+              style={{ background: '#23272e', color: '#e6e6e6', border: '1px solid #353b45' }}
+            />
+            <datalist id="gender-options">
+              <option value="Male" />
+              <option value="Female" />
+              <option value="Non-binary" />
+              <option value="Other" />
+            </datalist>
+          </div>
+          <div className="form-field">
+            <label htmlFor="appearance" style={{ color: '#bfc7d5', fontWeight: 600 }}>Physical Appearance (optional)</label>
+            <textarea
+              id="appearance"
+              name="appearance"
+              value={generateFormCharacter.appearance || ''}
+              onChange={handleGenerateFormChange}
+              placeholder="Describe how this character looks..."
+              className="form-textarea"
+              style={{ background: '#23272e', color: '#e6e6e6', border: '1px solid #353b45' }}
+            />
+          </div>
+          <div className="form-field">
+            <label htmlFor="backstory" style={{ color: '#bfc7d5', fontWeight: 600 }}>Backstory (optional)</label>
+            <textarea
+              id="backstory"
+              name="backstory"
+              value={generateFormCharacter.backstory || ''}
+              onChange={handleGenerateFormChange}
+              placeholder="Character's history and background..."
+              className="form-textarea"
+              style={{ background: '#23272e', color: '#e6e6e6', border: '1px solid #353b45' }}
+            />
+          </div>
+          <div className="form-field">
+            <label htmlFor="extraInfo" style={{ color: '#bfc7d5', fontWeight: 600 }}>Extra Information (optional)</label>
+            <textarea
+              id="extraInfo"
+              name="extraInfo"
+              value={generateFormCharacter.extraInfo || ''}
+              onChange={handleGenerateFormChange}
+              placeholder="Any additional details about this character..."
+              className="form-textarea"
+              style={{ background: '#23272e', color: '#e6e6e6', border: '1px solid #353b45' }}
+            />
+          </div>
+          {generateFormError && (
+            <div style={{ color: '#ff6b6b', marginBottom: '1rem', fontWeight: 600 }}>{generateFormError}</div>
+          )}
+          <div className="form-buttons">
+            <ActionButton onClick={() => { setShowGenerateModal(false); setGenerateFormError(null); }} label="Cancel" variant="default" />
+            <ActionButton 
+              onClick={handleGenerateCharacterFromModal} 
+              label="Generate" 
+              variant="success" 
+              disabled={characterGenerationInProgress}
+            />
+          </div>
+        </div>
+      </Modal>
 
       {showForm && (
         <div className="form-container" style={{

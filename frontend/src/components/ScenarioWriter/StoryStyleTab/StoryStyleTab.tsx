@@ -4,8 +4,8 @@ import { generateRandomWritingStyle } from '../../../services/storyGenerator';
 import ActionButton from '../../common/ActionButton';
 import ImportButton from '../../common/ImportButton';
 import ImportModal from '../../common/ImportModal';
-import { TabProps } from '../tabs/TabInterface';
-import '../tabs/TabStylesNew.css';
+import { TabProps } from '../common/TabInterface';
+import '../common/TabStylesNew.css';
 
 // Define the suggestion options for each dropdown
 const styleOptions = ['Modern', 'Classic', 'Minimalist', 'Baroque', 'Gothic', 'Stream of consciousness', 'Epistolary', 'Journalistic', 'Academic', 'Poetic'];
