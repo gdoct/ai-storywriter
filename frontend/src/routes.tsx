@@ -7,15 +7,16 @@ import Settings from './pages/Settings';
 
 interface RoutesProps {
   setIsLoading: Dispatch<SetStateAction<boolean>>;
+  seed?: number | null;
 }
 
-const getRoutes = ({ setIsLoading }: RoutesProps): RouteObject[] => {
+const getRoutes = ({ setIsLoading, seed }: RoutesProps): RouteObject[] => {
   return [
     { 
       path: '/', 
       element: (
         <ProtectedRoute>
-          <Home setIsLoading={setIsLoading} />
+          <Home setIsLoading={setIsLoading} seed={seed} />
         </ProtectedRoute>
       )
     },

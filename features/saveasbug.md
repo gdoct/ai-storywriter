@@ -1,0 +1,1 @@
+* "Save as..." throws the app into a loop between the scenario with the old name and the scenario with the new name

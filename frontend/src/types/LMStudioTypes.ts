@@ -83,5 +83,5 @@ export interface ChatCompletionChunk {
 export interface LMStudioConfig {
   baseUrl: string;
   modelName: string;
-  seed?: number | null; // Added seed parameter for reproducible generation
+  seed: number | null;
 }

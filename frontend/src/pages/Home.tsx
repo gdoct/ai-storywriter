@@ -5,9 +5,10 @@ import './Home.css';
 
 interface HomeProps {
   setIsLoading: Dispatch<SetStateAction<boolean>>;
+  seed?: number | null;
 }
 
-const Home: React.FC<HomeProps> = ({ setIsLoading }) => {
+const Home: React.FC<HomeProps> = ({ setIsLoading, seed }) => {
   const [scenario, setScenario] = useState('');
 
   const handleSubmit = () => {
@@ -29,6 +30,7 @@ const Home: React.FC<HomeProps> = ({ setIsLoading }) => {
         value={scenario}
         onChange={setScenario}
         onSubmit={handleSubmit}
+        seed={seed}
       />
     </div>
   );

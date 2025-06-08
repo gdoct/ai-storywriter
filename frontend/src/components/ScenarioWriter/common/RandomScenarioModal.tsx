@@ -45,8 +45,6 @@ interface GenerationStatus {
 const RandomScenarioModal: React.FC<RandomScenarioModalProps> = ({
   show,
   onClose,
-  currentScenario,
-  onLoadScenario,
   isGeneratingScenario,
   generationProgress,
   randomScenarioName,
@@ -71,15 +69,9 @@ const RandomScenarioModal: React.FC<RandomScenarioModalProps> = ({
   const [storyArcValue, setStoryArcValue] = useState<string>('');
   const [completionPercent, setCompletionPercent] = useState<number>(0);
 
-  // Update generation status based on progress string
+  // Reset status when not generating
   useEffect(() => {
     if (!isGeneratingScenario) {
-      // Reset status when not generating
-      if (generationStatus.isComplete) {
-        // Keep complete status
-        return;
-      }
-      
       setGenerationStatus({
         title: 'waiting',
         style: 'waiting',
@@ -89,182 +81,187 @@ const RandomScenarioModal: React.FC<RandomScenarioModalProps> = ({
         isComplete: false
       });
       setCompletionPercent(0);
-      return;
     }
+  }, [isGeneratingScenario]);
 
-    // Parse the generation progress string
-    const newStatus = { ...generationStatus };
-    let percent = 0;
-    let totalSteps = 2; // Title is always generated
-    let completedSteps = 0;
-    
-    // Count how many steps are enabled in total
-    if (randomScenarioOptions.generateStyle) totalSteps++;
-    if (randomScenarioOptions.generateCharacters) totalSteps++;
-    if (randomScenarioOptions.generateBackstory) totalSteps++;
-    if (randomScenarioOptions.generateStoryArc) totalSteps++;
-
-    // Title generation
-    if (generationProgress.includes('Generating scenario name')) {
-      newStatus.title = 'in-progress';
-      completedSteps = 0;
-    } else if (randomScenarioName) {
-      newStatus.title = 'completed';
-      completedSteps = 1;
-    }
-
-    // Style generation
-    if (randomScenarioOptions.generateStyle) {
-      if (generationProgress.includes('Generating writing style')) {
-        newStatus.style = 'in-progress';
-        // Extract style value if available
-        const styleMatch = generationProgress.match(/Generating writing style...\n(.*)/);
-        if (styleMatch && styleMatch[1]) {
-          setStyleValue(styleMatch[1].trim());
-        }
-      } else if (newStatus.title === 'completed' && !generationProgress.includes('Generating protagonist character') && 
-                !generationProgress.includes('Generating backstory') && 
-                !generationProgress.includes('Generating story arc')) {
-        newStatus.style = 'completed';
-        completedSteps = 2;
-      }
-    } else {
-      // Skip if not selected
-      newStatus.style = 'waiting';
-    }
-
-    // Character generation
-    if (randomScenarioOptions.generateCharacters) {
-      if (generationProgress.includes('Generating protagonist character') || 
-          generationProgress.includes('Generating antagonist character')) {
-        newStatus.characters = 'in-progress';
-        if (newStatus.style === 'completed' || !randomScenarioOptions.generateStyle) {
-          completedSteps = 2;
-        }
-        
-        // Extract character information if available
-        if (generationProgress.includes('Generating protagonist character...\n')) {
-          const parts = generationProgress.split('Generating protagonist character...\n');
-          if (parts.length > 1) {
-            const preview = parts[1].trim();
-            setCharactersValue(preview.length > 50 ? preview.substring(0, 50) + "..." : preview);
-          }
-        } else if (generationProgress.includes('Generating antagonist character...\n')) {
-          const parts = generationProgress.split('Generating antagonist character...\n');
-          if (parts.length > 1) {
-            const preview = parts[1].trim();
-            setCharactersValue(preview.length > 50 ? preview.substring(0, 50) + "..." : preview);
-          }
-        }
-      } else if ((newStatus.style === 'completed' || !randomScenarioOptions.generateStyle) && 
-                !generationProgress.includes('Generating writing style') &&
-                !generationProgress.includes('Generating backstory') && 
-                !generationProgress.includes('Generating story arc')) {
-        newStatus.characters = 'completed';
-        completedSteps = randomScenarioOptions.generateStyle ? 3 : 2;
-      }
-    } else {
-      // Skip if not selected
-      newStatus.characters = 'waiting';
-    }
-
-    // Backstory generation
-    if (randomScenarioOptions.generateBackstory) {
-      if (generationProgress.includes('Generating backstory')) {
-        newStatus.backstory = 'in-progress';
-        // Calculate completed steps
-        if (randomScenarioOptions.generateCharacters && newStatus.characters === 'completed') {
-          completedSteps = randomScenarioOptions.generateStyle ? 3 : 2;
-        } else if (!randomScenarioOptions.generateCharacters && newStatus.style === 'completed') {
-          completedSteps = 2;
-        } else if (!randomScenarioOptions.generateCharacters && !randomScenarioOptions.generateStyle) {
-          completedSteps = 1;
-        }
-        
-        // Extract backstory preview if available
-        if (generationProgress.includes('Generating backstory...\n')) {
-          const parts = generationProgress.split('Generating backstory...\n');
-          if (parts.length > 1) {
-            const preview = parts[1].trim();
-            setBackstoryValue(preview.length > 50 ? preview.substring(0, 50) + "..." : preview);
-          }
-        }
-      } else if ((newStatus.characters === 'completed' || !randomScenarioOptions.generateCharacters) && 
-                (newStatus.style === 'completed' || !randomScenarioOptions.generateStyle) &&
-                !generationProgress.includes('Generating writing style') &&
-                !generationProgress.includes('Generating protagonist character') &&
-                !generationProgress.includes('Generating antagonist character') &&
-                !generationProgress.includes('Generating story arc')) {
-        newStatus.backstory = 'completed';
-        let baseSteps = 1; // Title
-        if (randomScenarioOptions.generateStyle) baseSteps++;
-        if (randomScenarioOptions.generateCharacters) baseSteps++;
-        completedSteps = baseSteps + 1;
-      }
-    } else {
-      // Skip if not selected
-      newStatus.backstory = 'waiting';
-    }
-
-    // Story Arc generation
-    if (randomScenarioOptions.generateStoryArc) {
-      if (generationProgress.includes('Generating story arc')) {
-        newStatus.storyArc = 'in-progress';
-        // Calculate completed steps based on what else is enabled
-        let baseSteps = 1; // Title
-        if (randomScenarioOptions.generateStyle && newStatus.style === 'completed') baseSteps++;
-        if (randomScenarioOptions.generateCharacters && newStatus.characters === 'completed') baseSteps++;
-        if (randomScenarioOptions.generateBackstory && newStatus.backstory === 'completed') baseSteps++;
-        completedSteps = baseSteps;
-        
-        // Extract story arc preview if available
-        if (generationProgress.includes('Generating story arc...\n')) {
-          const parts = generationProgress.split('Generating story arc...\n');
-          if (parts.length > 1) {
-            const preview = parts[1].trim();
-            setStoryArcValue(preview.length > 50 ? preview.substring(0, 50) + "..." : preview);
-          }
-        }
-      } else if ((newStatus.backstory === 'completed' || !randomScenarioOptions.generateBackstory) && 
-                (newStatus.characters === 'completed' || !randomScenarioOptions.generateCharacters) && 
-                (newStatus.style === 'completed' || !randomScenarioOptions.generateStyle) &&
-                !generationProgress.includes('Generating writing style') &&
-                !generationProgress.includes('Generating protagonist character') &&
-                !generationProgress.includes('Generating antagonist character') &&
-                !generationProgress.includes('Generating backstory')) {
-        newStatus.storyArc = 'completed';
-        completedSteps = totalSteps;
-      }
-    } else {
-      // Skip if not selected
-      newStatus.storyArc = 'waiting';
-    }
-
-    // Check if generation is complete - if Updating scenario appears or all selected steps are complete
-    if (generationProgress.includes('Updating scenario')) {
-      newStatus.isComplete = true;
-      completedSteps = totalSteps;
-    } else {
-      // Check if all selected steps are completed
-      const allComplete = 
-        newStatus.title === 'completed' &&
-        (!randomScenarioOptions.generateStyle || newStatus.style === 'completed') &&
-        (!randomScenarioOptions.generateCharacters || newStatus.characters === 'completed') &&
-        (!randomScenarioOptions.generateBackstory || newStatus.backstory === 'completed') &&
-        (!randomScenarioOptions.generateStoryArc || newStatus.storyArc === 'completed');
+  // Update generation status based on progress string (only when generating)
+  useEffect(() => {
+    if (!isGeneratingScenario) return;
+    setGenerationStatus(prevStatus => {
+      const newStatus = { ...prevStatus };
+      let totalSteps = 2; // Title is always generated
+      let completedSteps = 0;
       
-      if (allComplete && !isGeneratingScenario) {
+      // Count how many steps are enabled in total
+      if (randomScenarioOptions.generateStyle) totalSteps++;
+      if (randomScenarioOptions.generateCharacters) totalSteps++;
+      if (randomScenarioOptions.generateBackstory) totalSteps++;
+      if (randomScenarioOptions.generateStoryArc) totalSteps++;
+
+      // Title generation
+      if (generationProgress.includes('Generating scenario name')) {
+        newStatus.title = 'in-progress';
+        completedSteps = 0;
+      } else if (randomScenarioName) {
+        newStatus.title = 'completed';
+        completedSteps = 1;
+      }
+
+      // Style generation
+      if (randomScenarioOptions.generateStyle) {
+        if (generationProgress.includes('Generating writing style')) {
+          newStatus.style = 'in-progress';
+          // Extract style value if available
+          const styleMatch = generationProgress.match(/Generating writing style...\n(.*)/);
+          if (styleMatch && styleMatch[1]) {
+            setStyleValue(styleMatch[1].trim());
+          }
+        } else if (newStatus.title === 'completed' && !generationProgress.includes('Generating protagonist character') && 
+                  !generationProgress.includes('Generating backstory') && 
+                  !generationProgress.includes('Generating story arc')) {
+          newStatus.style = 'completed';
+          completedSteps = 2;
+        }
+      } else {
+        // Skip if not selected
+        newStatus.style = 'waiting';
+      }
+
+      // Character generation
+      if (randomScenarioOptions.generateCharacters) {
+        if (generationProgress.includes('Generating protagonist character') || 
+            generationProgress.includes('Generating antagonist character')) {
+          newStatus.characters = 'in-progress';
+          if (newStatus.style === 'completed' || !randomScenarioOptions.generateStyle) {
+            completedSteps = 2;
+          }
+          
+          // Extract character information if available
+          if (generationProgress.includes('Generating protagonist character...\n')) {
+            const parts = generationProgress.split('Generating protagonist character...\n');
+            if (parts.length > 1) {
+              const preview = parts[1].trim();
+              setCharactersValue(preview.length > 50 ? preview.substring(0, 50) + "..." : preview);
+            }
+          } else if (generationProgress.includes('Generating antagonist character...\n')) {
+            const parts = generationProgress.split('Generating antagonist character...\n');
+            if (parts.length > 1) {
+              const preview = parts[1].trim();
+              setCharactersValue(preview.length > 50 ? preview.substring(0, 50) + "..." : preview);
+            }
+          }
+        } else if ((newStatus.style === 'completed' || !randomScenarioOptions.generateStyle) && 
+                  !generationProgress.includes('Generating writing style') &&
+                  !generationProgress.includes('Generating backstory') && 
+                  !generationProgress.includes('Generating story arc')) {
+          newStatus.characters = 'completed';
+          completedSteps = randomScenarioOptions.generateStyle ? 3 : 2;
+        }
+      } else {
+        // Skip if not selected
+        newStatus.characters = 'waiting';
+      }
+
+      // Backstory generation
+      if (randomScenarioOptions.generateBackstory) {
+        if (generationProgress.includes('Generating backstory')) {
+          newStatus.backstory = 'in-progress';
+          // Calculate completed steps
+          if (randomScenarioOptions.generateCharacters && newStatus.characters === 'completed') {
+            completedSteps = randomScenarioOptions.generateStyle ? 3 : 2;
+          } else if (!randomScenarioOptions.generateCharacters && newStatus.style === 'completed') {
+            completedSteps = 2;
+          } else if (!randomScenarioOptions.generateCharacters && !randomScenarioOptions.generateStyle) {
+            completedSteps = 1;
+          }
+          
+          // Extract backstory preview if available
+          if (generationProgress.includes('Generating backstory...\n')) {
+            const parts = generationProgress.split('Generating backstory...\n');
+            if (parts.length > 1) {
+              const preview = parts[1].trim();
+              setBackstoryValue(preview.length > 50 ? preview.substring(0, 50) + "..." : preview);
+            }
+          }
+        } else if ((newStatus.characters === 'completed' || !randomScenarioOptions.generateCharacters) && 
+                  (newStatus.style === 'completed' || !randomScenarioOptions.generateStyle) &&
+                  !generationProgress.includes('Generating writing style') &&
+                  !generationProgress.includes('Generating protagonist character') &&
+                  !generationProgress.includes('Generating antagonist character') &&
+                  !generationProgress.includes('Generating story arc')) {
+          newStatus.backstory = 'completed';
+          let baseSteps = 1; // Title
+          if (randomScenarioOptions.generateStyle) baseSteps++;
+          if (randomScenarioOptions.generateCharacters) baseSteps++;
+          completedSteps = baseSteps + 1;
+        }
+      } else {
+        // Skip if not selected
+        newStatus.backstory = 'waiting';
+      }
+
+      // Story Arc generation
+      if (randomScenarioOptions.generateStoryArc) {
+        if (generationProgress.includes('Generating story arc')) {
+          newStatus.storyArc = 'in-progress';
+          // Calculate completed steps based on what else is enabled
+          let baseSteps = 1; // Title
+          if (randomScenarioOptions.generateStyle && newStatus.style === 'completed') baseSteps++;
+          if (randomScenarioOptions.generateCharacters && newStatus.characters === 'completed') baseSteps++;
+          if (randomScenarioOptions.generateBackstory && newStatus.backstory === 'completed') baseSteps++;
+          completedSteps = baseSteps;
+          
+          // Extract story arc preview if available
+          if (generationProgress.includes('Generating story arc...\n')) {
+            const parts = generationProgress.split('Generating story arc...\n');
+            if (parts.length > 1) {
+              const preview = parts[1].trim();
+              setStoryArcValue(preview.length > 50 ? preview.substring(0, 50) + "..." : preview);
+            }
+          }
+        } else if ((newStatus.backstory === 'completed' || !randomScenarioOptions.generateBackstory) && 
+                  (newStatus.characters === 'completed' || !randomScenarioOptions.generateCharacters) && 
+                  (newStatus.style === 'completed' || !randomScenarioOptions.generateStyle) &&
+                  !generationProgress.includes('Generating writing style') &&
+                  !generationProgress.includes('Generating protagonist character') &&
+                  !generationProgress.includes('Generating antagonist character') &&
+                  !generationProgress.includes('Generating backstory')) {
+          newStatus.storyArc = 'completed';
+          completedSteps = totalSteps;
+        }
+      } else {
+        // Skip if not selected
+        newStatus.storyArc = 'waiting';
+      }
+
+      // Check if generation is complete - if Updating scenario appears or all selected steps are complete
+      if (generationProgress.includes('Updating scenario')) {
         newStatus.isComplete = true;
         completedSteps = totalSteps;
+      } else {
+        // Check if all selected steps are completed
+        const allComplete = 
+          newStatus.title === 'completed' &&
+          (!randomScenarioOptions.generateStyle || newStatus.style === 'completed') &&
+          (!randomScenarioOptions.generateCharacters || newStatus.characters === 'completed') &&
+          (!randomScenarioOptions.generateBackstory || newStatus.backstory === 'completed') &&
+          (!randomScenarioOptions.generateStoryArc || newStatus.storyArc === 'completed');
+        
+        if (allComplete && !isGeneratingScenario) {
+          newStatus.isComplete = true;
+          completedSteps = totalSteps;
+        }
       }
-    }
 
-    // Calculate percentage based on steps
-    percent = totalSteps > 0 ? (completedSteps / totalSteps) * 100 : 0;
-
-    setGenerationStatus(newStatus);
-    setCompletionPercent(percent);
+      // Calculate percentage based on steps
+      const percent = totalSteps > 0 ? (completedSteps / totalSteps) * 100 : 0;
+      setCompletionPercent(percent);
+      return newStatus;
+    });
   }, [generationProgress, isGeneratingScenario, randomScenarioName, randomScenarioOptions]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+  }, []);
 
   // Generate SVG icon based on status
   const renderStatusIcon = (status: GenerationStage) => {

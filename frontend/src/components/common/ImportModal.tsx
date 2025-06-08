@@ -49,7 +49,7 @@ const ImportModal: React.FC<ImportModalProps> = ({
 
   // Initialize selected items when scenario content changes
   useEffect(() => {
-    if (scenarioContent && renderCheckboxes && getCheckboxItems) {
+    if (scenarioContent && renderCheckboxes) {
       const items = getCheckboxItems(scenarioContent);
       const initialSelectedState: {[key: string]: boolean} = {};
       items.forEach(item => {
@@ -60,7 +60,7 @@ const ImportModal: React.FC<ImportModalProps> = ({
       // Clear selected items for non-checkbox mode
       setSelectedItems({});
     }
-  }, [scenarioContent, renderCheckboxes]); // Removed getCheckboxItems from dependencies
+  }, [scenarioContent, renderCheckboxes]); // Added getCheckboxItems back to dependencies since we're using it directly
 
   // Reset state when modal opens/closes
   useEffect(() => {
@@ -101,14 +101,20 @@ const ImportModal: React.FC<ImportModalProps> = ({
     return words.slice(0, wordCount).join(' ') + '...';
   };
 
+  // Memoize the expensive operations with getCheckboxItems function
+  const getCheckboxItemsMemoized = useCallback((scenario: any) => {
+    if (!getCheckboxItems || !scenario) return [];
+    return getCheckboxItems(scenario);
+  }, [getCheckboxItems]);
+
   const handleImport = () => {
     if (!scenarioContent) return;
     
     try {
       let contentToImport;
-      if (renderCheckboxes && getCheckboxItems) {
+      if (renderCheckboxes) {
         // Filter items based on checkbox selection
-        const allItems = getCheckboxItems(scenarioContent);
+        const allItems = getCheckboxItemsMemoized(scenarioContent);
         const selectedItemsList = allItems.filter(item => selectedItems[item.id]);
         contentToImport = selectedItemsList;
       } else {
@@ -130,10 +136,10 @@ const ImportModal: React.FC<ImportModalProps> = ({
     }));
   };
 
-  const renderItemCheckboxes = () => {
-    if (!renderCheckboxes || !scenarioContent || !getCheckboxItems) return null;
+  const renderItemCheckboxes = useCallback(() => {
+    if (!renderCheckboxes || !scenarioContent) return null;
     
-    const items = getCheckboxItems(scenarioContent);
+    const items = getCheckboxItemsMemoized(scenarioContent);
     
     return (
       <div className="checkbox-list">
@@ -155,7 +161,7 @@ const ImportModal: React.FC<ImportModalProps> = ({
         )}
       </div>
     );
-  };
+  }, [renderCheckboxes, scenarioContent, getCheckboxItemsMemoized, itemType, selectedItems, renderItemLabel]);
 
   return (
     <Modal 

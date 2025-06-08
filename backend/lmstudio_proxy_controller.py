@@ -1,7 +1,7 @@
 import requests
 from flask import Blueprint, Response, request, stream_with_context
 
-LMSTUDIO_BASE_URL = 'http://localhost:1234/v1'
+LMSTUDIO_BASE_URL = 'http://192.168.32.1:1234/v1'
 
 lmstudio_proxy = Blueprint('lmstudio_proxy', __name__)
 

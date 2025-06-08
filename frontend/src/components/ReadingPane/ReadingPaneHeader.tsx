@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useImperativeHandle } from 'react';
+import React, { useEffect, useImperativeHandle, useState } from 'react';
 import { fetchDBStories, saveDBStory } from '../../services/scenario';
 import ActionButton from '../common/ActionButton';
 import './ReadingPane.css';
@@ -16,6 +16,10 @@ interface ReadingPaneHeaderProps {
   isGeneratedStory?: boolean;
   displaySource: 'generated' | 'database' | 'none';
   isStoryDropdownDisabled?: boolean;
+  fontFamily: string;
+  fontSize: string;
+  setFontFamily: (font: string) => void;
+  setFontSize: (size: string) => void;
 }
 
 const fontOptions = [
@@ -38,19 +42,19 @@ const ReadingPaneHeader = React.forwardRef<any, ReadingPaneHeaderProps>((props, 
     currentScenario,
     displayContent,
     onStorySelectedFromDb,
-    onFontChange,
     onGenerateStory,
     onCancelGeneration,
     isGenerating,
     canSubmit,
     onSubmit,
-    isGeneratedStory,
     displaySource,
     isStoryDropdownDisabled = false,
+    fontFamily,
+    fontSize,
+    setFontFamily,
+    setFontSize,
   } = props;
 
-  const [fontFamily, setFontFamily] = useState<string>('Georgia');
-  const [fontSize, setFontSize] = useState<string>('16px');
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [loadingVersions, setLoadingVersions] = useState<boolean>(false);
@@ -94,10 +98,6 @@ const ReadingPaneHeader = React.forwardRef<any, ReadingPaneHeaderProps>((props, 
       onStorySelectedFromDb(story.text, story.id, story.created_at);
     }
   }, [selectedDbStoryId, dbStories, onStorySelectedFromDb]);
-
-  useEffect(() => {
-    if (onFontChange) onFontChange(fontFamily, fontSize);
-  }, [fontFamily, fontSize, onFontChange]);
 
   useEffect(() => {
     setHasUnsavedChanges(true);

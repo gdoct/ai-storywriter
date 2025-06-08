@@ -50,6 +50,19 @@ def recreate_db():
         )
     ''')
     
+    # Settings table for LLM backend configuration
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS settings (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id TEXT,
+            backend_type TEXT NOT NULL,
+            config_json TEXT,
+            is_active INTEGER DEFAULT 1,
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+            updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(user_id) REFERENCES users(id)
+        )
+    ''')
     conn.commit()
     conn.close()
     print("Database created successfully with UUID-based schema")

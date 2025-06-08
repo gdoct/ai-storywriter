@@ -64,6 +64,8 @@ const ReadingPane: React.FC<ReadingPaneProps> = ({
   const headerRef = React.useRef<ReadingPaneHeaderRef>(null);
   // Global state for the currently active tab's ID (could be from any scenario)
   const [activeTabId, setActiveTabId] = useState<string | null>(null);
+  // Ref to track which scenarios already have tabs
+  const scenariosWithTabsRef = React.useRef<Set<string>>(new Set());
 
   // Derived state: tabs for the current scenario
   const [scenarioTabs, setScenarioTabs] = useState<Tab[]>([]);
@@ -71,20 +73,18 @@ const ReadingPane: React.FC<ReadingPaneProps> = ({
   const [activeScenarioTabId, setActiveScenarioTabId] = useState<string | null>(null);
 
   // Default font settings for new tabs
-  const [defaultFontFamily, setDefaultFontFamily] = useState<string>('Georgia');
-  const [defaultFontSize, setDefaultFontSize] = useState<string>('16px');
+  const [fontFamily, setFontFamily] = useState<string>('Georgia');
+  const [fontSize, setFontSize] = useState<string>('16px');
 
   // Story generation state
   const [isGeneratingGlobal, setIsGeneratingGlobal] = useState<boolean>(false);
   const [cancelGeneration, setCancelGeneration] = useState<(() => void) | null>(null);
 
   // Effect to manage tabs based on currentScenario
- useEffect(() => {
+  useEffect(() => {
     if (!currentScenario) {
       setScenarioTabs([]);
       setActiveScenarioTabId(null);
-      // If activeTabId was for a scenario that's no longer current, it might need clearing
-      // or we rely on user interaction to switch. For now, keep global activeTabId.
       return;
     }
 
@@ -96,42 +96,50 @@ const ReadingPane: React.FC<ReadingPaneProps> = ({
       const globalActiveTabIsForCurrentScenario = tabsForCurrentScenario.find(t => t.id === activeTabId);
 
       if (globalActiveTabIsForCurrentScenario) {
-        // Global active tab is one of the current scenario's tabs. Ensure scenario-specific active tab is synced.
-        if (activeScenarioTabId !== activeTabId) { // Avoid unnecessary re-renders if already synced
+        if (activeScenarioTabId !== activeTabId) {
           setActiveScenarioTabId(activeTabId);
         }
       } else {
-        // Global active tab is not for this scenario (or is null), or scenario-specific active tab is not set.
-        // Make the first tab of this scenario active.
         const firstTab = tabsForCurrentScenario[0];
         setActiveScenarioTabId(firstTab.id);
-        setActiveTabId(firstTab.id); // Also update the global active tab to keep them in sync.
+        setActiveTabId(firstTab.id);
       }
     } else {
-      // No tabs exist for the current scenario.
-      setActiveScenarioTabId(null); // Clear scenario-specific active tab.
-
-      // If initial content is provided for this scenario, and no tab for this scenario exists yet, create one.
-      // Check !tabs.some(t => t.scenarioId === currentScenarioId) to ensure we only create an initial tab once per scenario load.
-      if (content && currentScenarioId && !tabs.some(t => t.scenarioId === currentScenarioId)) {
-        const newTabId = generateTabId(`initial-${currentScenarioId}`);
-        const initialTab: Tab = {
-          id: newTabId,
-          title: currentTimestamp ? `DB: ${formatDateForTabTitle(currentTimestamp)}` : `Story 1`,
-          content: content,
-          source: currentTimestamp ? 'database' : 'none',
-          scenarioId: currentScenarioId,
-          dbStoryId: currentTimestamp ? undefined : null, // dbStoryId from timestamp is not directly available here
-          fontFamily: defaultFontFamily,
-          fontSize: defaultFontSize,
-          isGenerating: false,
-        };
-        setTabs(prevGlobalTabs => [...prevGlobalTabs, initialTab]);
-        setActiveTabId(newTabId); // Make the new initial tab globally active; effect will sync activeScenarioTabId
-        if (onStoryGenerated) onStoryGenerated(initialTab.content);
-      }
+      setActiveScenarioTabId(null);
     }
-  }, [currentScenario, content, currentTimestamp, tabs, activeTabId, defaultFontFamily, defaultFontSize, onStoryGenerated, activeScenarioTabId]);
+  }, [currentScenario, activeTabId, activeScenarioTabId, tabs]);
+
+  // Separate useEffect for creating initial tabs
+  useEffect(() => {
+    if (!currentScenario || !content) return;
+    
+    const currentScenarioId = currentScenario.id;
+    
+    // Only create a tab if we haven't already created one for this scenario
+    if (!scenariosWithTabsRef.current.has(currentScenarioId)) {
+      const newTabId = generateTabId(`initial-${currentScenarioId}`);
+      const initialTab: Tab = {
+        id: newTabId,
+        title: currentTimestamp ? `DB: ${formatDateForTabTitle(currentTimestamp)}` : `Story 1`,
+        content: content,
+        source: currentTimestamp ? 'database' : 'none',
+        scenarioId: currentScenarioId,
+        dbStoryId: currentTimestamp ? undefined : null,
+        fontFamily: fontFamily,
+        fontSize: fontSize,
+        isGenerating: false,
+      };
+      
+      setTabs(prevGlobalTabs => [...prevGlobalTabs, initialTab]);
+      setActiveTabId(newTabId);
+      
+      // Mark this scenario as having tabs now
+      scenariosWithTabsRef.current.add(currentScenarioId);
+      
+      // Notify parent if this is a new tab addition
+      if (onStoryGenerated) onStoryGenerated(initialTab.content);
+    }
+  }, [currentScenario, content, currentTimestamp, fontFamily, fontSize, onStoryGenerated]);
 
   const activeScenarioTab = scenarioTabs.find(t => t.id === activeScenarioTabId);
 
@@ -167,8 +175,8 @@ const ReadingPane: React.FC<ReadingPaneProps> = ({
       content: '',
       source: 'generated',
       scenarioId: currentScenario.id,
-      fontFamily: defaultFontFamily,
-      fontSize: defaultFontSize,
+      fontFamily: fontFamily,
+      fontSize: fontSize,
       isGenerating: true,
     };
 
@@ -216,16 +224,28 @@ const ReadingPane: React.FC<ReadingPaneProps> = ({
     if (onSubmit) onSubmit();
   };
 
-  const handleFontChange = (family: string, size: string) => {
-    setDefaultFontFamily(family);
-    setDefaultFontSize(size);
-    if (activeScenarioTabId) {
-      setTabs(prevGlobalTabs =>
-        prevGlobalTabs.map(t =>
-          t.id === activeScenarioTabId ? { ...t, fontFamily: family, fontSize: size } : t
-        )
-      );
-    }
+  const handleSetFontFamily = (family: string) => {
+    setFontFamily(prev => {
+      if (prev !== family) {
+        if (activeScenarioTabId) {
+          setTabs(prevTabs => prevTabs.map(t => t.id === activeScenarioTabId ? { ...t, fontFamily: family } : t));
+        }
+        return family;
+      }
+      return prev;
+    });
+  };
+
+  const handleSetFontSize = (size: string) => {
+    setFontSize(prev => {
+      if (prev !== size) {
+        if (activeScenarioTabId) {
+          setTabs(prevTabs => prevTabs.map(t => t.id === activeScenarioTabId ? { ...t, fontSize: size } : t));
+        }
+        return size;
+      }
+      return prev;
+    });
   };
 
   const handleSelectTab = (tabId: string) => {
@@ -295,8 +315,8 @@ const ReadingPane: React.FC<ReadingPaneProps> = ({
         source: 'database',
         scenarioId: currentScenario.id,
         dbStoryId: dbStoryId,
-        fontFamily: defaultFontFamily,
-        fontSize: defaultFontSize,
+        fontFamily: fontFamily,
+        fontSize: fontSize,
         isGenerating: false,
       };
       setTabs(prevGlobalTabs => [...prevGlobalTabs, newDbTab]);
@@ -314,14 +334,17 @@ const ReadingPane: React.FC<ReadingPaneProps> = ({
         currentScenario={currentScenario}
         displayContent={activeScenarioTab?.content || ''}
         onStorySelectedFromDb={handleDbStorySelected}
-        onFontChange={handleFontChange}
         onGenerateStory={handleGenerateStory}
         onCancelGeneration={handleCancelGeneration}
         isGenerating={isGeneratingGlobal}
         canSubmit={canSubmit}
-        onSubmit={onSubmit} // This is the parent's onSubmit, used to show/hide generate button
+        onSubmit={onSubmit}
         displaySource={activeScenarioTab?.source || 'none'}
         isStoryDropdownDisabled={isStoryDropdownDisabled || isGeneratingGlobal}
+        fontFamily={fontFamily}
+        fontSize={fontSize}
+        setFontFamily={handleSetFontFamily}
+        setFontSize={handleSetFontSize}
       />
 
       <div className="tabs-container">
@@ -341,8 +364,8 @@ const ReadingPane: React.FC<ReadingPaneProps> = ({
       <div
         className="reading-content"
         style={{
-          fontSize: activeScenarioTab?.fontSize || defaultFontSize,
-          fontFamily: activeScenarioTab?.fontFamily || defaultFontFamily,
+          fontSize: activeScenarioTab?.fontSize || fontSize,
+          fontFamily: activeScenarioTab?.fontFamily || fontFamily,
         }}
       >
         {activeScenarioTab && activeScenarioTab.content ? (

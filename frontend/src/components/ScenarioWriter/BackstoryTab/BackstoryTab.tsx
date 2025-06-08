@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { generateBackstory, rewriteBackstory } from '../../../services/storyGenerator';
 import { Character, Scenario } from '../../../types/ScenarioTypes';
 import ActionButton from '../../common/ActionButton';
 import ImportButton from '../../common/ImportButton';
@@ -11,6 +10,12 @@ const BackstoryTab: React.FC<TabProps> = ({ content, updateContent, currentScena
   const [showImportModal, setShowImportModal] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [cancelGeneration, setCancelGeneration] = useState<(() => void) | null>(null);
+  const [draft, setDraft] = useState(content);
+
+  // Keep draft in sync with content when not generating
+  React.useEffect(() => {
+    if (!isGenerating) setDraft(content);
+  }, [content, isGenerating]);
   
   // Helper to create a temporary scenario object
   const createTemporaryScenario = (): Scenario => {
@@ -47,35 +52,84 @@ const BackstoryTab: React.FC<TabProps> = ({ content, updateContent, currentScena
   const handleGenerateRandomBackstory = async () => {
     console.log('Generate random backstory button clicked');
     const temporaryScenario = createTemporaryScenario();
-
     try {
       setIsGenerating(true);
+      setDraft(''); // Clear the draft immediately
       
-      // Debug: Log the scenario to verify it has all required fields
-      console.log('Generating backstory with scenario:', temporaryScenario);
+      // Create a direct function call to the backend that mimics ChatTab's approach
+      const prompt = `Generate a backstory for the following scenario, providing all necessary details to understand the characters and plot. Do not include any meta-commentary or formatting.\n\nScenario:\n${JSON.stringify(temporaryScenario, null, 2)}`;
       
-      const generationResult = await generateBackstory(temporaryScenario, {
-        onProgress: (generatedText) => {
-          // Update the backstory text while it's being generated
-          updateContent(generatedText);
-        }
+      // Prepare payload like in ChatTab
+      const payload = {
+        model: undefined, // let backend use default
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0.7,
+        max_tokens: 1000
+      };
+      
+      // Direct fetch like in ChatTab
+      const response = await fetch('/proxy/llm/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
       });
-
-      // Store the cancel function to enable cancellation
-      setCancelGeneration(() => generationResult.cancelGeneration);
       
-      try {
-        // Wait for the generation to complete
-        const generatedBackstory = await generationResult.result;
+      if (!response.body) throw new Error('No response body');
+      
+      // Get a reference to the cancel function
+      let isCancelled = false;
+      setCancelGeneration(() => () => { isCancelled = true; });
+      
+      // Read the stream directly like in ChatTab
+      const reader = response.body.getReader();
+      let generatedText = '';
+      let done = false;
+      
+      while (!done && !isCancelled) {
+        const { value, done: doneReading } = await reader.read();
+        done = doneReading;
         
-        // Update the content with the generated backstory
-        updateContent(generatedBackstory);
-      } catch (error) {
-        // If we get an error, it might be due to cancellation
-        // In that case, we keep the partially generated text that was 
-        // already updated through onProgress
-        console.log('Backstory generation was interrupted:', error);
+        if (value) {
+          const chunk = new TextDecoder().decode(value);
+          
+          // Process in the same way as ChatTab
+          chunk.split('\n').forEach(line => {
+            if (line.startsWith('data: ')) {
+              const data = line.slice(6);
+              if (data === '[DONE]') return;
+              
+              try {
+                const json = JSON.parse(data);
+                const choices = json.choices || [];
+                
+                for (const choice of choices) {
+                  const delta = choice.delta || {};
+                  const content = delta.content;
+                  
+                  if (content) {
+                    // Key difference: Update generatedText AND set draft state immediately
+                    generatedText += content;
+                    setDraft(generatedText);
+                  }
+                }
+              } catch (e) {
+                // Not JSON, ignore
+              }
+            }
+          });
+        }
       }
+      
+      if (!isCancelled) {
+        // When done and not cancelled, update the content with the final text
+        updateContent(generatedText);
+      } else {
+        // If cancelled, update with what was generated so far
+        updateContent(generatedText);
+      }
+      
     } catch (error) {
       console.error('Error generating backstory:', error);
     } finally {
@@ -86,43 +140,96 @@ const BackstoryTab: React.FC<TabProps> = ({ content, updateContent, currentScena
 
   const handleRewriteBackstory = async () => {
     console.log('Rewrite backstory button clicked');
-    
-    // Only proceed if there's actual content to rewrite
     if (!content || content.trim() === '') {
       console.log('No backstory to rewrite');
       return;
     }
-    
     const temporaryScenario = createTemporaryScenario();
-
     try {
       setIsGenerating(true);
+      setDraft('');
       
-      // Debug: Log the scenario to verify it has all required fields
-      console.log('Rewriting backstory with scenario:', temporaryScenario);
+      // Create a direct function call to the backend that mimics ChatTab's approach
+      const prompt = `You are a masterful storyteller specializing in improving existing content in the genre ${temporaryScenario.writingStyle?.genre || "General Fiction"}. Rewrite the following backstory:\n\n` +
+                   `"${temporaryScenario.backstory || ""}"\n\n` +
+                   `Keep the core elements of the backstory but make it short and high-level. improve it by:\n` +
+                   `- Making it clear and structured\n` +
+                   `- Keeping it short and high-level (only add details that are needed for clarity)\n` +
+                   `- Preserving all key plot points and character relationships\n` +
+                   `- Write in a neutral tone, as if it's the back cover of a book. \n\n` +
+                   `Do not include any markdown, formatting, or meta-commentary - only the rewritten backstory itself.`;
       
-      const generationResult = await rewriteBackstory(temporaryScenario, {
-        onProgress: (generatedText) => {
-          // Update the backstory text while it's being rewritten
-          updateContent(generatedText);
-        }
+      // Prepare payload like in ChatTab
+      const payload = {
+        model: undefined, // let backend use default
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0.7,
+        max_tokens: 1000
+      };
+      
+      // Direct fetch like in ChatTab
+      const response = await fetch('/proxy/llm/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
       });
-
-      // Store the cancel function to enable cancellation
-      setCancelGeneration(() => generationResult.cancelGeneration);
       
-      try {
-        // Wait for the generation to complete
-        const rewrittenBackstory = await generationResult.result;
+      if (!response.body) throw new Error('No response body');
+      
+      // Get a reference to the cancel function
+      let isCancelled = false;
+      setCancelGeneration(() => () => { isCancelled = true; });
+      
+      // Read the stream directly like in ChatTab
+      const reader = response.body.getReader();
+      let rewrittenText = '';
+      let done = false;
+      
+      while (!done && !isCancelled) {
+        const { value, done: doneReading } = await reader.read();
+        done = doneReading;
         
-        // Update the content with the rewritten backstory
-        updateContent(rewrittenBackstory);
-      } catch (error) {
-        // If we get an error, it might be due to cancellation
-        // In that case, we keep the partially generated text that was 
-        // already updated through onProgress
-        console.log('Backstory rewriting was interrupted:', error);
+        if (value) {
+          const chunk = new TextDecoder().decode(value);
+          
+          // Process in the same way as ChatTab
+          chunk.split('\n').forEach(line => {
+            if (line.startsWith('data: ')) {
+              const data = line.slice(6);
+              if (data === '[DONE]') return;
+              
+              try {
+                const json = JSON.parse(data);
+                const choices = json.choices || [];
+                
+                for (const choice of choices) {
+                  const delta = choice.delta || {};
+                  const content = delta.content;
+                  
+                  if (content) {
+                    // Key difference: Update rewrittenText AND set draft state immediately
+                    rewrittenText += content;
+                    setDraft(rewrittenText);
+                  }
+                }
+              } catch (e) {
+                // Not JSON, ignore
+              }
+            }
+          });
+        }
       }
+      
+      if (!isCancelled) {
+        // When done and not cancelled, update the content with the final text
+        updateContent(rewrittenText);
+      } else {
+        // If cancelled, update with what was generated so far
+        updateContent(rewrittenText);
+      }
+      
     } catch (error) {
       console.error('Error rewriting backstory:', error);
     } finally {
@@ -192,7 +299,7 @@ const BackstoryTab: React.FC<TabProps> = ({ content, updateContent, currentScena
       </div>
       <p className="style-tab-description">Provide context and background information for your story here. When does the story happen? Where does it take place? Is there history to consider?</p>
       <TabContentArea 
-        content={content} 
+        content={isGenerating ? draft : content} 
         updateContent={updateContent}
         placeholder="Write your backstory here... (optional)"
       />

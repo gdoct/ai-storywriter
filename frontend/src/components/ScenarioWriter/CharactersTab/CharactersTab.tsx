@@ -261,53 +261,6 @@ const CharactersTab: React.FC<TabProps> = ({ content, updateContent, currentScen
     </svg>
   );
 
-  // Styles for character type dropdown
-  const dropdownStyles = {
-    position: 'absolute' as const,
-    top: '100%',
-    left: '0',
-    backgroundColor: '#23272e',
-    color: '#e6e6e6',
-    boxShadow: '0 6px 24px rgba(0,0,0,0.32)',
-    borderRadius: '10px',
-    border: '1.5px solid #353b45',
-    overflow: 'hidden',
-    zIndex: 20,
-    width: '220px',
-    marginTop: '8px',
-    fontSize: '1rem',
-    fontFamily: 'inherit',
-    padding: '0.5rem 0',
-    transition: 'box-shadow 0.2s',
-  };
-  
-  const dropdownOptionStyles = {
-    padding: '12px 20px',
-    cursor: 'pointer',
-    transition: 'background 0.18s, color 0.18s',
-    display: 'flex',
-    alignItems: 'center',
-    borderLeft: '4px solid transparent',
-    fontWeight: 500,
-    color: '#e6e6e6',
-    background: 'none',
-  };
-
-  const protagonistOptionStyles = {
-    ...dropdownOptionStyles,
-    borderLeftColor: '#4caf50',
-  };
-  
-  const antagonistOptionStyles = {
-    ...dropdownOptionStyles,
-    borderLeftColor: '#ff6b6b',
-  };
-  
-  const supportingOptionStyles = {
-    ...dropdownOptionStyles,
-    borderLeftColor: '#61dafb',
-  };
-
   return (
     <div className="tab-container scenario-editor-panel">
       <div className="scenario-tab-title">

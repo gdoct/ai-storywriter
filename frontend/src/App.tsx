@@ -10,8 +10,14 @@ import { AuthProvider } from './services/AuthContext';
 // AppContent component to use the useRoutes hook (it must be used inside Router context)
 const AppContent = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const routes = getRoutes({ setIsLoading });
+  const [currentSeed, setCurrentSeed] = useState<number | null>(null);
+  const routes = getRoutes({ setIsLoading, seed: currentSeed });
   const routeElements = useRoutes(routes);
+
+  // Handler for seed changes from Footer
+  const handleSeedChange = (seed: number | null) => {
+    setCurrentSeed(seed);
+  };
 
   return (
     <AuthProvider>
@@ -19,7 +25,7 @@ const AppContent = () => {
       <div className="main-content">
         {routeElements}
       </div>
-      <Footer isLoading={isLoading} />
+      <Footer isLoading={isLoading} onSeedChange={handleSeedChange} />
     </AuthProvider>
   );
 };

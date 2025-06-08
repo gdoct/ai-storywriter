@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { getLMStudioConfig, updateLMStudioConfig } from '../../services/settings';
+import { getLLMStatus } from '../../services/llmBackend';
+import { getSavedSettings } from '../../services/settings';
 import './Footer.css';
 
 interface FooterProps {
@@ -7,48 +8,67 @@ interface FooterProps {
   onSeedChange?: (seed: number | null) => void;
 }
 
-const Footer: React.FC<FooterProps> = ({ isLoading }) => {
+const Footer: React.FC<FooterProps> = ({ isLoading, onSeedChange }) => {
   const [temperature, setTemperature] = useState(0.8);
-  const [isLMStudioConnected, setIsLMStudioConnected] = useState(false);
-  const [lmStudioModel, setLMStudioModel] = useState('');
+  const [isLLMConnected, setIsLLMConnected] = useState(false);
+  const [llmModel, setLLMModel] = useState('');
+  const [backendType, setBackendType] = useState('');
   const [seed, setSeed] = useState<number | null>(null);
   const [isRandomSeed, setIsRandomSeed] = useState(true);
 
-  // Load the current temperature setting and check LM Studio connectivity on mount
+  // Use a ref to track previous loading state
+  const prevLoadingRef = React.useRef(isLoading);
+
+  // Load the current temperature setting and check LLM backend connectivity on mount
   useEffect(() => {
-    const config = getLMStudioConfig();
-    // Try to get saved temperature or default to 0.8
+    // Try to get saved temperature from localStorage (fallback for compatibility)
     const savedTemp = localStorage.getItem('storywriter_temperature');
     if (savedTemp) {
       setTemperature(parseFloat(savedTemp));
     }
     
-    // Set seed from config if not random
-    if (config.seed !== undefined && config.seed !== null) {
-      setSeed(config.seed);
-    }
+    // Get settings and check backend connection
+    loadSettingsAndCheckStatus();
     
-    // Check if LM Studio is available
-    checkLMStudioConnection(config.baseUrl);
+    // Set up interval to periodically check connection status
+    const intervalId = setInterval(loadSettingsAndCheckStatus, 30000); // check every 30 seconds
+    
+    return () => {
+      clearInterval(intervalId); // Clean up interval on component unmount
+    };
   }, []);
-
-  // Function to check LM Studio connection
-  const checkLMStudioConnection = async (baseUrl: string) => {
+  
+  const loadSettingsAndCheckStatus = async () => {
     try {
-      const response = await fetch(`${baseUrl}/v1/models`);
-      if (response.ok) {
-        setIsLMStudioConnected(true);
-        const data = await response.json();
-        if (data.data && data.data.length > 0) {
-          setLMStudioModel(data.data[0].id);
+      // Check LLM connection status
+      const status = await getLLMStatus();
+      setIsLLMConnected(status.isConnected);
+      
+      if (status.backendType) {
+        setBackendType(status.backendType);
+      }
+      
+      if (status.modelName) {
+        setLLMModel(status.modelName);
+      }
+      
+      // Only fetch settings if we don't have enough info from status
+      if (!status.backendType || !status.modelName) {
+        const settings = await getSavedSettings();
+        
+        if (settings) {
+          if (!status.backendType) {
+            setBackendType(settings.backendType);
+          }
+          
+          if (!status.modelName && settings.defaultModel) {
+            setLLMModel(settings.defaultModel);
+          }
         }
-      } else {
-        setIsLMStudioConnected(false);
-        setLMStudioModel('');
       }
     } catch (error) {
-      setIsLMStudioConnected(false);
-      setLMStudioModel('');
+      console.error("Failed to load settings or check status:", error);
+      setIsLLMConnected(false);
     }
   };
 
@@ -63,8 +83,11 @@ const Footer: React.FC<FooterProps> = ({ isLoading }) => {
   // Handle seed change
   const handleSeedChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newSeed = parseInt(e.target.value, 10);
-    setSeed(isNaN(newSeed) ? null : newSeed);
-    updateLMStudioConfig({ seed: isNaN(newSeed) ? null : newSeed });
+    const seedValue = isNaN(newSeed) ? null : newSeed;
+    setSeed(seedValue);
+    if (onSeedChange) {
+      onSeedChange(seedValue);
+    }
   };
 
   // Handle random seed checkbox
@@ -75,23 +98,56 @@ const Footer: React.FC<FooterProps> = ({ isLoading }) => {
     if (isRandom) {
       // If random is checked, set seed to null in config
       setSeed(null);
-      updateLMStudioConfig({ seed: null });
+      if (onSeedChange) {
+        onSeedChange(null);
+      }
     } else if (seed === null) {
       // If random is unchecked and no seed is set, generate a random seed as starting point
       const randomSeed = Math.floor(Math.random() * 1000000);
       setSeed(randomSeed);
-      updateLMStudioConfig({ seed: randomSeed });
+      if (onSeedChange) {
+        onSeedChange(randomSeed);
+      }
     }
   };
   
-  // Reset seed for new story generation - can be called from parent component
+  // Reset seed for new story generation when loading finishes
   useEffect(() => {
-    if (isRandomSeed && !isLoading) {
+    // Only generate a new seed when loading changes from true to false
+    if (prevLoadingRef.current && !isLoading && isRandomSeed) {
       const randomSeed = Math.floor(Math.random() * 1000000);
       setSeed(randomSeed);
-      updateLMStudioConfig({ seed: isRandomSeed ? null : randomSeed });
+      if (onSeedChange) {
+        onSeedChange(randomSeed);
+      }
     }
-  }, [isLoading, isRandomSeed]);
+    
+    // Update the ref with current loading state
+    prevLoadingRef.current = isLoading;
+  }, [isLoading, isRandomSeed, onSeedChange]);
+
+  // Get display name for the model
+  const getModelDisplayName = () => {
+    if (!llmModel) return '';
+    return llmModel.split('/').pop() || llmModel;
+  };
+
+  // Format the backend type for display
+  const getBackendDisplayName = () => {
+    if (!backendType) return 'LLM';
+    
+    // Capitalize first letter and format backend type
+    switch(backendType.toLowerCase()) {
+      case 'lmstudio':
+        return 'LM Studio';
+      case 'chatgpt':
+        return 'ChatGPT';
+      case 'ollama':
+        return 'Ollama';
+      default:
+        return backendType.charAt(0).toUpperCase() + backendType.slice(1);
+    }
+  };
 
   return (
     <div className="footer">
@@ -102,8 +158,25 @@ const Footer: React.FC<FooterProps> = ({ isLoading }) => {
             <span>{isLoading ? 'Processing Request...' : 'Backend Idle'}</span>
           </div>
           <div className="status-indicator">
-            <div className={`status-dot ${isLMStudioConnected ? 'idle' : 'error'}`}></div>
-            <span>{isLMStudioConnected ? `LMStudio: ${lmStudioModel.split('/').pop() || 'Connected'}` : 'LMStudio: Disconnected'}</span>
+            <div className={`status-dot ${isLLMConnected ? 'idle' : 'error'}`}></div>
+            <span>
+              {isLLMConnected 
+                ? `${getBackendDisplayName()}: ${getModelDisplayName() || 'Connected'}` 
+                : `${getBackendDisplayName()}: Disconnected`}
+            </span>
+            <button 
+              onClick={loadSettingsAndCheckStatus} 
+              title="Refresh LLM Status"
+              style={{ 
+                background: 'none', 
+                border: 'none', 
+                cursor: 'pointer', 
+                fontSize: '12px',
+                marginLeft: '5px'
+              }}
+            >
+              ↻
+            </button>
           </div>
         </div>
         

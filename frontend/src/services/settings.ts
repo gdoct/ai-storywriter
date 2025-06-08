@@ -1,42 +1,10 @@
-import { LMStudioConfig } from '../types/LMStudioTypes';
+import { LLMConfig } from '../types/LLMTypes';
+import { fetchLLMSettings, saveLLMSettings } from './llmBackend';
 
-const SETTINGS_KEY = 'storywriter_settings';
-
-interface Settings {
-  lmStudio: LMStudioConfig;
-  // Add other settings here as needed
+export async function getSavedSettings(): Promise<LLMConfig | null> {
+  return await fetchLLMSettings();
 }
 
-const defaultSettings: Settings = {
-  lmStudio: {
-    baseUrl: '/proxy/lmstudio',
-    modelName: 'default',
-    seed: null
-  }
-};
-
-export function getSavedSettings(): Settings {
-  try {
-    const savedSettings = localStorage.getItem(SETTINGS_KEY);
-    if (savedSettings) {
-      return JSON.parse(savedSettings);
-    }
-  } catch (error) {
-    console.error('Error loading settings from localStorage:', error);
-  }
-  return defaultSettings;
-}
-
-export function saveSettings(settings: Settings): void {
-  localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
-}
-
-export function getLMStudioConfig(): LMStudioConfig {
-  return getSavedSettings().lmStudio;
-}
-
-export function updateLMStudioConfig(config: Partial<LMStudioConfig>): void {
-  const settings = getSavedSettings();
-  settings.lmStudio = { ...settings.lmStudio, ...config };
-  saveSettings(settings);
+export async function saveSettings(config: LLMConfig): Promise<LLMConfig | null> {
+  return await saveLLMSettings(config);
 }

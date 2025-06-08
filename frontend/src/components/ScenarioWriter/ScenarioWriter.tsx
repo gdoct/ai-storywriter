@@ -1,6 +1,6 @@
 // filepath: /home/guido/storywriter/frontend/src/components/ScenarioWriter.tsx
 import React, { useEffect, useRef, useState } from 'react';
-import { FaBookOpen, FaEye, FaFileAlt, FaFont, FaListUl, FaProjectDiagram, FaStickyNote, FaUserFriends } from 'react-icons/fa';
+import { FaBookOpen, FaComment, FaEye, FaFileAlt, FaFont, FaProjectDiagram, FaStickyNote, FaUserFriends } from 'react-icons/fa';
 import { v4 as uuidv4 } from 'uuid';
 import { createScenario, fetchGeneratedStory, updateScenario } from '../../services/scenario';
 import './ScenarioWriter.css';
@@ -10,10 +10,11 @@ import { Scenario } from '../../types/ScenarioTypes';
 import ReadingPane from '../ReadingPane/ReadingPane';
 import BackstoryTab from './BackstoryTab/BackstoryTab';
 import CharactersTab from './CharactersTab/CharactersTab';
+import ChatTab from './ChatTab/ChatTab';
 import FileTab from './FileTab/FileTab';
 import NotesTab from './NotesTab/NotesTab';
 import PromptPreviewTab from './PromptPreviewTab/PromptPreviewTab';
-import ScenesTab from './ScenesTab/ScenesTab';
+//import ScenesTab from './ScenesTab/ScenesTab';
 import StoryArcTab from './StoryArcTab/StoryArcTab';
 import StoryStyleTab from './StoryStyleTab/StoryStyleTab';
 
@@ -21,9 +22,10 @@ interface ScenarioWriterProps {
   value: string;
   onChange: (value: string) => void;
   onSubmit?: () => void;
+  seed?: number | null;
 }
 
-const ScenarioWriter: React.FC<ScenarioWriterProps> = ({ value, onChange, onSubmit }) => {
+const ScenarioWriter: React.FC<ScenarioWriterProps> = ({ value, onChange, onSubmit, seed }) => {
   const [activeTab, setActiveTab] = useState('file');
   const [mainContent, setMainContent] = useState(value);
   const [characters, setCharacters] = useState('');
@@ -324,8 +326,9 @@ const ScenarioWriter: React.FC<ScenarioWriterProps> = ({ value, onChange, onSubm
     { id: 'characters', label: 'Characters', icon: <FaUserFriends /> },
     { id: 'backstory', label: 'Backstory', icon: <FaBookOpen /> },
     { id: 'storyArc', label: 'Story Arc', icon: <FaProjectDiagram /> },
-    { id: 'scenes', label: 'Scenes', icon: <FaListUl /> },
+    // { id: 'scenes', label: 'Scenes', icon: <FaListUl /> },
     { id: 'notes', label: 'Notes', icon: <FaStickyNote /> },
+    { id: 'chat', label: 'Chat', icon: <FaComment /> },
     { id: 'preview', label: 'Prompt Preview', icon: <FaEye /> },
   ];
 
@@ -358,14 +361,14 @@ const ScenarioWriter: React.FC<ScenarioWriterProps> = ({ value, onChange, onSubm
             currentScenario={currentScenario}
           />
         );
-      case 'scenes':
-        return (
-          <ScenesTab
-            content={scenes}
-            updateContent={(content) => updateContent('scenes', content)}
-            currentScenario={currentScenario}
-          />
-        );
+      // case 'scenes':
+      //   return (
+      //     <ScenesTab
+      //       content={scenes}
+      //       updateContent={(content) => updateContent('scenes', content)}
+      //       currentScenario={currentScenario}
+      //     />
+      //   );
       case 'backstory':
         return (
           <BackstoryTab 
@@ -387,6 +390,14 @@ const ScenarioWriter: React.FC<ScenarioWriterProps> = ({ value, onChange, onSubm
           <NotesTab 
             content={notes} 
             updateContent={(content) => updateContent('notes', content)}
+            currentScenario={currentScenario}
+          />
+        );
+      case 'chat':
+        return (
+          <ChatTab 
+            content="" 
+            updateContent={() => {}} // Chat doesn't need to update parent content
             currentScenario={currentScenario}
           />
         );

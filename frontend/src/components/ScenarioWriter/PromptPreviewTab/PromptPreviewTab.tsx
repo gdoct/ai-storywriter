@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { createScenarioPrompt } from '../../../services/storyGenerator';
+import { createScenarioPrompt } from '../../../services/llmPromptService';
 import { Scenario } from '../../../types/ScenarioTypes';
 import '../common/TabStylesNew.css';
 

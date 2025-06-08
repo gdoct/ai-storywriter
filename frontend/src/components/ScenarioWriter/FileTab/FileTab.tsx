@@ -1,27 +1,30 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { generateBackstory, generateRandomCharacter, generateRandomScenarioName, generateRandomWritingStyle, generateStoryArc } from '../../../services/storyGenerator';
 import { Scenario } from '../../../types/ScenarioTypes';
-import ActionButton from '../../common/ActionButton';
-import CreateScenarioModal from '../common/CreateScenarioModal';
-import DeleteScenarioModal from '../common/DeleteScenarioModal';
-import RandomScenarioModal from '../common/RandomScenarioModal';
-import RenameScenarioModal from '../common/RenameScenarioModal';
-import SaveAsModal from '../common/SaveAsModal';
-import SaveChangesModal from '../common/SaveChangesModal';
 import {
-    confirmDeleteScenario as confirmDeleteScenarioService,
-    confirmRenameScenario as confirmRenameScenarioService,
-    fetchScenarios as fetchScenariosService,
-    handleCancelSwitch as handleCancelSwitchService,
-    handleDiscardAndLoad as handleDiscardAndLoadService,
-    handleSaveAndLoad as handleSaveAndLoadService,
-    loadScenario as loadScenarioService
+  confirmDeleteScenario as confirmDeleteScenarioService,
+  fetchScenarios as fetchScenariosService,
+  handleCancelSwitch as handleCancelSwitchService,
+  handleDiscardAndLoad as handleDiscardAndLoadService,
+  handleSaveAndLoad as handleSaveAndLoadService,
+  loadScenario as loadScenarioService
 } from '../common/scenarioTabService';
 import '../common/TabStylesNew.css';
 import '../common/TabStylesRandom.css';
 import '../common/TabStylesSpinner.css';
 import '../common/ToggleButtonStyles.css';
-import UnsavedChangesModal from '../common/UnsavedChangesModal';
+import FileTabActions from './FileTabActions';
+import FileTabModals from './FileTabModals';
+import {
+  confirmNewScenarioService,
+  confirmRenameScenarioService as confirmRenameScenarioLogic,
+  confirmSaveAsService,
+  handleCreateNewScenarioService,
+  handleGenerateRandomScenarioService,
+  handleRandomizeScenarioService,
+  handleRenameScenarioService,
+  handleSaveAsScenarioService,
+} from './fileTabService';
+import ScenarioDropdown from './ScenarioDropdown';
 
 interface FileTabProps {
   currentScenario: Scenario | null;
@@ -151,247 +154,94 @@ const FileTab: React.FC<FileTabProps> = ({
     );
   };
 
-  const handleCreateNewScenario = () => {
-    const createAction = () => {
-      setShowTitleInput(true);
-      setShowConfirm(false);
-      
-      // Generate a default title
-      let defaultTitle = "new story";
-      const existingTitles = scenarios.map(s => s.title || '');
-      
-      if (existingTitles.includes(defaultTitle)) {
-        let counter = 1;
-        while (existingTitles.includes(`${defaultTitle} (${counter})`)) {
-          counter++;
-        }
-        defaultTitle = `${defaultTitle} (${counter})`;
-      }
-      
-      setNewTitle(defaultTitle);
-    };
+  // Replace handleCreateNewScenario with service call
+  const handleCreateNewScenario = () =>
+    handleCreateNewScenarioService({
+      isDirty,
+      setConfirmAction,
+      setShowConfirm,
+      setShowTitleInput,
+      scenarios,
+      setNewTitle,
+    });
 
-    if (isDirty) {
-      setConfirmAction(() => createAction);
-      setShowConfirm(true);
-    } else {
-      createAction();
-    }
-  };
+  // Replace handleRandomizeScenario with service call
+  const handleRandomizeScenario = () =>
+    handleRandomizeScenarioService({
+      isDirty,
+      setConfirmAction,
+      setShowConfirm,
+      currentScenario,
+      setShowRandomScenarioModal,
+    });
 
-  // Open the random scenario generation modal
-  const handleRandomizeScenario = () => {
-    const openAction = () => {
-      // Check if there is a current scenario to randomize
-      if (!currentScenario) {
-        alert('Please create or select a scenario first.');
-        return;
-      }
-      
-      setShowRandomScenarioModal(true);
-      setShowConfirm(false);
-    };
+  // Replace handleRenameScenario with service call
+  const handleRenameScenario = () =>
+    handleRenameScenarioService({
+      currentScenario,
+      setShowRenameInput,
+      setRenameTitle,
+    });
 
-    if (isDirty) {
-      setConfirmAction(() => openAction);
-      setShowConfirm(true);
-    } else {
-      openAction();
-    }
-  };
+  // Replace handleSaveAsScenario with service call
+  const handleSaveAsScenario = () =>
+    handleSaveAsScenarioService({
+      setShowSaveAsInput,
+      setSaveAsTitle,
+      currentScenario,
+    });
 
-  // Start the random scenario generation process
-  const handleGenerateRandomScenario = async (extraInstructions: string) => {
-    try {
-      // Make sure we have a current scenario to modify
-      if (!currentScenario) {
-        alert('No active scenario to randomize.');
-        setShowRandomScenarioModal(false);
-        return;
-      }
+  // Replace confirmNewScenario with service call
+  const confirmNewScenario = async () =>
+    confirmNewScenarioService({
+      newTitle,
+      setErrorMessage,
+      onNewScenario,
+      setShowTitleInput,
+      fetchScenarios,
+    });
 
-      setIsGeneratingScenario(true);
-      
-      // Create a working copy of the current scenario to modify
-      const updatedScenario = { ...currentScenario };
-      
-      // Step 1: Keep the existing name unless specifically requested to change it
-      const shouldGenerateNewName = extraInstructions.includes("rename") || 
-                                    extraInstructions.includes("new title") || 
-                                    extraInstructions.includes("new name");
-      
-      if (shouldGenerateNewName) {
-        setGenerationProgress('Generating scenario name...');
-        const nameGenerationResult = await generateRandomScenarioName({
-          onProgress: (text: string) => {
-            setRandomScenarioName(text);
-          }
-        });
-        
-        setGenerationCancelHandler(() => nameGenerationResult.cancelGeneration);
-        
-        try {
-          const name = await nameGenerationResult.result;
-          updatedScenario.title = name;
-          setRandomScenarioName(name);
-        } catch (error) {
-          console.error('Error generating scenario name:', error);
-          // Keep existing name if generation fails
-        }
-      } else {
-        setRandomScenarioName(updatedScenario.title || 'Current Scenario');
-      }
-      
-      // Step 2: Generate writing style if selected
-      if (randomScenarioOptions.generateStyle) {
-        setGenerationProgress('Generating writing style...');
-        
-        const styleGenerationResult = await generateRandomWritingStyle({
-          onProgress: (text: string) => {
-            setGenerationProgress('Generating writing style...\n' + text);
-          }
-        });
-        
-        setGenerationCancelHandler(() => styleGenerationResult.cancelGeneration);
-        
-        try {
-          const style = await styleGenerationResult.result;
-          updatedScenario.writingStyle = style;
-        } catch (error) {
-          console.error('Error generating writing style:', error);
-          if (!updatedScenario.writingStyle) {
-            updatedScenario.writingStyle = { genre: 'General Fiction' };
-          }
-        }
-      }
-      
-      // Step 3: Generate protagonist character if selected
-      if (randomScenarioOptions.generateCharacters) {
-        setGenerationProgress('Generating protagonist character...');
-        
-        const characterGenerationResult = await generateRandomCharacter(
-          updatedScenario,
-          'protagonist',
-          {
-            onProgress: (text: string) => {
-              setGenerationProgress('Generating protagonist character...\n' + text);
-            }
-          }
-        );
-        
-        setGenerationCancelHandler(() => characterGenerationResult.cancelGeneration);
-        
-        try {
-          const character = await characterGenerationResult.result;
-          console.log('Generated protagonist character:', JSON.stringify(character, null, 2));
-          character.id = Date.now().toString(36) + Math.random().toString(36).substr(2);
-          updatedScenario.characters = [character]; // Replace existing characters
-          
-          // Generate an antagonist character
-          setGenerationProgress('Generating antagonist character...');
-          
-          const antagonistGenerationResult = await generateRandomCharacter(
-            updatedScenario,
-            'antagonist',
-            {
-              onProgress: (text: string) => {
-                setGenerationProgress('Generating antagonist character...\n' + text);
-              }
-            }
-          );
-          
-          setGenerationCancelHandler(() => antagonistGenerationResult.cancelGeneration);
-          
-          try {
-            const antagonist = await antagonistGenerationResult.result;
-            console.log('Generated antagonist character:', JSON.stringify(antagonist, null, 2));
-            antagonist.id = Date.now().toString(36) + Math.random().toString(36).substr(2);
-            updatedScenario.characters.push(antagonist);
-          } catch (error) {
-            console.error('Error generating antagonist character:', error);
-            console.error('Antagonist generation error details:', error);
-          }
-        } catch (error) {
-          console.error('Error generating protagonist character:', error);
-        }
-      }
-      
-      // Step 4: Generate backstory if selected
-      if (randomScenarioOptions.generateBackstory) {
-        setGenerationProgress('Generating backstory...');
-        
-        // Add basic extra instruction processing if provided
-        if (extraInstructions) {
-          // Add a custom note to help guide the backstory generation
-          updatedScenario.notes = `Extra instructions for generation: ${extraInstructions}`;
-        }
-        
-        try {
-          const backstoryResult = await generateBackstory(updatedScenario, {
-            onProgress: (generatedText) => {
-              // Update the progress and scenario as it's generating
-              setGenerationProgress('Generating backstory...\n' + generatedText);
-              updatedScenario.backstory = generatedText;
-            }
-          });
-          
-          // Wait for the generation to complete
-          const generatedBackstory = await backstoryResult.result;
-          updatedScenario.backstory = generatedBackstory;
-          
-        } catch (error) {
-          console.error('Error generating backstory:', error);
-          updatedScenario.backstory = "Error generating backstory.";
-        }
-      }
-      
-      // Step 5: Generate story arc if selected
-      if (randomScenarioOptions.generateStoryArc) {
-        setGenerationProgress('Generating story arc...');
-        
-        try {
-          const storyArcResult = await generateStoryArc(updatedScenario, {
-            onProgress: (generatedText) => {
-              // Update the progress and scenario as it's generating
-              setGenerationProgress('Generating story arc...\n' + generatedText);
-              updatedScenario.storyarc = generatedText;
-            }
-          });
-          
-          // Wait for the generation to complete
-          const generatedStoryArc = await storyArcResult.result;
-          updatedScenario.storyarc = generatedStoryArc;
-          
-        } catch (error) {
-          console.error('Error generating story arc:', error);
-          updatedScenario.storyarc = "Error generating story arc.";
-        }
-      }
-      
-      // Update the UI with the randomized scenario (without saving to backend)
-      setGenerationProgress('Updating scenario...');
-      
-      // Update the UI with the randomized scenario
-      onLoadScenario(updatedScenario);
-      
-      // Keep the modal open to show the completed state
-      // The user will close it using the "Close" button
-      // setShowRandomScenarioModal(false);
-      
-      // Switch to the Story Style tab if the callback is available
-      if (onSwitchTab) {
-        onSwitchTab('main');
-      }
-      
-    } catch (error) {
-      console.error('Error randomizing scenario:', error);
-      alert('There was an error while randomizing the scenario. Please try again.');
-    } finally {
-      setIsGeneratingScenario(false);
-      setGenerationCancelHandler(null);
-    }
-  };
-  
+  // Replace confirmSaveAs with service call
+  const confirmSaveAs = async () =>
+    confirmSaveAsService({
+      saveAsTitle,
+      setErrorMessage,
+      scenarios,
+      currentScenario,
+      onSaveScenario,
+      setShowSaveAsInput,
+      fetchScenarios,
+      onSaveComplete,
+    });
+
+  // Replace confirmRenameScenario with service call
+  const confirmRenameScenario = async () =>
+    currentScenario &&
+    confirmRenameScenarioLogic(
+      currentScenario,
+      renameTitle,
+      scenarios,
+      setErrorMessage,
+      onLoadScenario,
+      setShowRenameInput,
+      fetchScenarios
+    );
+
+  // Fix: call handleGenerateRandomScenarioService directly (no fileTabService. prefix)
+  const handleGenerateRandomScenario = async (extraInstructions: string) =>
+    handleGenerateRandomScenarioService({
+      extraInstructions,
+      currentScenario,
+      setIsGeneratingScenario,
+      setGenerationProgress,
+      setRandomScenarioName,
+      setGenerationCancelHandler,
+      randomScenarioOptions,
+      onLoadScenario,
+      onSwitchTab,
+      setShowRandomScenarioModal,
+    });
+
   // Cancel the random scenario generation process
   const handleCancelRandomGeneration = () => {
     if (generationCancelHandler) {
@@ -405,86 +255,22 @@ const FileTab: React.FC<FileTabProps> = ({
   // Fix: fetchScenarios wrapper must be defined before use in handlers
   const fetchScenarios = () => fetchScenariosService(setScenarios);
 
-  const confirmNewScenario = async () => {
-    if (!newTitle.trim()) {
-      setErrorMessage('Title cannot be empty');
-      return;
-    }
-    try {
-      await onNewScenario(newTitle.trim());
-      setShowTitleInput(false);
-      fetchScenarios(); // Refresh the list
-    } catch (error) {
-      console.error('Failed to create new scenario:', error);
-      setErrorMessage('Failed to create scenario');
-    }
-  };
-
+  // Add missing handleSaveScenario (was lost in refactor)
   const handleSaveScenario = async () => {
     if (!currentScenario) return;
-    
     try {
       await onSaveScenario(currentScenario);
-      if (onSaveComplete) onSaveComplete(); // <-- Notify parent to reset isDirty
+      if (onSaveComplete) onSaveComplete();
     } catch (error) {
       console.error('Failed to save scenario:', error);
     }
   };
 
-  const handleSaveAsScenario = () => {
-    setShowSaveAsInput(true);
-    setSaveAsTitle(currentScenario?.title || '');
-  };
-
-  const confirmSaveAs = async () => {
-    if (!saveAsTitle.trim()) {
-      setErrorMessage('Title cannot be empty');
-      return;
-    }
-    if (scenarios.some(s => s.title === saveAsTitle && s.id !== currentScenario?.id)) {
-      setErrorMessage('A scenario with this title already exists');
-      return;
-    }
-    try {
-      if (currentScenario) {
-        const updatedScenario = { ...currentScenario, title: saveAsTitle.trim(), id: '' };
-        await onSaveScenario(updatedScenario);
-        setShowSaveAsInput(false);
-        fetchScenarios(); // Refresh the list
-        if (onSaveComplete) onSaveComplete(); // <-- Notify parent to reset isDirty
-      }
-    } catch (error) {
-      console.error('Failed to save scenario as:', error);
-      setErrorMessage('Failed to save scenario');
-    }
-  };
-
-  // Add function to handle renaming a scenario
-  const handleRenameScenario = () => {
-    if (!currentScenario) return;
-    setShowRenameInput(true);
-    setRenameTitle(currentScenario.title || '');
-  };
-
-  // Add function to handle deleting a scenario
+  // Add missing handleDeleteRequest and confirmDeleteScenario
   const handleDeleteRequest = (id: string, event?: React.MouseEvent) => {
-    if (event) {
-      event.stopPropagation(); // Prevent the click from also selecting the scenario
-    }
+    if (event) event.stopPropagation();
     setScenarioToDelete(id);
     setShowDeleteConfirm(true);
-  };
-
-  const confirmRenameScenario = async () => {
-    await confirmRenameScenarioService(
-      currentScenario,
-      renameTitle,
-      scenarios,
-      setErrorMessage,
-      onLoadScenario,
-      setShowRenameInput,
-      fetchScenarios
-    );
   };
 
   const confirmDeleteScenario = async () => {
@@ -503,185 +289,69 @@ const FileTab: React.FC<FileTabProps> = ({
       <div className="scenario-tab-title">
         Manage Scenarios
       </div>
-      <UnsavedChangesModal
-        show={showConfirm}
-        onClose={() => setShowConfirm(false)}
-        onContinue={confirmAction}
-      />
-
-      <SaveChangesModal
-        show={showSaveConfirm}
-        onClose={handleCancelSwitch}
-        onDiscard={handleDiscardAndLoad}
-        onSave={handleSaveAndLoad}
-      />
-
-      <CreateScenarioModal
-        show={showTitleInput}
-        onClose={() => {
-          setShowTitleInput(false);
-          setErrorMessage('');
-        }}
-        onCreate={confirmNewScenario}
+      <FileTabModals
+        showConfirm={showConfirm}
+        setShowConfirm={setShowConfirm}
+        confirmAction={confirmAction}
+        showSaveConfirm={showSaveConfirm}
+        handleCancelSwitch={handleCancelSwitch}
+        handleDiscardAndLoad={handleDiscardAndLoad}
+        handleSaveAndLoad={handleSaveAndLoad}
+        showTitleInput={showTitleInput}
+        setShowTitleInput={setShowTitleInput}
+        confirmNewScenario={confirmNewScenario}
         newTitle={newTitle}
         setNewTitle={setNewTitle}
         errorMessage={errorMessage}
-      />
-
-      <SaveAsModal
-        show={showSaveAsInput}
-        onClose={() => {
-          setShowSaveAsInput(false);
-          setErrorMessage('');
-        }}
-        onSave={confirmSaveAs}
+        setErrorMessage={setErrorMessage}
+        showSaveAsInput={showSaveAsInput}
+        setShowSaveAsInput={setShowSaveAsInput}
+        confirmSaveAs={confirmSaveAs}
         saveAsTitle={saveAsTitle}
         setSaveAsTitle={setSaveAsTitle}
-        errorMessage={errorMessage}
-      />
-
-      <RenameScenarioModal
-        show={showRenameInput}
-        onClose={() => {
-          setShowRenameInput(false);
-          setErrorMessage('');
-        }}
-        onRename={confirmRenameScenario}
+        showRenameInput={showRenameInput}
+        setShowRenameInput={setShowRenameInput}
+        confirmRenameScenario={confirmRenameScenario}
         renameTitle={renameTitle}
         setRenameTitle={setRenameTitle}
-        errorMessage={errorMessage}
-      />
-      {/* Random Scenario Generation Modal */}
-      <RandomScenarioModal 
-        show={showRandomScenarioModal}
-        onClose={() => setShowRandomScenarioModal(false)}
+        showRandomScenarioModal={showRandomScenarioModal}
+        setShowRandomScenarioModal={setShowRandomScenarioModal}
         currentScenario={currentScenario}
         onLoadScenario={onLoadScenario}
         isGeneratingScenario={isGeneratingScenario}
         generationProgress={generationProgress}
         randomScenarioName={randomScenarioName}
-        onGenerateRandomScenario={handleGenerateRandomScenario}
-        onCancelGeneration={handleCancelRandomGeneration}
+        handleGenerateRandomScenario={handleGenerateRandomScenario}
+        handleCancelRandomGeneration={handleCancelRandomGeneration}
         randomScenarioOptions={randomScenarioOptions}
         setRandomScenarioOptions={setRandomScenarioOptions}
+        showDeleteConfirm={showDeleteConfirm}
+        setShowDeleteConfirm={setShowDeleteConfirm}
+        confirmDeleteScenario={confirmDeleteScenario}
       />
-
-      <DeleteScenarioModal
-        show={showDeleteConfirm}
-        onClose={() => setShowDeleteConfirm(false)}
-        onDelete={confirmDeleteScenario}
-      />
-
       <div className="tab-actions file-tab-actions">
         <div className="scenario-card">
           <div className="form-field">
             <div>Load Scenario:</div>
-            <div className="scenario-select-wrapper">
-              <div className="custom-dropdown" ref={dropdownRef}>
-                <button
-                  className="dropdown-toggle tab-btn tab-btn-default"
-                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                >
-                  {selectedScenarioId
-                    ? scenarios.find(s => s.id === selectedScenarioId)?.title
-                    : "Select a scenario"}
-                  <span style={{ marginLeft: 8, color: '#90caf9' }}>▼</span>
-                </button>
-                {isDropdownOpen && (
-                  <div className="dropdown-menu" style={{
-                    background: '#23272e',
-                    color: '#e6e6e6',
-                    border: '1.5px solid #353b45',
-                    borderRadius: '10px',
-                    boxShadow: '0 6px 24px rgba(0,0,0,0.32)',
-                    marginTop: '6px',
-                    minWidth: '220px',
-                    zIndex: 30,
-                  }}>
-                    {scenarios.length === 0 && (
-                      <div className="dropdown-item disabled" style={{ color: '#888', background: 'none' }}>
-                        No scenarios found
-                      </div>
-                    )}
-                    {scenarios.map(scenario => (
-                      <div
-                        key={scenario.id}
-                        className={`dropdown-item ${scenario.id === selectedScenarioId ? 'active' : ''}`}
-                        style={{
-                          background: scenario.id === selectedScenarioId ? '#353b45' : 'none',
-                          color: '#e6e6e6',
-                          padding: '12px 18px',
-                          cursor: 'pointer',
-                          fontWeight: scenario.id === selectedScenarioId ? 600 : 500,
-                          borderLeft: scenario.id === selectedScenarioId ? '4px solid #61dafb' : '4px solid transparent',
-                          transition: 'background 0.15s, color 0.15s',
-                        }}
-                        onClick={() => {
-                          if (scenario.id !== selectedScenarioId) {
-                            setSelectedScenarioId(scenario.id);
-                          }
-                          setIsDropdownOpen(false);
-                        }}
-                        onMouseOver={e => {
-                          e.currentTarget.style.background = '#353b45';
-                          e.currentTarget.style.color = '#61dafb';
-                        }}
-                        onMouseOut={e => {
-                          e.currentTarget.style.background = scenario.id === selectedScenarioId ? '#353b45' : 'none';
-                          e.currentTarget.style.color = '#e6e6e6';
-                        }}
-                      >
-                        <span>{scenario.title || "(Untitled)"}</span>
-                        <button
-                          className="card-btn card-btn-delete"
-                          onClick={e => {
-                            e.stopPropagation();
-                            handleDeleteRequest(scenario.id);
-                          }}
-                          title="Delete scenario"
-                        >
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                            <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" fill="currentColor"/>
-                          </svg>
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-          <div className="tab-actions-group">
-            <ActionButton
-              onClick={handleRandomizeScenario}
-              label="✨ Randomize current scenario"
-              variant="success"
-              title="Completely randomize the current scenario with customizable options"
-            />
-            <ActionButton
-              onClick={handleCreateNewScenario}
-              label="Create New Scenario"
-              variant="primary"
-            />
-            <ActionButton
-              onClick={handleSaveScenario}
-              label="Save Scenario"
-              variant="primary"
-              className={!currentScenario || !isDirty ? "disabled" : ""}
-            />
-            <ActionButton
-              onClick={handleSaveAsScenario}
-              label="Save As..."
-              variant="default"
-              className={!currentScenario ? "disabled" : ""}
-            />
-            <ActionButton
-              onClick={handleRenameScenario}
-              label="Rename"
-              variant="default"
-              className={!currentScenario || !currentScenario.id ? "disabled" : ""}
+            <ScenarioDropdown
+              scenarios={scenarios}
+              selectedScenarioId={selectedScenarioId}
+              setSelectedScenarioId={setSelectedScenarioId}
+              isDropdownOpen={isDropdownOpen}
+              setIsDropdownOpen={setIsDropdownOpen}
+              dropdownRef={dropdownRef}
+              handleDeleteRequest={handleDeleteRequest}
             />
           </div>
+          <FileTabActions
+            handleRandomizeScenario={handleRandomizeScenario}
+            handleCreateNewScenario={handleCreateNewScenario}
+            handleSaveScenario={handleSaveScenario}
+            handleSaveAsScenario={handleSaveAsScenario}
+            handleRenameScenario={handleRenameScenario}
+            currentScenario={currentScenario}
+            isDirty={isDirty}
+          />
         </div>
       </div>
     </div>
