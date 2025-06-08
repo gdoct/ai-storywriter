@@ -33,29 +33,34 @@ const ImportModal: React.FC<ImportModalProps> = ({
   const [selectedItems, setSelectedItems] = useState<{[key: string]: boolean}>({});
 
   // Fetch scenario content function
-  const fetchScenarioContent = useCallback(async () => {
-    if (!selectedScenarioId || !show) return;
+  const fetchScenarioContent = useCallback(async (scenarioId: string) => {
+    if (!scenarioId) return;
     
     try {
       setLoading(true);
-      const scenario = await fetchScenarioById(selectedScenarioId);
+      const scenario = await fetchScenarioById(scenarioId);
       setScenarioContent(scenario);
-      
-      // Initialize checkboxes for items if needed
-      if (renderCheckboxes && getCheckboxItems) {
-        const items = getCheckboxItems(scenario);
-        const initialSelectedState: {[key: string]: boolean} = {};
-        items.forEach(item => {
-          initialSelectedState[item.id] = true; // Default all to checked
-        });
-        setSelectedItems(initialSelectedState);
-      }
     } catch (error) {
       console.error('Failed to fetch scenario content:', error);
     } finally {
       setLoading(false);
     }
-  }, [selectedScenarioId, renderCheckboxes, getCheckboxItems, show]);
+  }, []);
+
+  // Initialize selected items when scenario content changes
+  useEffect(() => {
+    if (scenarioContent && renderCheckboxes && getCheckboxItems) {
+      const items = getCheckboxItems(scenarioContent);
+      const initialSelectedState: {[key: string]: boolean} = {};
+      items.forEach(item => {
+        initialSelectedState[item.id] = true; // Default all to checked
+      });
+      setSelectedItems(initialSelectedState);
+    } else if (!renderCheckboxes) {
+      // Clear selected items for non-checkbox mode
+      setSelectedItems({});
+    }
+  }, [scenarioContent, renderCheckboxes]); // Removed getCheckboxItems from dependencies
 
   // Reset state when modal opens/closes
   useEffect(() => {
@@ -68,20 +73,16 @@ const ImportModal: React.FC<ImportModalProps> = ({
     }
   }, [show]);
 
-  // Only fetch content when a scenario is selected and not already loading
+  // Fetch content whenever the selected scenario changes
   useEffect(() => {
-    
-    const loadScenarioIfNeeded = async () => {
-      if (show && selectedScenarioId && !loading && !scenarioContent) {
-        await fetchScenarioContent();
-      }
-    };
-    
-    loadScenarioIfNeeded();
-    
-    return () => {
-    };
-  }, [selectedScenarioId, show, loading, scenarioContent, fetchScenarioContent]);
+    if (selectedScenarioId && show) {
+      fetchScenarioContent(selectedScenarioId);
+    } else {
+      // Clear content when no scenario is selected
+      setScenarioContent(null);
+      setSelectedItems({});
+    }
+  }, [selectedScenarioId, show, fetchScenarioContent]);
 
   const fetchScenarios = async () => {
     try {

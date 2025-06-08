@@ -440,7 +440,6 @@ const ScenarioWriter: React.FC<ScenarioWriterProps> = ({ value, onChange, onSubm
             content={generatedStory === null ? '' : generatedStory || ''}
             onSubmit={onSubmit}
             canSubmit={!!mainContent.trim() && !!currentScenario}
-            isGeneratedStory={!!generatedStory}
             currentScenario={currentScenario}
             currentTimestamp={currentStoryTimestamp}
             onStoryVersionSelect={handleStoryVersionSelect}
@@ -448,7 +447,6 @@ const ScenarioWriter: React.FC<ScenarioWriterProps> = ({ value, onChange, onSubm
               setGeneratedStory(story);
               setIsDirty(true);
             }}
-            scenes={currentScenario?.scenes || []}
             onDisableStoryDropdown={setIsStoryDropdownDisabled}
             isStoryDropdownDisabled={isStoryDropdownDisabled}
           />

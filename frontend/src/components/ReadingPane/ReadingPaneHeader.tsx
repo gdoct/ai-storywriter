@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useImperativeHandle } from 'react';
 import { fetchDBStories, saveDBStory } from '../../services/scenario';
 import ActionButton from '../common/ActionButton';
 import './ReadingPane.css';
@@ -6,7 +6,7 @@ import './ReadingPane.css';
 interface ReadingPaneHeaderProps {
   currentScenario: any;
   displayContent: string;
-  onStoryGenerated?: (story: string | null) => void;
+  onStorySelectedFromDb?: (storyText: string | null, storyId?: number | null, storyCreatedAt?: string) => void;
   onFontChange?: (fontFamily: string, fontSize: string) => void;
   onGenerateStory: () => void;
   onCancelGeneration: () => void;
@@ -16,8 +16,6 @@ interface ReadingPaneHeaderProps {
   isGeneratedStory?: boolean;
   displaySource: 'generated' | 'database' | 'none';
   isStoryDropdownDisabled?: boolean;
-  // Force reset the dropdown by providing a new value
-  resetStorySelection?: boolean; 
 }
 
 const fontOptions = [
@@ -35,21 +33,22 @@ const sizeOptions = [
   '28px', '32px', '36px', '40px', '44px', '48px',
 ];
 
-const ReadingPaneHeader: React.FC<ReadingPaneHeaderProps> = ({
-  currentScenario,
-  displayContent,
-  onStoryGenerated,
-  onFontChange,
-  onGenerateStory,
-  onCancelGeneration,
-  isGenerating,
-  canSubmit,
-  onSubmit,
-  isGeneratedStory,
-  displaySource,
-  isStoryDropdownDisabled = false,
-  resetStorySelection = false,
-}) => {
+const ReadingPaneHeader = React.forwardRef<any, ReadingPaneHeaderProps>((props, ref) => {
+  const {
+    currentScenario,
+    displayContent,
+    onStorySelectedFromDb,
+    onFontChange,
+    onGenerateStory,
+    onCancelGeneration,
+    isGenerating,
+    canSubmit,
+    onSubmit,
+    isGeneratedStory,
+    displaySource,
+    isStoryDropdownDisabled = false,
+  } = props;
+
   const [fontFamily, setFontFamily] = useState<string>('Georgia');
   const [fontSize, setFontSize] = useState<string>('16px');
   const [isSaving, setIsSaving] = useState<boolean>(false);
@@ -59,7 +58,10 @@ const ReadingPaneHeader: React.FC<ReadingPaneHeaderProps> = ({
   const [selectedDbStoryId, setSelectedDbStoryId] = useState<number | null>(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState<boolean>(false);
 
-  // Fetch DB stories when scenario changes
+  useImperativeHandle(ref, () => ({
+    resetDbStoryDropdown: () => setSelectedDbStoryId(null)
+  }));
+
   useEffect(() => {
     const fetchStories = async () => {
       if (!currentScenario || !currentScenario.id) return;
@@ -68,13 +70,9 @@ const ReadingPaneHeader: React.FC<ReadingPaneHeaderProps> = ({
         setLoadingVersions(true);
         const stories = await fetchDBStories(scenarioId);
         setDbStories(stories);
-        
-        // If we are generating, don't auto-select a story
         if (isGenerating) {
           setSelectedDbStoryId(null);
-        } 
-        // Otherwise, auto-select the first story if available
-        else if (stories.length > 0) {
+        } else if (stories.length > 0) {
           setSelectedDbStoryId(stories[0].id);
         } else {
           setSelectedDbStoryId(null);
@@ -89,41 +87,34 @@ const ReadingPaneHeader: React.FC<ReadingPaneHeaderProps> = ({
     fetchStories();
   }, [currentScenario, isGenerating]);
 
-  // Update content when DB story selection changes
   useEffect(() => {
     if (!selectedDbStoryId) return;
     const story = dbStories.find(s => s.id === selectedDbStoryId);
-    if (story && story.text && onStoryGenerated) {
-      onStoryGenerated(story.text);
+    if (story && onStorySelectedFromDb) {
+      onStorySelectedFromDb(story.text, story.id, story.created_at);
     }
-  }, [selectedDbStoryId, dbStories, onStoryGenerated]);
+  }, [selectedDbStoryId, dbStories, onStorySelectedFromDb]);
 
-  // Notify parent of font changes
   useEffect(() => {
     if (onFontChange) onFontChange(fontFamily, fontSize);
   }, [fontFamily, fontSize, onFontChange]);
 
-  // Track unsaved changes
   useEffect(() => {
     setHasUnsavedChanges(true);
   }, [displayContent]);
-  
-  // Reset story selection when generating a new story
+
   useEffect(() => {
-    // Reset dropdown when starting story generation
     if (isGenerating) {
       setSelectedDbStoryId(null);
     }
   }, [isGenerating]);
-  
-  // Also reset selection when display source changes to generated
+
   useEffect(() => {
     if (displaySource === 'generated') {
       setSelectedDbStoryId(null);
     }
   }, [displaySource]);
 
-  // Format date for display
   const formatDate = (dateString: string): string => {
     try {
       const date = new Date(dateString);
@@ -134,7 +125,6 @@ const ReadingPaneHeader: React.FC<ReadingPaneHeaderProps> = ({
     }
   };
 
-  // Save story handler
   const handleSaveStory = async () => {
     if (!currentScenario || !currentScenario.id) {
       setSaveError('No valid scenario selected');
@@ -164,7 +154,7 @@ const ReadingPaneHeader: React.FC<ReadingPaneHeaderProps> = ({
   };
 
   return (
-    <>
+    <div className="reading-pane-header">
       <div className="reading-controls">
         {onSubmit && (
           !isGenerating ? (
@@ -211,7 +201,7 @@ const ReadingPaneHeader: React.FC<ReadingPaneHeaderProps> = ({
       <div className="reading-controls">
         {currentScenario && (
           <>
-            {isGeneratedStory && displaySource === 'generated' && (
+            {displaySource === 'generated' && (
               <button
                 className="submit-btn upload-btn"
                 disabled={isSaving || !displayContent || isGenerating || !hasUnsavedChanges}
@@ -248,8 +238,7 @@ const ReadingPaneHeader: React.FC<ReadingPaneHeaderProps> = ({
                       setSelectedDbStoryId(Number(value));
                     } else {
                       setSelectedDbStoryId(null);
-                      // Clear the story content when selection is reset
-                      if (onStoryGenerated) onStoryGenerated(null);
+                      if (onStorySelectedFromDb) onStorySelectedFromDb(null);
                     }
                   }}
                   disabled={isStoryDropdownDisabled}
@@ -268,8 +257,8 @@ const ReadingPaneHeader: React.FC<ReadingPaneHeaderProps> = ({
           </>
         )}
       </div>
-    </>
+    </div>
   );
-};
+});
 
 export default ReadingPaneHeader;
