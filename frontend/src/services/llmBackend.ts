@@ -1,3 +1,6 @@
+// THIS FILE IS DEPRECATED
+// DO NOT USE THIS FILE
+
 import { LLMConfig } from '../types/LLMTypes';
 import { createWritingStylePrompt } from './llmPromptService';
 

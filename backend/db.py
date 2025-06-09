@@ -3,7 +3,7 @@ import sqlite3
 import uuid
 from datetime import datetime
 
-DB_PATH = os.path.join(os.path.dirname(__file__), 'storywriter.db')
+DB_PATH = os.environ.get('STORYWRITER_DB_PATH', os.path.join(os.path.dirname(__file__), 'storywriter.db'))
 
 def get_db_connection():
     conn = sqlite3.connect(DB_PATH)

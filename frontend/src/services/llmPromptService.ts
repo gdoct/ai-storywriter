@@ -1,6 +1,6 @@
 // All prompt generation logic for LLM scenario/storywriting
 import { Scenario, StyleSettings } from '../types/ScenarioTypes';
-import { formatScenarioAsMarkdown } from '../utils/scenarioToMarkdown';
+import { formatScenarioAsMarkdown, formatScenarioAsMarkdownWithoutBackStory } from '../utils/scenarioToMarkdown';
 
 export function createWritingStylePrompt(): string {
   let prompt = "You are an expert in literary styles and genres. Create a random writing style configuration for a story.\n\n";
@@ -84,6 +84,41 @@ export function createScenarioPrompt(scenario: Scenario): string {
   prompt += "- Incorporate any specified themes, settings, and plot elements\n";
   prompt += "- Present only the finished story with no meta-commentary, formatting, or markdown\n\n";
   prompt += markdown;
+  return prompt;
+}
+
+export function createContinueStoryPrompt(scenario: Scenario, summaryOfPreviousChapters: string): string {
+
+  if (!scenario) {
+    console.error("Error: scenario is null or undefined");
+    return "Error: Invalid scenario data";
+  }
+  const markdown = formatScenarioAsMarkdownWithoutBackStory(scenario);
+  const style = scenario.writingStyle || { genre: "General Fiction" };
+  let prompt = "You are an exceptional storyteller";
+  if (style.genre) {
+    prompt += ` with expertise in ${style.genre} fiction`;
+  }
+  prompt += ".\n\nContinue the story based on the following scenario and previous chapters:\n\n";
+  prompt += "Guidelines:\n";
+  prompt += "- Focus on continuing the narrative from where it left off.\n";
+  prompt += "- Do not begin with a chapter heading.\n";
+  prompt += "- Create a cohesive continuation that advances the story.\n";
+  prompt += "- Include meaningful character interactions and development.\n";
+  prompt += "- Honor the established character backgrounds and relationships.\n";
+  prompt += "- Maintain consistent pacing appropriate to the genre.\n";
+  prompt += "- Continue the story coherently from where the previous chapter ended.\n\n";
+  prompt += "- Ensure that the continuation seamlessly integrates with the established narrative and character arcs.\n\n";
+  prompt += "- Do not include any markdown, formatting, or meta-commentary - only the continuation of the story.\n";
+  prompt += "- Make sure to maintain the established tone and style throughout the continuation.\n";
+  prompt += "- If there are any unresolved plot points, address them in the continuation.\n";
+  prompt += "- Ensure that the continuation is engaging and keeps the reader invested in the story.\n";
+  
+  prompt += "\nScenario details:\n";
+  prompt += markdown;
+
+  prompt += "Here is the summary of previous written chapters:\n\n";
+  prompt += summaryOfPreviousChapters + "\n\n";
   return prompt;
 }
 

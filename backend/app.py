@@ -3,7 +3,7 @@ from datetime import timedelta
 
 # Import controllers
 from auth_controller import auth_bp
-from db import init_db
+from db import DB_PATH, init_db
 from dotenv import load_dotenv
 from flask import Flask, send_from_directory
 from flask_cors import CORS
@@ -33,7 +33,9 @@ app.register_blueprint(llm_proxy)
 app.register_blueprint(settings_controller)
 
 # Initialize DB on app startup
-init_db()
+if not os.path.exists(DB_PATH):
+    print("Initializing database...")
+    init_db()
 
 # Static file routes
 @app.route('/', defaults={'path': ''})
@@ -54,7 +56,6 @@ def create_app():
     app.register_blueprint(scenario_bp)
     app.register_blueprint(llm_proxy)
     app.register_blueprint(settings_controller)
-    init_db()
     @app.route('/', defaults={'path': ''})
     @app.route('/<path:path>')
     def serve(path):

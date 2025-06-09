@@ -39,6 +39,7 @@ const ScenarioWriter: React.FC<ScenarioWriterProps> = ({ value, onChange, onSubm
   const [generatedStory, setGeneratedStory] = useState<string | null>(null);
   const [currentStoryTimestamp, setCurrentStoryTimestamp] = useState<string | null>(null);
   const [isStoryDropdownDisabled, setIsStoryDropdownDisabled] = useState(false);
+  const [isTabCollapsed, setIsTabCollapsed] = useState(false);
   
   // Splitter state and refs
   const [isDragging, setIsDragging] = useState(false);
@@ -416,6 +417,16 @@ const ScenarioWriter: React.FC<ScenarioWriterProps> = ({ value, onChange, onSubm
     }
   };
 
+  // Tab button click handler with collapse logic
+  const handleTabClick = (tabId: string) => {
+    if (activeTab === tabId && !isTabCollapsed) {
+      setIsTabCollapsed(true); // Collapse if clicking active tab
+    } else {
+      setActiveTab(tabId);
+      setIsTabCollapsed(false); // Un-collapse and show new tab
+    }
+  };
+
   return (
     <div className="scenario-writer-container">
       <div className="scenario-sidebar">
@@ -424,7 +435,7 @@ const ScenarioWriter: React.FC<ScenarioWriterProps> = ({ value, onChange, onSubm
             <button
               key={tab.id}
               className={`scenario-sidebar-btn ${activeTab === tab.id ? 'active' : ''}`}
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => handleTabClick(tab.id)}
               title={tab.label}
               style={tab.id === 'settings' ? { fontSize: 24, display: 'flex', alignItems: 'center', justifyContent: 'center' } : {}}
             >
@@ -434,15 +445,16 @@ const ScenarioWriter: React.FC<ScenarioWriterProps> = ({ value, onChange, onSubm
         </div>
       </div>
       <div className="scenario-workspace" ref={containerRef}>
-        <div 
-          className="scenario-editor-panel scenario-editor-panel-scroll" 
-          style={{ flex: `0 0 ${splitPosition}%`, overflowY: 'scroll' }}
-        >
-          {renderTabContent()}
-          <div style={{ height: '100%', minHeight: '100px' }}>
-
+        {!isTabCollapsed && (
+          <div 
+            className="scenario-editor-panel scenario-editor-panel-scroll" 
+            style={{ flex: `0 0 ${splitPosition}%`, overflowY: 'scroll' }}
+          >
+            {renderTabContent()}
+            <div style={{ height: '100%', minHeight: '100px' }}>
+            </div>
           </div>
-        </div>
+        )}
         <div 
           className="splitter" 
           ref={splitterRef}
@@ -452,7 +464,7 @@ const ScenarioWriter: React.FC<ScenarioWriterProps> = ({ value, onChange, onSubm
         </div>
         <div 
           className="scenario-reading-panel"
-          style={{ flex: `0 0 ${100 - splitPosition}%` }}
+          style={{ flex: isTabCollapsed ? '1 1 100%' : `0 0 ${100 - splitPosition}%` }}
         >
           <ReadingPane 
             content={generatedStory === null ? '' : generatedStory || ''}

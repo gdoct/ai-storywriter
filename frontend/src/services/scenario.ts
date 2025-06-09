@@ -132,3 +132,12 @@ export const saveDBStory = async (scenarioId: number | string, text: string): Pr
     throw error;
   }
 };
+
+export const deleteDBStory = async (storyId: number): Promise<void> => {
+  try {
+    await axios.delete(`/api/story/delete/${storyId}`);
+  } catch (error) {
+    console.error(`Error deleting DB story ${storyId}:`, error);
+    throw error;
+  }
+};

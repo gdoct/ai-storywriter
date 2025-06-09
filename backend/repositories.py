@@ -95,3 +95,10 @@ class GeneratedTextRepository:
         story = conn.execute('SELECT * FROM stories WHERE scenario_id = ? ORDER BY created_at DESC LIMIT 1', (scenario_id,)).fetchone()
         conn.close()
         return story
+
+    @staticmethod
+    def delete_story(story_id):
+        conn = get_db_connection()
+        conn.execute('DELETE FROM stories WHERE id = ?', (story_id,))
+        conn.commit()
+        conn.close()

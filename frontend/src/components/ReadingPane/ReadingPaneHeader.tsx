@@ -1,5 +1,5 @@
 import React, { useEffect, useImperativeHandle, useState } from 'react';
-import { fetchDBStories, saveDBStory } from '../../services/scenario';
+import { deleteDBStory, fetchDBStories, saveDBStory } from '../../services/scenario';
 import ActionButton from '../common/ActionButton';
 import './ReadingPane.css';
 
@@ -153,6 +153,25 @@ const ReadingPaneHeader = React.forwardRef<any, ReadingPaneHeaderProps>((props, 
     }
   };
 
+  const handleDeleteStory = async (storyId: number) => {
+    if (!window.confirm('Are you sure you want to delete this story?')) return;
+    try {
+      await deleteDBStory(storyId);
+      if (currentScenario && currentScenario.id) {
+        const stories = await fetchDBStories(currentScenario.id.toString());
+        setDbStories(stories);
+        if (stories.length > 0) {
+          setSelectedDbStoryId(stories[0].id);
+        } else {
+          setSelectedDbStoryId(null);
+          if (onStorySelectedFromDb) onStorySelectedFromDb(null);
+        }
+      }
+    } catch (e) {
+      alert('Failed to delete story.');
+    }
+  };
+
   return (
     <div className="reading-pane-header">
       <div className="reading-controls">
@@ -228,28 +247,38 @@ const ReadingPaneHeader = React.forwardRef<any, ReadingPaneHeaderProps>((props, 
               {loadingVersions ? (
                 <span className="loading-text">Loading stories...</span>
               ) : dbStories.length > 0 ? (
-                <select
-                  id="db-version-selector"
-                  className="story-selector"
-                  value={selectedDbStoryId || ''}
-                  onChange={e => {
-                    const value = e.target.value;
-                    if (value) {
-                      setSelectedDbStoryId(Number(value));
-                    } else {
-                      setSelectedDbStoryId(null);
-                      if (onStorySelectedFromDb) onStorySelectedFromDb(null);
-                    }
-                  }}
-                  disabled={isStoryDropdownDisabled}
-                >
-                  <option value="">Select a saved story...</option>
+                <div className="story-dropdown-list">
                   {dbStories.map(story => (
-                    <option key={story.id} value={story.id}>
-                      {formatDate(story.created_at)}
-                    </option>
+                    <div key={story.id} className="story-dropdown-item">
+                      <input
+                        type="radio"
+                        name="db-version-selector"
+                        value={story.id}
+                        checked={selectedDbStoryId === story.id}
+                        onChange={() => {
+                          setSelectedDbStoryId(story.id);
+                        }}
+                        disabled={isStoryDropdownDisabled}
+                      />
+                      <span
+                        className="story-date-label"
+                        style={{ marginLeft: 8, marginRight: 8, cursor: 'pointer' }}
+                        onClick={() => setSelectedDbStoryId(story.id)}
+                      >
+                        {formatDate(story.created_at)}
+                      </span>
+                      <button
+                        className="delete-story-btn"
+                        title="Delete story"
+                        onClick={() => handleDeleteStory(story.id)}
+                        style={{ marginLeft: 8, color: 'red', background: 'none', border: 'none', cursor: 'pointer' }}
+                        disabled={isStoryDropdownDisabled}
+                      >
+                        🗑️
+                      </button>
+                    </div>
                   ))}
-                </select>
+                </div>
               ) : (
                 <span className="no-versions">No saved stories</span>
               )}

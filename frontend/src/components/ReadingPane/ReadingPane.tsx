@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { generateStory } from '../../services/storyGenerator';
+import { createContinueStoryPrompt } from '../../services/llmPromptService';
+import { generateChapterSummary, generateStory } from '../../services/storyGenerator';
 import { Scenario } from '../../types/ScenarioTypes';
+import ContinueSummaryModal from './ContinueSummaryModal';
 import MarkdownViewer from './MarkDownViewer';
 import './ReadingPane.css';
 import ReadingPaneHeader from './ReadingPaneHeader';
@@ -79,6 +81,14 @@ const ReadingPane: React.FC<ReadingPaneProps> = ({
   // Story generation state
   const [isGeneratingGlobal, setIsGeneratingGlobal] = useState<boolean>(false);
   const [cancelGeneration, setCancelGeneration] = useState<(() => void) | null>(null);
+  const [isSummarizing, setIsSummarizing] = useState(false);
+  const [isContinuing, setIsContinuing] = useState(false);
+
+  // Continue story modal state
+  const [showContinueModal, setShowContinueModal] = useState(false);
+  const [continueSummary, setContinueSummary] = useState<string>('');
+  const [continuePrompt, setContinuePrompt] = useState<string>('');
+  const [pendingTabId, setPendingTabId] = useState<string | null>(null);
 
   // Effect to manage tabs based on currentScenario
   useEffect(() => {
@@ -328,6 +338,69 @@ const ReadingPane: React.FC<ReadingPaneProps> = ({
     if (headerRef.current) headerRef.current.resetDbStoryDropdown();
   };
 
+  // Handler for Continue Story
+  const handleContinueStory = async () => {
+    if (!activeScenarioTab || !currentScenario) return;
+    setIsSummarizing(true);
+    try {
+      // 1. Summarize the current story
+      const summary = await generateChapterSummary(activeScenarioTab.content);
+      setContinueSummary(summary);
+      setContinuePrompt(createContinueStoryPrompt(currentScenario, summary));
+      setShowContinueModal(true);
+    } catch (err) {
+      setIsSummarizing(false);
+      setIsContinuing(false);
+      alert('Failed to continue story: ' + (err instanceof Error ? err.message : err));
+      return;
+    }
+    setIsSummarizing(false);
+  };
+
+  const handleConfirmContinue = async () => {
+    if (!currentScenario || !continuePrompt) return;
+    setShowContinueModal(false);
+    setIsContinuing(true);
+    // Open a new tab for the continuation
+    const newTabId = generateTabId(`continue-${currentScenario.id}`);
+    setPendingTabId(newTabId);
+    const newTab: Tab = {
+      id: newTabId,
+      title: 'Continuing...',
+      content: '',
+      source: 'generated',
+      scenarioId: currentScenario.id,
+      fontFamily,
+      fontSize,
+      isGenerating: true,
+    };
+    setTabs(prevTabs => [...prevTabs, newTab]);
+    setActiveTabId(newTabId);
+    let accumulated = '';
+    try {
+      await generateStory(
+        { ...currentScenario },
+        {
+          onProgress: (text) => {
+            accumulated = text;
+            setTabs(prevTabs => prevTabs.map(t => t.id === newTabId ? { ...t, content: accumulated } : t));
+          },
+        }
+      );
+      setTabs(prevTabs => prevTabs.map(t => t.id === newTabId ? { ...t, content: accumulated, title: 'Continued Story', isGenerating: false } : t));
+    } catch (err) {
+      setTabs(prevTabs => prevTabs.map(t => t.id === newTabId ? { ...t, title: 'Generation Failed', isGenerating: false } : t));
+    }
+    setIsContinuing(false);
+    setPendingTabId(null);
+  };
+
+  const handleCancelContinue = () => {
+    setShowContinueModal(false);
+    setContinueSummary('');
+    setContinuePrompt('');
+  };
+
   return (
     <div className="reading-pane">
       <ReadingPaneHeader
@@ -361,6 +434,25 @@ const ReadingPane: React.FC<ReadingPaneProps> = ({
           </button>
         ))}
       </div>
+
+      {/* Continue Story Button */}
+      <div style={{ display: 'flex', justifyContent: 'flex-end', margin: '8px 0' }}>
+        <button
+          className="continue-story-btn"
+          disabled={
+            isSummarizing || isContinuing || !activeScenarioTab || activeScenarioTab.source !== 'database'
+          }
+          onClick={handleContinueStory}
+        >
+          {isSummarizing ? 'Summarizing...' : isContinuing ? 'Generating Sequel...' : 'Continue story'}
+        </button>
+      </div>
+      <ContinueSummaryModal
+        show={showContinueModal}
+        summary={continueSummary}
+        onConfirm={handleConfirmContinue}
+        onCancel={handleCancelContinue}
+      />
 
       <div
         className="reading-content"

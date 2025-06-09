@@ -28,7 +28,7 @@ export async function streamChatCompletion(
   options: LLMChatOptions = {}
 ): Promise<void> {
   const payload = {
-    model: options.model || 'google/gemma-3-4b',
+    model: options.model || '',
     messages,
     temperature: options.temperature ?? 0.8,
     max_tokens: options.max_tokens ?? 1024,
@@ -71,4 +71,38 @@ export async function streamChatCompletion(
     }
   }
   onStream(assistantText, true);
+}
+
+/**
+ * Gets chat completion from the LLM backend in a non-streaming way.
+ * @param messages Chat history
+ * @param options Model and generation options
+ * @returns The assistant's reply as a string
+ */
+export async function chatCompletion(
+  messages: LLMMessage[],
+  options: LLMChatOptions = {}
+): Promise<string> {
+  const payload = {
+    model: options.model || '',
+    messages,
+    temperature: options.temperature ?? 0.8,
+    max_tokens: options.max_tokens ?? 1024,
+    stream: false,
+  };
+
+  const response = await fetch(LLM_PROXY_ENDPOINT, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    throw new Error(`LLM backend error: ${response.statusText}`);
+  }
+
+  const data = await response.json();
+  const choices = data.choices || [];
+  if (choices.length === 0) return '';
+  return choices[0].message?.content || '';
 }

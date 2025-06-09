@@ -178,3 +178,12 @@ def save_story(scenario_id):
         'content': story['text'],
         'timestamp': story['created_at']
     }), 201
+
+@scenario_bp.route('/api/story/delete/<int:story_id>', methods=['DELETE'])
+@jwt_required()
+def delete_story(story_id):
+    try:
+        GeneratedTextRepository.delete_story(story_id)
+        return jsonify({'success': True}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
