@@ -224,116 +224,104 @@ const StoryStyleTab: React.FC<TabProps> = ({ content, updateContent, currentScen
         </div>
       </div>
 
-      <div className="tab-section" style={{
-        background: '#181b20',
-        borderRadius: '12px',
-        padding: '36px 0 48px 0',
-        margin: '0',
-        boxShadow: 'none',
-        minHeight: '480px',
+
+      <div style={{ width: '100%', margin: '0 auto 16px auto', textAlign: 'center' }}>
+        {styleGenerationInProgress && streamedJson && (
+          <div style={{
+            background: '#23272f',
+            color: '#90caf9',
+            fontFamily: 'monospace',
+            fontSize: '1rem',
+            padding: '12px 18px',
+            borderRadius: '8px',
+            margin: '12px auto',
+            maxWidth: 700,
+            wordBreak: 'break-all',
+            whiteSpace: 'pre-wrap',
+            border: '1px solid #444',
+          }}>
+            {streamedJson}
+          </div>
+        )}
+        {jsonError && (
+          <div style={{ color: '#ff5252', fontWeight: 600, margin: '8px 0' }}>{jsonError}</div>
+        )}
+      </div>
+
+      <div className="style-options-container" style={{
+        background: '#23272f',
+        border: '1.5px solid #444',
+        borderRadius: '10px',
+        color: '#fff',
+        boxShadow: '0 4px 16px rgba(0,0,0,0.18)',
+        margin: '0 auto 24px auto',
+        padding: '32px 32px 22px 32px',
+        minWidth: '580px',
+        maxWidth: '820px',
+        fontSize: '1.08rem',
+        fontFamily: 'inherit',
         display: 'flex',
         flexDirection: 'column',
-        alignItems: 'center',
+        gap: '22px',
       }}>
+        <StyleDropdown
+          label="Style"
+          value={styleSettings.style}
+          onChange={(value) => handleSettingChange('style', value)}
+          options={styleOptions}
+          labelStyle={{ color: '#90caf9', fontWeight: 600, fontSize: '1.04rem', marginBottom: 4 }}
+        />
 
-        <div style={{ width: '100%', margin: '0 auto 16px auto', textAlign: 'center' }}>
-          {styleGenerationInProgress && streamedJson && (
-            <div style={{
-              background: '#23272f',
-              color: '#90caf9',
-              fontFamily: 'monospace',
-              fontSize: '1rem',
-              padding: '12px 18px',
-              borderRadius: '8px',
-              margin: '12px auto',
-              maxWidth: 700,
-              wordBreak: 'break-all',
-              whiteSpace: 'pre-wrap',
+        <StyleDropdown
+          label="Genre"
+          value={styleSettings.genre}
+          onChange={(value) => handleSettingChange('genre', value)}
+          options={genreOptions}
+          labelStyle={{ color: '#90caf9', fontWeight: 600, fontSize: '1.04rem', marginBottom: 4 }}
+        />
+
+        <StyleDropdown
+          label="Tone"
+          value={styleSettings.tone}
+          onChange={(value) => handleSettingChange('tone', value)}
+          options={toneOptions}
+          labelStyle={{ color: '#90caf9', fontWeight: 600, fontSize: '1.04rem', marginBottom: 4 }}
+        />
+
+        <StyleDropdown
+          label="Language"
+          value={styleSettings.language}
+          onChange={(value) => handleSettingChange('language', value)}
+          options={languageOptions}
+          labelStyle={{ color: '#90caf9', fontWeight: 600, fontSize: '1.04rem', marginBottom: 4 }}
+        />
+
+        <StyleDropdown
+          label="Theme"
+          value={styleSettings.theme}
+          onChange={(value) => handleSettingChange('theme', value)}
+          options={themeOptions}
+          labelStyle={{ color: '#90caf9', fontWeight: 600, fontSize: '1.04rem', marginBottom: 4 }}
+        />
+
+        <div className="form-field">
+          <label style={{ color: '#90caf9', fontWeight: 600, fontSize: '1.04rem', marginBottom: 4 }}>Other Instructions</label>
+          <textarea
+            value={styleSettings.other}
+            onChange={(e) => handleSettingChange('other', e.target.value)}
+            placeholder="Add any additional style instructions here..."
+            className="form-textarea"
+            style={{
+              background: '#181b20',
+              color: '#fff',
               border: '1px solid #444',
-            }}>
-              {streamedJson}
-            </div>
-          )}
-          {jsonError && (
-            <div style={{ color: '#ff5252', fontWeight: 600, margin: '8px 0' }}>{jsonError}</div>
-          )}
-        </div>
-
-        <div className="style-options-container" style={{
-          background: '#23272f',
-          border: '1.5px solid #444',
-          borderRadius: '10px',
-          color: '#fff',
-          boxShadow: '0 4px 16px rgba(0,0,0,0.18)',
-          margin: '0 auto 24px auto',
-          padding: '32px 32px 22px 32px',
-          minWidth: '580px',
-          maxWidth: '820px',
-          fontSize: '1.08rem',
-          fontFamily: 'inherit',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '22px',
-        }}>
-          <StyleDropdown
-            label="Style"
-            value={styleSettings.style}
-            onChange={(value) => handleSettingChange('style', value)}
-            options={styleOptions}
-            labelStyle={{ color: '#90caf9', fontWeight: 600, fontSize: '1.04rem', marginBottom: 4 }}
+              borderRadius: '6px',
+              fontSize: '1rem',
+              padding: '10px',
+              marginTop: '4px',
+              minHeight: '96px',
+            }}
           />
-
-          <StyleDropdown
-            label="Genre"
-            value={styleSettings.genre}
-            onChange={(value) => handleSettingChange('genre', value)}
-            options={genreOptions}
-            labelStyle={{ color: '#90caf9', fontWeight: 600, fontSize: '1.04rem', marginBottom: 4 }}
-          />
-
-          <StyleDropdown
-            label="Tone"
-            value={styleSettings.tone}
-            onChange={(value) => handleSettingChange('tone', value)}
-            options={toneOptions}
-            labelStyle={{ color: '#90caf9', fontWeight: 600, fontSize: '1.04rem', marginBottom: 4 }}
-          />
-
-          <StyleDropdown
-            label="Language"
-            value={styleSettings.language}
-            onChange={(value) => handleSettingChange('language', value)}
-            options={languageOptions}
-            labelStyle={{ color: '#90caf9', fontWeight: 600, fontSize: '1.04rem', marginBottom: 4 }}
-          />
-
-          <StyleDropdown
-            label="Theme"
-            value={styleSettings.theme}
-            onChange={(value) => handleSettingChange('theme', value)}
-            options={themeOptions}
-            labelStyle={{ color: '#90caf9', fontWeight: 600, fontSize: '1.04rem', marginBottom: 4 }}
-          />
-
-          <div className="form-field">
-            <label style={{ color: '#90caf9', fontWeight: 600, fontSize: '1.04rem', marginBottom: 4 }}>Other Instructions</label>
-            <textarea
-              value={styleSettings.other}
-              onChange={(e) => handleSettingChange('other', e.target.value)}
-              placeholder="Add any additional style instructions here..."
-              className="form-textarea"
-              style={{
-                background: '#181b20',
-                color: '#fff',
-                border: '1px solid #444',
-                borderRadius: '6px',
-                fontSize: '1rem',
-                padding: '10px',
-                marginTop: '4px',
-                minHeight: '96px',
-              }}
-            />
-          </div>
         </div>
       </div>
 

@@ -2,7 +2,7 @@ import { GeneratedStory, Scenario } from '../types/ScenarioTypes';
 import {
   generateRandomScenarioName as backendGenerateRandomScenarioName
 } from './llmBackend';
-import { createCharacterPrompt, createWritingStylePrompt, createScenarioPrompt } from './llmPromptService';
+import { createCharacterPrompt, createScenarioPrompt, createWritingStylePrompt } from './llmPromptService';
 import { streamChatCompletion } from './llmService';
 
 

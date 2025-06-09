@@ -1,8 +1,6 @@
 /* src/components/MarkdownViewer.css */
 
 .markdown-scroll-container {
-
-    
   max-height: calc(80vh - 200px); /* Adjust this value based on your layout needs */
 
   /* Step 2: Add a scrollbar only when the content overflows the max-height. */

@@ -375,7 +375,10 @@ const ReadingPane: React.FC<ReadingPaneProps> = ({
               <div className="generated-story-badge">Generated Story</div>}
             {activeScenarioTab.source === 'database' &&
               <div className="saved-story-badge">Saved Story</div>}
-            <MarkdownViewer content={activeScenarioTab.content} />
+            <MarkdownViewer 
+              content={activeScenarioTab.content} 
+              isGenerating={activeScenarioTab.isGenerating}
+            />
           </>
         ) : (
           <p className="placeholder-text">
