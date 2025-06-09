@@ -2,6 +2,7 @@
   position: fixed;
   bottom: 0;
   left: 0;
+  right: 0;
   width: 100%;
   background-color: #f5f5f5;
   border-top: 1px solid #ddd;
@@ -11,7 +12,8 @@
   align-items: center;
   height: 50px;
   box-sizing: border-box;
-  z-index: 99;
+  z-index: 1000;
+  overflow: hidden !important; /* Hide all overflow */
 }
 
 .footer-content {
@@ -19,11 +21,16 @@
   justify-content: space-between;
   align-items: center;
   width: 100%;
+  min-width: 0;
+  overflow: hidden; /* Ensure no overflow in footer content */
+  flex-shrink: 1;
 }
 
 .status-indicators {
   display: flex;
   gap: 20px;
+  flex-shrink: 0;
+  min-width: 0;
 }
 
 .status-indicator {
@@ -56,21 +63,58 @@
 .model-controls {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 15px;
+  flex-wrap: nowrap;
+  min-width: 0;
+  flex-shrink: 1;
+  overflow: hidden; /* Prevent overflow */
+  max-width: 100%; /* Ensure it doesn't exceed container width */
+}
+
+.model-selection {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #333;
+  min-width: 0;
+  flex-shrink: 1;
+}
+
+.model-selection select {
+  padding: 3px 5px;
+  border: 1px solid #d3d3d3;
+  border-radius: 3px;
+  font-size: 14px;
+  background-color: white;
+  min-width: 120px;
+  max-width: 200px;
+  width: auto;
+  flex-shrink: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap; /* Prevent text wrapping */
+}
+
+.model-selection select:disabled {
+  background-color: #f0f0f0;
+  color: #888;
 }
 
 .temperature-control {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   font-size: 14px;
   color: #333;
+  flex-shrink: 0;
 }
 
 .temperature-control input[type="range"] {
-  width: 120px;
+  width: 100px;
   height: 6px;
   -webkit-appearance: none;
+  appearance: none;
   background: #d3d3d3;
   border-radius: 3px;
   outline: none;
@@ -79,13 +123,14 @@
 .seed-control {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   font-size: 14px;
   color: #333;
+  flex-shrink: 0;
 }
 
 .seed-control input[type="number"] {
-  width: 100px;
+  width: 80px;
   padding: 3px 5px;
   border: 1px solid #d3d3d3;
   border-radius: 3px;
@@ -140,5 +185,127 @@
   }
   100% {
     opacity: 0.5;
+  }
+}
+
+/* Ensure all inputs and selects in the footer don't cause overflow */
+.footer input,
+.footer select,
+.footer label {
+  box-sizing: border-box;
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* Prevent any dropdowns from creating scrollbars */
+.footer select option {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Responsive design for smaller screens */
+@media (max-width: 1200px) {
+  .model-controls {
+    gap: 10px;
+  }
+  
+  .model-selection select {
+    max-width: 150px;
+  }
+  
+  .temperature-control input[type="range"] {
+    width: 80px;
+  }
+  
+  .seed-control input[type="number"] {
+    width: 70px;
+  }
+}
+
+@media (max-width: 900px) {
+  .footer {
+    padding: 8px 15px;
+  }
+  
+  .model-controls {
+    gap: 8px;
+  }
+  
+  .model-selection select {
+    max-width: 120px;
+    font-size: 12px;
+  }
+  
+  .temperature-control {
+    gap: 6px;
+    font-size: 12px;
+  }
+  
+  .temperature-control input[type="range"] {
+    width: 60px;
+  }
+  
+  .seed-control {
+    gap: 6px;
+    font-size: 12px;
+  }
+  
+  .seed-control input[type="number"] {
+    width: 60px;
+  }
+  
+  .status-indicators {
+    gap: 15px;
+  }
+  
+  .status-indicator {
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 600px) {
+  .footer {
+    padding: 6px 10px;
+    height: 60px; /* Slightly taller on very small screens */
+    overflow: hidden; /* Ensure no overflow on small screens */
+  }
+  
+  .footer-content {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    overflow: hidden;
+  }
+  
+  .status-indicators {
+    order: 1;
+    gap: 10px;
+  }
+  
+  .model-controls {
+    order: 2;
+    gap: 6px;
+    justify-content: center;
+  }
+  
+  .model-selection select {
+    max-width: 100px;
+    font-size: 11px;
+  }
+  
+  .temperature-control,
+  .seed-control {
+    font-size: 11px;
+  }
+  
+  .temperature-control input[type="range"] {
+    width: 50px;
+  }
+  
+  .seed-control input[type="number"] {
+    width: 50px;
   }
 }

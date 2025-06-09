@@ -55,7 +55,6 @@ def proxy_chat_completions():
         payload = request.get_json() or {}
         # Force stream: True for all LLM backends
         payload['stream'] = True
-        print(f"Backend: {backend_type}, Payload: {payload}")
 
         def generate():
             for chunk in service.chat_completion_stream(payload):
@@ -65,7 +64,9 @@ def proxy_chat_completions():
         return add_cors_headers(resp)
     except Exception as e:
         import traceback
-        print(f"Error in chat_completion_stream: {str(e)}")
+
+        # Only log failed requests
+        print(f"LLM proxy error - Backend: {backend_type}, Error: {str(e)}")
         print(traceback.format_exc())
         resp = jsonify({'error': str(e), 'backend_type': backend_type})
         return add_cors_headers(resp), 502

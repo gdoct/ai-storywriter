@@ -5,5 +5,4 @@ export interface LLMConfig {
   lmstudio?: { url: string };
   ollama?: { url: string };
   chatgpt?: { apiKey: string };
-  defaultModel?: string;
 }

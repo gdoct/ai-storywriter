@@ -9,11 +9,23 @@ body, html {
 }
 
 .main-content {
+  flex: 1;
   padding: 0;
-  min-height: calc(100vh - 60px); /* Updated to account for footer height */
+  margin-top: 60px; /* Account for fixed TopBar */
+  margin-bottom: 50px; /* Account for fixed Footer */
   background-color: #f5f5f5;
-  padding-bottom: 0;
   width: 100%;
+  height: calc(100vh - 110px); /* Total height minus topbar and footer */
+  overflow-y: hidden;
+  overflow-x: hidden; /* Hide horizontal scrollbar */
+  box-sizing: border-box;
+}
+
+/* Responsive design for footer height changes */
+@media (max-width: 600px) {
+  .main-content {
+    margin-bottom: 60px; /* Account for taller footer on small screens */
+  }
 }
 
 /* Keep some of the original styles */

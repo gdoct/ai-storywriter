@@ -5,7 +5,7 @@ from llm_service import BaseLLMService  # type: ignore
 class LMStudioService(BaseLLMService):
     def __init__(self, config):
         super().__init__(config)
-        self.base_url = config.get('url', 'http://192.168.32.1:1234')
+        self.base_url = config.get('url', 'http://1localhost:1234')
 
     def get_models(self):
         resp = requests.get(f"{self.base_url}/v1/models", timeout=10)
@@ -36,24 +36,20 @@ class LMStudioService(BaseLLMService):
                 completion_params['max_tokens'] = int(payload['max_tokens'])
             if 'model' in payload and payload['model'] is not None:
                 completion_params['model'] = payload['model']
-            
-            # Debug logging
-            print(f"LMStudio Request URL: {self.base_url}/v1/chat/completions")
-            print(f"LMStudio Request Payload: {completion_params}")
                 
             # Stream the response
             with requests.post(f"{self.base_url}/v1/chat/completions", 
                              json=completion_params, 
                              stream=True, 
                              timeout=60) as resp:
-                print(f"LMStudio Response Status: {resp.status_code}")
-                print(f"LMStudio Response Headers: {dict(resp.headers)}")
                 resp.raise_for_status()
                 for chunk in resp.iter_content(chunk_size=4096):
                     if chunk:
                         yield chunk
         except Exception as e:
             import traceback
-            print(f"Error in LMStudio chat_completion_stream: {str(e)}")
+
+            # Only log failed requests
+            print(f"LMStudio error: {str(e)}")
             print(traceback.format_exc())
             raise

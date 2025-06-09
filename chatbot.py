@@ -25,7 +25,7 @@ def stream_chat_completion(jwt_token: str, user_message: str):
         "Content-Type": "application/json"
     }
     payload = {
-        "model": "google/gemma-3-4b",  # or any model loaded in LM Studio
+        "model": "gemma3:4b",  # or any model loaded in LM Studio
         "messages": [
             {"role": "user", "content": user_message}
         ],

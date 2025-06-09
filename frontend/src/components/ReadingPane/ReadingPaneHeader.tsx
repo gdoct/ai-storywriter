@@ -2,6 +2,7 @@ import React, { useEffect, useImperativeHandle, useState } from 'react';
 import { deleteDBStory, fetchDBStories, saveDBStory } from '../../services/scenario';
 import ActionButton from '../common/ActionButton';
 import './ReadingPane.css';
+import SavedStoriesDropdown from './SavedStoriesDropdown';
 
 interface ReadingPaneHeaderProps {
   currentScenario: any;
@@ -20,6 +21,7 @@ interface ReadingPaneHeaderProps {
   fontSize: string;
   setFontFamily: (font: string) => void;
   setFontSize: (size: string) => void;
+  openTabs?: { dbStoryId: number | null; scenarioId: string }[]; // New prop for open tabs
 }
 
 const fontOptions = [
@@ -53,6 +55,7 @@ const ReadingPaneHeader = React.forwardRef<any, ReadingPaneHeaderProps>((props, 
     fontSize,
     setFontFamily,
     setFontSize,
+    openTabs = [], // Default to empty array
   } = props;
 
   const [isSaving, setIsSaving] = useState<boolean>(false);
@@ -74,13 +77,8 @@ const ReadingPaneHeader = React.forwardRef<any, ReadingPaneHeaderProps>((props, 
         setLoadingVersions(true);
         const stories = await fetchDBStories(scenarioId);
         setDbStories(stories);
-        if (isGenerating) {
-          setSelectedDbStoryId(null);
-        } else if (stories.length > 0) {
-          setSelectedDbStoryId(stories[0].id);
-        } else {
-          setSelectedDbStoryId(null);
-        }
+        // Don't automatically select any story - let user choose explicitly
+        setSelectedDbStoryId(null);
       } catch (e) {
         setDbStories([]);
         setSelectedDbStoryId(null);
@@ -91,13 +89,7 @@ const ReadingPaneHeader = React.forwardRef<any, ReadingPaneHeaderProps>((props, 
     fetchStories();
   }, [currentScenario, isGenerating]);
 
-  useEffect(() => {
-    if (!selectedDbStoryId) return;
-    const story = dbStories.find(s => s.id === selectedDbStoryId);
-    if (story && onStorySelectedFromDb) {
-      onStorySelectedFromDb(story.text, story.id, story.created_at);
-    }
-  }, [selectedDbStoryId, dbStories, onStorySelectedFromDb]);
+  // Removed automatic story selection useEffect - stories should only be loaded when explicitly selected by user
 
   useEffect(() => {
     setHasUnsavedChanges(true);
@@ -141,15 +133,26 @@ const ReadingPaneHeader = React.forwardRef<any, ReadingPaneHeaderProps>((props, 
       await saveDBStory(scenarioId, displayContent);
       const stories = await fetchDBStories(scenarioId);
       setDbStories(stories);
-      if (stories.length > 0) {
-        setSelectedDbStoryId(stories[0].id);
-      }
+      // Don't automatically select any story after saving - let user choose explicitly
       setHasUnsavedChanges(false);
       alert('Story saved successfully!');
     } catch (error) {
       setSaveError('Failed to save story. Please try again.');
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleStorySelection = (storyId: number | null) => {
+    setSelectedDbStoryId(storyId);
+    if (storyId && onStorySelectedFromDb) {
+      const story = dbStories.find(s => s.id === storyId);
+      if (story) {
+        onStorySelectedFromDb(story.text, story.id, story.created_at);
+      }
+    } else if (!storyId && onStorySelectedFromDb) {
+      // User cleared selection
+      onStorySelectedFromDb(null);
     }
   };
 
@@ -160,12 +163,9 @@ const ReadingPaneHeader = React.forwardRef<any, ReadingPaneHeaderProps>((props, 
       if (currentScenario && currentScenario.id) {
         const stories = await fetchDBStories(currentScenario.id.toString());
         setDbStories(stories);
-        if (stories.length > 0) {
-          setSelectedDbStoryId(stories[0].id);
-        } else {
-          setSelectedDbStoryId(null);
-          if (onStorySelectedFromDb) onStorySelectedFromDb(null);
-        }
+        // Don't automatically select any story after deletion - let user choose explicitly
+        setSelectedDbStoryId(null);
+        if (onStorySelectedFromDb) onStorySelectedFromDb(null);
       }
     } catch (e) {
       alert('Failed to delete story.');
@@ -242,47 +242,17 @@ const ReadingPaneHeader = React.forwardRef<any, ReadingPaneHeaderProps>((props, 
             &nbsp;
             {saveError && <span className="save-error">{saveError}</span>}
             &nbsp;
-            <div className="control-group saved-stories-dropdown">
-              <label htmlFor="db-version-selector">Saved Stories:</label>
-              {loadingVersions ? (
-                <span className="loading-text">Loading stories...</span>
-              ) : dbStories.length > 0 ? (
-                <div className="story-dropdown-list">
-                  {dbStories.map(story => (
-                    <div key={story.id} className="story-dropdown-item">
-                      <input
-                        type="radio"
-                        name="db-version-selector"
-                        value={story.id}
-                        checked={selectedDbStoryId === story.id}
-                        onChange={() => {
-                          setSelectedDbStoryId(story.id);
-                        }}
-                        disabled={isStoryDropdownDisabled}
-                      />
-                      <span
-                        className="story-date-label"
-                        style={{ marginLeft: 8, marginRight: 8, cursor: 'pointer' }}
-                        onClick={() => setSelectedDbStoryId(story.id)}
-                      >
-                        {formatDate(story.created_at)}
-                      </span>
-                      <button
-                        className="delete-story-btn"
-                        title="Delete story"
-                        onClick={() => handleDeleteStory(story.id)}
-                        style={{ marginLeft: 8, color: 'red', background: 'none', border: 'none', cursor: 'pointer' }}
-                        disabled={isStoryDropdownDisabled}
-                      >
-                        🗑️
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <span className="no-versions">No saved stories</span>
-              )}
-            </div>
+            <SavedStoriesDropdown
+              dbStories={dbStories}
+              selectedDbStoryId={selectedDbStoryId}
+              loadingVersions={loadingVersions}
+              isStoryDropdownDisabled={isStoryDropdownDisabled}
+              onStorySelect={handleStorySelection}
+              onDeleteStory={handleDeleteStory}
+              formatDate={formatDate}
+              openTabs={openTabs}
+              currentScenarioId={currentScenario?.id}
+            />
           </>
         )}
       </div>

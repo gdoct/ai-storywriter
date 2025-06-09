@@ -57,7 +57,9 @@ class OpenAIService(BaseLLMService):
                         yield chunk
         except Exception as e:
             import traceback
-            print(f"Error in OpenAI chat_completion_stream: {str(e)}")
+
+            # Only log failed requests
+            print(f"OpenAI error: {str(e)}")
             print(traceback.format_exc())
             raise
 

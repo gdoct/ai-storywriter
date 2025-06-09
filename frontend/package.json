@@ -21,6 +21,13 @@
   },
   "scripts": {
     "start": "react-scripts start",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
+    "lint:fix": "eslint . --ext .js,.jsx,.ts,.tsx --fix",
+    "prettier": "prettier --write \"src/**/*.{js,jsx,ts,tsx,json,css,md}\"",
+    "prettier:check": "prettier --check \"src/**/*.{js,jsx,ts,tsx,json,css,md}\"",
+    "format": "npm run prettier && npm run lint:fix",
+    "format:check": "npm run prettier:check && npm run lint",
     "build": "react-scripts build",
     "test": "jest",
     "test:puppeteer": "jest --config=jest.config.js --runInBand",

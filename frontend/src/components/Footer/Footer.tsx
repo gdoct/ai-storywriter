@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { getLLMStatus } from '../../services/llmBackend';
+import { fetchLLMModels, getLLMStatus } from '../../services/llmBackend';
+import { getSelectedModel, setSelectedModel } from '../../services/modelSelection';
 import { getSavedSettings } from '../../services/settings';
 import './Footer.css';
 
@@ -11,10 +12,11 @@ interface FooterProps {
 const Footer: React.FC<FooterProps> = ({ isLoading, onSeedChange }) => {
   const [temperature, setTemperature] = useState(0.8);
   const [isLLMConnected, setIsLLMConnected] = useState(false);
-  const [llmModel, setLLMModel] = useState('');
   const [backendType, setBackendType] = useState('');
   const [seed, setSeed] = useState<number | null>(null);
   const [isRandomSeed, setIsRandomSeed] = useState(true);
+  const [availableModels, setAvailableModels] = useState<string[]>([]);
+  const [selectedModel, setSelectedModelState] = useState<string>('');
 
   // Use a ref to track previous loading state
   const prevLoadingRef = React.useRef(isLoading);
@@ -25,6 +27,12 @@ const Footer: React.FC<FooterProps> = ({ isLoading, onSeedChange }) => {
     const savedTemp = localStorage.getItem('storywriter_temperature');
     if (savedTemp) {
       setTemperature(parseFloat(savedTemp));
+    }
+    
+    // Load selected model from storage
+    const savedModel = getSelectedModel();
+    if (savedModel) {
+      setSelectedModelState(savedModel);
     }
     
     // Get settings and check backend connection
@@ -48,22 +56,28 @@ const Footer: React.FC<FooterProps> = ({ isLoading, onSeedChange }) => {
         setBackendType(status.backendType);
       }
       
-      if (status.modelName) {
-        setLLMModel(status.modelName);
+      // Load available models
+      if (status.isConnected) {
+        try {
+          const models = await fetchLLMModels();
+          setAvailableModels(models);
+          
+          // If no model is selected and we have models available, select the first one
+          if (!getSelectedModel() && models.length > 0) {
+            setSelectedModel(models[0]);
+            setSelectedModelState(models[0]);
+          }
+        } catch (error) {
+          console.error("Failed to fetch models:", error);
+        }
       }
       
-      // Only fetch settings if we don't have enough info from status
-      if (!status.backendType || !status.modelName) {
+      // Only fetch settings if we don't have enough info from status  
+      if (!status.backendType) {
         const settings = await getSavedSettings();
         
-        if (settings) {
-          if (!status.backendType) {
-            setBackendType(settings.backendType);
-          }
-          
-          if (!status.modelName && settings.defaultModel) {
-            setLLMModel(settings.defaultModel);
-          }
+        if (settings && !status.backendType) {
+          setBackendType(settings.backendType);
         }
       }
     } catch (error) {
@@ -78,6 +92,13 @@ const Footer: React.FC<FooterProps> = ({ isLoading, onSeedChange }) => {
     setTemperature(newTemp);
     // Store in localStorage for persistence
     localStorage.setItem('storywriter_temperature', newTemp.toString());
+  };
+
+  // Handle model selection change
+  const handleModelChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newModel = e.target.value;
+    setSelectedModel(newModel);
+    setSelectedModelState(newModel);
   };
   
   // Handle seed change
@@ -126,12 +147,6 @@ const Footer: React.FC<FooterProps> = ({ isLoading, onSeedChange }) => {
     prevLoadingRef.current = isLoading;
   }, [isLoading, isRandomSeed, onSeedChange]);
 
-  // Get display name for the model
-  const getModelDisplayName = () => {
-    if (!llmModel) return '';
-    return llmModel.split('/').pop() || llmModel;
-  };
-
   // Format the backend type for display
   const getBackendDisplayName = () => {
     if (!backendType) return 'LLM';
@@ -161,26 +176,31 @@ const Footer: React.FC<FooterProps> = ({ isLoading, onSeedChange }) => {
             <div className={`status-dot ${isLLMConnected ? 'idle' : 'error'}`}></div>
             <span>
               {isLLMConnected 
-                ? `${getBackendDisplayName()}: ${getModelDisplayName() || 'Connected'}` 
+                ? getBackendDisplayName() 
                 : `${getBackendDisplayName()}: Disconnected`}
             </span>
-            <button 
-              onClick={loadSettingsAndCheckStatus} 
-              title="Refresh LLM Status"
-              style={{ 
-                background: 'none', 
-                border: 'none', 
-                cursor: 'pointer', 
-                fontSize: '12px',
-                marginLeft: '5px'
-              }}
-            >
-              ↻
-            </button>
           </div>
         </div>
         
         <div className="model-controls">
+          <div className="model-selection">
+            <label htmlFor="model-select">Model:</label>
+            <select
+              id="model-select"
+              value={selectedModel}
+              onChange={handleModelChange}
+              disabled={!isLLMConnected || availableModels.length === 0}
+            >
+              {availableModels.length === 0 ? (
+                <option value="">No models available</option>
+              ) : (
+                availableModels.map(model => (
+                  <option key={model} value={model}>{model}</option>
+                ))
+              )}
+            </select>
+          </div>
+          
           <div className="temperature-control">
             <label htmlFor="temperature-slider">Temperature: {temperature.toFixed(2)}</label>
             <input

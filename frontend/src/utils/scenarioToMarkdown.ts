@@ -112,7 +112,7 @@ export function scenarioBackstoryToMarkdown(scenario: Scenario): string {
     }
 }
 
-export function formatScenarioAsMarkdown(scenario: Scenario): string {
+export function     formatScenarioAsMarkdown(scenario: Scenario): string {
     let markdown = `# Title: ${scenario.title || "Random title"}\n`;
     if (scenario.synopsis) {
         markdown += `## Synopsis\n${scenario.synopsis}\n\n`;

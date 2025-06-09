@@ -21,11 +21,13 @@ const AppContent = () => {
 
   return (
     <AuthProvider>
-      <TopBar />
-      <div className="main-content">
-        {routeElements}
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
+        <TopBar />
+        <div className="main-content">
+          {routeElements}
+        </div>
+        <Footer isLoading={isLoading} onSeedChange={handleSeedChange} />
       </div>
-      <Footer isLoading={isLoading} onSeedChange={handleSeedChange} />
     </AuthProvider>
   );
 };

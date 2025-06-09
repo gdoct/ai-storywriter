@@ -25,14 +25,12 @@ const Home: React.FC<HomeProps> = ({ setIsLoading, seed }) => {
   };
 
   return (
-    <div className="home-container">
       <ScenarioWriter 
         value={scenario}
         onChange={setScenario}
         onSubmit={handleSubmit}
         seed={seed}
       />
-    </div>
   );
 };
 

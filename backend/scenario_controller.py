@@ -130,7 +130,6 @@ def delete_scenario(scenario_id):
 @scenario_bp.route('/api/story/<string:scenario_id>', methods=['GET'])
 @jwt_required()
 def get_stories(scenario_id):
-    print(f"Fetching stories for scenario ID: {scenario_id}")
     stories = GeneratedTextRepository.get_stories_by_scenario(scenario_id)
     result = [
         {
@@ -139,7 +138,6 @@ def get_stories(scenario_id):
             'created_at': s['created_at']
         } for s in stories
     ]
-    print(f"Found {len(result)} stories for scenario {scenario_id}")
     return jsonify(result)
 
 @scenario_bp.route('/api/story/<string:scenario_id>/list', methods=['GET'])

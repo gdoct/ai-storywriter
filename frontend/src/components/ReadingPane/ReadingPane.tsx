@@ -66,8 +66,6 @@ const ReadingPane: React.FC<ReadingPaneProps> = ({
   const headerRef = React.useRef<ReadingPaneHeaderRef>(null);
   // Global state for the currently active tab's ID (could be from any scenario)
   const [activeTabId, setActiveTabId] = useState<string | null>(null);
-  // Ref to track which scenarios already have tabs
-  const scenariosWithTabsRef = React.useRef<Set<string>>(new Set());
 
   // Derived state: tabs for the current scenario
   const [scenarioTabs, setScenarioTabs] = useState<Tab[]>([]);
@@ -88,13 +86,14 @@ const ReadingPane: React.FC<ReadingPaneProps> = ({
   const [showContinueModal, setShowContinueModal] = useState(false);
   const [continueSummary, setContinueSummary] = useState<string>('');
   const [continuePrompt, setContinuePrompt] = useState<string>('');
-  const [pendingTabId, setPendingTabId] = useState<string | null>(null);
 
   // Effect to manage tabs based on currentScenario
   useEffect(() => {
     if (!currentScenario) {
       setScenarioTabs([]);
       setActiveScenarioTabId(null);
+      // Notify parent that no story is available
+      if (onStoryGenerated) onStoryGenerated(null);
       return;
     }
 
@@ -116,40 +115,13 @@ const ReadingPane: React.FC<ReadingPaneProps> = ({
       }
     } else {
       setActiveScenarioTabId(null);
+      // Notify parent that no story is available when no tabs exist for this scenario
+      if (onStoryGenerated) onStoryGenerated(null);
     }
-  }, [currentScenario, activeTabId, activeScenarioTabId, tabs]);
+  }, [currentScenario, activeTabId, activeScenarioTabId, tabs, onStoryGenerated]);
 
-  // Separate useEffect for creating initial tabs
-  useEffect(() => {
-    if (!currentScenario || !content) return;
-    
-    const currentScenarioId = currentScenario.id;
-    
-    // Only create a tab if we haven't already created one for this scenario
-    if (!scenariosWithTabsRef.current.has(currentScenarioId)) {
-      const newTabId = generateTabId(`initial-${currentScenarioId}`);
-      const initialTab: Tab = {
-        id: newTabId,
-        title: currentTimestamp ? `DB: ${formatDateForTabTitle(currentTimestamp)}` : `Story 1`,
-        content: content,
-        source: currentTimestamp ? 'database' : 'none',
-        scenarioId: currentScenarioId,
-        dbStoryId: currentTimestamp ? undefined : null,
-        fontFamily: fontFamily,
-        fontSize: fontSize,
-        isGenerating: false,
-      };
-      
-      setTabs(prevGlobalTabs => [...prevGlobalTabs, initialTab]);
-      setActiveTabId(newTabId);
-      
-      // Mark this scenario as having tabs now
-      scenariosWithTabsRef.current.add(currentScenarioId);
-      
-      // Notify parent if this is a new tab addition
-      if (onStoryGenerated) onStoryGenerated(initialTab.content);
-    }
-  }, [currentScenario, content, currentTimestamp, fontFamily, fontSize, onStoryGenerated]);
+  // Removed automatic tab creation - tabs are now only created when explicitly requested
+  // by user actions like "Generate Story" or selecting a saved story
 
   const activeScenarioTab = scenarioTabs.find(t => t.id === activeScenarioTabId);
 
@@ -363,7 +335,6 @@ const ReadingPane: React.FC<ReadingPaneProps> = ({
     setIsContinuing(true);
     // Open a new tab for the continuation
     const newTabId = generateTabId(`continue-${currentScenario.id}`);
-    setPendingTabId(newTabId);
     const newTab: Tab = {
       id: newTabId,
       title: 'Continuing...',
@@ -392,7 +363,6 @@ const ReadingPane: React.FC<ReadingPaneProps> = ({
       setTabs(prevTabs => prevTabs.map(t => t.id === newTabId ? { ...t, title: 'Generation Failed', isGenerating: false } : t));
     }
     setIsContinuing(false);
-    setPendingTabId(null);
   };
 
   const handleCancelContinue = () => {

@@ -194,8 +194,9 @@ const ScenarioWriter: React.FC<ScenarioWriterProps> = ({ value, onChange, onSubm
     setStoryArc(scenario.storyarc || '');
     setNotes(scenario.notes || '');
     
-    // Set the generated story if provided and is not empty
-    setGeneratedStory(generatedStory && generatedStory.trim() ? generatedStory : null);
+    // Don't automatically display generated story when loading scenario
+    // User should explicitly generate or select a story from the saved stories dropdown
+    setGeneratedStory(null);
     setCurrentStoryTimestamp(null); // Reset timestamp when loading a new scenario
     
     // Handle characters (this might need more processing depending on implementation)

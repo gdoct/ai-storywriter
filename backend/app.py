@@ -1,3 +1,4 @@
+import logging
 import os
 from datetime import timedelta
 
@@ -17,6 +18,14 @@ load_dotenv()
 
 # Initialize Flask app
 app = Flask(__name__, static_folder="../frontend/build", static_url_path="/")
+
+# Configure logging to only show errors
+if not app.debug:
+    # Disable werkzeug request logging in production
+    logging.getLogger('werkzeug').setLevel(logging.ERROR)
+    
+# Set Flask app logging to WARNING level to reduce noise
+app.logger.setLevel(logging.WARNING)
 
 # Configure JWT
 app.config["JWT_SECRET_KEY"] = os.environ.get("JWT_SECRET_KEY", "default-dev-secret-key")  # Change in production
@@ -48,6 +57,15 @@ def serve(path):
 
 def create_app():
     app = Flask(__name__, static_folder="../frontend/build", static_url_path="/")
+    
+    # Configure logging to only show errors
+    if not app.debug:
+        # Disable werkzeug request logging in production
+        logging.getLogger('werkzeug').setLevel(logging.ERROR)
+        
+    # Set Flask app logging to WARNING level to reduce noise
+    app.logger.setLevel(logging.WARNING)
+    
     app.config["JWT_SECRET_KEY"] = os.environ.get("JWT_SECRET_KEY", "default-dev-secret-key")
     app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(days=365)
     jwt = JWTManager(app)

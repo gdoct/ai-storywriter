@@ -79,9 +79,7 @@ class GeneratedTextRepository:
     @staticmethod
     def get_stories_by_scenario(scenario_id):
         conn = get_db_connection()
-        print(f"DB query for stories with scenario_id = {scenario_id} (type: {type(scenario_id)})")
         stories = conn.execute('SELECT * FROM stories WHERE scenario_id = ? ORDER BY created_at DESC', (scenario_id,)).fetchall()
-        print(f"Found {len(stories)} stories in database")
         conn.close()
         return stories
 
@@ -89,7 +87,6 @@ class GeneratedTextRepository:
     def create_story(scenario_id, text):
         conn = get_db_connection()
         now = datetime.utcnow().isoformat()
-        print(f"Inserting story for scenario_id = {scenario_id} (type: {type(scenario_id)})")
         conn.execute('INSERT INTO stories (scenario_id, text, created_at) VALUES (?, ?, ?)', (scenario_id, text, now))
         conn.commit()
         story = conn.execute('SELECT * FROM stories WHERE scenario_id = ? ORDER BY created_at DESC LIMIT 1', (scenario_id,)).fetchone()

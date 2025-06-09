@@ -1,9 +1,7 @@
 import { GeneratedStory, Scenario } from '../types/ScenarioTypes';
-import {
-  generateRandomScenarioName as backendGenerateRandomScenarioName
-} from './llmBackend';
-import { createCharacterPrompt, createScenarioPrompt, createWritingStylePrompt } from './llmPromptService';
+import { createBackstoryPrompt, createCharacterPrompt, createScenarioPrompt, createWritingStylePrompt } from './llmPromptService';
 import { streamChatCompletion } from './llmService';
+import { getSelectedModel } from './modelSelection';
 
 
 // Helper for prompt-based streaming using llmService
@@ -21,6 +19,7 @@ async function streamPromptCompletion({
   max_tokens?: number
 }) {
   let fullText = '';
+  const selectedModel = getSelectedModel();
   // Use a single message for prompt-based completions
   await streamChatCompletion(
     [ { role: 'user', content: prompt } ],
@@ -31,7 +30,11 @@ async function streamPromptCompletion({
       }
       fullText = text;
     },
-    { temperature, max_tokens }
+    { 
+      model: selectedModel || undefined,
+      temperature, 
+      max_tokens 
+    }
   );
   return fullText;
 }
@@ -98,6 +101,7 @@ export async function generateStory(
   let cancelGeneration = () => { cancelled = true; };
   const resultPromise = new Promise<GeneratedStory>(async (resolve, reject) => {
     try {
+      const selectedModel = getSelectedModel();
       let fullText = '';
       await streamChatCompletion(
         [ { role: 'user', content: prompt } ],
@@ -107,7 +111,11 @@ export async function generateStory(
             fullText = text;
           }
         },
-        { temperature: options.temperature, max_tokens: 6000 }
+        { 
+          model: selectedModel || undefined,
+          temperature: options.temperature, 
+          max_tokens: 6000 
+        }
       );
       if (!cancelled) {
         resolve({ completeText: fullText, chapters: [] });
@@ -130,12 +138,13 @@ export async function generateBackstory(
     seed?: number | null
   } = {}
 ): Promise<{ result: Promise<string>; cancelGeneration: () => void }> {
-  const prompt = `Generate a backstory for the following scenario, providing all necessary details to understand the characters and plot. Do not include any meta-commentary or formatting.\n\nScenario:\n${JSON.stringify(scenario, null, 2)}`;
+  const prompt = createBackstoryPrompt(scenario);
   let cancelled = false;
   let cancelGeneration = () => { cancelled = true; };
   let fullText = '';
   const resultPromise = new Promise<string>(async (resolve, reject) => {
     try {
+      const selectedModel = getSelectedModel();
       await streamChatCompletion(
         [ { role: 'user', content: prompt } ],
         (text) => {
@@ -143,7 +152,11 @@ export async function generateBackstory(
           if (options.onProgress) options.onProgress(text.slice(fullText.length));
           fullText = text;
         },
-        { temperature: options.temperature, max_tokens: 1000 }
+        { 
+          model: selectedModel || undefined,
+          temperature: options.temperature, 
+          max_tokens: 1000 
+        }
       );
       if (!cancelled) {
         resolve(fullText);
@@ -180,6 +193,7 @@ export async function rewriteBackstory(
   let cancelGeneration = () => { cancelled = true; };
   const resultPromise = new Promise<string>(async (resolve, reject) => {
     try {
+      const selectedModel = getSelectedModel();
       let fullText = '';
       await streamChatCompletion(
         [ { role: 'user', content: prompt } ],
@@ -189,7 +203,11 @@ export async function rewriteBackstory(
             fullText = text;
           }
         },
-        { temperature: options.temperature, max_tokens: 1000 }
+        { 
+          model: selectedModel || undefined,
+          temperature: options.temperature, 
+          max_tokens: 1000 
+        }
       );
       if (!cancelled) {
         resolve(fullText);
@@ -220,6 +238,7 @@ export async function rewriteStoryArc(
   let cancelGeneration = () => { cancelled = true; };
   const resultPromise = new Promise<string>(async (resolve, reject) => {
     try {
+      const selectedModel = getSelectedModel();
       let fullText = '';
       await streamChatCompletion(
         [ { role: 'user', content: prompt } ],
@@ -229,7 +248,11 @@ export async function rewriteStoryArc(
             fullText = text;
           }
         },
-        { temperature: options.temperature, max_tokens: 1000 }
+        { 
+          model: selectedModel || undefined,
+          temperature: options.temperature, 
+          max_tokens: 1000 
+        }
       );
       if (!cancelled) {
         resolve(fullText);
@@ -256,6 +279,7 @@ export async function generateRandomWritingStyle(
   let cancelGeneration = () => { cancelled = true; };
   const resultPromise = new Promise<any>(async (resolve, reject) => {
     try {
+      const selectedModel = getSelectedModel();
       let fullText = '';
       await streamChatCompletion(
         [ { role: 'user', content: createWritingStylePrompt() } ],
@@ -263,7 +287,11 @@ export async function generateRandomWritingStyle(
           if (!cancelled && options.onProgress) options.onProgress(text.slice(fullText.length));
           fullText = text;
         },
-        { temperature: options.temperature, max_tokens: 1000 }
+        { 
+          model: selectedModel || undefined,
+          temperature: options.temperature, 
+          max_tokens: 1000 
+        }
       );
       if (!cancelled) { console.log(fullText); resolve(fullText); }
     } catch (e) { reject(e); }
@@ -290,6 +318,7 @@ export async function generateRandomCharacter(
   const prompt = createCharacterPrompt(scenario, characterType);
   const resultPromise = new Promise<any>(async (resolve, reject) => {
     try {
+      const selectedModel = getSelectedModel();
       let fullText = '';
       await streamChatCompletion(
         [ { role: 'user', content: prompt } ],
@@ -297,7 +326,11 @@ export async function generateRandomCharacter(
           if (!cancelled && options.onProgress) options.onProgress(text.slice(fullText.length));
           fullText = text;
         },
-        { temperature: options.temperature, max_tokens: 1000 }
+        { 
+          model: selectedModel || undefined,
+          temperature: options.temperature, 
+          max_tokens: 1000 
+        }
       );
       if (!cancelled) {
         // Remove markdown code block if present
@@ -327,7 +360,7 @@ export async function generateRandomScenarioName(
     seed?: number | null
   }
 ): Promise<{ result: Promise<string>; cancelGeneration: () => void }> {
-  return backendGenerateRandomScenarioName(options);
+  return generateRandomScenarioName(options);
 }
 
 /**
@@ -349,6 +382,7 @@ export async function generateStoryArc(
   let cancelGeneration = () => { cancelled = true; };
   const resultPromise = new Promise<string>(async (resolve, reject) => {
     try {
+      const selectedModel = getSelectedModel();
       let fullText = '';
       await streamChatCompletion(
         [ { role: 'user', content: prompt } ],
@@ -358,7 +392,11 @@ export async function generateStoryArc(
             fullText = text;
           }
         },
-        { temperature: options.temperature, max_tokens: 1000 }
+        { 
+          model: selectedModel || undefined,
+          temperature: options.temperature, 
+          max_tokens: 1000 
+        }
       );
       if (!cancelled) {
         resolve(fullText);

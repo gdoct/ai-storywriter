@@ -33,7 +33,9 @@ export async function streamChatCompletion(
     temperature: options.temperature ?? 0.8,
     max_tokens: options.max_tokens ?? 1024,
   };
-
+  if (!options.model || options.model.trim() === '') {
+    throw new Error('Model must be specified');
+  }
   const response = await fetch(LLM_PROXY_ENDPOINT, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -90,6 +92,9 @@ export async function chatCompletion(
     max_tokens: options.max_tokens ?? 1024,
     stream: false,
   };
+  if (!options.model || options.model.trim() === '') {
+    throw new Error('Model must be specified');
+  }
 
   const response = await fetch(LLM_PROXY_ENDPOINT, {
     method: 'POST',

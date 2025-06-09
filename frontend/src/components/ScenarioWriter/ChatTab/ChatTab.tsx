@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { LLMMessage, streamChatCompletion } from '../../../services/llmService';
+import { getSelectedModel } from '../../../services/modelSelection';
 import { TabProps } from '../common/TabInterface';
 import '../common/TabStylesNew.css';
 import './ChatTab.css';
@@ -33,6 +34,8 @@ const ChatTab: React.FC<TabProps> = () => {
     ];
 
     try {
+      // Fetch user-selected model
+      const model = getSelectedModel();
       await streamChatCompletion(
         chatHistory,
         (assistantText, isDone) => {
@@ -47,7 +50,7 @@ const ChatTab: React.FC<TabProps> = () => {
             return updated;
           });
         },
-        { model: 'google/gemma-3-4b', temperature: 0.8, max_tokens: 1024 }
+        { model: model || undefined, temperature: 0.8, max_tokens: 1024 }
       );
     } catch (err) {
       setMessages(prev => {

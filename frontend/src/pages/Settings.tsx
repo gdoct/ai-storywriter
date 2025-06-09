@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { fetchLLMModels, fetchLLMSettings, saveLLMSettings, testLLMConnection } from '../services/llmBackend';
+import { fetchLLMSettings, saveLLMSettings, testLLMConnection } from '../services/llmBackend';
 import { BackendType, LLMConfig } from '../types/LLMTypes';
 import './Settings.css';
 
@@ -11,15 +11,13 @@ const backendOptions: { label: string; value: BackendType }[] = [
 
 const defaultConfig: LLMConfig = {
   backendType: 'lmstudio',
-  lmstudio: { url: 'http://192.168.32.1:1234' },
+  lmstudio: { url: 'http://localhost:1234' },
   ollama: { url: 'http://localhost:11434' },
   chatgpt: { apiKey: '' },
-  defaultModel: '',
 };
 
 const Settings: React.FC = () => {
   const [config, setConfig] = useState<LLMConfig>(defaultConfig);
-  const [availableModels, setAvailableModels] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [saveMessage, setSaveMessage] = useState('');
   const [testMessage, setTestMessage] = useState('');
@@ -32,23 +30,6 @@ const Settings: React.FC = () => {
     });
   }, []);
 
-  // Fetch models for the selected backend
-  const fetchModels = async () => {
-    setLoading(true);
-    try {
-      const models = await fetchLLMModels();
-      setAvailableModels(models);
-      if (models.length > 0 && !models.includes(config.defaultModel || '')) {
-        setConfig((prev) => ({ ...prev, defaultModel: models[0] }));
-      }
-      return models.length > 0;
-    } catch (error) {
-      return false;
-    } finally {
-      setLoading(false);
-    }
-  };
-
   // Test connection
   const handleTestConnection = async () => {
     setTestStatus('idle');
@@ -59,7 +40,6 @@ const Settings: React.FC = () => {
       if (result.status === 'connected') {
         setTestStatus('success');
         setTestMessage('Connected! Models: ' + (result.models?.join(', ') || 'none'));
-        setAvailableModels(result.models || []);
       } else {
         setTestStatus('error');
         setTestMessage(result.error || 'Connection failed');
@@ -86,9 +66,7 @@ const Settings: React.FC = () => {
       ...defaultConfig,
       ...prev,
       backendType,
-      defaultModel: '',
     }));
-    setAvailableModels([]);
   };
 
   // Handle config field changes
@@ -105,11 +83,6 @@ const Settings: React.FC = () => {
     });
   };
 
-  // Handle model selection
-  const handleModelChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setConfig((prev) => ({ ...prev, defaultModel: e.target.value }));
-  };
-
   // Render dynamic config form
   const renderConfigForm = () => {
     switch (config.backendType) {
@@ -121,7 +94,7 @@ const Settings: React.FC = () => {
               type="text"
               value={config.lmstudio?.url || ''}
               onChange={(e) => handleConfigChange('url', e.target.value)}
-              placeholder="http://192.168.32.1:1234"
+              placeholder="http://localhost:1234"
               className="settings-input"
             />
           </div>
@@ -170,18 +143,6 @@ const Settings: React.FC = () => {
           </select>
         </div>
         {renderConfigForm()}
-        <div className="form-row">
-          <label>Model:</label>
-          <select value={config.defaultModel || ''} onChange={handleModelChange} className="settings-input">
-            <option value="">Select model</option>
-            {availableModels.map(m => (
-              <option key={m} value={m}>{m}</option>
-            ))}
-          </select>
-          <button onClick={fetchModels} disabled={loading} className="settings-btn secondary-btn" style={{ marginLeft: 8 }}>
-            {loading ? 'Refreshing...' : 'Refresh Models'}
-          </button>
-        </div>
         <div className="button-row">
           <button className="settings-btn primary-btn" onClick={handleSave} disabled={loading}>
             Save Settings
