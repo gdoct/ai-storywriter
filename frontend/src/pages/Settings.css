@@ -146,3 +146,120 @@
   border: 1px solid #ddd;
   border-radius: 4px;
 }
+
+/* Dark Mode Styles */
+.dark-settings {
+  background: #23272f;
+  color: #e6e6e6;
+  border-radius: 10px;
+  padding: 32px;
+  max-width: 700px;
+  margin: 0 auto;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+}
+
+.dark-settings .settings-title {
+  color: #61dafb;
+  margin-bottom: 24px;
+  font-size: 1.6rem;
+  font-weight: 600;
+}
+
+.dark-settings .settings-section {
+  background: #181a20;
+  border-radius: 8px;
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.18);
+}
+
+.dark-settings .form-row {
+  margin-bottom: 18px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.dark-settings label {
+  color: #bfc7d5;
+  font-weight: 500;
+  min-width: 120px;
+}
+
+.dark-settings .settings-input,
+.dark-settings input,
+.dark-settings select {
+  background: #23272f;
+  color: #e6e6e6;
+  border: 1px solid #353b45;
+  border-radius: 6px;
+  padding: 10px;
+  font-size: 1rem;
+  transition: border 0.2s;
+}
+
+.dark-settings .settings-input:focus,
+.dark-settings input:focus,
+.dark-settings select:focus {
+  border-color: #61dafb;
+  outline: none;
+}
+
+.dark-settings .settings-btn {
+  background: #353b45;
+  color: #e6e6e6;
+  border: 1px solid #23272e;
+  border-radius: 6px;
+  font-weight: 500;
+  transition: background 0.15s, color 0.15s;
+  padding: 8px 16px;
+  margin-right: 8px;
+}
+
+.dark-settings .settings-btn.primary-btn {
+  background: #61dafb;
+  color: #181a20;
+}
+
+.dark-settings .settings-btn.primary-btn:hover {
+  background: #4fc3f7;
+}
+
+.dark-settings .settings-btn.secondary-btn {
+  background: #353b45;
+  color: #e6e6e6;
+}
+
+.dark-settings .settings-btn.secondary-btn:hover {
+  background: #23272f;
+  color: #61dafb;
+}
+
+.dark-settings .button-row {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.dark-settings .message {
+  padding: 10px;
+  margin-top: 16px;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+.dark-settings .success-message {
+  background: #263238;
+  color: #8bc34a;
+  border: 1px solid #4caf50;
+}
+
+.dark-settings .error-message {
+  background: #2d1a1a;
+  color: #ff6b6b;
+  border: 1px solid #c62828;
+}
+
+.dark-settings input[type="password"] {
+  letter-spacing: 0.1em;
+}

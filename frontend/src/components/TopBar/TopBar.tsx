@@ -25,15 +25,7 @@ const TopBar: React.FC = () => {
   return (
     <header className="topbar">
       <nav className="topbar-nav">
-        {authenticated && (
-          <>
-            <Link to="/"><img src="/storywriter-logo-48.png" alt="Logo" /></Link>
-            <div className="nav-links">
-              <Link to="/">Home</Link>
-              <Link to="/settings">Settings</Link>
-            </div>
-          </>
-        )}
+        <Link to="/"><img src="/storywriter-logo-48.png" alt="Logo" /></Link>
       </nav>
       <div className="topbar-right">
         <div className="user-dropdown">

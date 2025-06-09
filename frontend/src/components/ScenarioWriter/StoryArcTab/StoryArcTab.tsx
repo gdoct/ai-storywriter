@@ -50,35 +50,23 @@ const StoryArcTab: React.FC<TabProps> = ({ content, updateContent, currentScenar
 
   const handleGenerateRandomStoryArc = async () => {
     console.log('Generate random story arc button clicked');
-    
     const temporaryScenario = createTemporaryScenario();
-
     try {
       setIsGenerating(true);
-      
-      // Debug: Log the scenario to verify it has all required fields
       console.log('Generating story arc with scenario:', temporaryScenario);
-      
+      let accumulated = '';
       const generationResult = await generateStoryArc(temporaryScenario, {
         onProgress: (generatedText) => {
-          // Update the story arc text while it's being generated
-          updateContent(generatedText);
+          // Accumulate the text as it streams in
+          accumulated += generatedText;
+          updateContent(accumulated);
         }
       });
-
-      // Store the cancel function to enable cancellation
       setCancelGeneration(() => generationResult.cancelGeneration);
-      
       try {
-        // Wait for the generation to complete
         const generatedStoryArc = await generationResult.result;
-        
-        // Update the content with the generated story arc
         updateContent(generatedStoryArc);
       } catch (error) {
-        // If we get an error, it might be due to cancellation
-        // In that case, we keep the partially generated text that was 
-        // already updated through onProgress
         console.log('Story arc generation was interrupted:', error);
       }
     } catch (error) {
@@ -91,41 +79,26 @@ const StoryArcTab: React.FC<TabProps> = ({ content, updateContent, currentScenar
   
   const handleRewriteStoryArc = async () => {
     console.log('Rewrite story arc button clicked');
-    
-    // Only proceed if there's actual content to rewrite
     if (!content || content.trim() === '') {
       console.log('No story arc to rewrite');
       return;
     }
-    
     const temporaryScenario = createTemporaryScenario();
-
     try {
       setIsGenerating(true);
-      
-      // Debug: Log the scenario to verify it has all required fields
       console.log('Rewriting story arc with scenario:', temporaryScenario);
-      
+      let accumulated = '';
       const generationResult = await rewriteStoryArc(temporaryScenario, {
         onProgress: (generatedText) => {
-          // Update the story arc text while it's being rewritten
-          updateContent(generatedText);
+          accumulated += generatedText;
+          updateContent(accumulated);
         }
       });
-
-      // Store the cancel function to enable cancellation
       setCancelGeneration(() => generationResult.cancelGeneration);
-      
       try {
-        // Wait for the generation to complete
         const rewrittenStoryArc = await generationResult.result;
-        
-        // Update the content with the rewritten story arc
         updateContent(rewrittenStoryArc);
       } catch (error) {
-        // If we get an error, it might be due to cancellation
-        // In that case, we keep the partially generated text that was 
-        // already updated through onProgress
         console.log('Story arc rewriting was interrupted:', error);
       }
     } catch (error) {

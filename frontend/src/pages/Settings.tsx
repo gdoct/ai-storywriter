@@ -122,6 +122,7 @@ const Settings: React.FC = () => {
               value={config.lmstudio?.url || ''}
               onChange={(e) => handleConfigChange('url', e.target.value)}
               placeholder="http://192.168.32.1:1234"
+              className="settings-input"
             />
           </div>
         );
@@ -134,6 +135,7 @@ const Settings: React.FC = () => {
               value={config.ollama?.url || ''}
               onChange={(e) => handleConfigChange('url', e.target.value)}
               placeholder="http://localhost:11434"
+              className="settings-input"
             />
           </div>
         );
@@ -146,6 +148,7 @@ const Settings: React.FC = () => {
               value={config.chatgpt?.apiKey || ''}
               onChange={(e) => handleConfigChange('apiKey', e.target.value)}
               placeholder="sk-..."
+              className="settings-input"
             />
           </div>
         );
@@ -155,12 +158,12 @@ const Settings: React.FC = () => {
   };
 
   return (
-    <div className="settings-container">
-      <h2>LLM Backend Settings</h2>
+    <div className="settings-container dark-settings">
+      <h2 className="settings-title">LLM Backend Settings</h2>
       <section className="settings-section">
         <div className="form-row">
           <label>Backend:</label>
-          <select value={config.backendType} onChange={handleBackendChange}>
+          <select value={config.backendType} onChange={handleBackendChange} className="settings-input">
             {backendOptions.map(opt => (
               <option key={opt.value} value={opt.value}>{opt.label}</option>
             ))}
@@ -169,13 +172,13 @@ const Settings: React.FC = () => {
         {renderConfigForm()}
         <div className="form-row">
           <label>Model:</label>
-          <select value={config.defaultModel || ''} onChange={handleModelChange}>
+          <select value={config.defaultModel || ''} onChange={handleModelChange} className="settings-input">
             <option value="">Select model</option>
             {availableModels.map(m => (
               <option key={m} value={m}>{m}</option>
             ))}
           </select>
-          <button onClick={fetchModels} disabled={loading} style={{ marginLeft: 8 }}>
+          <button onClick={fetchModels} disabled={loading} className="settings-btn secondary-btn" style={{ marginLeft: 8 }}>
             {loading ? 'Refreshing...' : 'Refresh Models'}
           </button>
         </div>

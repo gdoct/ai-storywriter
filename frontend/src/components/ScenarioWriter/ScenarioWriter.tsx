@@ -1,6 +1,6 @@
 // filepath: /home/guido/storywriter/frontend/src/components/ScenarioWriter.tsx
 import React, { useEffect, useRef, useState } from 'react';
-import { FaBookOpen, FaComment, FaEye, FaFileAlt, FaFont, FaProjectDiagram, FaStickyNote, FaUserFriends } from 'react-icons/fa';
+import { FaBookOpen, FaCog, FaComment, FaEye, FaFileAlt, FaFont, FaProjectDiagram, FaStickyNote, FaUserFriends } from 'react-icons/fa';
 import { v4 as uuidv4 } from 'uuid';
 import { createScenario, fetchGeneratedStory, updateScenario } from '../../services/scenario';
 import './ScenarioWriter.css';
@@ -15,6 +15,7 @@ import FileTab from './FileTab/FileTab';
 import NotesTab from './NotesTab/NotesTab';
 import PromptPreviewTab from './PromptPreviewTab/PromptPreviewTab';
 //import ScenesTab from './ScenesTab/ScenesTab';
+import Settings from '../../pages/Settings';
 import StoryArcTab from './StoryArcTab/StoryArcTab';
 import StoryStyleTab from './StoryStyleTab/StoryStyleTab';
 
@@ -330,6 +331,7 @@ const ScenarioWriter: React.FC<ScenarioWriterProps> = ({ value, onChange, onSubm
     { id: 'notes', label: 'Notes', icon: <FaStickyNote /> },
     { id: 'chat', label: 'Chat', icon: <FaComment /> },
     { id: 'preview', label: 'Prompt Preview', icon: <FaEye /> },
+    { id: 'settings', label: 'Settings', icon: <FaCog /> },
   ];
 
   const renderTabContent = () => {
@@ -407,6 +409,8 @@ const ScenarioWriter: React.FC<ScenarioWriterProps> = ({ value, onChange, onSubm
             currentScenario={currentScenario} 
           />
         );
+      case 'settings':
+        return <Settings />;
       default:
         return null;
     }
@@ -415,13 +419,14 @@ const ScenarioWriter: React.FC<ScenarioWriterProps> = ({ value, onChange, onSubm
   return (
     <div className="scenario-writer-container">
       <div className="scenario-sidebar">
-        <div className="scenario-sidebar-tabs"> {/* Added scrollable container */}
+        <div className="scenario-sidebar-tabs" style={{flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'flex-start'}}>
           {tabs.map((tab) => (
             <button
               key={tab.id}
               className={`scenario-sidebar-btn ${activeTab === tab.id ? 'active' : ''}`}
               onClick={() => setActiveTab(tab.id)}
               title={tab.label}
+              style={tab.id === 'settings' ? { fontSize: 24, display: 'flex', alignItems: 'center', justifyContent: 'center' } : {}}
             >
               {tab.icon}
             </button>
@@ -434,7 +439,9 @@ const ScenarioWriter: React.FC<ScenarioWriterProps> = ({ value, onChange, onSubm
           style={{ flex: `0 0 ${splitPosition}%`, overflowY: 'scroll' }}
         >
           {renderTabContent()}
+          <div style={{ height: '100%', minHeight: '100px' }}>
 
+          </div>
         </div>
         <div 
           className="splitter" 

@@ -2,12 +2,40 @@ import { GeneratedStory, Scenario } from '../types/ScenarioTypes';
 import {
   generateRandomCharacter as backendGenerateRandomCharacter,
   generateRandomScenarioName as backendGenerateRandomScenarioName,
-  generateRandomWritingStyle as backendGenerateRandomWritingStyle,
-  generateStreamingCompletion
+  generateRandomWritingStyle as backendGenerateRandomWritingStyle
 } from './llmBackend';
+import { streamChatCompletion } from './llmService';
 
 
-// All prompt creation functions have been removed. Now using only imports from llmPromptService.
+// Helper for prompt-based streaming using llmService
+async function streamPromptCompletion({
+  prompt,
+  onProgress,
+  temperature,
+  seed,
+  max_tokens
+}: {
+  prompt: string,
+  onProgress?: (text: string) => void,
+  temperature?: number,
+  seed?: number | null,
+  max_tokens?: number
+}) {
+  let fullText = '';
+  // Use a single message for prompt-based completions
+  await streamChatCompletion(
+    [ { role: 'user', content: prompt } ],
+    (text) => {
+      // Only send the new chunk to onProgress
+      if (onProgress) {
+        onProgress(text.slice(fullText.length));
+      }
+      fullText = text;
+    },
+    { temperature, max_tokens }
+  );
+  return fullText;
+}
 
 /**
  * Generate a single chapter using the backend LLM proxy
@@ -26,18 +54,13 @@ export async function generateChapter(
                  `Scenario:\n${JSON.stringify(scenario, null, 2)}\n\n` +
                  `Previous Chapters:\n${previousChapters}\n\n` +
                  `Chapter ${chapterNumber}:`;
-  let fullText = '';
-  await generateStreamingCompletion({
+  return streamPromptCompletion({
     prompt,
-    onProgress: (chunk) => {
-      fullText += chunk;
-      if (options.onProgress) options.onProgress(chunk);
-    },
+    onProgress: options.onProgress,
     temperature: options.temperature,
     seed: options.seed,
     max_tokens: 2000
   });
-  return fullText;
 }
 
 /**
@@ -51,17 +74,12 @@ export async function generateChapterSummary(
   } = {}
 ): Promise<string> {
   const prompt = `Summarize the following chapter in 2-3 sentences, focusing on the main events and character developments. Do not include any meta-commentary or formatting.\n\nChapter:\n${chapterText}`;
-  let fullText = '';
-  await generateStreamingCompletion({
+  return streamPromptCompletion({
     prompt,
-    onProgress: (chunk) => {
-      fullText += chunk;
-      if (options.onProgress) options.onProgress(chunk);
-    },
+    onProgress: options.onProgress,
     temperature: options.temperature,
     max_tokens: 200
   });
-  return fullText;
 }
 
 /**
@@ -82,18 +100,16 @@ export async function generateStory(
   const resultPromise = new Promise<GeneratedStory>(async (resolve, reject) => {
     try {
       let fullText = '';
-      await generateStreamingCompletion({
-        prompt,
-        onProgress: (chunk) => {
+      await streamChatCompletion(
+        [ { role: 'user', content: prompt } ],
+        (text) => {
           if (!cancelled) {
-            fullText += chunk;
-            if (options.onProgress) options.onProgress(chunk);
+            if (options.onProgress) options.onProgress(text.slice(fullText.length));
+            fullText = text;
           }
         },
-        temperature: options.temperature,
-        seed: options.seed,
-        max_tokens: 6000
-      });
+        { temperature: options.temperature, max_tokens: 6000 }
+      );
       if (!cancelled) {
         resolve({ completeText: fullText, chapters: [] });
       }
@@ -118,34 +134,18 @@ export async function generateBackstory(
   const prompt = `Generate a backstory for the following scenario, providing all necessary details to understand the characters and plot. Do not include any meta-commentary or formatting.\n\nScenario:\n${JSON.stringify(scenario, null, 2)}`;
   let cancelled = false;
   let cancelGeneration = () => { cancelled = true; };
-  
-  // Create a separate buffer for accumulating text
   let fullText = '';
-  
   const resultPromise = new Promise<string>(async (resolve, reject) => {
     try {
-      // Use a direct approach similar to ChatTab
-      await generateStreamingCompletion({
-        prompt,
-        onProgress: (chunk) => {
+      await streamChatCompletion(
+        [ { role: 'user', content: prompt } ],
+        (text) => {
           if (cancelled) return;
-          
-          // Log chunk for debugging
-          console.log('Received chunk:', chunk);
-          
-          // Add to our accumulated text
-          fullText += chunk;
-          
-          // Call the provided onProgress with just the new chunk
-          if (options.onProgress) {
-            options.onProgress(chunk);
-          }
+          if (options.onProgress) options.onProgress(text.slice(fullText.length));
+          fullText = text;
         },
-        temperature: options.temperature,
-        seed: options.seed,
-        max_tokens: 1000
-      });
-      
+        { temperature: options.temperature, max_tokens: 1000 }
+      );
       if (!cancelled) {
         resolve(fullText);
       } else {
@@ -155,7 +155,6 @@ export async function generateBackstory(
       reject(error);
     }
   });
-  
   return { result: resultPromise, cancelGeneration };
 }
 
@@ -183,18 +182,16 @@ export async function rewriteBackstory(
   const resultPromise = new Promise<string>(async (resolve, reject) => {
     try {
       let fullText = '';
-      await generateStreamingCompletion({
-        prompt,
-        onProgress: (chunk) => {
+      await streamChatCompletion(
+        [ { role: 'user', content: prompt } ],
+        (text) => {
           if (!cancelled) {
-            fullText += chunk;
-            if (options.onProgress) options.onProgress(chunk);
+            if (options.onProgress) options.onProgress(text.slice(fullText.length));
+            fullText = text;
           }
         },
-        temperature: options.temperature,
-        seed: options.seed,
-        max_tokens: 1000
-      });
+        { temperature: options.temperature, max_tokens: 1000 }
+      );
       if (!cancelled) {
         resolve(fullText);
       }
@@ -225,18 +222,16 @@ export async function rewriteStoryArc(
   const resultPromise = new Promise<string>(async (resolve, reject) => {
     try {
       let fullText = '';
-      await generateStreamingCompletion({
-        prompt,
-        onProgress: (chunk) => {
+      await streamChatCompletion(
+        [ { role: 'user', content: prompt } ],
+        (text) => {
           if (!cancelled) {
-            fullText += chunk;
-            if (options.onProgress) options.onProgress(chunk);
+            if (options.onProgress) options.onProgress(text.slice(fullText.length));
+            fullText = text;
           }
         },
-        temperature: options.temperature,
-        seed: options.seed,
-        max_tokens: 1000
-      });
+        { temperature: options.temperature, max_tokens: 1000 }
+      );
       if (!cancelled) {
         resolve(fullText);
       }
@@ -311,18 +306,16 @@ export async function generateStoryArc(
   const resultPromise = new Promise<string>(async (resolve, reject) => {
     try {
       let fullText = '';
-      await generateStreamingCompletion({
-        prompt,
-        onProgress: (chunk) => {
+      await streamChatCompletion(
+        [ { role: 'user', content: prompt } ],
+        (text) => {
           if (!cancelled) {
-            fullText += chunk;
-            if (options.onProgress) options.onProgress(chunk);
+            if (options.onProgress) options.onProgress(text.slice(fullText.length));
+            fullText = text;
           }
         },
-        temperature: options.temperature,
-        seed: options.seed,
-        max_tokens: 1000
-      });
+        { temperature: options.temperature, max_tokens: 1000 }
+      );
       if (!cancelled) {
         resolve(fullText);
       }

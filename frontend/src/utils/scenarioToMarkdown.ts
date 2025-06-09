@@ -119,11 +119,11 @@ export function formatScenarioAsMarkdown(scenario: Scenario): string {
     } 
 
     markdown += scenarioStyleToMarkdown(scenario);
-    markdown += scenarioCharactersToMarkdown(scenario);
-    markdown += scenarioScenesToMarkdown(scenario);
-    markdown += scenarioStoryArcToMarkdown(scenario);
     markdown += scenarioNotesToMarkdown(scenario);
+    markdown += scenarioCharactersToMarkdown(scenario);
     markdown += scenarioBackstoryToMarkdown(scenario);
+    markdown += scenarioStoryArcToMarkdown(scenario);
+    markdown += scenarioScenesToMarkdown(scenario);
 
   return markdown;
 }

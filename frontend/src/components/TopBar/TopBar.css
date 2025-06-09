@@ -4,14 +4,14 @@
   justify-content: space-between;
   background: linear-gradient(to right, #2c3e50, #4a6491);
   color: #fff;
-  padding: 0 24px;
+  padding: 0 0px;
   height: 60px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.2);
 }
 
 .topbar-right {
   display: flex;
-  align-items: center;
+  align-items: left;
 }
 
 .user-dropdown {

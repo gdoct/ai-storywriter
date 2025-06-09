@@ -1,5 +1,4 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { LLMMessage, streamChatCompletion } from '../../../services/llmService';
 import { TabProps } from '../common/TabInterface';
 import '../common/TabStylesNew.css';
 import './ChatTab.css';
@@ -8,6 +7,9 @@ interface Message {
   role: 'user' | 'assistant';
   content: string;
 }
+
+const BACKEND_URL = 'http://localhost:5000';
+const LLM_PROXY_ENDPOINT = `${BACKEND_URL}/proxy/llm/v1/chat/completions`;
 
 const ChatTab: React.FC<TabProps> = () => {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -26,29 +28,67 @@ const ChatTab: React.FC<TabProps> = () => {
     setInput('');
     setIsGenerating(true);
 
-    // Prepare chat history for LLM
-    const chatHistory: LLMMessage[] = [
-      ...messages.filter(m => m.role === 'user' || m.role === 'assistant').map(m => ({ role: m.role, content: m.content })),
-      { role: 'user', content: input }
-    ];
+    // Prepare payload as in chatbot.py
+    const payload = {
+      model: 'google/gemma-3-4b',
+      messages: [
+        ...messages.filter(m => m.role === 'user' || m.role === 'assistant').map(m => ({ role: m.role, content: m.content })),
+        { role: 'user', content: input }
+      ],
+      temperature: 0.8,
+      max_tokens: 1024
+    };
 
     try {
-      await streamChatCompletion(
-        chatHistory,
-        (assistantText, isDone) => {
-          setMessages(prev => {
-            const updated = [...prev];
-            for (let i = updated.length - 1; i >= 0; i--) {
-              if (updated[i].role === 'assistant') {
-                updated[i] = { ...updated[i], content: assistantText };
-                break;
+      const response = await fetch(LLM_PROXY_ENDPOINT, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+      if (!response.body) throw new Error('No response body');
+      const reader = response.body.getReader();
+      let assistantText = '';
+      let done = false;
+      while (!done) {
+        const { value, done: doneReading } = await reader.read();
+        done = doneReading;
+        if (value) {
+          const chunk = new TextDecoder().decode(value);
+          // Split by newlines, process lines starting with 'data: '
+          chunk.split('\n').forEach(line => {
+            if (line.startsWith('data: ')) {
+              const data = line.slice(6);
+              if (data === '[DONE]') return;
+              try {
+                const json = JSON.parse(data);
+                const choices = json.choices || [];
+                for (const choice of choices) {
+                  const delta = choice.delta || {};
+                  const content = delta.content;
+                  if (content) {
+                    assistantText += content;
+                    setMessages(prev => {
+                      // Update the last assistant message
+                      const updated = [...prev];
+                      for (let i = updated.length - 1; i >= 0; i--) {
+                        if (updated[i].role === 'assistant') {
+                          updated[i] = { ...updated[i], content: assistantText };
+                          break;
+                        }
+                      }
+                      return updated;
+                    });
+                  }
+                }
+              } catch {
+                // Not JSON, ignore
               }
             }
-            return updated;
           });
-        },
-        { model: 'google/gemma-3-4b', temperature: 0.8, max_tokens: 1024 }
-      );
+        }
+      }
     } catch (err) {
       setMessages(prev => {
         const updated = [...prev];
