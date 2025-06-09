@@ -188,10 +188,11 @@ const ReadingPane: React.FC<ReadingPaneProps> = ({
 
     try {
       const { result, cancelGeneration: newCancel } = await generateStory(currentScenario, {
-        onProgress: (text: string) => {
+        onProgress: (generatedText) => {
+          // Accumulate the text as it streams in
           setTabs(prevGlobalTabs =>
             prevGlobalTabs.map(t =>
-              t.id === newTabId ? { ...t, content: text } : t
+              t.id === newTabId ? { ...t, content: (t.content || '') + generatedText } : t
             )
           );
         }

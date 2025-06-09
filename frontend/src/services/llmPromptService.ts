@@ -217,3 +217,75 @@ export function createRewriteBackstoryPrompt(scenario: Scenario): string {
   prompt += "Do not include any markdown, formatting, or meta-commentary - only the rewritten backstory itself.\n";
   return prompt;
 }
+
+/**
+ * Creates a prompt specifically for generating a character
+ * @param scenario The current scenario for context
+ * @param characterType The type of character to generate: "protagonist", "antagonist", or "supporting"
+ */
+export function createCharacterPrompt(scenario: Scenario, characterType: string): string {
+  // Verify scenario is not null or undefined
+  if (!scenario) {
+    console.error("Error: scenario is null or undefined");
+    scenario = {
+      id: 'error-fallback',
+      userId: 'system',
+      createdAt: new Date(),
+      writingStyle: { genre: "General Fiction" }
+    };
+  }
+
+  // Get writing style and other details from scenario
+  const writingStyle = scenario.writingStyle || { genre: "General Fiction" };
+  const genre = writingStyle.genre || "General Fiction";
+  const existingCharacters = Array.isArray(scenario.characters) ? scenario.characters : [];
+  
+  // Create a prompt based on character type
+  let prompt = `You are an expert character creator for ${genre} stories. Create a ${characterType} character with depth and interesting traits.\n\n`;
+  
+  if (characterType === "protagonist") {
+    prompt += "Create a compelling protagonist who will engage readers and drive the story forward.\n";
+    prompt += "The character should have clear motivations, flaws, strengths, and a strong narrative voice.\n";
+  } else if (characterType === "antagonist") {
+    prompt += "Create a nuanced antagonist who provides meaningful opposition to the protagonist.\n";
+    prompt += "The character should have understandable motivations, complexity, and not be purely evil without reason.\n";
+  } else if (characterType === "supporting") {
+    prompt += "Create a memorable supporting character who adds depth to the story world.\n";
+    prompt += "The character should have their own goals and personality while complementing the main characters.\n";
+  }
+
+  // Add context from existing characters, if any
+  if (existingCharacters.length > 0) {
+    prompt += "\nConsider these existing characters in the story:\n";
+    existingCharacters.forEach((char, index) => {
+      prompt += `Character ${index + 1}: ${char.name || char.alias || 'Unnamed'} - ${char.role || 'No specified role'}\n`;
+    });
+    prompt += "\nCreate a character that would interact well with these existing characters.\n";
+  }
+
+  // Request specific details
+  prompt += "\nProvide the following information in JSON format:\n";
+  prompt += "- name: A fitting name for this character\n";
+  prompt += "- alias: An optional nickname or alias (can be empty string)\n";
+  prompt += "- gender: The character's gender\n";
+  prompt += "- role: Their specific role ('Protagonist', 'Antagonist', or 'Supporting')\n";
+  prompt += "- appearance: A concise description of their physical appearance\n";
+  prompt += "- backstory: A brief but compelling backstory for the character\n";
+  prompt += "- extraInfo: Any additional traits, skills, or information\n\n";
+  
+  prompt += "Format your response as a valid JSON object WITHOUT any explanation or additional text.\n\n";
+  prompt += "Ensure the JSON is well-formed and includes all required fields.\n";
+  prompt += "Make sure that quotes inside the JSON string are properly escaped:\n";
+  prompt += "IMPORTANT: Your response must be in JSON format ONLY with the following structure:\n";
+  prompt += "{\n";
+  prompt += '  "name": "(name)",\n';
+  prompt += '  "alias": "(alias)",\n';
+  prompt += '  "gender": "(gender)",\n';
+  prompt += '  "role": "(role)",\n';
+  prompt += '  "appearance": "(appearance)",\n';
+  prompt += '  "backstory": "(backstory)",\n';
+  prompt += '  "extraInfo": "(extraInfo)"\n';
+  prompt += "}";
+  
+  return prompt;
+}

@@ -58,7 +58,7 @@ const StyleDropdown: React.FC<{
 const StoryStyleTab: React.FC<TabProps> = ({ content, updateContent, currentScenario }) => {
   const [showImportModal, setShowImportModal] = useState(false);
   const [styleGenerationInProgress, setStyleGenerationInProgress] = useState(false);
-  
+
   // Define default empty style settings
   const defaultStyleSettings = {
     style: '',
@@ -82,7 +82,7 @@ const StoryStyleTab: React.FC<TabProps> = ({ content, updateContent, currentScen
       if (!content) {
         return defaultStyleSettings;
       }
-      
+
       // Try to parse content as JSON
       let parsedContent;
       try {
@@ -91,7 +91,7 @@ const StoryStyleTab: React.FC<TabProps> = ({ content, updateContent, currentScen
         // If parsing fails, return empty values
         return defaultStyleSettings;
       }
-      
+
       // Return the parsed content with defaults for any missing fields
       return {
         style: parsedContent.style || '',
@@ -124,51 +124,64 @@ const StoryStyleTab: React.FC<TabProps> = ({ content, updateContent, currentScen
       theme: importedSettings.theme || '',
       other: importedSettings.other || ''
     };
-    
+
     setStyleSettings(normalizedSettings);
     updateContent(JSON.stringify(normalizedSettings));
   };
 
+  // Add a state for streaming JSON and error
+  const [streamedJson, setStreamedJson] = useState('');
+  const [jsonError, setJsonError] = useState<string | null>(null);
+
   // Handler for generating a random writing style
   const handleGenerateRandomStyle = async () => {
     console.log('Generate random style button clicked');
-    
+    let accumulated = '';
+    setJsonError(null);
+    setStreamedJson('');
     try {
       setStyleGenerationInProgress(true);
-      
-      // Generate a random writing style
+      // Generate a random writing style with streaming
       const generationResult = await generateRandomWritingStyle({
         onProgress: (generatedText) => {
-          // For JSON results, we don't need to update intermediate progress
-          // as it might not be valid JSON until complete
-          console.log('Generating writing style...');
+          accumulated += generatedText;
+          setStreamedJson(accumulated); // Show the raw JSON as it is being generated
         }
       });
-
-      // Wait for the generation to complete
       try {
-        const randomStyle = await generationResult.result;
-        
-        // Update the style settings with the generated style
-        const newSettings = {
-          style: randomStyle.style || '',
-          genre: randomStyle.genre || '',
-          tone: randomStyle.tone || '',
-          language: randomStyle.language || '',
-          theme: randomStyle.theme || '',
-          other: randomStyle.other || ''
-        };
-        
-        setStyleSettings(newSettings);
-        
-        // Save as JSON string
-        updateContent(JSON.stringify(newSettings));
-        
-        console.log('Random style generated:', newSettings);
+        let randomStyle = await generationResult.result;
+        // Try to parse the final JSON and update the form
+        let parsed = null;
+        // the randomStyle starts with "```json\n" and ends with "\n```", so we need to clean it up
+        randomStyle = randomStyle.replace(/^```json\n/, '').replace(/\n```$/, '');
+        // Attempt to parse the cleaned style
+
+        try {
+          parsed = typeof randomStyle === 'string' ? JSON.parse(randomStyle) : randomStyle;
+        } catch (e) {
+          setJsonError('Failed to parse generated style as JSON.');
+          return;
+        }
+        if (parsed && typeof parsed === 'object') {
+          const newSettings = {
+            style: parsed.style || '',
+            genre: parsed.genre || '',
+            tone: parsed.tone || '',
+            language: parsed.language || '',
+            theme: parsed.theme || '',
+            other: parsed.other || ''
+          };
+          setStyleSettings(newSettings);
+          updateContent(JSON.stringify(newSettings));
+          setStreamedJson('');
+        }
+        console.log('Random style generated:', parsed);
       } catch (error) {
+        setJsonError('Style generation was interrupted or invalid.');
         console.log('Style generation was interrupted or invalid:', error);
       }
     } catch (error) {
+      setJsonError('Error generating random style.');
       console.error('Error generating random style:', error);
     } finally {
       setStyleGenerationInProgress(false);
@@ -181,12 +194,12 @@ const StoryStyleTab: React.FC<TabProps> = ({ content, updateContent, currentScen
         Story Style
       </div>
       <div className="tab-description" style={{ color: '#bfc7d5', fontWeight: 500, marginBottom: 32 }}>
-          Use these options to influence the style of your story. All fields are optional.
+        Use these options to influence the style of your story. All fields are optional.
       </div>
       <div className="tab-actions">
         <div className="tab-actions-primary">
           {!styleGenerationInProgress ? (
-            <ActionButton 
+            <ActionButton
               onClick={handleGenerateRandomStyle}
               label="✨ Generate Random Style"
               variant="success"
@@ -194,8 +207,8 @@ const StoryStyleTab: React.FC<TabProps> = ({ content, updateContent, currentScen
               disabled={styleGenerationInProgress}
             />
           ) : (
-            <ActionButton 
-              onClick={() => {}}
+            <ActionButton
+              onClick={() => { }}
               label="✨ Generating Style..."
               variant="default"
               disabled={true}
@@ -210,7 +223,7 @@ const StoryStyleTab: React.FC<TabProps> = ({ content, updateContent, currentScen
           />
         </div>
       </div>
-      
+
       <div className="tab-section" style={{
         background: '#181b20',
         borderRadius: '12px',
@@ -223,86 +236,107 @@ const StoryStyleTab: React.FC<TabProps> = ({ content, updateContent, currentScen
         alignItems: 'center',
       }}>
 
-      <div className="style-options-container" style={{
-        background: '#23272f',
-        border: '1.5px solid #444',
-        borderRadius: '10px',
-        color: '#fff',
-        boxShadow: '0 4px 16px rgba(0,0,0,0.18)',
-        margin: '0 auto 24px auto',
-        padding: '32px 32px 22px 32px',
-        minWidth: '580px',
-        maxWidth: '820px',
-        fontSize: '1.08rem',
-        fontFamily: 'inherit',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '22px',
-      }}>
-        <StyleDropdown
-          label="Style"
-          value={styleSettings.style}
-          onChange={(value) => handleSettingChange('style', value)}
-          options={styleOptions}
-          labelStyle={{ color: '#90caf9', fontWeight: 600, fontSize: '1.04rem', marginBottom: 4 }}
-        />
-
-        <StyleDropdown
-          label="Genre"
-          value={styleSettings.genre}
-          onChange={(value) => handleSettingChange('genre', value)}
-          options={genreOptions}
-          labelStyle={{ color: '#90caf9', fontWeight: 600, fontSize: '1.04rem', marginBottom: 4 }}
-        />
-
-        <StyleDropdown
-          label="Tone"
-          value={styleSettings.tone}
-          onChange={(value) => handleSettingChange('tone', value)}
-          options={toneOptions}
-          labelStyle={{ color: '#90caf9', fontWeight: 600, fontSize: '1.04rem', marginBottom: 4 }}
-        />
-
-        <StyleDropdown
-          label="Language"
-          value={styleSettings.language}
-          onChange={(value) => handleSettingChange('language', value)}
-          options={languageOptions}
-          labelStyle={{ color: '#90caf9', fontWeight: 600, fontSize: '1.04rem', marginBottom: 4 }}
-        />
-
-        <StyleDropdown
-          label="Theme"
-          value={styleSettings.theme}
-          onChange={(value) => handleSettingChange('theme', value)}
-          options={themeOptions}
-          labelStyle={{ color: '#90caf9', fontWeight: 600, fontSize: '1.04rem', marginBottom: 4 }}
-        />
-
-        <div className="form-field">
-          <label style={{ color: '#90caf9', fontWeight: 600, fontSize: '1.04rem', marginBottom: 4 }}>Other Instructions</label>
-          <textarea
-            value={styleSettings.other}
-            onChange={(e) => handleSettingChange('other', e.target.value)}
-            placeholder="Add any additional style instructions here..."
-            className="form-textarea"
-            style={{
-              background: '#181b20',
-              color: '#fff',
-              border: '1px solid #444',
-              borderRadius: '6px',
+        <div style={{ width: '100%', margin: '0 auto 16px auto', textAlign: 'center' }}>
+          {styleGenerationInProgress && streamedJson && (
+            <div style={{
+              background: '#23272f',
+              color: '#90caf9',
+              fontFamily: 'monospace',
               fontSize: '1rem',
-              padding: '10px',
-              marginTop: '4px',
-              minHeight: '96px',
-            }}
+              padding: '12px 18px',
+              borderRadius: '8px',
+              margin: '12px auto',
+              maxWidth: 700,
+              wordBreak: 'break-all',
+              whiteSpace: 'pre-wrap',
+              border: '1px solid #444',
+            }}>
+              {streamedJson}
+            </div>
+          )}
+          {jsonError && (
+            <div style={{ color: '#ff5252', fontWeight: 600, margin: '8px 0' }}>{jsonError}</div>
+          )}
+        </div>
+
+        <div className="style-options-container" style={{
+          background: '#23272f',
+          border: '1.5px solid #444',
+          borderRadius: '10px',
+          color: '#fff',
+          boxShadow: '0 4px 16px rgba(0,0,0,0.18)',
+          margin: '0 auto 24px auto',
+          padding: '32px 32px 22px 32px',
+          minWidth: '580px',
+          maxWidth: '820px',
+          fontSize: '1.08rem',
+          fontFamily: 'inherit',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '22px',
+        }}>
+          <StyleDropdown
+            label="Style"
+            value={styleSettings.style}
+            onChange={(value) => handleSettingChange('style', value)}
+            options={styleOptions}
+            labelStyle={{ color: '#90caf9', fontWeight: 600, fontSize: '1.04rem', marginBottom: 4 }}
           />
+
+          <StyleDropdown
+            label="Genre"
+            value={styleSettings.genre}
+            onChange={(value) => handleSettingChange('genre', value)}
+            options={genreOptions}
+            labelStyle={{ color: '#90caf9', fontWeight: 600, fontSize: '1.04rem', marginBottom: 4 }}
+          />
+
+          <StyleDropdown
+            label="Tone"
+            value={styleSettings.tone}
+            onChange={(value) => handleSettingChange('tone', value)}
+            options={toneOptions}
+            labelStyle={{ color: '#90caf9', fontWeight: 600, fontSize: '1.04rem', marginBottom: 4 }}
+          />
+
+          <StyleDropdown
+            label="Language"
+            value={styleSettings.language}
+            onChange={(value) => handleSettingChange('language', value)}
+            options={languageOptions}
+            labelStyle={{ color: '#90caf9', fontWeight: 600, fontSize: '1.04rem', marginBottom: 4 }}
+          />
+
+          <StyleDropdown
+            label="Theme"
+            value={styleSettings.theme}
+            onChange={(value) => handleSettingChange('theme', value)}
+            options={themeOptions}
+            labelStyle={{ color: '#90caf9', fontWeight: 600, fontSize: '1.04rem', marginBottom: 4 }}
+          />
+
+          <div className="form-field">
+            <label style={{ color: '#90caf9', fontWeight: 600, fontSize: '1.04rem', marginBottom: 4 }}>Other Instructions</label>
+            <textarea
+              value={styleSettings.other}
+              onChange={(e) => handleSettingChange('other', e.target.value)}
+              placeholder="Add any additional style instructions here..."
+              className="form-textarea"
+              style={{
+                background: '#181b20',
+                color: '#fff',
+                border: '1px solid #444',
+                borderRadius: '6px',
+                fontSize: '1rem',
+                padding: '10px',
+                marginTop: '4px',
+                minHeight: '96px',
+              }}
+            />
+          </div>
         </div>
       </div>
 
-      
-      </div>
-      
       <ImportModal
         show={showImportModal}
         onClose={() => setShowImportModal(false)}
@@ -315,7 +349,7 @@ const StoryStyleTab: React.FC<TabProps> = ({ content, updateContent, currentScen
           const hasTone = !!styleSettings.tone;
           const hasLanguage = !!styleSettings.language;
           const hasTheme = !!styleSettings.theme;
-          
+
           return (
             <div className="style-settings-preview">
               <div className="style-settings-grid">
@@ -330,10 +364,10 @@ const StoryStyleTab: React.FC<TabProps> = ({ content, updateContent, currentScen
         }}
         extractContent={(scenario) => {
           if (!scenario) return { style: '', genre: '', tone: '', language: '', theme: '', other: '' };
-          
+
           try {
             // Default empty result
-            const result = { 
+            const result = {
               style: '',
               genre: '',
               tone: '',
@@ -341,7 +375,7 @@ const StoryStyleTab: React.FC<TabProps> = ({ content, updateContent, currentScen
               theme: '',
               other: ''
             };
-            
+
             // First priority: check for writingStyle property (backend format)
             if (scenario.writingStyle) {
               return {
@@ -353,7 +387,7 @@ const StoryStyleTab: React.FC<TabProps> = ({ content, updateContent, currentScen
                 other: scenario.writingStyle.other || ''
               };
             }
-            
+
             // Second priority: try to parse style as JSON
             if (scenario.style) {
               if (typeof scenario.style === 'string') {
@@ -378,14 +412,14 @@ const StoryStyleTab: React.FC<TabProps> = ({ content, updateContent, currentScen
                 Object.assign(result, scenario.style);
               }
             }
-            
+
             // Finally check for direct properties on scenario
             if (typeof scenario.genre === 'string') result.genre = scenario.genre;
             if (typeof scenario.tone === 'string') result.tone = scenario.tone;
             if (typeof scenario.language === 'string') result.language = scenario.language;
             if (typeof scenario.theme === 'string') result.theme = scenario.theme;
             if (typeof scenario.other === 'string') result.other = scenario.other;
-            
+
             return result;
           } catch (error) {
             console.error('Error extracting style settings:', error);

@@ -1,9 +1,8 @@
 import { GeneratedStory, Scenario } from '../types/ScenarioTypes';
 import {
-  generateRandomCharacter as backendGenerateRandomCharacter,
-  generateRandomScenarioName as backendGenerateRandomScenarioName,
-  generateRandomWritingStyle as backendGenerateRandomWritingStyle
+  generateRandomScenarioName as backendGenerateRandomScenarioName
 } from './llmBackend';
+import { createCharacterPrompt, createWritingStylePrompt, createScenarioPrompt } from './llmPromptService';
 import { streamChatCompletion } from './llmService';
 
 
@@ -94,7 +93,7 @@ export async function generateStory(
     seed?: number | null
   } = {}
 ): Promise<{ result: Promise<GeneratedStory>; cancelGeneration: () => void }> {
-  const prompt = `Create a complete story based on the following scenario, including all major plot points and character developments. Do not include any meta-commentary or formatting.\n\nScenario:\n${JSON.stringify(scenario, null, 2)}`;
+  const prompt = createScenarioPrompt(scenario);
   let cancelled = false;
   let cancelGeneration = () => { cancelled = true; };
   const resultPromise = new Promise<GeneratedStory>(async (resolve, reject) => {
@@ -252,8 +251,24 @@ export async function generateRandomWritingStyle(
     seed?: number | null
   } = {}
 ): Promise<{ result: Promise<any>; cancelGeneration: () => void }> {
-  // Use backend service
-  return backendGenerateRandomWritingStyle(options);
+  // Use llmService directly for streaming completions
+  let cancelled = false;
+  let cancelGeneration = () => { cancelled = true; };
+  const resultPromise = new Promise<any>(async (resolve, reject) => {
+    try {
+      let fullText = '';
+      await streamChatCompletion(
+        [ { role: 'user', content: createWritingStylePrompt() } ],
+        (text) => {
+          if (!cancelled && options.onProgress) options.onProgress(text.slice(fullText.length));
+          fullText = text;
+        },
+        { temperature: options.temperature, max_tokens: 1000 }
+      );
+      if (!cancelled) { console.log(fullText); resolve(fullText); }
+    } catch (e) { reject(e); }
+  });
+  return { result: resultPromise, cancelGeneration };
 }
 
 /**
@@ -268,7 +283,36 @@ export async function generateRandomCharacter(
     seed?: number | null
   } = {}
 ): Promise<{ result: Promise<any>; cancelGeneration: () => void }> {
-  return backendGenerateRandomCharacter(scenario, characterType, options);
+  // Use llmService directly for streaming completions
+  let cancelled = false;
+  let cancelGeneration = () => { cancelled = true; };
+  // Use llmPromptService to generate the correct prompt
+  const prompt = createCharacterPrompt(scenario, characterType);
+  const resultPromise = new Promise<any>(async (resolve, reject) => {
+    try {
+      let fullText = '';
+      await streamChatCompletion(
+        [ { role: 'user', content: prompt } ],
+        (text) => {
+          if (!cancelled && options.onProgress) options.onProgress(text.slice(fullText.length));
+          fullText = text;
+        },
+        { temperature: options.temperature, max_tokens: 1000 }
+      );
+      if (!cancelled) {
+        // Remove markdown code block if present
+        let cleaned = fullText.trim();
+        if (cleaned.startsWith('```json')) {
+          cleaned = cleaned.slice(7);
+        }
+        if (cleaned.endsWith('```')) {
+          cleaned = cleaned.slice(0, -3);
+        }
+        resolve(cleaned.trim());
+      }
+    } catch (e) { reject(e); }
+  });
+  return { result: resultPromise, cancelGeneration };
 }
 
 /**

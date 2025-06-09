@@ -34,6 +34,11 @@ const CharactersTab: React.FC<TabProps> = ({ content, updateContent, currentScen
   const [characterGenerationInProgress, setCharacterGenerationInProgress] = useState(false);
   const [cancelGeneration, setCancelGeneration] = useState<(() => void) | null>(null);
 
+  // Add state for streaming character JSON and error modal
+  const [streamedJson, setStreamedJson] = useState('');
+  const [jsonError, setJsonError] = useState<string | null>(null);
+  const [showJsonErrorModal, setShowJsonErrorModal] = useState(false);
+
   // Parse stored characters JSON when component mounts or content changes
   useEffect(() => {
     if (content) {
@@ -188,7 +193,7 @@ const CharactersTab: React.FC<TabProps> = ({ content, updateContent, currentScen
     }));
   };
 
-  // Handler for generating character from modal form
+  // Handler for generating character from modal form (streaming, no llmBackend)
   const handleGenerateCharacterFromModal = async () => {
     if (!currentScenario) {
       setGenerateFormError("No scenario selected.");
@@ -196,42 +201,58 @@ const CharactersTab: React.FC<TabProps> = ({ content, updateContent, currentScen
     }
     setCharacterGenerationInProgress(true);
     setGenerateFormError(null);
+    setStreamedJson('');
+    setJsonError(null);
+    setShowJsonErrorModal(false);
+    let accumulated = '';
     try {
       // Compose a temporary scenario with up-to-date characters
       const scenarioForPrompt = {
         ...currentScenario,
         characters: characters
       };
-      // Use the form fields to determine which are missing
       const filledFields = generateFormCharacter;
-      // Find the first missing field to use as the 'characterType' (fallback to 'supporting')
       let characterType = filledFields.role?.toLowerCase() || 'supporting';
-      // If user provided a role, use it; otherwise, let the backend decide
-      // Call backend to generate missing fields
+      // Use llmService for streaming
       const generationResult = await generateRandomCharacter(
         scenarioForPrompt,
         characterType,
         {
-          onProgress: () => {}
+          onProgress: (chunk) => {
+            accumulated += chunk;
+            setStreamedJson(accumulated);
+          }
         }
       );
       setCancelGeneration(() => generationResult.cancelGeneration);
       try {
         const randomCharacter = await generationResult.result;
-        // Merge user input with generated fields (user input takes precedence)
-        const newCharacterWithId = {
-          ...randomCharacter,
-          ...generateFormCharacter,
-          id: generateFormCharacter.id || generateUniqueId()
-        };
-        setCharacters(prev => [...prev, newCharacterWithId]);
-        setShowGenerateModal(false);
-        setGenerateFormCharacter({ id: '', name: '' });
+        let parsed = null;
+        try {
+          parsed = typeof randomCharacter === 'string' ? JSON.parse(randomCharacter) : randomCharacter;
+        } catch (e) {
+          setJsonError('Failed to parse generated character as JSON.');
+          setShowJsonErrorModal(true);
+          return;
+        }
+        if (parsed && typeof parsed === 'object') {
+          const newCharacterWithId = {
+            ...parsed,
+            ...generateFormCharacter,
+            id: generateFormCharacter.id || generateUniqueId()
+          };
+          setCharacters(prev => [...prev, newCharacterWithId]);
+          setShowGenerateModal(false);
+          setGenerateFormCharacter({ id: '', name: '' });
+          setStreamedJson('');
+        }
       } catch (error) {
-        setGenerateFormError('Character generation was interrupted or failed.');
+        setJsonError('Character generation was interrupted or failed.');
+        setShowJsonErrorModal(true);
       }
     } catch (error) {
-      setGenerateFormError('Error generating random character.');
+      setJsonError('Error generating random character.');
+      setShowJsonErrorModal(true);
     } finally {
       setCharacterGenerationInProgress(false);
       setCancelGeneration(null);
@@ -308,7 +329,7 @@ const CharactersTab: React.FC<TabProps> = ({ content, updateContent, currentScen
       {/* Generate Character Modal */}
       <Modal
         show={showGenerateModal}
-        onClose={() => { setShowGenerateModal(false); setGenerateFormError(null); }}
+        onClose={() => { setShowGenerateModal(false); setGenerateFormError(null); setStreamedJson(''); }}
         title="Generate New Character"
       >
         <div className="form-container" style={{
@@ -425,6 +446,23 @@ const CharactersTab: React.FC<TabProps> = ({ content, updateContent, currentScen
           {generateFormError && (
             <div style={{ color: '#ff6b6b', marginBottom: '1rem', fontWeight: 600 }}>{generateFormError}</div>
           )}
+          {streamedJson && characterGenerationInProgress && (
+            <div style={{
+              background: '#23272f',
+              color: '#90caf9',
+              fontFamily: 'monospace',
+              fontSize: '1rem',
+              padding: '12px 18px',
+              borderRadius: '8px',
+              margin: '12px auto',
+              maxWidth: 700,
+              wordBreak: 'break-all',
+              whiteSpace: 'pre-wrap',
+              border: '1px solid #444',
+            }}>
+              {streamedJson}
+            </div>
+          )}
           <div className="form-buttons">
             <ActionButton onClick={() => { setShowGenerateModal(false); setGenerateFormError(null); }} label="Cancel" variant="default" />
             <ActionButton 
@@ -434,6 +472,19 @@ const CharactersTab: React.FC<TabProps> = ({ content, updateContent, currentScen
               disabled={characterGenerationInProgress}
             />
           </div>
+        </div>
+      </Modal>
+
+      <Modal
+        show={showJsonErrorModal}
+        onClose={() => setShowJsonErrorModal(false)}
+        title="Character Generation Error"
+      >
+        <div style={{ color: '#ff5252', fontWeight: 600, marginBottom: '12px' }}>{jsonError}</div>
+        <div style={{ background: '#23272f', color: '#90caf9', fontFamily: 'monospace', fontSize: '1rem', padding: '12px 18px', borderRadius: '8px', margin: '12px auto', maxWidth: 700, wordBreak: 'break-all', whiteSpace: 'pre-wrap', border: '1px solid #444' }}>{streamedJson}</div>
+        <div className="form-buttons">
+          <ActionButton onClick={() => { setShowJsonErrorModal(false); handleGenerateCharacterFromModal(); }} label="Retry" variant="success" />
+          <ActionButton onClick={() => setShowJsonErrorModal(false)} label="Cancel" variant="default" />
         </div>
       </Modal>
 

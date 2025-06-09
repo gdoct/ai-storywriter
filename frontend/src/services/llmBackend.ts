@@ -1,4 +1,5 @@
 import { LLMConfig } from '../types/LLMTypes';
+import { createWritingStylePrompt } from './llmPromptService';
 
 const API_BASE = '/api/settings/llm';
 
@@ -113,50 +114,6 @@ export async function getLLMStatus(): Promise<{isConnected: boolean, modelName: 
   }
 }
 
-// Proxy call to backend for LLM completions (non-streaming)
-export async function generateCompletion({ prompt, temperature, seed, max_tokens }: {
-  prompt: string,
-  temperature?: number,
-  seed?: number | null,
-  max_tokens?: number
-}): Promise<string> {
-  try {
-    const payload = {
-      model: undefined, // let backend use default
-      messages: [{ role: 'user', content: prompt }],
-      temperature,
-      max_tokens,
-      seed
-    };
-    console.log('Sending completion request with payload:', payload);
-    
-    const response = await fetch('/proxy/llm/v1/chat/completions', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-    
-    if (!response.ok) {
-      // Try to get error details from the response
-      let errorMessage = 'LLM backend error';
-      try {
-        const errorData = await response.json();
-        errorMessage = `LLM backend error: ${errorData.error || response.statusText}`;
-      } catch (e) {
-        console.error('Failed to parse error response:', e);
-      }
-      throw new Error(errorMessage);
-    }
-    
-    const data = await response.json();
-    console.log('Completion response:', data);
-    return data.choices?.[0]?.message?.content || '';
-  } catch (error) {
-    console.error('Error in generateCompletion:', error);
-    throw error;
-  }
-}
-
 // Proxy call to backend for LLM completions (streaming, real SSE implementation)
 export async function generateStreamingCompletion({ prompt, onProgress, temperature, seed, max_tokens }: {
   prompt: string,
@@ -233,13 +190,19 @@ export async function generateStreamingCompletion({ prompt, onProgress, temperat
 
 // Generate a random writing style using the backend
 export async function generateRandomWritingStyle(options: any = {}): Promise<{ result: Promise<any>; cancelGeneration: () => void }> {
-  const prompt = `Create a random writing style configuration for a story. Format as JSON.`;
+  const prompt = createWritingStylePrompt();
   let cancelled = false;
   let cancelGeneration = () => { cancelled = true; };
   const resultPromise = new Promise<any>(async (resolve, reject) => {
     try {
-      const text = await generateCompletion({ prompt, ...options });
-      if (!cancelled) resolve(text);
+      // Only support streaming completions now
+      let fullText = '';
+      await generateStreamingCompletion({
+        prompt,
+        onProgress: (chunk) => { fullText += chunk; },
+        ...options
+      });
+      if (!cancelled) resolve(fullText);
     } catch (e) { reject(e); }
   });
   return { result: resultPromise, cancelGeneration };
@@ -252,8 +215,13 @@ export async function generateRandomCharacter(scenario: any, characterType: stri
   let cancelGeneration = () => { cancelled = true; };
   const resultPromise = new Promise<any>(async (resolve, reject) => {
     try {
-      const text = await generateCompletion({ prompt, ...options });
-      if (!cancelled) resolve(text);
+      let fullText = '';
+      await generateStreamingCompletion({
+        prompt,
+        onProgress: (chunk) => { fullText += chunk; },
+        ...options
+      });
+      if (!cancelled) resolve(fullText);
     } catch (e) { reject(e); }
   });
   return { result: resultPromise, cancelGeneration };
@@ -266,8 +234,13 @@ export async function generateRandomScenarioName(options: any = {}): Promise<{ r
   let cancelGeneration = () => { cancelled = true; };
   const resultPromise = new Promise<string>(async (resolve, reject) => {
     try {
-      const text = await generateCompletion({ prompt, ...options });
-      if (!cancelled) resolve(text);
+      let fullText = '';
+      await generateStreamingCompletion({
+        prompt,
+        onProgress: (chunk) => { fullText += chunk; },
+        ...options
+      });
+      if (!cancelled) resolve(fullText);
     } catch (e) { reject(e); }
   });
   return { result: resultPromise, cancelGeneration };
