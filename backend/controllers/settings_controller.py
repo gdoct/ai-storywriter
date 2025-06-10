@@ -1,8 +1,8 @@
 import json
 
-from db import get_db_connection
+from data.db import get_db_connection
 from flask import Blueprint, jsonify, request
-from llm_service import get_llm_service
+from llm_services.llm_service import get_llm_service
 
 settings_controller = Blueprint('settings_controller', __name__)
 

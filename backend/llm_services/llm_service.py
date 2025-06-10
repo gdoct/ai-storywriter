@@ -1,7 +1,7 @@
 import abc
 import json
 
-from db import get_db_connection
+from data.db import get_db_connection
 
 
 class BaseLLMService(abc.ABC):
@@ -25,13 +25,13 @@ class BaseLLMService(abc.ABC):
 
 def get_llm_service(backend_type, config):
     if backend_type == 'lmstudio':
-        from lmstudio_service import LMStudioService
+        from llm_services.lmstudio_service import LMStudioService
         return LMStudioService(config)
     elif backend_type == 'ollama':
-        from ollama_service import OllamaService
+        from llm_services.ollama_service import OllamaService
         return OllamaService(config)
     elif backend_type == 'chatgpt':
-        from openai_service import OpenAIService
+        from llm_services.openai_service import OpenAIService
         return OpenAIService(config)
     else:
         raise ValueError(f"Unknown backend_type: {backend_type}")
@@ -49,6 +49,6 @@ def get_active_llm_service():
     return get_llm_service(backend_type, config)
 
 # Re-export for test imports
-from lmstudio_service import LMStudioService  # noqa: F401
-from ollama_service import OllamaService  # noqa: F401
-from openai_service import OpenAIService  # noqa: F401
+from llm_services.lmstudio_service import LMStudioService  # noqa: F401
+from llm_services.ollama_service import OllamaService  # noqa: F401
+from llm_services.openai_service import OpenAIService  # noqa: F401

@@ -1,9 +1,9 @@
 import json
 
-from db import get_db_connection
+from data.db import get_db_connection
 from flask import (Blueprint, Response, jsonify, make_response, request,
                    stream_with_context)
-from llm_service import get_llm_service
+from llm_services.llm_service import get_llm_service
 
 llm_proxy = Blueprint('llm_proxy', __name__)
 

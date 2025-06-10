@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { generateCharacterField } from '../../../services/characterFieldGenerator';
 import { generateRandomCharacter } from '../../../services/storyGenerator';
 import { Character } from '../../../types/ScenarioTypes';
 import ActionButton from '../../common/ActionButton';
@@ -38,6 +39,11 @@ const CharactersTab: React.FC<TabProps> = ({ content, updateContent, currentScen
   const [streamedJson, setStreamedJson] = useState('');
   const [jsonError, setJsonError] = useState<string | null>(null);
   const [showJsonErrorModal, setShowJsonErrorModal] = useState(false);
+
+  // Add state for field-level generation
+  const [fieldGenerationInProgress, setFieldGenerationInProgress] = useState<string | null>(null); // field name being generated
+  const [fieldStreamedText, setFieldStreamedText] = useState('');
+  const [fieldCancelGeneration, setFieldCancelGeneration] = useState<(() => void) | null>(null);
 
   // Parse stored characters JSON when component mounts or content changes
   useEffect(() => {
@@ -268,6 +274,66 @@ const CharactersTab: React.FC<TabProps> = ({ content, updateContent, currentScen
     }
   };
 
+  // Handle field-level generation
+  const handleGenerateField = async (fieldName: string, fieldDisplayName: string) => {
+    if (!currentScenario) {
+      alert("Please create or select a scenario first before generating field values.");
+      return;
+    }
+
+    setFieldGenerationInProgress(fieldName);
+    setFieldStreamedText('');
+    
+    try {
+      const generationResult = await generateCharacterField(
+        currentScenario,
+        newCharacter,
+        fieldName,
+        fieldDisplayName,
+        {
+          onProgress: (text) => {
+            setFieldStreamedText(text);
+          }
+        }
+      );
+      
+      setFieldCancelGeneration(() => generationResult.cancelGeneration);
+      
+      try {
+        const generatedValue = await generationResult.result;
+        
+        // Update the character with the generated value
+        setNewCharacter(prev => ({
+          ...prev,
+          [fieldName]: generatedValue
+        }));
+        
+        setFieldStreamedText('');
+        setFieldGenerationInProgress(null);
+        setFieldCancelGeneration(null);
+      } catch (error) {
+        console.error('Field generation failed:', error);
+        setFieldStreamedText('');
+        setFieldGenerationInProgress(null);
+        setFieldCancelGeneration(null);
+      }
+    } catch (error) {
+      console.error('Error starting field generation:', error);
+      setFieldGenerationInProgress(null);
+      setFieldCancelGeneration(null);
+    }
+  };
+
+  // Handle cancellation of field generation
+  const handleCancelFieldGeneration = () => {
+    if (fieldCancelGeneration) {
+      fieldCancelGeneration();
+      setFieldCancelGeneration(null);
+      setFieldGenerationInProgress(null);
+      setFieldStreamedText('');
+    }
+  };
+
   // Icons for buttons
   const addIcon = (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -275,12 +341,81 @@ const CharactersTab: React.FC<TabProps> = ({ content, updateContent, currentScen
     </svg>
   );
   
-  
   const cancelIcon = (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
       <path d="M4 4L12 12M12 4L4 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
     </svg>
   );
+
+  // Field generation button component
+  const FieldGenerateButton: React.FC<{
+    fieldName: string;
+    fieldDisplayName: string;
+    disabled?: boolean;
+    isTextarea?: boolean;
+  }> = ({ fieldName, fieldDisplayName, disabled, isTextarea = false }) => {
+    const isGenerating = fieldGenerationInProgress === fieldName;
+    
+    const baseStyle = {
+      position: 'absolute' as const,
+      right: '8px',
+      background: 'rgba(66, 133, 244, 0.05)',
+      border: '1px solid rgba(66, 133, 244, 0.3)',
+      borderRadius: '4px',
+      width: '28px',
+      height: '28px',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      cursor: 'pointer',
+      fontSize: '14px',
+      transition: 'all 0.3s ease',
+      backdropFilter: 'blur(2px)'
+    };
+
+    const positionStyle = { top: '1px', transform: 'none' }; 
+    
+    if (isGenerating) {
+      return (
+        <button
+          type="button"
+          onClick={handleCancelFieldGeneration}
+          title={`Cancel generating ${fieldDisplayName.toLowerCase()}`}
+          className="field-generate-btn generating"
+          style={{
+            ...baseStyle,
+            ...positionStyle,
+            background: 'rgba(255, 107, 107, 0.15)',
+            borderColor: '#ff6b6b',
+            color: '#ff6b6b',
+            fontWeight: 'bold'
+          }}
+        >
+          ×
+        </button>
+      );
+    }
+
+    return (
+      <button
+        type="button"
+        onClick={() => handleGenerateField(fieldName, fieldDisplayName)}
+        disabled={disabled || !!fieldGenerationInProgress}
+        title={`Generate ${fieldDisplayName.toLowerCase()}`}
+        className={`field-generate-btn ${disabled || fieldGenerationInProgress ? 'disabled' : ''}`}
+        style={{
+          ...baseStyle,
+          ...positionStyle,
+          borderColor: disabled || fieldGenerationInProgress ? 'rgba(68, 68, 68, 0.3)' : 'rgba(66, 133, 244, 0.3)',
+          color: disabled || fieldGenerationInProgress ? '#666' : '#4285f4',
+          opacity: disabled || fieldGenerationInProgress ? 0.4 : 0.7,
+          cursor: disabled || fieldGenerationInProgress ? 'not-allowed' : 'pointer'
+        }}
+      >
+        ✨
+      </button>
+    );
+  };
 
   return (
     <div className="tab-container scenario-editor-panel">
@@ -499,46 +634,88 @@ const CharactersTab: React.FC<TabProps> = ({ content, updateContent, currentScen
         }}>
           <h3 className="form-title" style={{ color: '#e6e6e6', fontWeight: 700 }}>{isEditing ? 'Edit Character' : 'New Character'}</h3>
 
-          <div className="form-field">
+          <div className="form-field" style={{ position: 'relative' }}>
             <label htmlFor="name" style={{ color: '#bfc7d5', fontWeight: 600 }}>Name (or leave blank for random name)</label>
-            <input
-              type="text"
-              id="name"
-              name="name"
-              value={newCharacter.name}
-              onChange={handleFormChange}
-              placeholder="Character name"
-              className="form-input"
-              style={{ background: '#23272e', color: '#e6e6e6', border: '1px solid #353b45' }}
-            />
+            <div style={{ position: 'relative' }}>
+              <input
+                type="text"
+                id="name"
+                name="name"
+                value={fieldGenerationInProgress === 'name' ? fieldStreamedText : (newCharacter.name || '')}
+                onChange={handleFormChange}
+                placeholder="Character name"
+                className="form-input"
+                style={{ 
+                  background: '#23272e', 
+                  color: '#e6e6e6', 
+                  border: '1px solid #353b45',
+                  paddingRight: '44px',
+                  opacity: fieldGenerationInProgress && fieldGenerationInProgress !== 'name' ? 0.5 : 1
+                }}
+                disabled={!!fieldGenerationInProgress}
+              />
+              <FieldGenerateButton 
+                fieldName="name" 
+                fieldDisplayName="Name" 
+                disabled={!currentScenario || !!fieldGenerationInProgress}
+              />
+            </div>
           </div>
-          <div className="form-field">
+          <div className="form-field" style={{ position: 'relative' }}>
             <label htmlFor="alias" style={{ color: '#bfc7d5', fontWeight: 600 }}>Alias (use this if no name given)</label>
-            <input
-              type="text"
-              id="alias"
-              name="alias"
-              value={newCharacter.alias}
-              onChange={handleFormChange}
-              placeholder="Character alias"
-              className="form-input"
-              style={{ background: '#23272e', color: '#e6e6e6', border: '1px solid #353b45' }}
-            />
+            <div style={{ position: 'relative' }}>
+              <input
+                type="text"
+                id="alias"
+                name="alias"
+                value={fieldGenerationInProgress === 'alias' ? fieldStreamedText : (newCharacter.alias || '')}
+                onChange={handleFormChange}
+                placeholder="Character alias"
+                className="form-input"
+                style={{ 
+                  background: '#23272e', 
+                  color: '#e6e6e6', 
+                  border: '1px solid #353b45',
+                  paddingRight: '44px',
+                  opacity: fieldGenerationInProgress && fieldGenerationInProgress !== 'alias' ? 0.5 : 1
+                }}
+                disabled={!!fieldGenerationInProgress}
+              />
+              <FieldGenerateButton 
+                fieldName="alias" 
+                fieldDisplayName="Alias" 
+                disabled={!currentScenario || !!fieldGenerationInProgress}
+              />
+            </div>
           </div>
 
-          <div className="form-field">
+          <div className="form-field" style={{ position: 'relative' }}>
             <label htmlFor="role" style={{ color: '#bfc7d5', fontWeight: 600 }}>Role (optional)</label>
-            <input
-              type="text"
-              id="role"
-              name="role"
-              value={newCharacter.role || ''}
-              onChange={handleFormChange}
-              placeholder="Select or type a role"
-              list="role-options"
-              className="form-input"
-              style={{ background: '#23272e', color: '#e6e6e6', border: '1px solid #353b45' }}
-            />
+            <div style={{ position: 'relative' }}>
+              <input
+                type="text"
+                id="role"
+                name="role"
+                value={fieldGenerationInProgress === 'role' ? fieldStreamedText : (newCharacter.role || '')}
+                onChange={handleFormChange}
+                placeholder="Select or type a role"
+                list="role-options"
+                className="form-input"
+                style={{ 
+                  background: '#23272e', 
+                  color: '#e6e6e6', 
+                  border: '1px solid #353b45',
+                  paddingRight: '44px',
+                  opacity: fieldGenerationInProgress && fieldGenerationInProgress !== 'role' ? 0.5 : 1
+                }}
+                disabled={!!fieldGenerationInProgress}
+              />
+              <FieldGenerateButton 
+                fieldName="role" 
+                fieldDisplayName="Role" 
+                disabled={!currentScenario || !!fieldGenerationInProgress}
+              />
+            </div>
             <datalist id="role-options">
               <option value="Protagonist" />
               <option value="Antagonist" />
@@ -547,19 +724,33 @@ const CharactersTab: React.FC<TabProps> = ({ content, updateContent, currentScen
             </datalist>
           </div>
 
-          <div className="form-field">
+          <div className="form-field" style={{ position: 'relative' }}>
             <label htmlFor="gender" style={{ color: '#bfc7d5', fontWeight: 600 }}>Gender (optional)</label>
-            <input
-              type="text"
-              id="gender"
-              name="gender"
-              value={newCharacter.gender || ''}
-              onChange={handleFormChange}
-              placeholder="Select or type a gender"
-              list="gender-options"
-              className="form-input"
-              style={{ background: '#23272e', color: '#e6e6e6', border: '1px solid #353b45' }}
-            />
+            <div style={{ position: 'relative' }}>
+              <input
+                type="text"
+                id="gender"
+                name="gender"
+                value={fieldGenerationInProgress === 'gender' ? fieldStreamedText : (newCharacter.gender || '')}
+                onChange={handleFormChange}
+                placeholder="Select or type a gender"
+                list="gender-options"
+                className="form-input"
+                style={{ 
+                  background: '#23272e', 
+                  color: '#e6e6e6', 
+                  border: '1px solid #353b45',
+                  paddingRight: '44px',
+                  opacity: fieldGenerationInProgress && fieldGenerationInProgress !== 'gender' ? 0.5 : 1
+                }}
+                disabled={!!fieldGenerationInProgress}
+              />
+              <FieldGenerateButton 
+                fieldName="gender" 
+                fieldDisplayName="Gender" 
+                disabled={!currentScenario || !!fieldGenerationInProgress}
+              />
+            </div>
             <datalist id="gender-options">
               <option value="Male" />
               <option value="Female" />
@@ -568,51 +759,94 @@ const CharactersTab: React.FC<TabProps> = ({ content, updateContent, currentScen
             </datalist>
           </div>
 
-          <div className="form-field">
+          <div className="form-field" style={{ position: 'relative' }}>
             <label htmlFor="appearance" style={{ color: '#bfc7d5', fontWeight: 600 }}>Physical Appearance (optional)</label>
-            <textarea
-              id="appearance"
-              name="appearance"
-              value={newCharacter.appearance || ''}
-              onChange={handleFormChange}
-              placeholder="Describe how this character looks..."
-              className="form-textarea"
-              style={{ background: '#23272e', color: '#e6e6e6', border: '1px solid #353b45' }}
-            />
+            <div style={{ position: 'relative' }}>
+              <textarea
+                id="appearance"
+                name="appearance"
+                value={fieldGenerationInProgress === 'appearance' ? fieldStreamedText : (newCharacter.appearance || '')}
+                onChange={handleFormChange}
+                placeholder="Describe how this character looks..."
+                className="form-textarea"
+                style={{ 
+                  background: '#23272e', 
+                  color: '#e6e6e6', 
+                  border: '1px solid #353b45',
+                  paddingRight: '44px',
+                  opacity: fieldGenerationInProgress && fieldGenerationInProgress !== 'appearance' ? 0.5 : 1
+                }}
+                disabled={!!fieldGenerationInProgress}
+              />
+              <FieldGenerateButton 
+                fieldName="appearance" 
+                fieldDisplayName="Physical Appearance" 
+                disabled={!currentScenario || !!fieldGenerationInProgress}
+              />
+            </div>
           </div>
 
-          <div className="form-field">
+          <div className="form-field" style={{ position: 'relative' }}>
             <label htmlFor="backstory" style={{ color: '#bfc7d5', fontWeight: 600 }}>Backstory (optional)</label>
-            <textarea
-              id="backstory"
-              name="backstory"
-              value={newCharacter.backstory || ''}
-              onChange={handleFormChange}
-              placeholder="Character's history and background..."
-              className="form-textarea"
-              style={{ background: '#23272e', color: '#e6e6e6', border: '1px solid #353b45' }}
-            />
+            <div style={{ position: 'relative' }}>
+              <textarea
+                id="backstory"
+                name="backstory"
+                value={fieldGenerationInProgress === 'backstory' ? fieldStreamedText : (newCharacter.backstory || '')}
+                onChange={handleFormChange}
+                placeholder="Character's history and background..."
+                className="form-textarea"
+                style={{ 
+                  background: '#23272e', 
+                  color: '#e6e6e6', 
+                  border: '1px solid #353b45',
+                  paddingRight: '44px',
+                  opacity: fieldGenerationInProgress && fieldGenerationInProgress !== 'backstory' ? 0.5 : 1
+                }}
+                disabled={!!fieldGenerationInProgress}
+              />
+              <FieldGenerateButton 
+                fieldName="backstory" 
+                fieldDisplayName="Backstory" 
+                disabled={!currentScenario || !!fieldGenerationInProgress}
+              />
+            </div>
           </div>
 
-          <div className="form-field">
+          <div className="form-field" style={{ position: 'relative' }}>
             <label htmlFor="extraInfo" style={{ color: '#bfc7d5', fontWeight: 600 }}>Extra Information (optional)</label>
-            <textarea
-              id="extraInfo"
-              name="extraInfo"
-              value={newCharacter.extraInfo || ''}
-              onChange={handleFormChange}
-              placeholder="Any additional details about this character..."
-              className="form-textarea"
-              style={{ background: '#23272e', color: '#e6e6e6', border: '1px solid #353b45' }}
-            />
+            <div style={{ position: 'relative' }}>
+              <textarea
+                id="extraInfo"
+                name="extraInfo"
+                value={fieldGenerationInProgress === 'extraInfo' ? fieldStreamedText : (newCharacter.extraInfo || '')}
+                onChange={handleFormChange}
+                placeholder="Any additional details about this character..."
+                className="form-textarea"
+                style={{ 
+                  background: '#23272e', 
+                  color: '#e6e6e6', 
+                  border: '1px solid #353b45',
+                  paddingRight: '44px',
+                  opacity: fieldGenerationInProgress && fieldGenerationInProgress !== 'extraInfo' ? 0.5 : 1
+                }}
+                disabled={!!fieldGenerationInProgress}
+              />
+              <FieldGenerateButton 
+                fieldName="extraInfo" 
+                fieldDisplayName="Extra Information" 
+                disabled={!currentScenario || !!fieldGenerationInProgress}
+              />
+            </div>
           </div>
 
           <div className="form-buttons">
-            <ActionButton onClick={handleCancelForm} label="Cancel" variant="default" />
+            <ActionButton onClick={handleCancelForm} label="Cancel" variant="default" disabled={!!fieldGenerationInProgress} />
             <ActionButton 
               onClick={handleSaveCharacter} 
               label={isEditing ? 'Update Character' : 'Save Character'} 
-              variant="primary" 
+              variant="primary"
+              disabled={!!fieldGenerationInProgress}
             />
           </div>
         </div>

@@ -1,5 +1,5 @@
 import requests
-from llm_service import BaseLLMService  # type: ignore
+from llm_services.llm_service import BaseLLMService  # type: ignore
 
 
 class LMStudioService(BaseLLMService):

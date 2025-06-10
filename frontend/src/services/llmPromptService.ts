@@ -1,30 +1,16 @@
 // All prompt generation logic for LLM scenario/storywriting
-import { Scenario, StyleSettings } from '../types/ScenarioTypes';
+import { llmCompletionRequestMessage } from '../types/LLMTypes';
+import { Character, Scenario, StyleSettings } from '../types/ScenarioTypes';
 import { formatScenarioAsMarkdown, formatScenarioAsMarkdownWithoutBackStory } from '../utils/scenarioToMarkdown';
 
-export function createWritingStylePrompt(): string {
-  let prompt = "You are an expert in literary styles and genres. Create a random writing style configuration for a story.\n\n";
-  prompt += "Provide a JSON object with the following fields:\n";
-  prompt += "- style: a literary style (e.g., 'Modern')\n";
-  prompt += "- genre: a specific writing genre \n";
-  prompt += "- tone: the emotional tone of the writing in one word\n";
-  prompt += "- language: the type of language used (e.g., 'Elaborate')\n";
-  prompt += "- theme: a central theme of the story\n";
-  prompt += "- other: additional specific instructions for the writing style\n\n";
-  prompt += "Format your response as a valid JSON object WITHOUT any explanation or additional text.\n\n";
-  prompt += "IMPORTANT: Your response must be in JSON format ONLY with the following structure:\n";
-  prompt += "{\n";
-  prompt += '  "style": "(style)",\n';
-  prompt += '  "genre": "(genre)",\n';
-  prompt += '  "tone": "(tone)",\n';
-  prompt += '  "language": "(language)",\n';
-  prompt += '  "theme": "(theme)",\n';
-  prompt += '  "other": "(other)"\n';
-  prompt += "}";
-  return prompt;
+export function createWritingStylePrompt(): llmCompletionRequestMessage {
+  return {
+    systemMessage: 'You are an expert in literary styles and genres.',
+    userMessage: `Create a random writing style configuration for a story.\n\nProvide a JSON object with the following fields:\n- style: a literary style (e.g., 'Modern')\n- genre: a specific writing genre \n- tone: the emotional tone of the writing in one word\n- language: the type of language used (e.g., 'Elaborate')\n- theme: a central theme of the story\n- other: additional specific instructions for the writing style\n\nFormat your response as a valid JSON object WITHOUT any explanation or additional text.\n\nIMPORTANT: Your response must be in JSON format ONLY with the following structure:\n{\n  "style": "(style)",\n  "genre": "(genre)",\n  "tone": "(tone)",\n  "language": "(language)",\n  "theme": "(theme)",\n  "other": "(other)"\n}`
+  };
 }
 
-export function createBackstoryPrompt(scenario: Scenario): string {
+export function createBackstoryPrompt(scenario: Scenario): llmCompletionRequestMessage {
   if (!scenario) {
     console.error("Error: scenario is null or undefined");
     scenario = {
@@ -51,22 +37,19 @@ export function createBackstoryPrompt(scenario: Scenario): string {
     notes: scenario.notes || ""
   };
   const markdown = formatScenarioAsMarkdown(newScenario);
-  let prompt = "You are a masterful storyteller specializing in character development. I need a compelling backstory for the protagonist in the following scenario:\n\n";
-  prompt += "The backstory should be rich but concise (1-2 paragraphs) and serve as an introduction in a " + writingStyle.genre + " story.\n\n";
-  prompt += "Include details about their formative experiences, motivations, and a key event that shaped them.\n\n";
-  prompt += "Establish connections to other characters where relevant.\n\n";
-  prompt += "Match the tone and themes appropriate for " + writingStyle.genre + " while maintaining narrative consistency.\n\n";
-  prompt += "End with an unresolved tension or mystery that connects to the main story.\n\n";
-  prompt += "Do not include any markdown, formatting, or meta-commentary - only the backstory itself.\n\n";
-  prompt += "Scenario details:\n\n";
-  prompt += markdown;
-  return prompt;
+  return {
+    systemMessage: `You are a masterful storyteller specializing in character development.`,
+    userMessage: `I need a compelling backstory for the protagonist in the following scenario:\n\nThe backstory should be rich but concise (1-2 paragraphs) and serve as an introduction in a ${writingStyle.genre} story.\n\nInclude details about their formative experiences, motivations, and a key event that shaped them.\n\nEstablish connections to other characters where relevant.\n\nMatch the tone and themes appropriate for ${writingStyle.genre} while maintaining narrative consistency.\n\nEnd with an unresolved tension or mystery that connects to the main story.\n\nDo not include any markdown, formatting, or meta-commentary - only the backstory itself.\n\nScenario details:\n\n${markdown}`
+  };
 }
 
-export function createScenarioPrompt(scenario: Scenario): string {
+export function createScenarioPrompt(scenario: Scenario): llmCompletionRequestMessage {
   if (!scenario) {
     console.error("Error: scenario is null or undefined");
-    return "Error: Invalid scenario data";
+    return {
+      systemMessage: 'Invalid scenario data',
+      userMessage: ''
+    };
   }
   const markdown = formatScenarioAsMarkdown(scenario);
   const style = scenario.writingStyle || { genre: "General Fiction" };
@@ -84,14 +67,20 @@ export function createScenarioPrompt(scenario: Scenario): string {
   prompt += "- Incorporate any specified themes, settings, and plot elements\n";
   prompt += "- Present only the finished story with no meta-commentary, formatting, or markdown\n\n";
   prompt += markdown;
-  return prompt;
+  return {
+    systemMessage: 'You are an exceptional storyteller.',
+    userMessage: prompt
+  };
 }
 
-export function createContinueStoryPrompt(scenario: Scenario, summaryOfPreviousChapters: string): string {
+export function createContinueStoryPrompt(scenario: Scenario, summaryOfPreviousChapters: string): llmCompletionRequestMessage {
 
   if (!scenario) {
     console.error("Error: scenario is null or undefined");
-    return "Error: Invalid scenario data";
+    return {
+      systemMessage: 'Invalid scenario data',
+      userMessage: ''
+    };
   }
   const markdown = formatScenarioAsMarkdownWithoutBackStory(scenario);
   const style = scenario.writingStyle || { genre: "General Fiction" };
@@ -119,13 +108,19 @@ export function createContinueStoryPrompt(scenario: Scenario, summaryOfPreviousC
 
   prompt += "Here is the summary of previous written chapters:\n\n";
   prompt += summaryOfPreviousChapters + "\n\n";
-  return prompt;
+  return {
+    systemMessage: 'You are an exceptional storyteller.',
+    userMessage: prompt
+  };
 }
 
-export function createChapterPrompt(scenario: Scenario, chapterNumber: number, previousChapters?: string): string {
+export function createChapterPrompt(scenario: Scenario, chapterNumber: number, previousChapters?: string): llmCompletionRequestMessage {
   if (!scenario) {
     console.error("Error: scenario is null or undefined");
-    return "Error: Invalid scenario data";
+    return {
+      systemMessage: 'Invalid scenario data',
+      userMessage: ''
+    };
   }
   const markdown = formatScenarioAsMarkdown(scenario);
   const style = scenario.writingStyle || { genre: "General Fiction" };
@@ -149,10 +144,13 @@ export function createChapterPrompt(scenario: Scenario, chapterNumber: number, p
   }
   prompt += "Scenario details:\n";
   prompt += markdown;
-  return prompt;
+  return {
+    systemMessage: 'You are an exceptional storyteller.',
+    userMessage: prompt
+  };
 }
 
-export function createStoryArcPrompt(scenario: Scenario): string {
+export function createStoryArcPrompt(scenario: Scenario): llmCompletionRequestMessage {
   if (!scenario) {
     console.error("Error: scenario is null or undefined");
     scenario = {
@@ -168,10 +166,13 @@ export function createStoryArcPrompt(scenario: Scenario): string {
   prompt += `The story arc should outline the main plot points, character arcs, and key events from beginning to end.\n\n`;
   prompt += `Do not include any markdown, formatting, or meta-commentary - only the story arc itself.\n\nScenario details:\n\n`;
   prompt += markdown;
-  return prompt;
+  return {
+    systemMessage: 'You are a masterful story architect.',
+    userMessage: prompt
+  };
 }
 
-export function createRewriteStoryArcPrompt(scenario: Scenario): string {
+export function createRewriteStoryArcPrompt(scenario: Scenario): llmCompletionRequestMessage {
   if (!scenario) {
     console.error("Error: scenario is null or undefined");
     scenario = {
@@ -187,10 +188,13 @@ export function createRewriteStoryArcPrompt(scenario: Scenario): string {
   prompt += `"${currentStoryArc}"\n\n`;
   prompt += `Keep the core plot points and character arcs, but improve structure and flow.\n`;
   prompt += `Do not include any markdown, formatting, or meta-commentary - only the rewritten story arc itself.`;
-  return prompt;
+  return {
+    systemMessage: 'You are a masterful story architect specializing in improving story arcs.',
+    userMessage: prompt
+  };
 }
 
-export function createScenesPrompt(scenario: Scenario): string {
+export function createScenesPrompt(scenario: Scenario): llmCompletionRequestMessage {
   if (!scenario) {
     console.error("Error: scenario is null or undefined");
     scenario = {
@@ -227,10 +231,13 @@ export function createScenesPrompt(scenario: Scenario): string {
   prompt += `Do not include any explanatory text outside of the JSON structure.\n\n`;
   prompt += `Here is the scenario:\n\n`;
   prompt += markdown;
-  return prompt;
+  return {
+    systemMessage: 'You are an expert story outliner and screenplay writer.',
+    userMessage: prompt
+  };
 }
 
-export function createRewriteBackstoryPrompt(scenario: Scenario): string {
+export function createRewriteBackstoryPrompt(scenario: Scenario): llmCompletionRequestMessage {
   if (!scenario) {
     console.error("Error: scenario is null or undefined");
     scenario = {
@@ -250,7 +257,10 @@ export function createRewriteBackstoryPrompt(scenario: Scenario): string {
   prompt += "- Preserving all key plot points and character relationships\n";
   prompt += "- Write in a neutral tone, as if it's the back cover of a book. \n\n";
   prompt += "Do not include any markdown, formatting, or meta-commentary - only the rewritten backstory itself.\n";
-  return prompt;
+  return {
+    systemMessage: 'You are a masterful storyteller specializing in improving existing content.',
+    userMessage: prompt
+  };
 }
 
 /**
@@ -258,7 +268,7 @@ export function createRewriteBackstoryPrompt(scenario: Scenario): string {
  * @param scenario The current scenario for context
  * @param characterType The type of character to generate: "protagonist", "antagonist", or "supporting"
  */
-export function createCharacterPrompt(scenario: Scenario, characterType: string): string {
+export function createCharacterPrompt(scenario: Scenario, characterType: string): llmCompletionRequestMessage {
   // Verify scenario is not null or undefined
   if (!scenario) {
     console.error("Error: scenario is null or undefined");
@@ -322,5 +332,131 @@ export function createCharacterPrompt(scenario: Scenario, characterType: string)
   prompt += '  "extraInfo": "(extraInfo)"\n';
   prompt += "}";
   
-  return prompt;
+  return {
+    systemMessage: 'You are an expert character creator.',
+    userMessage: prompt
+  };
+}
+
+/**
+ * Creates a prompt for generating a specific character field value
+ * @param scenario The current scenario for context
+ * @param character The character being edited (with current field values)
+ * @param fieldName The name of the field to generate (e.g., 'name', 'backstory', 'appearance')
+ * @param fieldDisplayName The human-readable field name for the prompt
+ */
+export function createCharacterFieldPrompt(
+  scenario: Scenario, 
+  character: Character, 
+  fieldName: string, 
+  fieldDisplayName: string
+): llmCompletionRequestMessage {
+  // Verify scenario is not null or undefined
+  if (!scenario) {
+    console.error("Error: scenario is null or undefined");
+    scenario = {
+      id: 'error-fallback',
+      userId: 'system',
+      createdAt: new Date(),
+      writingStyle: { genre: "General Fiction" }
+    };
+  }
+
+  // Get writing style and other details from scenario
+  const writingStyle = scenario.writingStyle || { genre: "General Fiction" };
+  const genre = writingStyle.genre || "General Fiction";
+  const existingCharacters = Array.isArray(scenario.characters) ? scenario.characters : [];
+
+  let prompt = `You are a storyteller specializing in ${genre} fiction. Generate a ${fieldDisplayName.toLowerCase()} for a character based on their existing properties.\n\n`;
+  
+  // Add character context
+  prompt += "Character properties:\n";
+  if (character.name && character.name.trim()) {
+    prompt += `- Name: ${character.name}\n`;
+  }
+  if (character.alias && character.alias.trim()) {
+    prompt += `- Alias: ${character.alias}\n`;
+  }
+  if (character.role && character.role.trim()) {
+    prompt += `- Role: ${character.role}\n`;
+  }
+  if (character.gender && character.gender.trim()) {
+    prompt += `- Gender: ${character.gender}\n`;
+  }
+  if (character.appearance && character.appearance.trim() && fieldName !== 'appearance') {
+    prompt += `- Appearance: ${character.appearance}\n`;
+  }
+  if (character.backstory && character.backstory.trim() && fieldName !== 'backstory') {
+    prompt += `- Backstory: ${character.backstory}\n`;
+  }
+  if (character.extraInfo && character.extraInfo.trim() && fieldName !== 'extraInfo') {
+    prompt += `- Extra Info: ${character.extraInfo}\n`;
+  }
+
+  // Add story context
+  prompt += `\nStory context:\n`;
+  prompt += `- Genre: ${genre}\n`;
+  if (scenario.title) {
+    prompt += `- Story Title: ${scenario.title}\n`;
+  }
+  if (writingStyle.tone) {
+    prompt += `- Tone: ${writingStyle.tone}\n`;
+  }
+  if (writingStyle.theme) {
+    prompt += `- Theme: ${writingStyle.theme}\n`;
+  }
+
+  // Add context from other characters
+  if (existingCharacters.length > 0) {
+    prompt += `\nOther characters in the story:\n`;
+    existingCharacters.forEach((char, index) => {
+      if (char.id !== character.id) { // Don't include the character being edited
+        prompt += `- ${char.name || char.alias || 'Unnamed'} (${char.role || 'No role specified'})\n`;
+      }
+    });
+  }
+
+  // Field-specific instructions
+  switch (fieldName) {
+    case 'name':
+      prompt += `\nGenerate a ${fieldDisplayName.toLowerCase()} that fits the character's gender, role, and the ${genre} genre. `;
+      prompt += `The name should feel authentic to the story world and complement the existing character traits.\n`;
+      break;
+    case 'alias':
+      prompt += `\nGenerate an ${fieldDisplayName.toLowerCase()} or nickname that reflects the character's personality, role, or background. `;
+      prompt += `It should feel natural and fit the ${genre} setting.\n`;
+      break;
+    case 'role':
+      prompt += `\nDetermine an appropriate ${fieldDisplayName.toLowerCase()} for this character in the story. `;
+      prompt += `Consider their other traits and how they might function in a ${genre} narrative.\n`;
+      break;
+    case 'gender':
+      prompt += `\nDetermine an appropriate ${fieldDisplayName.toLowerCase()} for this character. `;
+      prompt += `Consider their name, role, and how they fit into the story.\n`;
+      break;
+    case 'appearance':
+      prompt += `\nDescribe the character's ${fieldDisplayName.toLowerCase()} in 2-3 sentences. `;
+      prompt += `Focus on distinctive physical features that match their personality and role. `;
+      prompt += `Keep it concise but vivid, appropriate for ${genre} fiction.\n`;
+      break;
+    case 'backstory':
+      prompt += `\nCreate a compelling ${fieldDisplayName.toLowerCase()} for this character in 2-3 sentences. `;
+      prompt += `Include formative experiences that shaped them and explain their current role in the story. `;
+      prompt += `Make it relevant to the ${genre} genre and story context.\n`;
+      break;
+    case 'extraInfo':
+      prompt += `\nProvide additional character details such as skills, personality traits, motivations, or quirks. `;
+      prompt += `Include 2-3 interesting details that would make this character memorable and three-dimensional. `;
+      prompt += `Keep it relevant to their role and the ${genre} setting.\n`;
+      break;
+    default:
+      prompt += `\nGenerate an appropriate ${fieldDisplayName.toLowerCase()} for this character.\n`;
+  }
+
+  prompt += `\nRespond with ONLY the ${fieldDisplayName.toLowerCase()} - no explanations, formatting, or additional text.`;
+
+  return {
+    systemMessage: 'You are an expert storyteller and character creator.',
+    userMessage: prompt
+  };
 }

@@ -1,5 +1,6 @@
 import { GeneratedStory, Scenario } from '../types/ScenarioTypes';
-import { createBackstoryPrompt, createCharacterPrompt, createScenarioPrompt, createWritingStylePrompt } from './llmPromptService';
+import { llmCompletionRequestMessage } from '../types/LLMTypes';
+import * as llmPromptService from './llmPromptService';
 import { streamChatCompletion } from './llmService';
 import { getSelectedModel } from './modelSelection';
 
@@ -21,8 +22,11 @@ async function streamPromptCompletion({
   let fullText = '';
   const selectedModel = getSelectedModel();
   // Use a single message for prompt-based completions
+  const promptObj: llmCompletionRequestMessage = {
+    userMessage: prompt
+  };
   await streamChatCompletion(
-    [ { role: 'user', content: prompt } ],
+    promptObj,
     (text) => {
       // Only send the new chunk to onProgress
       if (onProgress) {
@@ -52,12 +56,9 @@ export async function generateChapter(
     seed?: number | null
   } = {}
 ): Promise<string> {
-  const prompt = `Convert the following scenario into a detailed chapter ${chapterNumber}, incorporating elements from previous chapters as needed.\n\n` +
-                 `Scenario:\n${JSON.stringify(scenario, null, 2)}\n\n` +
-                 `Previous Chapters:\n${previousChapters}\n\n` +
-                 `Chapter ${chapterNumber}:`;
+  const promptObj = llmPromptService.createChapterPrompt(scenario, chapterNumber, previousChapters);
   return streamPromptCompletion({
-    prompt,
+    prompt: promptObj.userMessage || '',
     onProgress: options.onProgress,
     temperature: options.temperature,
     seed: options.seed,
@@ -75,9 +76,12 @@ export async function generateChapterSummary(
     temperature?: number
   } = {}
 ): Promise<string> {
-  const prompt = `Summarize the following chapter in 2-3 sentences, focusing on the main events and character developments. Do not include any meta-commentary or formatting.\n\nChapter:\n${chapterText}`;
+  // No createChapterSummaryPrompt exists, so use inline prompt
+  const promptObj: llmCompletionRequestMessage = {
+    userMessage: `Summarize the following chapter in 2-3 sentences, focusing on the main events and character developments. Do not include any meta-commentary or formatting.\n\nChapter:\n${chapterText}`
+  };
   return streamPromptCompletion({
-    prompt,
+    prompt: promptObj.userMessage || '',
     onProgress: options.onProgress,
     temperature: options.temperature,
     max_tokens: 200
@@ -96,7 +100,7 @@ export async function generateStory(
     seed?: number | null
   } = {}
 ): Promise<{ result: Promise<GeneratedStory>; cancelGeneration: () => void }> {
-  const prompt = createScenarioPrompt(scenario);
+  const promptObj = llmPromptService.createScenarioPrompt(scenario);
   let cancelled = false;
   let cancelGeneration = () => { cancelled = true; };
   const resultPromise = new Promise<GeneratedStory>(async (resolve, reject) => {
@@ -104,7 +108,7 @@ export async function generateStory(
       const selectedModel = getSelectedModel();
       let fullText = '';
       await streamChatCompletion(
-        [ { role: 'user', content: prompt } ],
+        promptObj,
         (text) => {
           if (!cancelled) {
             if (options.onProgress) options.onProgress(text.slice(fullText.length));
@@ -138,7 +142,7 @@ export async function generateBackstory(
     seed?: number | null
   } = {}
 ): Promise<{ result: Promise<string>; cancelGeneration: () => void }> {
-  const prompt = createBackstoryPrompt(scenario);
+  const promptObj = llmPromptService.createBackstoryPrompt(scenario);
   let cancelled = false;
   let cancelGeneration = () => { cancelled = true; };
   let fullText = '';
@@ -146,11 +150,12 @@ export async function generateBackstory(
     try {
       const selectedModel = getSelectedModel();
       await streamChatCompletion(
-        [ { role: 'user', content: prompt } ],
+        promptObj,
         (text) => {
-          if (cancelled) return;
-          if (options.onProgress) options.onProgress(text.slice(fullText.length));
-          fullText = text;
+          if (!cancelled) {
+            if (options.onProgress) options.onProgress(text.slice(fullText.length));
+            fullText = text;
+          }
         },
         { 
           model: selectedModel || undefined,
@@ -195,8 +200,11 @@ export async function rewriteBackstory(
     try {
       const selectedModel = getSelectedModel();
       let fullText = '';
+      const promptObj: llmCompletionRequestMessage = {
+        userMessage: prompt
+      };
       await streamChatCompletion(
-        [ { role: 'user', content: prompt } ],
+        promptObj,
         (text) => {
           if (!cancelled) {
             if (options.onProgress) options.onProgress(text.slice(fullText.length));
@@ -240,8 +248,11 @@ export async function rewriteStoryArc(
     try {
       const selectedModel = getSelectedModel();
       let fullText = '';
+      const promptObj: llmCompletionRequestMessage = {
+        userMessage: prompt
+      };
       await streamChatCompletion(
-        [ { role: 'user', content: prompt } ],
+        promptObj,
         (text) => {
           if (!cancelled) {
             if (options.onProgress) options.onProgress(text.slice(fullText.length));
@@ -274,15 +285,15 @@ export async function generateRandomWritingStyle(
     seed?: number | null
   } = {}
 ): Promise<{ result: Promise<any>; cancelGeneration: () => void }> {
-  // Use llmService directly for streaming completions
   let cancelled = false;
   let cancelGeneration = () => { cancelled = true; };
+  const promptObj = llmPromptService.createWritingStylePrompt();
   const resultPromise = new Promise<any>(async (resolve, reject) => {
     try {
       const selectedModel = getSelectedModel();
       let fullText = '';
       await streamChatCompletion(
-        [ { role: 'user', content: createWritingStylePrompt() } ],
+        promptObj,
         (text) => {
           if (!cancelled && options.onProgress) options.onProgress(text.slice(fullText.length));
           fullText = text;
@@ -311,17 +322,15 @@ export async function generateRandomCharacter(
     seed?: number | null
   } = {}
 ): Promise<{ result: Promise<any>; cancelGeneration: () => void }> {
-  // Use llmService directly for streaming completions
   let cancelled = false;
   let cancelGeneration = () => { cancelled = true; };
-  // Use llmPromptService to generate the correct prompt
-  const prompt = createCharacterPrompt(scenario, characterType);
+  const promptObj = llmPromptService.createCharacterPrompt(scenario, characterType);
   const resultPromise = new Promise<any>(async (resolve, reject) => {
     try {
       const selectedModel = getSelectedModel();
       let fullText = '';
       await streamChatCompletion(
-        [ { role: 'user', content: prompt } ],
+        promptObj,
         (text) => {
           if (!cancelled && options.onProgress) options.onProgress(text.slice(fullText.length));
           fullText = text;
@@ -384,8 +393,11 @@ export async function generateStoryArc(
     try {
       const selectedModel = getSelectedModel();
       let fullText = '';
+      const promptObj: llmCompletionRequestMessage = {
+        userMessage: prompt
+      };
       await streamChatCompletion(
-        [ { role: 'user', content: prompt } ],
+        promptObj,
         (text) => {
           if (!cancelled) {
             if (options.onProgress) options.onProgress(text.slice(fullText.length));

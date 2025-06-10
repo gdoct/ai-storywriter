@@ -11,7 +11,7 @@ class TestLLMProxyController:
         mock_llm.get_models.return_value = ['llama-7b', 'codellama']
         mock_service.return_value = mock_llm
         # Patch llm_proxy_controller to use the mock service
-        import llm_proxy_controller
+        import backend.llm_services.llm_proxy_controller as llm_proxy_controller
         llm_proxy_controller.get_llm_service = lambda backend_type, config: mock_llm
         # Insert a dummy active settings row to avoid 400/502
         from db import get_db_connection
@@ -37,7 +37,7 @@ class TestLLMProxyController:
             'choices': [{'message': {'content': 'Test response'}}]
         }
         mock_service.return_value = mock_llm
-        import llm_proxy_controller
+        import backend.llm_services.llm_proxy_controller as llm_proxy_controller
         llm_proxy_controller.get_llm_service = lambda backend_type, config: mock_llm
         # Insert a dummy active settings row to avoid 400/502
         from db import get_db_connection

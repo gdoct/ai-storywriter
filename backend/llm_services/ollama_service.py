@@ -1,7 +1,7 @@
 import json
 
 import requests
-from llm_service import BaseLLMService
+from llm_services.llm_service import BaseLLMService
 
 
 class OllamaService(BaseLLMService):

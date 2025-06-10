@@ -6,3 +6,13 @@ export interface LLMConfig {
   ollama?: { url: string };
   chatgpt?: { apiKey: string };
 }
+
+export interface LLMMessage {
+  role: 'system' | 'user' | 'assistant';
+  content: string;
+}
+
+export interface llmCompletionRequestMessage {
+  systemMessage?: string;
+  userMessage?: string;
+}

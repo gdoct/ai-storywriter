@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from db import get_db_connection
+from data.db import get_db_connection
 
 
 class UserRepository:

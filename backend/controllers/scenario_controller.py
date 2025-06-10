@@ -1,12 +1,9 @@
 import json
-import os
-import uuid
-from datetime import datetime
 
-from db import get_db_connection
+from data.db import get_db_connection
+from data.repositories import GeneratedTextRepository, ScenarioRepository
 from flask import Blueprint, current_app, jsonify, request
 from flask_jwt_extended import get_jwt_identity, jwt_required
-from repositories import GeneratedTextRepository, ScenarioRepository
 
 scenario_bp = Blueprint('scenario', __name__)
 
@@ -17,7 +14,7 @@ scenario_bp = Blueprint('scenario', __name__)
 def get_all_scenarios():
     username = get_jwt_identity()
     # Get user from DB
-    from repositories import UserRepository
+    from data.repositories import UserRepository
     user = UserRepository.get_user_by_username(username)
     if not user:
         return jsonify([])
@@ -46,7 +43,7 @@ def get_all_scenarios():
 def create_scenario():
     username = get_jwt_identity()
     data = request.json
-    from repositories import UserRepository
+    from data.repositories import UserRepository
     user = UserRepository.get_user_by_username(username)
     if not user:
         return jsonify({'error': 'User not found'}), 404
@@ -98,7 +95,7 @@ def get_scenario_by_id(scenario_id):
 def update_scenario(scenario_id):
     username = get_jwt_identity()
     data = request.json
-    from repositories import UserRepository
+    from data.repositories import UserRepository
     user = UserRepository.get_user_by_username(username)
     if not user:
         return jsonify({'error': 'User not found'}), 404
@@ -118,7 +115,7 @@ def update_scenario(scenario_id):
 @jwt_required()
 def delete_scenario(scenario_id):
     username = get_jwt_identity()
-    from repositories import UserRepository
+    from data.repositories import UserRepository
     user = UserRepository.get_user_by_username(username)
     if not user:
         return jsonify({'error': 'User not found'}), 404

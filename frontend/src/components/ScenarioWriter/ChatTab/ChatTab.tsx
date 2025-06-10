@@ -1,14 +1,17 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { LLMMessage, streamChatCompletion } from '../../../services/llmService';
+import { streamChatCompletion } from '../../../services/llmService';
 import { getSelectedModel } from '../../../services/modelSelection';
 import { TabProps } from '../common/TabInterface';
 import '../common/TabStylesNew.css';
 import './ChatTab.css';
+import { llmCompletionRequestMessage } from '../../../types/LLMTypes';
 
 interface Message {
   role: 'user' | 'assistant';
   content: string;
 }
+
+const DEFAULT_SYSTEM_MESSAGE = 'You are a helpful assistant for creative writing.';
 
 const ChatTab: React.FC<TabProps> = () => {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -27,17 +30,17 @@ const ChatTab: React.FC<TabProps> = () => {
     setInput('');
     setIsGenerating(true);
 
-    // Prepare chat history for LLM
-    const chatHistory: LLMMessage[] = [
-      ...messages.filter(m => m.role === 'user' || m.role === 'assistant').map(m => ({ role: m.role, content: m.content })),
-      { role: 'user', content: input }
-    ];
+    // Prepare llmCompletionRequestMessage for LLM
+    const promptObj: llmCompletionRequestMessage = {
+      systemMessage: DEFAULT_SYSTEM_MESSAGE,
+      userMessage: input
+    };
 
     try {
       // Fetch user-selected model
       const model = getSelectedModel();
       await streamChatCompletion(
-        chatHistory,
+        promptObj,
         (assistantText, isDone) => {
           setMessages(prev => {
             const updated = [...prev];

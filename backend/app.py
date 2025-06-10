@@ -2,16 +2,15 @@ import logging
 import os
 from datetime import timedelta
 
-# Import controllers
-from auth_controller import auth_bp
-from db import DB_PATH, init_db
+from controllers.auth_controller import auth_bp
+from controllers.scenario_controller import scenario_bp
+from controllers.settings_controller import settings_controller
+from data.db import DB_PATH, init_db
 from dotenv import load_dotenv
-from flask import Flask, send_from_directory
+from flask import Flask, jsonify, send_from_directory
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
-from llm_proxy_controller import llm_proxy  # type: ignore
-from scenario_controller import scenario_bp
-from settings_controller import settings_controller  # type: ignore
+from llm_services.llm_proxy_controller import llm_proxy
 
 # Load environment variables (if any)
 load_dotenv()
@@ -55,33 +54,17 @@ def serve(path):
     else:
         return send_from_directory(app.static_folder, 'index.html')
 
-def create_app():
-    app = Flask(__name__, static_folder="../frontend/build", static_url_path="/")
-    
-    # Configure logging to only show errors
-    if not app.debug:
-        # Disable werkzeug request logging in production
-        logging.getLogger('werkzeug').setLevel(logging.ERROR)
-        
-    # Set Flask app logging to WARNING level to reduce noise
-    app.logger.setLevel(logging.WARNING)
-    
-    app.config["JWT_SECRET_KEY"] = os.environ.get("JWT_SECRET_KEY", "default-dev-secret-key")
-    app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(days=365)
-    jwt = JWTManager(app)
-    CORS(app, resources={r"/api/*": {"origins": "*"}})
-    app.register_blueprint(auth_bp)
-    app.register_blueprint(scenario_bp)
-    app.register_blueprint(llm_proxy)
-    app.register_blueprint(settings_controller)
-    @app.route('/', defaults={'path': ''})
-    @app.route('/<path:path>')
-    def serve(path):
-        if path != "" and os.path.exists(os.path.join(app.static_folder, path)):
-            return send_from_directory(app.static_folder, path)
-        else:
-            return send_from_directory(app.static_folder, 'index.html')
-    return app
+@app.route('/api/health')
+def health_check():
+    return jsonify({'status': 'healthy', 'database': 'connected'}), 200
+
+@app.errorhandler(404)
+def not_found(error):
+    return jsonify({'error': 'Not found'}), 404
+
+@app.errorhandler(500)
+def internal_error(error):
+    return jsonify({'error': 'Internal server error'}), 500
 
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=5000)

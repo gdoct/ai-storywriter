@@ -318,7 +318,7 @@ const ReadingPane: React.FC<ReadingPaneProps> = ({
       // 1. Summarize the current story
       const summary = await generateChapterSummary(activeScenarioTab.content);
       setContinueSummary(summary);
-      setContinuePrompt(createContinueStoryPrompt(currentScenario, summary));
+      setContinuePrompt(createContinueStoryPrompt(currentScenario, summary).userMessage || '');
       setShowContinueModal(true);
     } catch (err) {
       setIsSummarizing(false);

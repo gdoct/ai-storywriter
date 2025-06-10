@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { createScenarioPrompt } from '../../../services/llmPromptService';
 import { Scenario } from '../../../types/ScenarioTypes';
+import { llmCompletionRequestMessage } from '../../../types/LLMTypes';
 import '../common/TabStylesNew.css';
 
 interface PromptPreviewTabProps {
@@ -13,8 +14,8 @@ const PromptPreviewTab: React.FC<PromptPreviewTabProps> = ({ currentScenario }) 
   useEffect(() => {
     if (currentScenario) {
       try {
-        const prompt = createScenarioPrompt(currentScenario);
-        setPreviewContent(prompt);
+        const promptObj: llmCompletionRequestMessage = createScenarioPrompt(currentScenario);
+        setPreviewContent(promptObj.userMessage || '');
       } catch (error) {
         console.error('Error creating scenario prompt:', error);
         setPreviewContent('Error generating preview. Please make sure all fields are valid.');

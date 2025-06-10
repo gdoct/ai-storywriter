@@ -1,9 +1,5 @@
 // frontend/src/services/llmService.ts
-
-export interface LLMMessage {
-  role: 'user' | 'assistant';
-  content: string;
-}
+import { llmCompletionRequestMessage, LLMMessage } from '../types/LLMTypes';
 
 export interface LLMChatOptions {
   model?: string;
@@ -22,16 +18,29 @@ const LLM_PROXY_ENDPOINT = `${BACKEND_URL}/proxy/llm/v1/chat/completions`;
  * @param onStream Callback for each content chunk
  * @param options Model and generation options
  */
+function buildMessagesFromRequest(msg: llmCompletionRequestMessage): LLMMessage[] {
+  const messages: LLMMessage[] = [];
+  if (msg.systemMessage) {
+    messages.push({ role: 'system', content: msg.systemMessage });
+  }
+  if (msg.userMessage) {
+    messages.push({ role: 'user', content: msg.userMessage });
+  }
+  return messages;
+}
+
 export async function streamChatCompletion(
-  messages: LLMMessage[],
+  prompt: llmCompletionRequestMessage,
   onStream: LLMStreamCallback,
   options: LLMChatOptions = {}
 ): Promise<void> {
+  const messages = buildMessagesFromRequest(prompt);
   const payload = {
     model: options.model || '',
     messages,
     temperature: options.temperature ?? 0.8,
     max_tokens: options.max_tokens ?? 1024,
+    keep_alive: '10m',
   };
   if (!options.model || options.model.trim() === '') {
     throw new Error('Model must be specified');
@@ -82,14 +91,16 @@ export async function streamChatCompletion(
  * @returns The assistant's reply as a string
  */
 export async function chatCompletion(
-  messages: LLMMessage[],
+  prompt: llmCompletionRequestMessage,
   options: LLMChatOptions = {}
 ): Promise<string> {
+  const messages = buildMessagesFromRequest(prompt);
   const payload = {
     model: options.model || '',
     messages,
     temperature: options.temperature ?? 0.8,
     max_tokens: options.max_tokens ?? 1024,
+    keep_alive: '10m',
     stream: false,
   };
   if (!options.model || options.model.trim() === '') {
@@ -111,3 +122,5 @@ export async function chatCompletion(
   if (choices.length === 0) return '';
   return choices[0].message?.content || '';
 }
+
+export type { LLMMessage };

@@ -1,5 +1,5 @@
 import requests
-from llm_service import BaseLLMService
+from llm_services.llm_service import BaseLLMService
 
 
 class OpenAIService(BaseLLMService):
