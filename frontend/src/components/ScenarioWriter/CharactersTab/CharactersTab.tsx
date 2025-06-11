@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { AI_STATUS, useAIStatus } from '../../../contexts/AIStatusContext';
 import { generateCharacterField } from '../../../services/characterFieldGenerator';
 import { generateRandomCharacter } from '../../../services/storyGenerator';
 import { Character } from '../../../types/ScenarioTypes';
@@ -26,6 +27,8 @@ const CharactersTab: React.FC<TabProps> = ({ content, updateContent, currentScen
   const [showGenerateModal, setShowGenerateModal] = useState(false);
   const [generateFormCharacter, setGenerateFormCharacter] = useState<Character>({ id: '', name: '' });
   const [generateFormError, setGenerateFormError] = useState<string | null>(null);
+  const { aiStatus, setAiStatus, setShowAIBusyModal } = useAIStatus();
+  const isAIUnavailable = [AI_STATUS.BUSY, AI_STATUS.UNAVAILABLE, AI_STATUS.ERROR, AI_STATUS.LOADING].includes(aiStatus);
   
   // Debug: Log when currentScenario changes
   useEffect(() => {
@@ -228,7 +231,9 @@ const CharactersTab: React.FC<TabProps> = ({ content, updateContent, currentScen
             accumulated += chunk;
             setStreamedJson(accumulated);
           }
-        }
+        },
+        () => setAiStatus,
+        () => setShowAIBusyModal
       );
       setCancelGeneration(() => generationResult.cancelGeneration);
       try {
@@ -400,16 +405,26 @@ const CharactersTab: React.FC<TabProps> = ({ content, updateContent, currentScen
       <button
         type="button"
         onClick={() => handleGenerateField(fieldName, fieldDisplayName)}
-        disabled={disabled || !!fieldGenerationInProgress}
-        title={`Generate ${fieldDisplayName.toLowerCase()}`}
-        className={`field-generate-btn ${disabled || fieldGenerationInProgress ? 'disabled' : ''}`}
+        disabled={disabled || !!fieldGenerationInProgress || isAIUnavailable}
+        title={isAIUnavailable
+          ? aiStatus === AI_STATUS.BUSY
+            ? 'AI is busy. Please wait.'
+            : aiStatus === AI_STATUS.UNAVAILABLE
+            ? 'AI is unavailable.'
+            : aiStatus === AI_STATUS.ERROR
+            ? 'AI error.'
+            : aiStatus === AI_STATUS.LOADING
+            ? 'Checking AI status...'
+            : `Generate ${fieldDisplayName.toLowerCase()}`
+          : `Generate ${fieldDisplayName.toLowerCase()}`}
+        className={`field-generate-btn ${disabled || fieldGenerationInProgress || isAIUnavailable ? 'disabled' : ''}`}
         style={{
           ...baseStyle,
           ...positionStyle,
-          borderColor: disabled || fieldGenerationInProgress ? 'rgba(68, 68, 68, 0.3)' : 'rgba(66, 133, 244, 0.3)',
-          color: disabled || fieldGenerationInProgress ? '#666' : '#4285f4',
-          opacity: disabled || fieldGenerationInProgress ? 0.4 : 0.7,
-          cursor: disabled || fieldGenerationInProgress ? 'not-allowed' : 'pointer'
+          borderColor: disabled || fieldGenerationInProgress || isAIUnavailable ? 'rgba(68, 68, 68, 0.3)' : 'rgba(66, 133, 244, 0.3)',
+          color: disabled || fieldGenerationInProgress || isAIUnavailable ? '#666' : '#4285f4',
+          opacity: disabled || fieldGenerationInProgress || isAIUnavailable ? 0.4 : 0.7,
+          cursor: disabled || fieldGenerationInProgress || isAIUnavailable ? 'not-allowed' : 'pointer'
         }}
       >
         ✨
@@ -431,7 +446,7 @@ const CharactersTab: React.FC<TabProps> = ({ content, updateContent, currentScen
                 label="✨ Generate Character" 
                 variant="success"
                 title="Generate a random character using AI"
-                disabled={!currentScenario}
+                disabled={!currentScenario || isAIUnavailable}
               />
               &nbsp;
               <ActionButton 

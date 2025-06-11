@@ -19,10 +19,9 @@ import {
   confirmRenameScenarioService as confirmRenameScenarioLogic,
   confirmSaveAsService,
   handleCreateNewScenarioService,
-  handleGenerateRandomScenarioService,
   handleRandomizeScenarioService,
   handleRenameScenarioService,
-  handleSaveAsScenarioService,
+  handleSaveAsScenarioService
 } from './fileTabService';
 import ScenarioDropdown from './ScenarioDropdown';
 
@@ -63,18 +62,8 @@ const FileTab: React.FC<FileTabProps> = ({
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   
-  // Random scenario generation states
+  // Random scenario generation state
   const [showRandomScenarioModal, setShowRandomScenarioModal] = useState(false);
-  const [randomScenarioOptions, setRandomScenarioOptions] = useState({
-    generateStyle: true,
-    generateBackstory: true,
-    generateCharacters: true,
-    generateStoryArc: true
-  });
-  const [isGeneratingScenario, setIsGeneratingScenario] = useState(false);
-  const [generationProgress, setGenerationProgress] = useState('');
-  const [randomScenarioName, setRandomScenarioName] = useState('');
-  const [generationCancelHandler, setGenerationCancelHandler] = useState<(() => void) | null>(null);
   
   // Fetch scenarios on component mount
   useEffect(() => {
@@ -240,30 +229,7 @@ const FileTab: React.FC<FileTabProps> = ({
       fetchScenarios
     );
 
-  // Fix: call handleGenerateRandomScenarioService directly (no fileTabService. prefix)
-  const handleGenerateRandomScenario = async (extraInstructions: string) =>
-    handleGenerateRandomScenarioService({
-      extraInstructions,
-      currentScenario,
-      setIsGeneratingScenario,
-      setGenerationProgress,
-      setRandomScenarioName,
-      setGenerationCancelHandler,
-      randomScenarioOptions,
-      onLoadScenario,
-      onSwitchTab,
-      setShowRandomScenarioModal,
-    });
 
-  // Cancel the random scenario generation process
-  const handleCancelRandomGeneration = () => {
-    if (generationCancelHandler) {
-      generationCancelHandler();
-      setGenerationCancelHandler(null);
-    }
-    setIsGeneratingScenario(false);
-    setShowRandomScenarioModal(false);
-  };
   
   // Fix: fetchScenarios wrapper must be defined before use in handlers
   const fetchScenarios = () => fetchScenariosService(setScenarios);
@@ -331,13 +297,6 @@ const FileTab: React.FC<FileTabProps> = ({
         setShowRandomScenarioModal={setShowRandomScenarioModal}
         currentScenario={currentScenario}
         onLoadScenario={onLoadScenario}
-        isGeneratingScenario={isGeneratingScenario}
-        generationProgress={generationProgress}
-        randomScenarioName={randomScenarioName}
-        handleGenerateRandomScenario={handleGenerateRandomScenario}
-        handleCancelRandomGeneration={handleCancelRandomGeneration}
-        randomScenarioOptions={randomScenarioOptions}
-        setRandomScenarioOptions={setRandomScenarioOptions}
         showDeleteConfirm={showDeleteConfirm}
         setShowDeleteConfirm={setShowDeleteConfirm}
         confirmDeleteScenario={confirmDeleteScenario}

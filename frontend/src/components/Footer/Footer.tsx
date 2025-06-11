@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { AI_STATUS, useAIStatus } from '../../contexts/AIStatusContext';
 import { fetchLLMModels, getLLMStatus } from '../../services/llmBackend';
 import { getSelectedModel, setSelectedModel } from '../../services/modelSelection';
 import { getSavedSettings } from '../../services/settings';
@@ -17,6 +18,7 @@ const Footer: React.FC<FooterProps> = ({ isLoading, onSeedChange }) => {
   const [isRandomSeed, setIsRandomSeed] = useState(true);
   const [availableModels, setAvailableModels] = useState<string[]>([]);
   const [selectedModel, setSelectedModelState] = useState<string>('');
+  const { aiStatus } = useAIStatus();
 
   // Use a ref to track previous loading state
   const prevLoadingRef = React.useRef(isLoading);
@@ -164,22 +166,42 @@ const Footer: React.FC<FooterProps> = ({ isLoading, onSeedChange }) => {
     }
   };
 
+  // Ensure only one status indicator is rendered
+  const renderStatusIndicator = () => {
+    let statusClass = '';
+    let statusText = '';
+
+    switch (aiStatus) {
+      case AI_STATUS.IDLE:
+        statusClass = 'idle';
+        statusText = 'AI Available';
+        break;
+      case AI_STATUS.BUSY:
+        statusClass = 'busy';
+        statusText = 'AI Busy';
+        break;
+      case AI_STATUS.UNAVAILABLE:
+        statusClass = 'unavailable';
+        statusText = 'AI Unavailable';
+        break;
+      default:
+        statusClass = 'error';
+        statusText = 'AI Error';
+    }
+
+    return (
+      <div className="status-indicator">
+        <span className={`status-dot ${statusClass}`}></span>
+        {statusText}
+      </div>
+    );
+  };
+
   return (
     <div className="footer">
       <div className="footer-content">
         <div className="status-indicators">
-          <div className="status-indicator">
-            <div className={`status-dot ${isLoading ? 'active' : 'idle'}`}></div>
-            <span>{isLoading ? 'Processing Request...' : 'Backend Idle'}</span>
-          </div>
-          <div className="status-indicator">
-            <div className={`status-dot ${isLLMConnected ? 'idle' : 'error'}`}></div>
-            <span>
-              {isLLMConnected 
-                ? getBackendDisplayName() 
-                : `${getBackendDisplayName()}: Disconnected`}
-            </span>
-          </div>
+          {renderStatusIndicator()}
         </div>
         
         <div className="model-controls">

@@ -5,7 +5,7 @@ from llm_services.llm_service import BaseLLMService  # type: ignore
 class LMStudioService(BaseLLMService):
     def __init__(self, config):
         super().__init__(config)
-        self.base_url = config.get('url', 'http://1localhost:1234')
+        self.base_url = config.get('url', 'http://localhost:1234')
 
     def get_models(self):
         resp = requests.get(f"{self.base_url}/v1/models", timeout=10)

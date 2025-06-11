@@ -1,21 +1,46 @@
-# bugs
-there are three similar bugs, all related to the model selection in the frontend, probably with the same root cause.
+# AI Status State Variable Not Used Correctly
 
-## chat request not including the selected model
-- **Issue**: When making a chat request in the frontend, the selected model is not included in the request.
-- **Expected Behavior**: The request should include the selected model.
-Instead, the model is either set to blank or 'gemma3:4b'.
-The frontend does this when calling the function 'streamChatCompletion' in frontend/src/services/llmService.ts.
-It gets the model information therough functions in the module frontend/src/services/llmBackend.ts, which in turn gets the model information from the backend.
+We implemented a feature to ensure only one AI request can be sent at a time, by using an AiStatusContext. But it's not used correctly.
 
-## default model displayed is not the user-selected model
-The frontend also persistently displays a model in the Footer component frontend/src/components/Footer/Footer.tsx. This may be the default model, but it is not the model that the user has selected in the settings tab (frontend/src/pages/Settings.tsx).
-- **Steps to Reproduce**:
-  1. Select a model in the frontend.
-  2. Make a chat request.
-  3. Check the request payload.
+## Reproduction Scenario
+* Click on "generate backstory" in the BackstoryTab
+* The AI starts generating a backstory
+* The "generate story" button in the ReadingPane is still enabled
+* The footer still says "ai available"
 
-## selected model is not retained in the settings page
-- **Issue**: When navigating to the settings page, the selected model is not retained.
-This is because the dropdown is empty, because the model list has not been loaded yet from the ai service.
-- **Expected Behavior**: The selected model should be retained and displayed in the settings page. 
+## Expected Behavior
+* The "generate story" button in the ReadingPane should be disabled when the AI is busy
+* The footer should say "ai busy" when the AI is busy
+
+## Root Cause
+- The AiStatusContext is not correctly shared or consumed by all components that need to react to AI status changes.
+- The polling and update logic (useAiStatusPolling, llmService) may not be updating the context or its consumers properly.
+
+## Steps to Fix
+
+1. **Ensure a Single AiStatusContext Provider**
+   - Wrap both the ScenarioWriter tab components and the ReadingPane component with a single AiStatusContext provider at a high enough level in the component tree.
+
+2. **Correctly Consume AiStatusContext**
+   - In the ReadingPane and ScenarioWriter tab components, use the AiStatusContext to determine if the AI is busy.
+   - Disable the "generate story" button in ReadingPane when AI is busy.
+   - Update the footer to show "ai busy" when appropriate.
+
+3. **Update AI Status on Request Start/End**
+   - In the llmService (or wherever AI requests are made), update the AiStatusContext state to "busy" when a request starts and "available" when it completes.
+
+4. **Ensure useAiStatusPolling Updates Context**
+   - The useAiStatusPolling hook should update the AiStatusContext state based on polling results.
+
+5. **Test the Integration**
+   - Verify that starting any AI operation disables all relevant buttons and updates the footer.
+   - Ensure the status returns to "available" when the operation completes.
+
+## Verification Checklist
+- [ ] A single AiStatusContext is wrapped around the ScenarioWriter tab components and the ReadingPane component
+- [ ] The ai status is updated correctly by the polling behavior in useAiStatusPolling hook
+- [ ] The AiStatusContext provides the ai status correctly to its children
+- [ ] The ai status is updated correctly when a request is sent and when it completes (in the llmService)
+- [ ] The AiStatusContext is used correctly in the ScenarioWriter tab components and the ReadingPane component
+- [ ] The "generate story" button in the ReadingPane is disabled when AI is busy
+- [ ] The footer displays "ai busy" when AI is busy

@@ -1,23 +1,28 @@
-import { GeneratedStory, Scenario } from '../types/ScenarioTypes';
+import { AI_STATUS } from '../contexts/AIStatusContext';
 import { llmCompletionRequestMessage } from '../types/LLMTypes';
+import { GeneratedStory, Scenario } from '../types/ScenarioTypes';
 import * as llmPromptService from './llmPromptService';
-import { streamChatCompletion } from './llmService';
+import { streamChatCompletionWithStatus } from './llmService';
 import { getSelectedModel } from './modelSelection';
 
 
-// Helper for prompt-based streaming using llmService
-async function streamPromptCompletion({
+// Helper for prompt-based streaming using llmService, with AI status context
+export async function streamPromptCompletionWithStatus({
   prompt,
   onProgress,
   temperature,
   seed,
-  max_tokens
+  max_tokens,
+  setAiStatus = () => {},
+  setShowAIBusyModal = () => {}
 }: {
   prompt: string,
   onProgress?: (text: string) => void,
   temperature?: number,
   seed?: number | null,
-  max_tokens?: number
+  max_tokens?: number,
+  setAiStatus?: (s: any) => void,
+  setShowAIBusyModal?: (b: boolean) => void
 }) {
   let fullText = '';
   const selectedModel = getSelectedModel();
@@ -25,20 +30,21 @@ async function streamPromptCompletion({
   const promptObj: llmCompletionRequestMessage = {
     userMessage: prompt
   };
-  await streamChatCompletion(
+  await streamChatCompletionWithStatus(
     promptObj,
     (text) => {
-      // Only send the new chunk to onProgress
       if (onProgress) {
         onProgress(text.slice(fullText.length));
       }
       fullText = text;
     },
-    { 
+    {
       model: selectedModel || undefined,
-      temperature, 
-      max_tokens 
-    }
+      temperature,
+      max_tokens
+    },
+    setAiStatus,
+    setShowAIBusyModal
   );
   return fullText;
 }
@@ -54,16 +60,27 @@ export async function generateChapter(
     onProgress?: (text: string) => void,
     temperature?: number,
     seed?: number | null
-  } = {}
+  } = {},
+  setAiStatus = () => {},
+  setShowAIBusyModal = () => {}
 ): Promise<string> {
   const promptObj = llmPromptService.createChapterPrompt(scenario, chapterNumber, previousChapters);
-  return streamPromptCompletion({
-    prompt: promptObj.userMessage || '',
-    onProgress: options.onProgress,
-    temperature: options.temperature,
-    seed: options.seed,
-    max_tokens: 2000
-  });
+  let fullText = '';
+  await streamChatCompletionWithStatus(
+    promptObj,
+    (text) => {
+      if (options.onProgress) options.onProgress(text);
+      fullText = text;
+    },
+    {
+      model: getSelectedModel() || undefined,
+      temperature: options.temperature,
+      max_tokens: 2000
+    },
+    setAiStatus,
+    setShowAIBusyModal
+  );
+  return fullText;
 }
 
 /**
@@ -74,18 +91,30 @@ export async function generateChapterSummary(
   options: {
     onProgress?: (text: string) => void,
     temperature?: number
-  } = {}
+  } = {},
+  setAiStatus = () => {},
+  setShowAIBusyModal = () => {}
 ): Promise<string> {
   // No createChapterSummaryPrompt exists, so use inline prompt
   const promptObj: llmCompletionRequestMessage = {
     userMessage: `Summarize the following chapter in 2-3 sentences, focusing on the main events and character developments. Do not include any meta-commentary or formatting.\n\nChapter:\n${chapterText}`
   };
-  return streamPromptCompletion({
-    prompt: promptObj.userMessage || '',
-    onProgress: options.onProgress,
-    temperature: options.temperature,
-    max_tokens: 200
-  });
+  let fullText = '';
+  await streamChatCompletionWithStatus(
+    promptObj,
+    (text) => {
+      if (options.onProgress) options.onProgress(text);
+      fullText = text;
+    },
+    {
+      model: getSelectedModel() || undefined,
+      temperature: options.temperature,
+      max_tokens: 200
+    },
+    setAiStatus,
+    setShowAIBusyModal
+  );
+  return fullText;
 }
 
 /**
@@ -98,7 +127,9 @@ export async function generateStory(
     temperature?: number,
     numberOfChapters?: number, // ignored, kept for compatibility
     seed?: number | null
-  } = {}
+  } = {},
+  setAiStatus = () => {},
+  setShowAIBusyModal = () => {}
 ): Promise<{ result: Promise<GeneratedStory>; cancelGeneration: () => void }> {
   const promptObj = llmPromptService.createScenarioPrompt(scenario);
   let cancelled = false;
@@ -107,7 +138,7 @@ export async function generateStory(
     try {
       const selectedModel = getSelectedModel();
       let fullText = '';
-      await streamChatCompletion(
+      await streamChatCompletionWithStatus(
         promptObj,
         (text) => {
           if (!cancelled) {
@@ -118,8 +149,10 @@ export async function generateStory(
         { 
           model: selectedModel || undefined,
           temperature: options.temperature, 
-          max_tokens: 6000 
-        }
+          max_tokens: 6000
+        },
+        setAiStatus,
+        setShowAIBusyModal
       );
       if (!cancelled) {
         resolve({ completeText: fullText, chapters: [] });
@@ -140,7 +173,9 @@ export async function generateBackstory(
     onProgress?: (text: string) => void,
     temperature?: number,
     seed?: number | null
-  } = {}
+  } = {},
+  setAiStatus: (status: AI_STATUS) => void = () => {},
+  setShowAIBusyModal: (show: boolean) => void = () => {}
 ): Promise<{ result: Promise<string>; cancelGeneration: () => void }> {
   const promptObj = llmPromptService.createBackstoryPrompt(scenario);
   let cancelled = false;
@@ -149,7 +184,7 @@ export async function generateBackstory(
   const resultPromise = new Promise<string>(async (resolve, reject) => {
     try {
       const selectedModel = getSelectedModel();
-      await streamChatCompletion(
+      await streamChatCompletionWithStatus(
         promptObj,
         (text) => {
           if (!cancelled) {
@@ -160,8 +195,10 @@ export async function generateBackstory(
         { 
           model: selectedModel || undefined,
           temperature: options.temperature, 
-          max_tokens: 1000 
-        }
+          max_tokens: 1000
+        },
+        setAiStatus,
+        setShowAIBusyModal
       );
       if (!cancelled) {
         resolve(fullText);
@@ -184,7 +221,9 @@ export async function rewriteBackstory(
     onProgress?: (text: string) => void,
     temperature?: number,
     seed?: number | null
-  } = {}
+  } = {},
+  setAiStatus: (status: AI_STATUS) => void = () => {},
+  setShowAIBusyModal: (show: boolean) => void = () => {}
 ): Promise<{ result: Promise<string>; cancelGeneration: () => void }> {
   const prompt = `You are a masterful storyteller specializing in improving existing content in the genre ${scenario.writingStyle?.genre || "General Fiction"}. Rewrite the following backstory:\n\n` +
                  `"${scenario.backstory || ""}"\n\n` +
@@ -203,7 +242,7 @@ export async function rewriteBackstory(
       const promptObj: llmCompletionRequestMessage = {
         userMessage: prompt
       };
-      await streamChatCompletion(
+      await streamChatCompletionWithStatus(
         promptObj,
         (text) => {
           if (!cancelled) {
@@ -214,8 +253,10 @@ export async function rewriteBackstory(
         { 
           model: selectedModel || undefined,
           temperature: options.temperature, 
-          max_tokens: 1000 
-        }
+          max_tokens: 1000
+        },
+        setAiStatus,
+        setShowAIBusyModal
       );
       if (!cancelled) {
         resolve(fullText);
@@ -236,7 +277,9 @@ export async function rewriteStoryArc(
     onProgress?: (text: string) => void,
     temperature?: number,
     seed?: number | null
-  } = {}
+  } = {},
+  setAiStatus = () => {},
+  setShowAIBusyModal = () => {}
 ): Promise<{ result: Promise<string>; cancelGeneration: () => void }> {
   const prompt = `You are a masterful story architect specializing in improving story arcs for ${scenario.writingStyle?.genre || "General Fiction"} fiction. Rewrite the following story arc to be more compelling, clear, and high-level:\n\n` +
                  `"${scenario.storyarc || ""}"\n\n` +
@@ -251,7 +294,7 @@ export async function rewriteStoryArc(
       const promptObj: llmCompletionRequestMessage = {
         userMessage: prompt
       };
-      await streamChatCompletion(
+      await streamChatCompletionWithStatus(
         promptObj,
         (text) => {
           if (!cancelled) {
@@ -262,8 +305,10 @@ export async function rewriteStoryArc(
         { 
           model: selectedModel || undefined,
           temperature: options.temperature, 
-          max_tokens: 1000 
-        }
+          max_tokens: 1000
+        },
+        setAiStatus,
+        setShowAIBusyModal
       );
       if (!cancelled) {
         resolve(fullText);
@@ -283,7 +328,9 @@ export async function generateRandomWritingStyle(
     onProgress?: (text: string) => void,
     temperature?: number,
     seed?: number | null
-  } = {}
+  } = {},
+  setAiStatus = () => {},
+  setShowAIBusyModal = () => {}
 ): Promise<{ result: Promise<any>; cancelGeneration: () => void }> {
   let cancelled = false;
   let cancelGeneration = () => { cancelled = true; };
@@ -292,7 +339,7 @@ export async function generateRandomWritingStyle(
     try {
       const selectedModel = getSelectedModel();
       let fullText = '';
-      await streamChatCompletion(
+      await streamChatCompletionWithStatus(
         promptObj,
         (text) => {
           if (!cancelled && options.onProgress) options.onProgress(text.slice(fullText.length));
@@ -301,8 +348,10 @@ export async function generateRandomWritingStyle(
         { 
           model: selectedModel || undefined,
           temperature: options.temperature, 
-          max_tokens: 1000 
-        }
+          max_tokens: 1000
+        },
+        setAiStatus,
+        setShowAIBusyModal
       );
       if (!cancelled) { console.log(fullText); resolve(fullText); }
     } catch (e) { reject(e); }
@@ -320,7 +369,9 @@ export async function generateRandomCharacter(
     onProgress?: (text: string) => void,
     temperature?: number,
     seed?: number | null
-  } = {}
+  } = {},
+  setAiStatus = () => {},
+  setShowAIBusyModal = () => {}
 ): Promise<{ result: Promise<any>; cancelGeneration: () => void }> {
   let cancelled = false;
   let cancelGeneration = () => { cancelled = true; };
@@ -329,7 +380,7 @@ export async function generateRandomCharacter(
     try {
       const selectedModel = getSelectedModel();
       let fullText = '';
-      await streamChatCompletion(
+      await streamChatCompletionWithStatus(
         promptObj,
         (text) => {
           if (!cancelled && options.onProgress) options.onProgress(text.slice(fullText.length));
@@ -338,8 +389,10 @@ export async function generateRandomCharacter(
         { 
           model: selectedModel || undefined,
           temperature: options.temperature, 
-          max_tokens: 1000 
-        }
+          max_tokens: 1000
+        },
+        setAiStatus,
+        setShowAIBusyModal
       );
       if (!cancelled) {
         // Remove markdown code block if present
@@ -367,7 +420,9 @@ export async function generateRandomScenarioName(
     onProgress?: (text: string) => void,
     temperature?: number,
     seed?: number | null
-  }
+  },
+  setAiStatus = () => {},
+  setShowAIBusyModal = () => {}
 ): Promise<{ result: Promise<string>; cancelGeneration: () => void }> {
   return generateRandomScenarioName(options);
 }
@@ -381,7 +436,9 @@ export async function generateStoryArc(
     onProgress?: (text: string) => void,
     temperature?: number,
     seed?: number | null
-  } = {}
+  } = {},
+  setAiStatus = () => {},
+  setShowAIBusyModal = () => {}
 ): Promise<{ result: Promise<string>; cancelGeneration: () => void }> {
   const prompt = `You are a masterful story architect. Write a high-level story arc for a ${scenario.writingStyle?.genre || "General Fiction"} story based on the following scenario.\n\n` +
                  `The story arc should outline the main plot points, character arcs, and key events from beginning to end.\n\n` +
@@ -396,7 +453,7 @@ export async function generateStoryArc(
       const promptObj: llmCompletionRequestMessage = {
         userMessage: prompt
       };
-      await streamChatCompletion(
+      await streamChatCompletionWithStatus(
         promptObj,
         (text) => {
           if (!cancelled) {
@@ -407,8 +464,10 @@ export async function generateStoryArc(
         { 
           model: selectedModel || undefined,
           temperature: options.temperature, 
-          max_tokens: 1000 
-        }
+          max_tokens: 1000
+        },
+        setAiStatus,
+        setShowAIBusyModal
       );
       if (!cancelled) {
         resolve(fullText);

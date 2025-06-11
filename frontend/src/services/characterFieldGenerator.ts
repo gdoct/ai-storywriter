@@ -1,7 +1,8 @@
 // Service for generating individual character field values
+import { AI_STATUS } from '../contexts/AIStatusContext';
+import { streamChatCompletionWithStatus } from '../services/llmService';
 import { Character, Scenario } from '../types/ScenarioTypes';
 import { createCharacterFieldPrompt } from './llmPromptService';
-import { streamChatCompletion } from './llmService';
 import { getSelectedModel } from './modelSelection';
 
 /**
@@ -20,47 +21,43 @@ export async function generateCharacterField(
   fieldDisplayName: string,
   options: {
     onProgress?: (text: string) => void,
-    temperature?: number
+    temperature?: number,
+    setAiStatus?: (status: AI_STATUS) => void,
+    setShowAIBusyModal?: (show: boolean) => void
   } = {}
 ): Promise<{ result: Promise<string>; cancelGeneration: () => void }> {
   let cancelled = false;
   let cancelGeneration = () => { cancelled = true; };
 
   const promptObj = createCharacterFieldPrompt(scenario, character, fieldName, fieldDisplayName);
-  
   const resultPromise = new Promise<string>(async (resolve, reject) => {
     try {
       const selectedModel = getSelectedModel();
       let fullText = '';
-      
-      await streamChatCompletion(
+      await streamChatCompletionWithStatus(
         promptObj,
-        (text) => {
+        (text: string) => {
           if (!cancelled) {
-            // Send the full accumulated text to onProgress
             if (options.onProgress) {
               options.onProgress(text);
             }
             fullText = text;
           }
         },
-        { 
+        {
           model: selectedModel || undefined,
-          temperature: options.temperature || 0.8, 
-          max_tokens: 200  // Keep field values concise
-        }
+          temperature: options.temperature || 0.8,
+          max_tokens: 200
+        },
+        options.setAiStatus || (() => {}),
+        options.setShowAIBusyModal || (() => {})
       );
-      
       if (!cancelled) {
-        // Clean up the result - remove any markdown formatting or extra whitespace
         let cleaned = fullText.trim();
-        
-        // Remove quotes if the entire response is wrapped in them
         if ((cleaned.startsWith('"') && cleaned.endsWith('"')) || 
             (cleaned.startsWith("'") && cleaned.endsWith("'"))) {
           cleaned = cleaned.slice(1, -1);
         }
-        
         resolve(cleaned);
       }
     } catch (e) { 
@@ -69,6 +66,5 @@ export async function generateCharacterField(
       }
     }
   });
-
   return { result: resultPromise, cancelGeneration };
 }

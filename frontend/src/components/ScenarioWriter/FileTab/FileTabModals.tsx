@@ -37,13 +37,6 @@ interface FileTabModalsProps {
   setShowRandomScenarioModal: (show: boolean) => void;
   currentScenario: Scenario | null;
   onLoadScenario: (scenario: Scenario, generatedStory?: string | null) => void;
-  isGeneratingScenario: boolean;
-  generationProgress: string;
-  randomScenarioName: string;
-  handleGenerateRandomScenario: (extraInstructions: string) => void;
-  handleCancelRandomGeneration: () => void;
-  randomScenarioOptions: any;
-  setRandomScenarioOptions: (opts: any) => void;
   showDeleteConfirm: boolean;
   setShowDeleteConfirm: (show: boolean) => void;
   confirmDeleteScenario: () => void;
@@ -100,13 +93,6 @@ const FileTabModals: React.FC<FileTabModalsProps> = (props) => (
       onClose={() => props.setShowRandomScenarioModal(false)}
       currentScenario={props.currentScenario}
       onLoadScenario={props.onLoadScenario}
-      isGeneratingScenario={props.isGeneratingScenario}
-      generationProgress={props.generationProgress}
-      randomScenarioName={props.randomScenarioName}
-      onGenerateRandomScenario={props.handleGenerateRandomScenario}
-      onCancelGeneration={props.handleCancelRandomGeneration}
-      randomScenarioOptions={props.randomScenarioOptions}
-      setRandomScenarioOptions={props.setRandomScenarioOptions}
     />
     <DeleteScenarioModal
       show={props.showDeleteConfirm}

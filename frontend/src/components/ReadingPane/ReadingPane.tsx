@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { AI_STATUS, useAIStatus } from '../../contexts/AIStatusContext';
 import { createContinueStoryPrompt } from '../../services/llmPromptService';
 import { generateChapterSummary, generateStory } from '../../services/storyGenerator';
 import { Scenario } from '../../types/ScenarioTypes';
@@ -60,6 +61,8 @@ const ReadingPane: React.FC<ReadingPaneProps> = ({
   onDisableStoryDropdown,
   isStoryDropdownDisabled = false,
 }) => {
+  const { aiStatus } = useAIStatus();
+
   // Global state for all tabs across all scenarios
   const [tabs, setTabs] = useState<Tab[]>([]);
   // Ref for ReadingPaneHeader to reset dropdown
@@ -370,6 +373,8 @@ const ReadingPane: React.FC<ReadingPaneProps> = ({
     setContinueSummary('');
     setContinuePrompt('');
   };
+
+  const isGenerateButtonDisabled = aiStatus === AI_STATUS.BUSY;
 
   return (
     <div className="reading-pane">

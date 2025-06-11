@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { AI_STATUS, useAIStatus } from '../../../contexts/AIStatusContext';
 import { createContextAwareChatPrompt } from '../../../services/llmPromptService';
-import { streamChatCompletion } from '../../../services/llmService';
+import { streamChatCompletionWithStatus } from '../../../services/llmService';
 import { getSelectedModel } from '../../../services/modelSelection';
 import { llmCompletionRequestMessage } from '../../../types/LLMTypes';
 import { TabProps } from '../common/TabInterface';
@@ -19,13 +20,16 @@ const ChatTab: React.FC<TabProps> = ({ currentScenario }) => {
   const [input, setInput] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const { aiStatus, setAiStatus, setShowAIBusyModal } = useAIStatus();
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  const isAIUnavailable = [AI_STATUS.BUSY, AI_STATUS.UNAVAILABLE, AI_STATUS.ERROR, AI_STATUS.LOADING].includes(aiStatus);
+
   const handleSend = async () => {
-    if (!input.trim() || isGenerating) return;
+    if (!input.trim() || isGenerating || isAIUnavailable) return;
     const userMessage: Message = { role: 'user', content: input };
     setMessages(prev => [...prev, userMessage, { role: 'assistant', content: '' }]);
     setInput('');
@@ -45,7 +49,7 @@ const ChatTab: React.FC<TabProps> = ({ currentScenario }) => {
     try {
       // Fetch user-selected model
       const model = getSelectedModel();
-      await streamChatCompletion(
+      await streamChatCompletionWithStatus(
         promptObj,
         (assistantText, isDone) => {
           setMessages(prev => {
@@ -59,7 +63,9 @@ const ChatTab: React.FC<TabProps> = ({ currentScenario }) => {
             return updated;
           });
         },
-        { model: model || undefined, temperature: 0.8, max_tokens: 1024 }
+        { model: model || undefined, temperature: 0.8, max_tokens: 1024 },
+        setAiStatus,
+        setShowAIBusyModal
       );
     } catch (err) {
       setMessages(prev => {
@@ -117,12 +123,24 @@ const ChatTab: React.FC<TabProps> = ({ currentScenario }) => {
             onChange={e => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Type your message here..."
-            disabled={isGenerating}
+            disabled={isGenerating || isAIUnavailable}
+            title={isAIUnavailable ?
+              aiStatus === AI_STATUS.BUSY ? 'AI is busy. Please wait.' :
+              aiStatus === AI_STATUS.UNAVAILABLE ? 'AI is unavailable.' :
+              aiStatus === AI_STATUS.ERROR ? 'AI error.' :
+              aiStatus === AI_STATUS.LOADING ? 'Checking AI status...' : ''
+              : ''}
           />
           <button
             className="chat-send-btn"
             onClick={handleSend}
-            disabled={isGenerating || !input.trim()}
+            disabled={isGenerating || !input.trim() || isAIUnavailable}
+            title={isAIUnavailable ?
+              aiStatus === AI_STATUS.BUSY ? 'AI is busy. Please wait.' :
+              aiStatus === AI_STATUS.UNAVAILABLE ? 'AI is unavailable.' :
+              aiStatus === AI_STATUS.ERROR ? 'AI error.' :
+              aiStatus === AI_STATUS.LOADING ? 'Checking AI status...' : ''
+              : ''}
           >
             {isGenerating ? 'Generating...' : 'Send'}
           </button>

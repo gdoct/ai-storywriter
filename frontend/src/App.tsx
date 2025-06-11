@@ -1,9 +1,12 @@
 import { useState } from 'react';
 import { BrowserRouter as Router, useRoutes } from 'react-router-dom';
 import './App.css';
+import AIBusyModal from './components/common/AIBusyModal';
 import Footer from './components/Footer/Footer';
 import TopBar from './components/TopBar';
 import { SceneHoverProvider } from './context/SceneHoverContext';
+import { AIStatusProvider } from './contexts/AIStatusContext';
+import { useAIStatusPolling } from './hooks/useAIStatusPolling';
 import getRoutes from './routes';
 import { AuthProvider } from './services/AuthContext';
 
@@ -19,9 +22,12 @@ const AppContent = () => {
     setCurrentSeed(seed);
   };
 
+  useAIStatusPolling();
+
   return (
     <AuthProvider>
       <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
+        <AIBusyModal />
         <TopBar />
         <div className="main-content">
           {routeElements}
@@ -35,9 +41,11 @@ const AppContent = () => {
 function App() {
   return (
     <Router>
-      <SceneHoverProvider>
-        <AppContent />
-      </SceneHoverProvider>
+      <AIStatusProvider>
+        <SceneHoverProvider>
+          <AppContent />
+        </SceneHoverProvider>
+      </AIStatusProvider>
     </Router>
   );
 }

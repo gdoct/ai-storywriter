@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useAIStatus } from '../../../contexts/AIStatusContext';
 import { generateBackstory, rewriteBackstory } from '../../../services/storyGenerator';
 import { Character, Scenario } from '../../../types/ScenarioTypes';
 import ActionButton from '../../common/ActionButton';
@@ -12,6 +13,7 @@ const BackstoryTab: React.FC<TabProps> = ({ content, updateContent, currentScena
   const [isGenerating, setIsGenerating] = useState(false);
   const [cancelGeneration, setCancelGeneration] = useState<(() => void) | null>(null);
   const [draft, setDraft] = useState(content);
+  const { setAiStatus, setShowAIBusyModal } = useAIStatus();
 
   // Keep draft in sync with content when not generating
   React.useEffect(() => {
@@ -57,12 +59,17 @@ const BackstoryTab: React.FC<TabProps> = ({ content, updateContent, currentScena
       setIsGenerating(true);
       setDraft('');
       let accumulated = '';
-      const generationResult = await generateBackstory(temporaryScenario, {
-        onProgress: (generatedText) => {
-          accumulated += generatedText;
-          setDraft(accumulated);
-        }
-      });
+      const generationResult = await generateBackstory(
+        temporaryScenario,
+        {
+          onProgress: (generatedText) => {
+            accumulated += generatedText;
+            setDraft(accumulated);
+          }
+        },
+        setAiStatus,
+        setShowAIBusyModal
+      );
       setCancelGeneration(() => generationResult.cancelGeneration);
       try {
         const generatedBackstory = await generationResult.result;
@@ -90,12 +97,17 @@ const BackstoryTab: React.FC<TabProps> = ({ content, updateContent, currentScena
       setIsGenerating(true);
       setDraft('');
       let accumulated = '';
-      const generationResult = await rewriteBackstory(temporaryScenario, {
-        onProgress: (generatedText) => {
-          accumulated += generatedText;
-          setDraft(accumulated);
-        }
-      });
+      const generationResult = await rewriteBackstory(
+        temporaryScenario,
+        {
+          onProgress: (generatedText) => {
+            accumulated += generatedText;
+            setDraft(accumulated);
+          }
+        },
+        setAiStatus,
+        setShowAIBusyModal
+      );
       setCancelGeneration(() => generationResult.cancelGeneration);
       try {
         const rewrittenBackstory = await generationResult.result;
