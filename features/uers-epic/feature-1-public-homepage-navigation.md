@@ -235,7 +235,7 @@ No immediate database changes required for this feature.
 ### Phase 1: Core Structure (2 days)
 - [ ] Create `MarketingHome.tsx` component
 - [ ] Update routing to support marketing vs app states
-- [ ] Modify `TopBar.tsx` for dynamic navigation
+- [ ] Do not use `TopBar.tsx` for dynamic navigation
 - [ ] Create `AnonymousNav` and `AuthenticatedNav` components
 
 ### Phase 2: Marketing Content (2 days)
@@ -249,7 +249,7 @@ No immediate database changes required for this feature.
 - [ ] Update authentication flow redirects
 - [ ] Add smooth transitions between states
 - [ ] Implement breadcrumb navigation
-- [ ] Test all user flows
+- [ ] Manually test all user flows
 - [ ] Polish CSS and responsive design
 
 ## 🧪 Testing Strategy

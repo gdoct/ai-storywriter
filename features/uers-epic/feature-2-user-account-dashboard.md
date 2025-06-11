@@ -66,9 +66,9 @@ Create a centralized hub for logged-in users to manage their account, settings, 
 ## 🔧 Technical Implementation
 
 ### Current State Analysis
-The existing application has:
+The existing application is a single page application. It has a basic user authentication system but lacks a dedicated user dashboard or tier management features. The Settings page exists but is displayed within the SettingsTab component, which is not tier-aware. 
 - **Home component** redirects to ScenarioWriter directly
-- **Settings page** for LLM backend configuration only
+  **ScenarioWriter** has a tabbed interface that has a user settings tab that can be extended 
 - **Basic user authentication** with JWT tokens
 - **Database schema** with basic user info (no tier/credits)
 
@@ -106,7 +106,7 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ setIsLoading, seed }) => 
 **File:** `/frontend/src/pages/Settings.tsx` (extend existing)
 
 ```tsx
-// Add new sections to existing Settings component
+// Add new sections to existing Settings component but only for premium tier
 const Settings: React.FC = () => {
   const [activeTab, setActiveTab] = useState('llm'); // 'llm', 'account', 'billing'
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
@@ -387,7 +387,8 @@ CREATE TABLE IF NOT EXISTS credit_usage (
 │ ┌─────────────────────────────────────────────────────────┐ │
 │ │ • No need to manage API keys                           │ │
 │ │ • Access to latest premium models                      │ │
-│ │ • Priority support                                     │ │
+│ │ • Advanced features                                    │ │
+│ │ • Unlimited storage                                     │ │
 │ │                                        [Upgrade Now]   │ │
 │ └─────────────────────────────────────────────────────────┘ │
 └─────────────────────────────────────────────────────────────┘

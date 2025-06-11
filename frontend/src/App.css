@@ -12,20 +12,12 @@ body, html {
   flex: 1;
   padding: 0;
   margin-top: 60px; /* Account for fixed TopBar */
-  margin-bottom: 50px; /* Account for fixed Footer */
   background-color: #f5f5f5;
   width: 100%;
-  height: calc(100vh - 110px); /* Total height minus topbar and footer */
-  overflow-y: hidden;
+  min-height: calc(100vh - 60px); /* Minimum height minus topbar */
+  overflow-y: auto; /* Enable vertical scrolling */
   overflow-x: hidden; /* Hide horizontal scrollbar */
   box-sizing: border-box;
-}
-
-/* Responsive design for footer height changes */
-@media (max-width: 600px) {
-  .main-content {
-    margin-bottom: 60px; /* Account for taller footer on small screens */
-  }
 }
 
 /* Keep some of the original styles */

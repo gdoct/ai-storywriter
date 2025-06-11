@@ -8,11 +8,10 @@ the frontend (react/typescript) is in the folder "[root]/frontend" and is starte
 the frontend uses the following technologies:
 - React: a JavaScript library for building user interfaces
 - TypeScript: a typed superset of JavaScript that compiles to plain JavaScript
-start the frontend with the following commands:
-```bash
-cd <root>/frontend
-npm start  
-```
+
+The user is running both the frontend and the backend with hot reload,so changes are immediately applied to the running application.
+if the frontend or backend need to be started, ask the user to do it.
+
 compile the frontend and check for compile errors with the following command:
 ```bash
 cd <root>/frontend
@@ -21,11 +20,7 @@ npm run typecheck
 # backend
 the backend (python/flask) is in the folder "[root]/backend" and is started by the script "[root]/start-backend.sh"
 
-start the backend with the following commands:
-```bash
-cd <root>/backend
-python app.py
-```
+
 
 # project layout
 /

@@ -99,6 +99,8 @@ The current application has:
 ### Required Changes
 
 #### 1. Database Schema Extensions
+these schema extensions should be integrated in the database bootstrapping code in the application, ensuring that the database is ready to handle user tiers, credits, and API keys.
+
 **File:** `/backend/data/migration_user_tiers.py`
 
 ```python

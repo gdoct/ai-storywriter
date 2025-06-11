@@ -15,6 +15,9 @@ describe('Login Page', () => {
   });
 
   it('should display the login form', async () => {
+    // Navigate to login page from marketing homepage
+    await page.goto('http://localhost:3000/login');
+    
     const loginInput = await page.$('input[type="text"], input[type="email"]');
     const passwordInput = await page.$('input[type="password"]');
     let loginButton: ElementHandle<Element> | null = await page.$('button[type="submit"]');
@@ -28,7 +31,7 @@ describe('Login Page', () => {
   });
 
   it('should allow login and logout, and update UI and localStorage accordingly', async () => {
-    await page.goto('http://localhost:3000');
+    await page.goto('http://localhost:3000/login');
 
     await page.type('input[type="text"], input[type="email"]', 'test@testusers.org');
     await page.type('input[type="password"]', 'testpassword');
@@ -57,22 +60,19 @@ describe('Login Page', () => {
     expect(jwt).toBeTruthy();
 
     // Open user dropdown
-    const userIcon: ElementHandle<Element> | null = await page.$('.user-icon');
+    const userIcon: ElementHandle<Element> | null = await page.$('.user-button');
     expect(userIcon).toBeTruthy();
-    let userIconTitle: string | null = null;
     if (userIcon) {
-      userIconTitle = await page.evaluate(el => el.getAttribute('title'), userIcon);
       // Click the user icon to open the dropdown
       await userIcon.click();
     }
-    expect(userIconTitle).toBe('Logged in');
 
     // Verify dropdown username is visible
     const dropdownUsername = await page.$('.dropdown-username');
     expect(dropdownUsername).toBeTruthy();
 
     // Click logout (now visible after dropdown is open)
-    const logoutButton = await page.$('::-p-xpath(//button[contains(translate(., "LOGOUT", "logout"), "logout")])');
+    const logoutButton = await page.$('.logout-item');
     expect(logoutButton).toBeTruthy();
     if (logoutButton) await logoutButton.click();
     if ((page as any).waitForTimeout) {

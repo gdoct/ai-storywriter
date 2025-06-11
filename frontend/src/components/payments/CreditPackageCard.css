@@ -1,0 +1,226 @@
+/* CreditPackageCard.css */
+.package-card {
+  position: relative;
+  background: white;
+  border-radius: 16px;
+  padding: 2rem;
+  border: 2px solid #e2e8f0;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.package-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 25px rgba(0, 0, 0, 0.15);
+  border-color: #667eea;
+}
+
+.package-card.popular {
+  border-color: #f6ad55;
+  background: linear-gradient(135deg, #fff5f0 0%, #ffffff 100%);
+}
+
+.package-card.best-value {
+  border-color: #9f7aea;
+  background: linear-gradient(135deg, #faf5ff 0%, #ffffff 100%);
+}
+
+.package-badge {
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: white;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.popular-badge {
+  background: linear-gradient(135deg, #f6ad55 0%, #ed8936 100%);
+}
+
+.value-badge {
+  background: linear-gradient(135deg, #9f7aea 0%, #805ad5 100%);
+}
+
+.package-header {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.package-header h3 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #2d3748;
+  margin-bottom: 0.5rem;
+}
+
+.package-price {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.2rem;
+}
+
+.currency {
+  font-size: 1.2rem;
+  color: #718096;
+  font-weight: 600;
+}
+
+.amount {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #2d3748;
+}
+
+.package-credits {
+  text-align: center;
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background: #f7fafc;
+  border-radius: 12px;
+}
+
+.credits-amount {
+  display: block;
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: #667eea;
+  margin-bottom: 0.2rem;
+}
+
+.credits-label {
+  display: block;
+  font-size: 1rem;
+  color: #718096;
+  margin-bottom: 0.5rem;
+}
+
+.cost-per-credit {
+  font-size: 0.9rem;
+  color: #4a5568;
+  font-weight: 500;
+}
+
+.package-features {
+  flex: 1;
+  margin-bottom: 2rem;
+}
+
+.feature-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+  padding: 0.5rem 0;
+}
+
+.feature-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  background: #e6fffa;
+  color: #38b2ac;
+  border-radius: 50%;
+  font-size: 0.8rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.feature-text {
+  color: #4a5568;
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+
+.select-package-btn {
+  width: 100%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 1rem 2rem;
+  border-radius: 12px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.select-package-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+}
+
+.select-package-btn:active {
+  transform: translateY(0);
+}
+
+.package-card.popular .select-package-btn {
+  background: linear-gradient(135deg, #f6ad55 0%, #ed8936 100%);
+}
+
+.package-card.popular .select-package-btn:hover {
+  box-shadow: 0 8px 25px rgba(246, 173, 85, 0.3);
+}
+
+.package-card.best-value .select-package-btn {
+  background: linear-gradient(135deg, #9f7aea 0%, #805ad5 100%);
+}
+
+.package-card.best-value .select-package-btn:hover {
+  box-shadow: 0 8px 25px rgba(159, 122, 234, 0.3);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .package-card {
+    padding: 1.5rem;
+  }
+  
+  .package-header h3 {
+    font-size: 1.3rem;
+  }
+  
+  .amount {
+    font-size: 2.2rem;
+  }
+  
+  .credits-amount {
+    font-size: 1.8rem;
+  }
+  
+  .select-package-btn {
+    padding: 0.9rem 1.5rem;
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .package-card {
+    padding: 1.2rem;
+  }
+  
+  .package-header h3 {
+    font-size: 1.2rem;
+  }
+  
+  .amount {
+    font-size: 2rem;
+  }
+  
+  .credits-amount {
+    font-size: 1.6rem;
+  }
+}

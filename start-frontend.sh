@@ -8,7 +8,7 @@ fi
 echo "Starting frontend development server..."
 cd frontend
 npm install
-npm run dev
+BROWSER=none npm run dev
 if [ $? -ne 0 ]; then
   echo "Failed to start the frontend development server."
   exit 1

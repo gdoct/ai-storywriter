@@ -13,12 +13,21 @@ class UserRepository:
         return user
 
     @staticmethod
-    def create_user(username, email=None):
+    def create_user(username, email=None, agreed_to_terms=False):
         conn = get_db_connection()
         user_id = str(uuid.uuid4())
         now = datetime.utcnow().isoformat()
-        conn.execute('INSERT INTO users (id, username, email, created_at) VALUES (?, ?, ?, ?)', 
-                    (user_id, username, email, now))
+        
+        # If user agreed to terms, record the timestamp and version
+        terms_agreed_at = now if agreed_to_terms else None
+        privacy_agreed_at = now if agreed_to_terms else None
+        terms_version = '1.0' if agreed_to_terms else None
+        privacy_version = '1.0' if agreed_to_terms else None
+        
+        conn.execute('''INSERT INTO users 
+                        (id, username, email, created_at, terms_agreed_at, privacy_agreed_at, terms_version, privacy_version) 
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?)''', 
+                    (user_id, username, email, now, terms_agreed_at, privacy_agreed_at, terms_version, privacy_version))
         conn.commit()
         user = conn.execute('SELECT * FROM users WHERE username = ?', (username,)).fetchone()
         conn.close()
@@ -35,6 +44,14 @@ class UserRepository:
     def delete_user(user_id):
         conn = get_db_connection()
         conn.execute('UPDATE users SET is_deleted = 1 WHERE id = ?', (user_id,))
+        conn.commit()
+        conn.close()
+
+    @staticmethod
+    def update_user_credits(user_id, credits):
+        """Update user's credit balance"""
+        conn = get_db_connection()
+        conn.execute('UPDATE users SET credits = ? WHERE id = ?', (credits, user_id))
         conn.commit()
         conn.close()
 

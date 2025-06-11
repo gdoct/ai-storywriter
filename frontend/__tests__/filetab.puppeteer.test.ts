@@ -24,7 +24,7 @@ describe('FileTab Scenario Management', () => {
   let page: Page;
 
   async function login() {
-    await page.goto('http://localhost:3000');
+    await page.goto('http://localhost:3000/login');
     await page.type('input[type="text"], input[type="email"]', 'test@testusers.org');
     await page.type('input[type="password"]', 'testpassword');
     let loginButton: ElementHandle<Element> | null = await page.$('button[type="submit"]');

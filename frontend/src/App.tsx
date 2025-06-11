@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { BrowserRouter as Router, useRoutes } from 'react-router-dom';
+import { BrowserRouter as Router, useLocation, useRoutes } from 'react-router-dom';
 import './App.css';
 import AIBusyModal from './components/common/AIBusyModal';
 import Footer from './components/Footer/Footer';
@@ -16,6 +16,7 @@ const AppContent = () => {
   const [currentSeed, setCurrentSeed] = useState<number | null>(null);
   const routes = getRoutes({ setIsLoading, seed: currentSeed });
   const routeElements = useRoutes(routes);
+  const location = useLocation();
 
   // Handler for seed changes from Footer
   const handleSeedChange = (seed: number | null) => {
@@ -24,15 +25,23 @@ const AppContent = () => {
 
   useAIStatusPolling();
 
+  // Only show Footer on the /app route (ScenarioWriter)
+  const shouldShowFooter = location.pathname === '/app';
+
   return (
     <AuthProvider>
-      <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
         <AIBusyModal />
         <TopBar />
-        <div className="main-content">
+        <div className="main-content" style={{ 
+          marginBottom: shouldShowFooter ? '50px' : '0',
+          minHeight: shouldShowFooter ? 'calc(100vh - 110px)' : 'calc(100vh - 60px)'
+        }}>
           {routeElements}
         </div>
-        <Footer isLoading={isLoading} onSeedChange={handleSeedChange} />
+        {shouldShowFooter && (
+          <Footer isLoading={isLoading} onSeedChange={handleSeedChange} />
+        )}
       </div>
     </AuthProvider>
   );

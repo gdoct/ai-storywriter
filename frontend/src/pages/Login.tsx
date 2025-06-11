@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../services/AuthContext';
 import { login } from '../services/security';
 import './Login.css';
@@ -12,10 +12,10 @@ const Login: React.FC = () => {
   const navigate = useNavigate();
   const { authenticated, setAuthenticated } = useAuth();
 
-  // Redirect to home if already authenticated
+  // Redirect to dashboard if already authenticated
   useEffect(() => {
     if (authenticated) {
-      navigate('/');
+      navigate('/dashboard');
     }
   }, [authenticated, navigate]);
 
@@ -34,7 +34,7 @@ const Login: React.FC = () => {
     
     if (success) {
       setAuthenticated(true); // Update auth context
-      navigate('/');
+      navigate('/dashboard');
     } else {
       setError('Login failed. Please check your credentials.');
     }
@@ -43,7 +43,7 @@ const Login: React.FC = () => {
   return (
     <div className="login-container">
       <div className="login-form-wrapper">
-        <h2>Login to ScenarioWriter</h2>
+        <h2>Welcome Back to StoryWriter</h2>
         <form onSubmit={handleSubmit} className="login-form">
           {error && <div className="error-message">{error}</div>}
           
@@ -73,6 +73,11 @@ const Login: React.FC = () => {
             {isLoading ? 'Logging in...' : 'Login'}
           </button>
         </form>
+        
+        <div className="signup-link">
+          Don't have an account?{' '}
+          <Link to="/signup">Sign up here</Link>
+        </div>
       </div>
     </div>
   );

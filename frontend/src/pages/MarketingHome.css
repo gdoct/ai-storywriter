@@ -1,0 +1,24 @@
+.marketing-home {
+  min-height: 100vh;
+  background: white; /* Ensure white background for marketing pages */
+}
+
+/* Global marketing styles */
+* {
+  box-sizing: border-box;
+}
+
+.marketing-home h1,
+.marketing-home h2,
+.marketing-home h3 {
+  margin: 0;
+}
+
+.marketing-home p {
+  margin: 0;
+}
+
+/* Smooth scrolling for anchor links */
+html {
+  scroll-behavior: smooth;
+}

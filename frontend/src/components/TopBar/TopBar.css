@@ -109,14 +109,28 @@
   align-items: center;
 }
 
-.topbar-nav a {
+.logo-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
   color: #fff;
   text-decoration: none;
-  margin-right: 20px;
-  font-weight: 500;
-  padding: 6px 10px;
-  border-radius: 4px;
   transition: all 0.2s ease;
+}
+
+.logo-link:hover {
+  transform: translateY(-1px);
+}
+
+.logo-link img {
+  height: 40px;
+  width: auto;
+}
+
+.brand-text {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #fff;
 }
 
 .topbar-nav a:hover {

@@ -1,52 +1,31 @@
-// filepath: /home/guido/storywriter/frontend/src/components/TopBar.tsx
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../services/AuthContext';
-import { logout } from '../../services/security';
+import AnonymousNav from '../navigation/AnonymousNav';
+import AuthenticatedNav from '../navigation/AuthenticatedNav';
 import './TopBar.css';
 
 const TopBar: React.FC = () => {
-  const { authenticated, setAuthenticated, username } = useAuth();
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  const navigate = useNavigate();
-
-  const handleLogout = () => {
-    logout();
-    setAuthenticated(false);
-    navigate('/login');
-    setDropdownOpen(false);
-  };
-
-  const handleLogin = () => {
-    navigate('/login');
-    setDropdownOpen(false);
-  };
+  const { authenticated, username } = useAuth();
+  const location = useLocation();
+  const isMarketingPage = location.pathname === '/' && !authenticated;
 
   return (
     <header className="topbar">
       <nav className="topbar-nav">
-        <Link to="/"><img src="/storywriter-logo-48.png" alt="Logo" /></Link>
+        <Link to={authenticated ? "/dashboard" : "/"} className="logo-link">
+          <img src="/storywriter-logo-48.png" alt="StoryWriter" />
+          {!isMarketingPage && <span className="brand-text">StoryWriter</span>}
+        </Link>
       </nav>
+      
+      {/* Dynamic navigation based on auth state */}
       <div className="topbar-right">
-        <div className="user-dropdown">
-          <span 
-            className="user-icon" 
-            onClick={() => setDropdownOpen(!dropdownOpen)}
-            title={authenticated ? username || 'Logged in' : 'Not logged in'}
-          >
-            {authenticated ? (
-              <div className="avatar">{username ? username[0].toUpperCase() : '?'}</div>
-            ) : (
-              <button className="login-button" onClick={handleLogin}>Login</button>
-            )}
-          </span>
-          {dropdownOpen && authenticated && (
-            <div className="dropdown-content">
-              <div className="dropdown-username">{username}</div>
-              <button onClick={handleLogout}>Logout</button>
-            </div>
-          )}
-        </div>
+        {authenticated ? (
+          <AuthenticatedNav username={username} />
+        ) : (
+          <AnonymousNav />
+        )}
       </div>
     </header>
   );
