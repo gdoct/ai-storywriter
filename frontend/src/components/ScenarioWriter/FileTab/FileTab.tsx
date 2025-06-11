@@ -86,7 +86,7 @@ const FileTab: React.FC<FileTabProps> = ({
     if (currentScenario?.id) {
       setSelectedScenarioId(currentScenario.id);
     }
-  }, [currentScenario]);
+  }, [currentScenario?.id]); // Only depend on the ID, not the entire object
   
   // Handle clicks outside of dropdown to close it
   useEffect(() => {
@@ -104,13 +104,17 @@ const FileTab: React.FC<FileTabProps> = ({
 
   // Load the selected scenario when selectedScenarioId changes
   useEffect(() => {
+    // Skip if no scenario selected or if the selected scenario is already the current one
     if (!selectedScenarioId || (currentScenario && selectedScenarioId === currentScenario.id)) {
       return;
     }
+    
+    // If there are unsaved changes, show save confirmation
     if (isDirty) {
       setPendingScenarioId(selectedScenarioId);
       setShowSaveConfirm(true);
     } else {
+      // Load the scenario directly
       loadScenarioService(
         selectedScenarioId,
         onLoadScenario,
@@ -202,8 +206,8 @@ const FileTab: React.FC<FileTabProps> = ({
     });
 
   // Replace confirmSaveAs with service call
-  const confirmSaveAs = async () =>
-    confirmSaveAsService({
+  const confirmSaveAs = async () => {
+    const savedScenario = await confirmSaveAsService({
       saveAsTitle,
       setErrorMessage,
       scenarios,
@@ -213,6 +217,15 @@ const FileTab: React.FC<FileTabProps> = ({
       fetchScenarios,
       onSaveComplete,
     });
+    
+    // Update the selected scenario ID to match the newly saved scenario
+    // Use setTimeout to ensure this happens after any React state updates
+    if (savedScenario && savedScenario.id) {
+      setTimeout(() => {
+        setSelectedScenarioId(savedScenario.id);
+      }, 0);
+    }
+  };
 
   // Replace confirmRenameScenario with service call
   const confirmRenameScenario = async () =>

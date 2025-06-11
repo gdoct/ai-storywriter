@@ -1,9 +1,9 @@
 import {
-    generateBackstory,
-    generateRandomCharacter,
-    generateRandomScenarioName,
-    generateRandomWritingStyle,
-    generateStoryArc,
+  generateBackstory,
+  generateRandomCharacter,
+  generateRandomScenarioName,
+  generateRandomWritingStyle,
+  generateStoryArc,
 } from '../../../services/storyGenerator';
 import { Scenario } from '../../../types/ScenarioTypes';
 
@@ -126,10 +126,12 @@ export async function confirmSaveAsService({
   try {
     if (currentScenario) {
       const updatedScenario = { ...currentScenario, title: saveAsTitle.trim(), id: '' };
-      await onSaveScenario(updatedScenario);
+      const savedScenario = await onSaveScenario(updatedScenario);
       setShowSaveAsInput(false);
       fetchScenarios();
       if (onSaveComplete) onSaveComplete();
+      // Return the saved scenario so the caller can update the selected scenario ID
+      return savedScenario;
     }
   } catch (error) {
     console.error('Failed to save scenario as:', error);

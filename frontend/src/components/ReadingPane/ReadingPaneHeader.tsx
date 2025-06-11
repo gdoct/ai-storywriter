@@ -87,7 +87,7 @@ const ReadingPaneHeader = React.forwardRef<any, ReadingPaneHeaderProps>((props, 
       }
     };
     fetchStories();
-  }, [currentScenario, isGenerating]);
+  }, [currentScenario]);
 
   // Removed automatic story selection useEffect - stories should only be loaded when explicitly selected by user
 

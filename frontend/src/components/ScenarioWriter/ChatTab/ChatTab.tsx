@@ -1,10 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { createContextAwareChatPrompt } from '../../../services/llmPromptService';
 import { streamChatCompletion } from '../../../services/llmService';
 import { getSelectedModel } from '../../../services/modelSelection';
+import { llmCompletionRequestMessage } from '../../../types/LLMTypes';
 import { TabProps } from '../common/TabInterface';
 import '../common/TabStylesNew.css';
 import './ChatTab.css';
-import { llmCompletionRequestMessage } from '../../../types/LLMTypes';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -13,7 +14,7 @@ interface Message {
 
 const DEFAULT_SYSTEM_MESSAGE = 'You are a helpful assistant for creative writing.';
 
-const ChatTab: React.FC<TabProps> = () => {
+const ChatTab: React.FC<TabProps> = ({ currentScenario }) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
@@ -30,11 +31,16 @@ const ChatTab: React.FC<TabProps> = () => {
     setInput('');
     setIsGenerating(true);
 
-    // Prepare llmCompletionRequestMessage for LLM
-    const promptObj: llmCompletionRequestMessage = {
-      systemMessage: DEFAULT_SYSTEM_MESSAGE,
-      userMessage: input
-    };
+    // Build chat history string from existing messages (excluding the current user message)
+    const chatHistory = messages.map(msg => `${msg.role.toUpperCase()}: ${msg.content}`).join('\n');
+
+    // Prepare llmCompletionRequestMessage for LLM using context-aware prompt
+    const promptObj: llmCompletionRequestMessage = currentScenario 
+      ? createContextAwareChatPrompt(currentScenario, input, chatHistory)
+      : {
+          systemMessage: DEFAULT_SYSTEM_MESSAGE,
+          userMessage: input
+        };
 
     try {
       // Fetch user-selected model
@@ -86,14 +92,14 @@ const ChatTab: React.FC<TabProps> = () => {
         <div className="tab-actions-secondary" />
       </div>
       <p className="style-tab-description">
-        Chat with an AI assistant to help develop your story ideas, get writing tips, or answer questions about your creative project.
+        Chat with an AI assistant about your current scenario. The assistant has full context of your story, characters, and writing style.
       </p>
       <div className="chat-container">
         <div className="chat-messages">
           {messages.length === 0 ? (
             <div className="chat-welcome">
-              <h3>Welcome to the Chat Assistant!</h3>
-              <p>Ask questions about writing, get suggestions for your story, or brainstorm ideas together.</p>
+              <h3>Welcome to the Context-Aware Chat Assistant!</h3>
+              <p>Ask questions about your current scenario, characters, or story elements. The AI knows all about your project!</p>
             </div>
           ) : (
             messages.map((msg, idx) => (

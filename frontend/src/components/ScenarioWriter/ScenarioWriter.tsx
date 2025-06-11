@@ -35,6 +35,7 @@ const ScenarioWriter: React.FC<ScenarioWriterProps> = ({ value, onChange, onSubm
   const [storyArc, setStoryArc] = useState('');
   const [notes, setNotes] = useState('');
   const [isDirty, setIsDirty] = useState(false);
+  const [isLoadingScenario, setIsLoadingScenario] = useState(false); // Add loading state
   const [currentScenario, setCurrentScenario] = useState<Scenario | null>(null);
   const [generatedStory, setGeneratedStory] = useState<string | null>(null);
   const [currentStoryTimestamp, setCurrentStoryTimestamp] = useState<string | null>(null);
@@ -105,11 +106,16 @@ const ScenarioWriter: React.FC<ScenarioWriterProps> = ({ value, onChange, onSubm
 
   // Update the parent component whenever any content changes
   const updateContent = (tabName: string, content: string) => {
+    // Don't set dirty state if we're currently loading a scenario
+    if (isLoadingScenario) {
+      console.log('Skipping dirty state update during scenario loading');
+    }
+    
     switch (tabName) {
       case 'main':
         setMainContent(content);
-        onChange(content); // Only sync main content with parent
-        setIsDirty(true);
+        onChange(content); // Always sync main content with parent
+        if (!isLoadingScenario) setIsDirty(true);
         
         // Update the scenario with the latest style content
         if (currentScenario) {
@@ -124,7 +130,7 @@ const ScenarioWriter: React.FC<ScenarioWriterProps> = ({ value, onChange, onSubm
         break;
       case 'characters':
         setCharacters(content);
-        setIsDirty(true);
+        if (!isLoadingScenario) setIsDirty(true);
         
         // Update the scenario with the latest characters content
         if (currentScenario) {
@@ -141,7 +147,7 @@ const ScenarioWriter: React.FC<ScenarioWriterProps> = ({ value, onChange, onSubm
         console.log('ScenarioWriter received scenes update:', content); // Debug log
         // Important: make sure we store scene data properly
         setScenes(content);
-        setIsDirty(true);
+        if (!isLoadingScenario) setIsDirty(true);
         
         // Update the scenario with the latest scenes content
         if (currentScenario) {
@@ -157,21 +163,21 @@ const ScenarioWriter: React.FC<ScenarioWriterProps> = ({ value, onChange, onSubm
         break;
       case 'backstory':
         setBackstory(content);
-        setIsDirty(true);
+        if (!isLoadingScenario) setIsDirty(true);
         if (currentScenario) {
           setCurrentScenario({...currentScenario, backstory: content});
         }
         break;
       case 'storyArc':
         setStoryArc(content);
-        setIsDirty(true);
+        if (!isLoadingScenario) setIsDirty(true);
         if (currentScenario) {
           setCurrentScenario({...currentScenario, storyarc: content});
         }
         break;
       case 'notes':
         setNotes(content);
-        setIsDirty(true);
+        if (!isLoadingScenario) setIsDirty(true);
         if (currentScenario) {
           setCurrentScenario({...currentScenario, notes: content});
         }
@@ -180,10 +186,14 @@ const ScenarioWriter: React.FC<ScenarioWriterProps> = ({ value, onChange, onSubm
   };
 
   const handleLoadScenario = (scenario: Scenario, generatedStory?: string | null) => {
+    // Set loading flag to prevent dirty state updates
+    setIsLoadingScenario(true);
+    
     // Convert writingStyle object to JSON string for StoryStyleTab component
     if (scenario.writingStyle) {
       const styleJson = JSON.stringify(scenario.writingStyle);
       setMainContent(styleJson);
+      // We need to sync with parent during loading
       onChange(styleJson);
     } else {
       setMainContent('');
@@ -214,7 +224,12 @@ const ScenarioWriter: React.FC<ScenarioWriterProps> = ({ value, onChange, onSubm
     }
     
     setCurrentScenario(scenario);
-    setIsDirty(false); // Only set dirty to false after everything is loaded
+    
+    // Clear loading state and ensure clean state after loading
+    setTimeout(() => {
+      setIsLoadingScenario(false);
+      setIsDirty(false);
+    }, 0);
   };
 
   const handleSaveScenario = async (scenario: Scenario) => {
@@ -347,6 +362,7 @@ const ScenarioWriter: React.FC<ScenarioWriterProps> = ({ value, onChange, onSubm
             onSaveScenario={handleSaveScenario}
             onNewScenario={handleNewScenario}
             onSwitchTab={setActiveTab}
+            onSaveComplete={() => setIsDirty(false)}
           />
         );
       case 'main':
@@ -452,8 +468,7 @@ const ScenarioWriter: React.FC<ScenarioWriterProps> = ({ value, onChange, onSubm
             style={{ flex: `0 0 ${splitPosition}%`, overflowY: 'scroll' }}
           >
             {renderTabContent()}
-            <div style={{ height: '100%', minHeight: '100px' }}>
-            </div>
+
           </div>
         )}
         <div 
@@ -476,11 +491,12 @@ const ScenarioWriter: React.FC<ScenarioWriterProps> = ({ value, onChange, onSubm
             onStoryVersionSelect={handleStoryVersionSelect}
             onStoryGenerated={(story: string | null) => {
               setGeneratedStory(story);
-              setIsDirty(true);
+              // Don't set dirty state when generating stories - story generation doesn't modify the scenario
             }}
             onDisableStoryDropdown={setIsStoryDropdownDisabled}
             isStoryDropdownDisabled={isStoryDropdownDisabled}
           />
+                      
         </div>
       </div>
     </div>

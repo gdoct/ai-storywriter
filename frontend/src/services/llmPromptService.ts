@@ -1,7 +1,7 @@
 // All prompt generation logic for LLM scenario/storywriting
 import { llmCompletionRequestMessage } from '../types/LLMTypes';
 import { Character, Scenario, StyleSettings } from '../types/ScenarioTypes';
-import { formatScenarioAsMarkdown, formatScenarioAsMarkdownWithoutBackStory } from '../utils/scenarioToMarkdown';
+import { formatScenarioAsMarkdown, formatScenarioAsMarkdownWithoutBackStory, formatScenarioAsMarkdownWithoutStoryArc } from '../utils/scenarioToMarkdown';
 
 export function createWritingStylePrompt(): llmCompletionRequestMessage {
   return {
@@ -11,6 +11,46 @@ export function createWritingStylePrompt(): llmCompletionRequestMessage {
 }
 
 export function createBackstoryPrompt(scenario: Scenario): llmCompletionRequestMessage {
+    if (!scenario) {
+    console.error("Error: scenario is null or undefined");
+    scenario = {
+      id: 'error-fallback',
+      userId: 'system',
+      createdAt: new Date(),
+      writingStyle: { genre: "General Fiction" }
+    };
+  }
+  const writingStyle = scenario.writingStyle || { genre: "General Fiction" };
+  
+  // Build a more targeted prompt based on writing style
+  let genreContext = writingStyle.genre || "General Fiction";
+  let styleContext = "";
+  if (writingStyle.tone) styleContext += ` with a ${writingStyle.tone.toLowerCase()} tone`;
+  if (writingStyle.theme) styleContext += ` focusing on themes of ${writingStyle.theme.toLowerCase()}`;
+  
+  let prompt = `Create a compelling backstory for this ${genreContext} scenario${styleContext}.\n\n`;
+  
+  // Add scenario context
+  prompt += "SCENARIO DETAILS:\n";
+  prompt += formatScenarioAsMarkdownWithoutBackStory(scenario) + "\n\n";
+  
+  // Clear, specific requirements
+  prompt += "REQUIREMENTS:\n";
+  prompt += "• Write 2-3 concise paragraphs that establish the story's foundation\n";
+  prompt += "• Focus on the key events, conflicts, or circumstances that set up the main story\n";
+  prompt += "• Preserve all essential character relationships and motivations\n";
+  prompt += "• Write in a neutral, engaging tone suitable for a book synopsis\n";
+  prompt += "• Include only the most important background details needed for story context\n\n";
+  
+  prompt += "OUTPUT: Provide only the backstory text - no formatting, headers, or commentary.\n";
+  return {
+    systemMessage: `You are an expert storyteller specializing in ${genreContext} fiction. Create compelling backstories that establish story foundations without overwhelming detail.`,
+    userMessage: prompt
+  };
+}
+
+
+export function createRewriteBackstoryPrompt(scenario: Scenario): llmCompletionRequestMessage {
   if (!scenario) {
     console.error("Error: scenario is null or undefined");
     scenario = {
@@ -20,26 +60,19 @@ export function createBackstoryPrompt(scenario: Scenario): llmCompletionRequestM
       writingStyle: { genre: "General Fiction" }
     };
   }
-  const writingStyle: StyleSettings = scenario.writingStyle || { genre: "General Fiction" };
-  const newScenario: any = {
-    title: scenario.title || "Random title",
-    writingStyle: writingStyle,
-    characters: Array.isArray(scenario.characters) ? scenario.characters.map(char => ({
-      name: char.name || '',
-      alias: char.alias || '',
-      role: char.role || '',
-      appearance: char.appearance || '',
-      gender: char.gender || '',
-      id: char.id || '',
-      backstory: char.backstory || "",
-      extraInfo: char.extraInfo || ""
-    })) : [],
-    notes: scenario.notes || ""
-  };
-  const markdown = formatScenarioAsMarkdown(newScenario);
+  const currentBackstory = scenario.backstory || "";
+  const writingStyle = scenario.writingStyle || { genre: "General Fiction" };
+  let prompt = "You are a masterful storyteller specializing in providing summarized content for the genre " + writingStyle.genre + ". Rewrite the following backstory:\n\n";
+  prompt += "\"" + currentBackstory + "\"\n\n";
+  prompt += "Keep the core elements of the backstory but make it short and high-level. improve it by:\n";
+  prompt += "- Making it clear and structured\n";
+  prompt += "- Keeping it short and high-level (only add details that are needed for clarity)\n";
+  prompt += "- Preserving all key plot points and character relationships\n";
+  prompt += "- Write in a neutral tone, only a few paragraphs, as if it's the back cover of a book. \n\n";
+  prompt += "Do not include any markdown, formatting, or meta-commentary - only the rewritten backstory itself.\n";
   return {
-    systemMessage: `You are a masterful storyteller specializing in character development.`,
-    userMessage: `I need a compelling backstory for the protagonist in the following scenario:\n\nThe backstory should be rich but concise (1-2 paragraphs) and serve as an introduction in a ${writingStyle.genre} story.\n\nInclude details about their formative experiences, motivations, and a key event that shaped them.\n\nEstablish connections to other characters where relevant.\n\nMatch the tone and themes appropriate for ${writingStyle.genre} while maintaining narrative consistency.\n\nEnd with an unresolved tension or mystery that connects to the main story.\n\nDo not include any markdown, formatting, or meta-commentary - only the backstory itself.\n\nScenario details:\n\n${markdown}`
+    systemMessage: 'You are a masterful storyteller specializing in improving existing content.',
+    userMessage: prompt
   };
 }
 
@@ -65,7 +98,7 @@ export function createScenarioPrompt(scenario: Scenario): llmCompletionRequestMe
   prompt += "- Honor the established character backgrounds and relationships\n";
   prompt += "- Maintain consistent pacing appropriate to the genre\n";
   prompt += "- Incorporate any specified themes, settings, and plot elements\n";
-  prompt += "- Present only the finished story with no meta-commentary, formatting, or markdown\n\n";
+  prompt += "- Present only the finished story with no meta-commentary, or markdown. Divide the story in paragraphs.\n\n";
   prompt += markdown;
   return {
     systemMessage: 'You are an exceptional storyteller.',
@@ -161,19 +194,38 @@ export function createStoryArcPrompt(scenario: Scenario): llmCompletionRequestMe
     };
   }
   const writingStyle: StyleSettings = scenario.writingStyle || { genre: "General Fiction" };
-  const markdown = formatScenarioAsMarkdown(scenario);
-  let prompt = `You are a masterful story architect. Write a high-level story arc for a ${writingStyle.genre} story based on the following scenario.\n\n`;
-  prompt += `The story arc should outline the main plot points, character arcs, and key events from beginning to end.\n\n`;
-  prompt += `Do not include any markdown, formatting, or meta-commentary - only the story arc itself.\n\nScenario details:\n\n`;
-  prompt += markdown;
+  
+  // Build context-aware prompt based on writing style
+  let genreContext = writingStyle.genre || "General Fiction";
+  let styleContext = "";
+  if (writingStyle.tone) styleContext += ` with a ${writingStyle.tone.toLowerCase()} tone`;
+  if (writingStyle.theme) styleContext += ` exploring themes of ${writingStyle.theme.toLowerCase()}`;
+  
+  let prompt = `Create a comprehensive story arc for this ${genreContext} narrative${styleContext}.\n\n`;
+  
+  // Add scenario context
+  prompt += "SCENARIO DETAILS:\n";
+  prompt += formatScenarioAsMarkdownWithoutStoryArc(scenario) + "\n\n";
+  
+  // Clear, structured requirements
+  prompt += "STORY ARC REQUIREMENTS:\n";
+  prompt += "• Structure as a bullet-point outline covering the complete narrative journey\n";
+  prompt += "• Include major plot points from setup through resolution\n";
+  prompt += "• Show character development arcs for main characters\n";
+  prompt += "• Identify key conflicts, turning points, and climactic moments\n";
+  prompt += `• Follow ${genreContext} genre conventions and pacing expectations\n`;
+  prompt += "• Ensure logical progression and cause-and-effect relationships\n";
+  prompt += "• Cover beginning, middle, and end with appropriate story beats\n\n";
+  
+  prompt += "OUTPUT FORMAT: Provide a structured bullet-point list only - no explanations, headers, or commentary.\n";
   return {
-    systemMessage: 'You are a masterful story architect.',
+    systemMessage: `You are an expert story architect specializing in ${genreContext} fiction. Create well-structured narrative arcs that follow genre conventions and engage readers.`,
     userMessage: prompt
   };
 }
 
 export function createRewriteStoryArcPrompt(scenario: Scenario): llmCompletionRequestMessage {
-  if (!scenario) {
+ if (!scenario) {
     console.error("Error: scenario is null or undefined");
     scenario = {
       id: 'error-fallback',
@@ -182,14 +234,34 @@ export function createRewriteStoryArcPrompt(scenario: Scenario): llmCompletionRe
       writingStyle: { genre: "General Fiction" }
     };
   }
-  const currentStoryArc = scenario.storyarc || "";
-  const writingStyle = scenario.writingStyle || { genre: "General Fiction" };
-  let prompt = `You are a masterful story architect specializing in improving story arcs for ${writingStyle.genre} fiction. Rewrite the following story arc to be more compelling, clear, and high-level.\n\n`;
-  prompt += `"${currentStoryArc}"\n\n`;
-  prompt += `Keep the core plot points and character arcs, but improve structure and flow.\n`;
-  prompt += `Do not include any markdown, formatting, or meta-commentary - only the rewritten story arc itself.`;
+  const writingStyle: StyleSettings = scenario.writingStyle || { genre: "General Fiction" };
+  
+  // Build context-aware prompt based on writing style
+  let genreContext = writingStyle.genre || "General Fiction";
+  let styleContext = "";
+  if (writingStyle.tone) styleContext += ` with a ${writingStyle.tone.toLowerCase()} tone`;
+  if (writingStyle.theme) styleContext += ` exploring themes of ${writingStyle.theme.toLowerCase()}`;
+  
+  let prompt = `Rewrite the story arc for this ${genreContext} narrative${styleContext}.\n\n`;
+  
+  // Add scenario context
+  prompt += "SCENARIO DETAILS:\n";
+  prompt += formatScenarioAsMarkdown(scenario) + "\n\n";
+  
+  // Clear, structured requirements
+  prompt += "STORY ARC REQUIREMENTS:\n";
+  prompt += "• Focus on improving the existing story arc while preserving core elements\n";
+  prompt += "• Structure as a bullet-point outline covering the complete narrative journey\n";
+  prompt += "• Include major plot points from setup through resolution\n";
+  prompt += "• Show character development arcs for main characters\n";
+  prompt += "• Identify key conflicts, turning points, and climactic moments\n";
+  prompt += `• Follow ${genreContext} genre conventions and pacing expectations\n`;
+  prompt += "• Ensure logical progression and cause-and-effect relationships\n";
+  prompt += "• Cover beginning, middle, and end with appropriate story beats\n\n";
+  
+  prompt += "OUTPUT FORMAT: Provide a structured bullet-point list only - no explanations, headers, or commentary.\n";
   return {
-    systemMessage: 'You are a masterful story architect specializing in improving story arcs.',
+    systemMessage: `You are an expert story architect specializing in ${genreContext} fiction. Create well-structured narrative arcs that follow genre conventions and engage readers.`,
     userMessage: prompt
   };
 }
@@ -237,31 +309,6 @@ export function createScenesPrompt(scenario: Scenario): llmCompletionRequestMess
   };
 }
 
-export function createRewriteBackstoryPrompt(scenario: Scenario): llmCompletionRequestMessage {
-  if (!scenario) {
-    console.error("Error: scenario is null or undefined");
-    scenario = {
-      id: 'error-fallback',
-      userId: 'system',
-      createdAt: new Date(),
-      writingStyle: { genre: "General Fiction" }
-    };
-  }
-  const currentBackstory = scenario.backstory || "";
-  const writingStyle = scenario.writingStyle || { genre: "General Fiction" };
-  let prompt = "You are a masterful storyteller specializing in improving existing content in the genre " + writingStyle.genre + ". Rewrite the following backstory:\n\n";
-  prompt += "\"" + currentBackstory + "\"\n\n";
-  prompt += "Keep the core elements of the backstory but make it short and high-level. improve it by:\n";
-  prompt += "- Making it clear and structured\n";
-  prompt += "- Keeping it short and high-level (only add details that are needed for clarity)\n";
-  prompt += "- Preserving all key plot points and character relationships\n";
-  prompt += "- Write in a neutral tone, as if it's the back cover of a book. \n\n";
-  prompt += "Do not include any markdown, formatting, or meta-commentary - only the rewritten backstory itself.\n";
-  return {
-    systemMessage: 'You are a masterful storyteller specializing in improving existing content.',
-    userMessage: prompt
-  };
-}
 
 /**
  * Creates a prompt specifically for generating a character
@@ -458,5 +505,35 @@ export function createCharacterFieldPrompt(
   return {
     systemMessage: 'You are an expert storyteller and character creator.',
     userMessage: prompt
+  };
+}
+
+export function createContextAwareChatPrompt(scenario: Scenario, userMessage: string, chathistory: string): llmCompletionRequestMessage {
+  if (!scenario) {
+    console.error("Error: scenario is null or undefined");
+    scenario = {
+      id: 'error-fallback',
+      userId: 'system',
+      createdAt: new Date(),
+      writingStyle: { genre: "General Fiction" }
+    };
+  }
+  const systemprompt = "You are a helpful AI assistant for a storywriter. You will be given the full context of the current story scenario." + 
+  "Your task is to answer the user's questions about this scenario. Give short and concise replies.";
+const userprompt = `
+--- SCENARIO CONTEXT START ---
+${JSON.stringify(scenario)}
+--- SCENARIO CONTEXT END ---
+
+--- CHAT HISTORY START ---
+${chathistory}
+--- CHAT HISTORY END ---
+
+USER: ${userMessage}
+`;
+
+return {
+    systemMessage: systemprompt,
+    userMessage: userprompt
   };
 }
