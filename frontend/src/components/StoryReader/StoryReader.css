@@ -1,0 +1,236 @@
+/* StoryReader Component Styles */
+.story-reader {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  max-height: 80vh;
+  background-color: #f9f7f1;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.story-reader-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  color: #666;
+}
+
+.story-reader-loading .loading-spinner {
+  width: 24px;
+  height: 24px;
+  border: 2px solid #e0e0e0;
+  border-top: 2px solid #4caf50;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Reading Controls */
+.story-reader-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background-color: #f1efeb;
+  border-bottom: 1px solid #e0e0e0;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.font-controls {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.control-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.control-group label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #555;
+  white-space: nowrap;
+}
+
+.control-group select {
+  padding: 4px 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background-color: white;
+  font-size: 14px;
+  min-width: 120px;
+}
+
+.action-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  background-color: #6c757d;
+  color: white;
+}
+
+.btn-secondary:hover {
+  background-color: #5a6268;
+}
+
+.btn-primary {
+  background-color: #4f46e5;
+  color: white;
+}
+
+.btn-primary:hover {
+  background-color: #4338ca;
+}
+
+.btn-danger {
+  background-color: #dc3545;
+  color: white;
+}
+
+.btn-danger:hover {
+  background-color: #c82333;
+}
+
+/* Story Metadata */
+.story-reader-metadata {
+  padding: 16px 24px;
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #e0e0e0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+}
+
+.metadata-item {
+  font-size: 14px;
+  color: #495057;
+}
+
+.metadata-item strong {
+  color: #212529;
+  margin-right: 4px;
+}
+
+/* Story Content */
+.story-reader-content {
+  flex: 1;
+  padding: 24px;
+  line-height: 1.6;
+  color: #333;
+  overflow-y: auto;
+  background-color: #ffffff;
+}
+
+.story-reader-content .saved-story-badge {
+  background-color: #4caf50;
+  color: white;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  margin-bottom: 16px;
+  display: inline-block;
+}
+
+.story-reader-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  color: #666;
+  font-style: italic;
+}
+
+/* Custom scrollbar for story content */
+.story-reader-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.story-reader-content::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.story-reader-content::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+.story-reader-content::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .story-reader-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .font-controls {
+    justify-content: space-between;
+  }
+  
+  .action-controls {
+    justify-content: center;
+    margin-top: 8px;
+  }
+  
+  .story-reader-metadata {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .story-reader-content {
+    padding: 16px;
+  }
+}
+
+/* Ensure proper markdown rendering in story content */
+.story-reader-content .markdown-scroll-container {
+  background-color: transparent;
+  border: none;
+  padding: 0;
+  max-height: none;
+  overflow: visible;
+}
+
+/* Override modal content styling when StoryReader is used in modal */
+.modal-content .story-reader {
+  background-color: transparent;
+}
+
+.modal-content .story-reader-content {
+  background-color: transparent;
+}

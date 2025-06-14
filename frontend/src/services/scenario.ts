@@ -120,6 +120,22 @@ export const fetchDBStories = async (scenarioId: number | string): Promise<DBSto
   }
 };
 
+export const fetchSingleDBStory = async (storyId: number): Promise<DBStory | null> => {
+  try {
+    console.log(`Fetching single story ${storyId}`);
+    const response = await axios.get(`/api/story/single/${storyId}`);
+    console.log("API response for single story:", response.data);
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 404) {
+      console.log(`Story ${storyId} not found (404)`);
+      return null;
+    }
+    console.error(`Error fetching single story ${storyId}:`, error);
+    throw error;
+  }
+};
+
 export const saveDBStory = async (scenarioId: number | string, text: string): Promise<DBStory> => {
   try {
     console.log(`Saving story for scenario ${scenarioId} (type: ${typeof scenarioId})`);

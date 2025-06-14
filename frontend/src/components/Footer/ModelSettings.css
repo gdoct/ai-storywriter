@@ -1,0 +1,129 @@
+.model-settings {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  height: 100%;
+}
+
+.temperature-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #333;
+  height: 100%;
+  white-space: nowrap;
+}
+
+.temperature-control label {
+  font-weight: 500;
+  min-width: 110px;
+}
+
+.temperature-control input[type="range"] {
+  width: 100px;
+  height: 20px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  border-radius: 3px;
+  outline: none;
+  cursor: pointer;
+}
+
+.temperature-control input[type="range"]::-webkit-slider-track {
+  height: 6px;
+  background: #d3d3d3;
+  border-radius: 3px;
+}
+
+.temperature-control input[type="range"]::-moz-range-track {
+  height: 6px;
+  background: #d3d3d3;
+  border-radius: 3px;
+  border: none;
+}
+
+.temperature-control input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #4a90e2;
+  cursor: pointer;
+  transition: background 0.2s;
+  border: none;
+  margin-top: -5px;
+}
+
+.temperature-control input[type="range"]::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #4a90e2;
+  cursor: pointer;
+  transition: background 0.2s;
+  border: none;
+  margin-top: -5px;
+}
+
+.temperature-control input[type="range"]::-webkit-slider-thumb:hover {
+  background: #357ab7;
+}
+
+.temperature-control input[type="range"]::-moz-range-thumb:hover {
+  background: #357ab7;
+}
+
+.seed-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #333;
+  height: 100%;
+  white-space: nowrap;
+}
+
+.seed-control label {
+  font-weight: 500;
+}
+
+.seed-control input[type="number"] {
+  width: 80px;
+  padding: 6px 8px;
+  border: 1px solid #d3d3d3;
+  border-radius: 4px;
+  font-size: 14px;
+  height: 32px;
+  box-sizing: border-box;
+}
+
+.seed-control input[type="number"]:disabled {
+  background-color: #f0f0f0;
+  color: #888;
+  cursor: not-allowed;
+}
+
+.seed-control input[type="number"]:focus {
+  outline: none;
+  border-color: #4a90e2;
+  box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.1);
+}
+
+.seed-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  height: 100%;
+}
+
+.seed-checkbox input[type="checkbox"] {
+  cursor: pointer;
+}
+
+.seed-checkbox label {
+  cursor: pointer;
+  font-weight: normal;
+}

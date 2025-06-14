@@ -1,0 +1,107 @@
+/* Story Arc Tab Styles */
+.storyarc-tab {
+  padding: 1.5rem;
+  max-width: 100%;
+  overflow-y: auto;
+}
+
+.storyarc-tab__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2rem;
+  gap: 1rem;
+}
+
+.storyarc-tab__title-section {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.storyarc-tab__icon {
+  color: #3b82f6;
+  font-size: 1.5rem;
+}
+
+.storyarc-tab__title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0;
+}
+
+.storyarc-tab__description {
+  color: #6b7280;
+  line-height: 1.6;
+  margin: 0 0 1.5rem 0;
+  font-size: 0.95rem;
+}
+
+.storyarc-tab__content {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.storyarc-tab__hints {
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+}
+
+.storyarc-tab__hints-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #374151;
+  margin: 0 0 1.5rem 0;
+}
+
+.storyarc-tab__structure {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+.storyarc-tab__structure-item {
+  background-color: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.5rem;
+  padding: 1rem;
+}
+
+.storyarc-tab__structure-item h5 {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0 0 0.5rem 0;
+}
+
+.storyarc-tab__structure-item p {
+  font-size: 0.85rem;
+  color: #6b7280;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.storyarc-tab__actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .storyarc-tab {
+    padding: 1rem;
+  }
+  
+  .storyarc-tab__hints {
+    padding: 1rem;
+  }
+  
+  .storyarc-tab__structure {
+    grid-template-columns: 1fr;
+  }
+}

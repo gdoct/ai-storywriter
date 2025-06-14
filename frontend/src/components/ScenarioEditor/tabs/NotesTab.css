@@ -1,0 +1,91 @@
+/* Notes Tab Styles */
+.notes-tab {
+  padding: 1.5rem;
+  max-width: 100%;
+  overflow-y: auto;
+}
+
+.notes-tab__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+  gap: 1rem;
+}
+
+.notes-tab__title-section {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.notes-tab__icon {
+  color: #3b82f6;
+  font-size: 1.5rem;
+}
+
+.notes-tab__title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0;
+}
+
+.notes-tab__description {
+  color: #6b7280;
+  line-height: 1.6;
+  margin: 0 0 1.5rem 0;
+  font-size: 0.95rem;
+}
+
+.notes-tab__content {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.notes-tab__suggestions {
+  background-color: #fef7f0;
+  border: 1px solid #fed7aa;
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+}
+
+.notes-tab__suggestions-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #ea580c;
+  margin: 0 0 1rem 0;
+}
+
+.notes-tab__suggestions-list {
+  margin: 0;
+  padding-left: 1.5rem;
+  color: #9a3412;
+  line-height: 1.6;
+}
+
+.notes-tab__suggestions-list li {
+  margin-bottom: 0.5rem;
+}
+
+.notes-tab__suggestions-list li:last-child {
+  margin-bottom: 0;
+}
+
+.notes-tab__actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .notes-tab {
+    padding: 1rem;
+  }
+  
+  .notes-tab__suggestions {
+    padding: 1rem;
+  }
+}

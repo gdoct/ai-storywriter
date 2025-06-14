@@ -1,7 +1,7 @@
 // Style settings interface based on StoryStyleTab
 export interface StyleSettings {
     style?: string;
-    genre: string;
+    genre?: string;
     tone?: string;
     language?: string;
     theme?: string;

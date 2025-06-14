@@ -1,0 +1,274 @@
+/* Story Modal Styles */
+.story-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.story-modal {
+  background: white;
+  border-radius: 0.75rem;
+  width: 100%;
+  max-width: 4xl;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+.story-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.5rem;
+  border-bottom: 1px solid #e2e8f0;
+  gap: 1rem;
+}
+
+.story-modal__title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0;
+}
+
+.story-modal__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.story-modal__content {
+  position: relative; /* For absolute positioned text controls */
+  flex: 1;
+  overflow: hidden; /* Changed from overflow-y: auto since scroll container handles it */
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.story-modal__text {
+  line-height: 1.8;
+  color: #374151;
+  font-size: 1rem;
+}
+
+.story-modal__paragraph {
+  margin-bottom: 1.5rem;
+  text-align: justify;
+}
+
+.story-modal__paragraph:last-child {
+  margin-bottom: 0;
+}
+
+.story-modal__loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  color: #6b7280;
+}
+
+.story-modal__spinner {
+  width: 2rem;
+  height: 2rem;
+  border: 3px solid #e5e7eb;
+  border-top: 3px solid #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+.story-modal__empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  color: #6b7280;
+  text-align: center;
+}
+
+.story-modal__generating-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background-color: #f8fafc;
+  border-radius: 0.5rem;
+  color: #3b82f6;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.story-modal__generating-indicator .story-modal__spinner {
+  width: 1rem;
+  height: 1rem;
+  border-width: 2px;
+  margin-bottom: 0;
+}
+
+/* Text Size Controls */
+.story-modal__text-controls {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  display: flex;
+  gap: 0.25rem;
+  z-index: 10;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(4px);
+  border-radius: 0.5rem;
+  padding: 0.25rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.story-modal__text-size-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border: none;
+  border-radius: 0.25rem;
+  background: transparent;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 1rem;
+}
+
+.story-modal__text-size-btn:hover {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.story-modal__text-size-btn--active {
+  background: #3b82f6;
+  color: white;
+}
+
+.story-modal__text-size-btn--active:hover {
+  background: #2563eb;
+}
+
+/* Scroll Container */
+.story-modal__scroll-container {
+  flex: 1;
+  overflow-y: auto;
+  position: relative;
+  scroll-behavior: smooth;
+}
+
+/* Text Size Variants */
+.story-modal__text--small {
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+.story-modal__text--medium {
+  font-size: 22px;
+  line-height: 1.7;
+}
+
+.story-modal__text--large {
+  font-size: 28px;
+  line-height: 1.8;
+}
+
+/* Generating Dots Animation */
+.story-modal__generating-dots {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.story-modal__generating-dots span {
+  width: 0.375rem;
+  height: 0.375rem;
+  background-color: #3b82f6;
+  border-radius: 50%;
+  animation: bounce 1.4s ease-in-out infinite;
+}
+
+.story-modal__generating-dots span:nth-child(1) {
+  animation-delay: -0.32s;
+}
+
+.story-modal__generating-dots span:nth-child(2) {
+  animation-delay: -0.16s;
+}
+
+/* Button state styles for story generation */
+.story-modal__generate-status {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 1rem 0;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.story-modal__generate-status--ready {
+  background-color: #f0f9ff;
+  color: #0369a1;
+  border: 1px solid #bae6fd;
+}
+
+.story-modal__generate-status--generating {
+  background-color: #fef3c7;
+  color: #d97706;
+  border: 1px solid #fed7aa;
+}
+
+.story-modal__generate-status--completed {
+  background-color: #dcfce7;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+}
+
+.story-modal__actions .button--primary.button--disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .story-modal {
+    margin: 0.5rem;
+    max-height: 95vh;
+  }
+  
+  .story-modal__header {
+    padding: 1rem;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+  }
+  
+  .story-modal__actions {
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  
+  .story-modal__content {
+    padding: 1rem;
+  }
+  
+  .story-modal__title {
+    font-size: 1.25rem;
+    text-align: center;
+  }
+}

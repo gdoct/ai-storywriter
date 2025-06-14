@@ -127,37 +127,35 @@ def delete_scenario(scenario_id):
 @scenario_bp.route('/api/story/<string:scenario_id>', methods=['GET'])
 @jwt_required()
 def get_stories(scenario_id):
+    """Get all stories for a scenario with preview text only (first 50 chars) to save bandwidth"""
     stories = GeneratedTextRepository.get_stories_by_scenario(scenario_id)
     result = [
         {
             'id': s['id'],
-            'text': s['text'],
+            'text': s['text'][:50] + ('...' if len(s['text']) > 50 else ''),  # Only first 50 chars
+            'full_text_available': len(s['text']) > 50,
             'created_at': s['created_at']
         } for s in stories
     ]
     return jsonify(result)
 
-@scenario_bp.route('/api/story/<string:scenario_id>/list', methods=['GET'])
+@scenario_bp.route('/api/story/single/<int:story_id>', methods=['GET'])
 @jwt_required()
-def get_story_list(scenario_id):
+def get_single_story(story_id):
+    """Get a single story by ID - optimized endpoint for Stories page"""
     try:
-        stories = GeneratedTextRepository.get_stories_by_scenario(scenario_id)
-        if not stories:
-            return jsonify([])
-            
-        result = []
-        for s in stories:
-            created_at = s['created_at']
-            # Format the date for display
-            formatted_date = created_at  # You may want to format this better
-            result.append({
-                'timestamp': created_at,
-                'formattedDate': formatted_date
-            })
-            
-        return jsonify(result)
+        story = GeneratedTextRepository.get_story_by_id(story_id)
+        if not story:
+            return jsonify({'error': 'Story not found'}), 404
+        
+        return jsonify({
+            'id': story['id'],
+            'text': story['text'],
+            'created_at': story['created_at'],
+            'scenario_id': story['scenario_id']
+        })
     except Exception as e:
-        current_app.logger.error(f"Error getting story list: {e}")
+        current_app.logger.error(f"Error getting single story {story_id}: {e}")
         return jsonify({'error': str(e)}), 500
 
 @scenario_bp.route('/api/story/<string:scenario_id>', methods=['POST'])

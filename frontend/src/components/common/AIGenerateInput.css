@@ -1,0 +1,56 @@
+.ai-generate-input-wrapper {
+  width: 100%;
+  margin-bottom: 1.2rem;
+}
+
+.ai-generate-label {
+  display: block;
+  color: #90caf9;
+  font-weight: 600;
+  font-size: 1.04rem;
+  margin-bottom: 4px;
+}
+
+.ai-generate-input-container {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+}
+
+.ai-generate-input {
+  width: 100%;
+  padding-right: 60px;
+  font-size: 1.08rem;
+  border-radius: 8px;
+  border: 1.5px solid #444;
+  background: #181b20;
+  color: #fff;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  outline: none;
+  transition: border 0.2s;
+}
+
+.ai-generate-input:focus {
+  border: 1.5px solid #4f46e5;
+}
+
+.ai-generate-btn {
+  position: absolute;
+  right: 8px;
+  top: 8px;
+  transform: none;
+  height: 32px;
+  min-width: 38px;
+  font-size: 1rem;
+  padding: 0 12px;
+  z-index: 2;
+}
+
+.ai-generate-error {
+  color: #ff5252;
+  font-weight: 600;
+  margin-top: 4px;
+  font-size: 0.97rem;
+}

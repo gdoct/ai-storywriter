@@ -14,26 +14,25 @@ def login():
     request_data = request.get_json()
     
     # Check if username is present in request
-    if not request_data or 'username' not in request_data:
-        return jsonify({"error": "Username is required"}), 400
+    if not request_data or 'email' not in request_data:
+        return jsonify({"error": "Email is required"}), 400
     
     # Extract username and other fields
-    username = request_data.get('username')
     email = request_data.get('email')
-    agreed_to_terms = request_data.get('agreeToTerms', False)
 
-    # Check if user exists, create if not
-    user = UserRepository.get_user_by_username(username)
+    # Check if user exists, return error if not
+    user = UserRepository.get_user_by_email(email)
     if not user:
-        user = UserRepository.create_user(username, email, agreed_to_terms)
+        return jsonify({"error": "User not found"}), 404
 
     # Create JWT token with 1-year expiration
     token_expiry = timedelta(days=365)  # 1 year
-    access_token = create_access_token(identity=username, expires_delta=token_expiry)
+    access_token = create_access_token(identity=user['username'], expires_delta=token_expiry)
     
     # Return token in response
     return jsonify({
         "access_token": access_token,
-        "username": username,
+        "username": user['username'],
+        "email": user['email'],
         "message": "Login successful"
     }), 200

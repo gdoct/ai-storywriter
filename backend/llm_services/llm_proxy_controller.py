@@ -1,3 +1,4 @@
+import datetime
 import json
 import threading
 import traceback
@@ -56,6 +57,10 @@ def proxy_models():
         resp = jsonify({'data': [{'id': m} for m in models]})
         return add_cors_headers(resp)
     except Exception as e:
+        
+        now = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        print(f"[{now}] LLM proxy error - Backend: {backend_type}, Error: {str(e)}")
+        print(traceback.format_exc())
         resp = jsonify({'error': str(e)})
         return add_cors_headers(resp), 502
 
@@ -94,7 +99,8 @@ def proxy_chat_completions():
         return add_cors_headers(resp)
 
     except Exception as e:
-        print(f"LLM proxy error - Backend: {backend_type}, Error: {str(e)}")
+        now = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        print(f"[{now}] LLM proxy error - Backend: {backend_type}, Error: {str(e)}")
         print(traceback.format_exc())
         resp = jsonify({'error': str(e), 'backend_type': backend_type})
         return add_cors_headers(resp), 502

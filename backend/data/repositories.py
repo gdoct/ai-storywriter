@@ -1,7 +1,10 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 
 from data.db import get_db_connection
+from data.db_models import (  # Assuming db_models.py is in the same directory
+    AppActivePolicy, Policy, PolicySet)
+from sqlalchemy.orm import Session  # Assuming you'll use SQLAlchemy sessions
 
 
 class UserRepository:
@@ -13,10 +16,17 @@ class UserRepository:
         return user
 
     @staticmethod
+    def get_user_by_email(email):
+        conn = get_db_connection()
+        user = conn.execute('SELECT * FROM users WHERE email = ? AND is_deleted = 0', (email,)).fetchone()
+        conn.close()
+        return user
+
+    @staticmethod
     def create_user(username, email=None, agreed_to_terms=False):
         conn = get_db_connection()
         user_id = str(uuid.uuid4())
-        now = datetime.utcnow().isoformat()
+        now = datetime.now(timezone.utc).isoformat()
         
         # If user agreed to terms, record the timestamp and version
         terms_agreed_at = now if agreed_to_terms else None
@@ -67,9 +77,9 @@ class ScenarioRepository:
     def create_scenario(user_id, title, jsondata):
         conn = get_db_connection()
         scenario_id = str(uuid.uuid4())
-        now = datetime.utcnow().isoformat()
-        conn.execute('INSERT INTO scenarios (id, user_id, title, jsondata, created_at) VALUES (?, ?, ?, ?, ?)',
-                     (scenario_id, user_id, title, jsondata, now))
+        now = datetime.now(timezone.utc).isoformat()
+        conn.execute('INSERT INTO scenarios (id, user_id, title, jsondata, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)',
+                     (scenario_id, user_id, title, jsondata, now, now))
         conn.commit()
         scenario = conn.execute('SELECT * FROM scenarios WHERE id = ?', (scenario_id,)).fetchone()
         conn.close()
@@ -78,10 +88,28 @@ class ScenarioRepository:
     @staticmethod
     def update_scenario(scenario_id, title=None, jsondata=None):
         conn = get_db_connection()
+        now = datetime.now(timezone.utc).isoformat()
+        
+        # Build the update query dynamically
+        updates = []
+        params = []
+        
         if title:
-            conn.execute('UPDATE scenarios SET title = ? WHERE id = ?', (title, scenario_id))
+            updates.append('title = ?')
+            params.append(title)
         if jsondata:
-            conn.execute('UPDATE scenarios SET jsondata = ? WHERE id = ?', (jsondata, scenario_id))
+            updates.append('jsondata = ?')
+            params.append(jsondata)
+        
+        # Always update the updated_at timestamp
+        updates.append('updated_at = ?')
+        params.append(now)
+        params.append(scenario_id)
+        
+        if updates:
+            query = f'UPDATE scenarios SET {", ".join(updates)} WHERE id = ?'
+            conn.execute(query, params)
+        
         conn.commit()
         conn.close()
 
@@ -101,9 +129,16 @@ class GeneratedTextRepository:
         return stories
 
     @staticmethod
+    def get_story_by_id(story_id):
+        conn = get_db_connection()
+        story = conn.execute('SELECT * FROM stories WHERE id = ?', (story_id,)).fetchone()
+        conn.close()
+        return story
+
+    @staticmethod
     def create_story(scenario_id, text):
         conn = get_db_connection()
-        now = datetime.utcnow().isoformat()
+        now = datetime.now(timezone.utc).isoformat()
         conn.execute('INSERT INTO stories (scenario_id, text, created_at) VALUES (?, ?, ?)', (scenario_id, text, now))
         conn.commit()
         story = conn.execute('SELECT * FROM stories WHERE scenario_id = ? ORDER BY created_at DESC LIMIT 1', (scenario_id,)).fetchone()
@@ -116,3 +151,196 @@ class GeneratedTextRepository:
         conn.execute('DELETE FROM stories WHERE id = ?', (story_id,))
         conn.commit()
         conn.close()
+
+class PolicyRepository:
+    @staticmethod
+    def create_policy(db: Session, name: str, settings: dict, description: str = None, version: int = 1, conditions: dict = None, created_by: uuid.UUID = None, is_default: bool = False) -> Policy:
+        policy = Policy(
+            name=name,
+            description=description,
+            version=version,
+            conditions=conditions,
+            settings=settings,
+            created_by=created_by,
+            is_default=is_default
+        )
+        db.add(policy)
+        db.commit()
+        db.refresh(policy)
+        return policy
+
+    @staticmethod
+    def get_policy_by_id(db: Session, policy_id: uuid.UUID) -> Policy | None:
+        return db.query(Policy).filter(Policy.id == policy_id, Policy.is_archived == False).first()
+
+    @staticmethod
+    def get_active_policies(db: Session) -> list[Policy]:
+        return db.query(Policy).filter(Policy.is_active == True, Policy.is_archived == False).all()
+    
+    @staticmethod
+    def get_default_policy(db: Session) -> Policy | None:
+        return db.query(Policy).filter(Policy.is_default == True, Policy.is_active == True, Policy.is_archived == False).first()
+
+    @staticmethod
+    def update_policy(db: Session, policy_id: uuid.UUID, updated_by: uuid.UUID, **kwargs) -> Policy | None:
+        policy = db.query(Policy).filter(Policy.id == policy_id, Policy.is_archived == False).first()
+        if policy:
+            for key, value in kwargs.items():
+                setattr(policy, key, value)
+            policy.updated_by = updated_by
+            policy.updated_at = datetime.utcnow()
+            db.commit()
+            db.refresh(policy)
+        return policy
+
+    @staticmethod
+    def activate_policy(db: Session, policy_id: uuid.UUID, updated_by: uuid.UUID) -> Policy | None:
+        policy = db.query(Policy).filter(Policy.id == policy_id, Policy.is_archived == False).first()
+        if policy:
+            policy.is_active = True
+            policy.updated_by = updated_by
+            policy.updated_at = datetime.utcnow()
+            db.commit()
+            db.refresh(policy)
+        return policy
+
+    @staticmethod
+    def deactivate_policy(db: Session, policy_id: uuid.UUID, updated_by: uuid.UUID) -> Policy | None:
+        policy = db.query(Policy).filter(Policy.id == policy_id, Policy.is_archived == False).first()
+        if policy:
+            policy.is_active = False
+            policy.updated_by = updated_by
+            policy.updated_at = datetime.utcnow()
+            db.commit()
+            db.refresh(policy)
+        return policy
+
+    @staticmethod
+    def deprecate_policy(db: Session, policy_id: uuid.UUID, deprecated_by: uuid.UUID) -> Policy | None:
+        policy = db.query(Policy).filter(Policy.id == policy_id, Policy.is_archived == False).first()
+        if policy:
+            policy.is_deprecated = True
+            policy.is_active = False # Deprecated policies should not be active
+            policy.deprecated_by = deprecated_by
+            policy.deprecated_at = datetime.utcnow()
+            policy.updated_by = deprecated_by # Also update the updated_by field
+            policy.updated_at = datetime.utcnow()
+            db.commit()
+            db.refresh(policy)
+        return policy
+
+    @staticmethod
+    def archive_policy(db: Session, policy_id: uuid.UUID, archived_by: uuid.UUID) -> Policy | None:
+        policy = db.query(Policy).filter(Policy.id == policy_id).first() # Allow archiving even if already archived for some reason
+        if policy:
+            policy.is_archived = True
+            policy.is_active = False # Archived policies should not be active
+            policy.archived_by = archived_by
+            policy.archived_at = datetime.utcnow()
+            policy.updated_by = archived_by # Also update the updated_by field
+            policy.updated_at = datetime.utcnow()
+            db.commit()
+            db.refresh(policy)
+        return policy
+
+class PolicySetRepository:
+    @staticmethod
+    def create_policy_set(db: Session, name: str, policies: list[uuid.UUID], description: str = None, version: int = 1) -> PolicySet:
+        policy_set = PolicySet(
+            name=name,
+            description=description,
+            version=version,
+            policies=policies 
+        )
+        db.add(policy_set)
+        db.commit()
+        db.refresh(policy_set)
+        return policy_set
+
+    @staticmethod
+    def get_policy_set_by_id(db: Session, policy_set_id: uuid.UUID) -> PolicySet | None:
+        return db.query(PolicySet).filter(PolicySet.id == policy_set_id).first()
+
+    @staticmethod
+    def get_active_policy_sets(db: Session) -> list[PolicySet]:
+        return db.query(PolicySet).filter(PolicySet.is_active == True).all()
+
+    @staticmethod
+    def update_policy_set(db: Session, policy_set_id: uuid.UUID, **kwargs) -> PolicySet | None:
+        policy_set = db.query(PolicySet).filter(PolicySet.id == policy_set_id).first()
+        if policy_set:
+            for key, value in kwargs.items():
+                setattr(policy_set, key, value)
+            policy_set.updated_at = datetime.utcnow()
+            db.commit()
+            db.refresh(policy_set)
+        return policy_set
+    
+    @staticmethod
+    def activate_policy_set(db: Session, policy_set_id: uuid.UUID) -> PolicySet | None:
+        policy_set = db.query(PolicySet).filter(PolicySet.id == policy_set_id).first()
+        if policy_set:
+            policy_set.is_active = True
+            policy_set.updated_at = datetime.utcnow()
+            db.commit()
+            db.refresh(policy_set)
+        return policy_set
+
+    @staticmethod
+    def deactivate_policy_set(db: Session, policy_set_id: uuid.UUID) -> PolicySet | None:
+        policy_set = db.query(PolicySet).filter(PolicySet.id == policy_set_id).first()
+        if policy_set:
+            policy_set.is_active = False
+            policy_set.updated_at = datetime.utcnow()
+            db.commit()
+            db.refresh(policy_set)
+        return policy_set
+
+class AppActivePolicyRepository:
+    @staticmethod
+    def get_active_app_policy(db: Session) -> AppActivePolicy | None:
+        return db.query(AppActivePolicy).filter(AppActivePolicy.is_active == True).order_by(AppActivePolicy.created_at.desc()).first()
+
+    @staticmethod
+    def set_active_app_policy(db: Session, policy_set_id: uuid.UUID, policy_settings_value: dict) -> AppActivePolicy:
+        # Deactivate any currently active policy
+        current_active = db.query(AppActivePolicy).filter(AppActivePolicy.is_active == True).all()
+        for ap in current_active:
+            ap.is_active = False
+        
+        app_policy = AppActivePolicy(
+            policy_set_id=policy_set_id,
+            value=policy_settings_value, # This should be the resolved settings from the policy set
+            is_active=True
+        )
+        db.add(app_policy)
+        db.commit()
+        db.refresh(app_policy)
+        return app_policy
+
+    @staticmethod
+    def get_app_policy_history(db: Session, limit: int = 10) -> list[AppActivePolicy]:
+        return db.query(AppActivePolicy).order_by(AppActivePolicy.created_at.desc()).limit(limit).all()
+
+# You will need to integrate SQLAlchemy session management into your get_db_connection or similar utility.
+# For example, your get_db_connection might yield a session and ensure it's closed.
+# from sqlalchemy import create_engine
+# from sqlalchemy.orm import sessionmaker
+# from contextlib import contextmanager
+
+# DATABASE_URL = "sqlite:///./storywriter.db" # Or your actual DB URL
+# engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False}) # check_same_thread for SQLite
+# SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+# @contextmanager
+# def get_db_session():
+#     db = SessionLocal()
+#     try:
+#         yield db
+#     finally:
+#         db.close()
+
+# Then, in your repository methods, you would use this session:
+# with get_db_session() as db:
+#     # db operations
+#     pass

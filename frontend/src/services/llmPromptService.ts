@@ -519,7 +519,10 @@ export function createContextAwareChatPrompt(scenario: Scenario, userMessage: st
     };
   }
   const systemprompt = "You are a helpful AI assistant for a storywriter. You will be given the full context of the current story scenario." + 
-  "Your task is to answer the user's questions about this scenario. Give short and concise replies.";
+  " Your task is to answer the user's questions about this scenario and provide helpful follow-up questions." +
+  " IMPORTANT: Always respond in the following JSON format:" +
+  ' {"answer": "your helpful response", "followUpQuestions": ["question 1", "question 2", "question 3"]}' +
+  " Provide 2-3 relevant follow-up questions that would help the user explore their story further.";
 const userprompt = `
 --- SCENARIO CONTEXT START ---
 ${JSON.stringify(scenario)}
@@ -530,6 +533,8 @@ ${chathistory}
 --- CHAT HISTORY END ---
 
 USER: ${userMessage}
+
+Remember to respond in JSON format with both "answer" and "followUpQuestions" fields.
 `;
 
 return {

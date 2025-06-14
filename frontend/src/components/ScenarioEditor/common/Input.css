@@ -1,0 +1,92 @@
+/* Input Component Styles */
+.input-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.input-field__label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.input-field__required {
+  color: #ef4444;
+}
+
+.input-field__wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-field__control {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  transition: all 0.2s ease-in-out;
+  outline: none;
+  background-color: white;
+}
+
+.input-field__control:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.input-field__control::placeholder {
+  color: #9ca3af;
+}
+
+.input-field__textarea {
+  resize: vertical;
+  min-height: 80px;
+  font-family: inherit;
+  line-height: 1.5;
+}
+
+.input-field--with-icon .input-field__control {
+  padding-left: 2.5rem;
+}
+
+.input-field__icon {
+  position: absolute;
+  left: 0.75rem;
+  color: #6b7280;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+}
+
+.input-field--error .input-field__control {
+  border-color: #ef4444;
+}
+
+.input-field--error .input-field__control:focus {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+.input-field__error-text {
+  font-size: 0.8rem;
+  color: #ef4444;
+  margin-top: -0.25rem;
+}
+
+.input-field--disabled .input-field__control {
+  background-color: #f9fafb;
+  color: #6b7280;
+  cursor: not-allowed;
+}
+
+.input-field--disabled .input-field__label {
+  color: #6b7280;
+}

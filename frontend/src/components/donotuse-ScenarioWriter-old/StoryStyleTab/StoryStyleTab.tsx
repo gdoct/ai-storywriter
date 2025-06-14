@@ -1,0 +1,421 @@
+// filepath: /home/guido/storywriter/frontend/src/components/tabs/StoryStyleTab.tsx
+import React, { useState } from 'react';
+import { generateRandomWritingStyle } from '../../../services/storyGenerator';
+import ActionButton from '../../common/ActionButton';
+import AIGenerateDropdown from '../../common/AIGenerateDropdown';
+import AIGenerateTextarea from '../../common/AIGenerateTextarea';
+import ImportButton from '../../common/ImportButton';
+import ImportModal from '../../common/ImportModal';
+import { TabProps } from '../common/TabInterface';
+import '../common/TabStylesNew.css';
+
+// Define the suggestion options for each dropdown
+const styleOptions = ['Modern', 'Classic', 'Minimalist', 'Baroque', 'Gothic', 'Stream of consciousness', 'Epistolary', 'Journalistic', 'Academic', 'Poetic'];
+const genreOptions = ['Science Fiction', 'Fantasy', 'Mystery', 'Romance', 'Horror', 'Comedy', 'Drama', 'Adventure', 'Thriller', 'Historical Fiction'];
+const toneOptions = ['Serious', 'Humorous', 'Whimsical', 'Dark', 'Inspirational', 'Satirical', 'Suspenseful', 'Melancholic', 'Romantic', 'Philosophical'];
+const languageOptions = ['Simple', 'Elaborate', 'Technical', 'Poetic', 'Conversational', 'Formal', 'Archaic', 'Slang-heavy', 'Multi-lingual', 'Minimal'];
+const themeOptions = ['Coming of age', 'Redemption', 'Power and corruption', 'Love and sacrifice', 'Man vs. nature', 'Technology and humanity', 'Identity', 'Survival', 'Justice', 'Freedom'];
+
+// Custom dropdown component that allows both selection from options and free text input
+const StyleDropdown: React.FC<{
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  options: string[];
+  labelStyle?: React.CSSProperties; // Optional custom style for the label
+}> = ({ label, value, onChange, options, labelStyle }) => {
+  // Track if dropdown is showing or not
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <div className="form-field">
+      <label style={labelStyle}>{label}</label>
+      <div className="custom-dropdown">
+        <input
+          type="text"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          onClick={() => setIsOpen(true)}
+          onBlur={() => setTimeout(() => setIsOpen(false), 200)}
+          placeholder={`Select or enter ${label.toLowerCase()}...`}
+          className="form-input"
+        />
+        {isOpen && (
+          <ul className="dropdown-options">
+            {options.map((option, index) => (
+              <li key={index} onClick={() => {
+                onChange(option);
+                setIsOpen(false);
+              }}>
+                {option}
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </div>
+  );
+};
+
+const StoryStyleTab: React.FC<TabProps> = ({ content, updateContent, currentScenario }) => {
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [styleGenerationInProgress, setStyleGenerationInProgress] = useState(false);
+
+  // Define default empty style settings
+  const defaultStyleSettings = {
+    style: '',
+    genre: '',
+    tone: '',
+    language: '',
+    theme: '',
+    other: ''
+  };
+
+  // Parse stored JSON content or initialize with empty values
+  const [styleSettings, setStyleSettings] = useState<{
+    style: string;
+    genre: string;
+    tone: string;
+    language: string;
+    theme: string;
+    other: string;
+  }>(() => {
+    try {
+      if (!content) {
+        return defaultStyleSettings;
+      }
+
+      // Try to parse content as JSON
+      let parsedContent;
+      try {
+        parsedContent = JSON.parse(content);
+      } catch {
+        // If parsing fails, return empty values
+        return defaultStyleSettings;
+      }
+
+      // Return the parsed content with defaults for any missing fields
+      return {
+        style: parsedContent.style || '',
+        genre: parsedContent.genre || '',
+        tone: parsedContent.tone || '',
+        language: parsedContent.language || '',
+        theme: parsedContent.theme || '',
+        other: parsedContent.other || ''
+      };
+    } catch {
+      return defaultStyleSettings;
+    }
+  });
+
+  // Update the content each time any setting changes
+  const handleSettingChange = (key: string, value: string) => {
+    const newSettings = { ...styleSettings, [key]: value };
+    setStyleSettings(newSettings);
+    // Save as JSON string
+    updateContent(JSON.stringify(newSettings));
+  };
+
+  const handleImport = (importedSettings: any) => {
+    // Simply normalize the settings with defaults for any missing properties
+    const normalizedSettings = {
+      style: importedSettings.style || '',
+      genre: importedSettings.genre || '',
+      tone: importedSettings.tone || '',
+      language: importedSettings.language || '',
+      theme: importedSettings.theme || '',
+      other: importedSettings.other || ''
+    };
+
+    setStyleSettings(normalizedSettings);
+    updateContent(JSON.stringify(normalizedSettings));
+  };
+
+  // Add a state for streaming JSON and error
+  const [streamedJson, setStreamedJson] = useState('');
+  const [jsonError, setJsonError] = useState<string | null>(null);
+
+  // Handler for generating a random writing style
+  const handleGenerateRandomStyle = async () => {
+    console.log('Generate random style button clicked');
+    let accumulated = '';
+    setJsonError(null);
+    setStreamedJson('');
+    try {
+      setStyleGenerationInProgress(true);
+      // Generate a random writing style with streaming
+      const generationResult = await generateRandomWritingStyle({
+        onProgress: (generatedText) => {
+          accumulated += generatedText;
+          setStreamedJson(accumulated); // Show the raw JSON as it is being generated
+        }
+      });
+      try {
+        let randomStyle = await generationResult.result;
+        // Try to parse the final JSON and update the form
+        let parsed = null;
+        // the randomStyle starts with "```json\n" and ends with "\n```", so we need to clean it up
+        randomStyle = randomStyle.replace(/^```json\n/, '').replace(/\n```$/, '');
+        // Attempt to parse the cleaned style
+
+        try {
+          parsed = typeof randomStyle === 'string' ? JSON.parse(randomStyle) : randomStyle;
+        } catch (e) {
+          setJsonError('Failed to parse generated style as JSON.');
+          return;
+        }
+        if (parsed && typeof parsed === 'object') {
+          const newSettings = {
+            style: parsed.style || '',
+            genre: parsed.genre || '',
+            tone: parsed.tone || '',
+            language: parsed.language || '',
+            theme: parsed.theme || '',
+            other: parsed.other || ''
+          };
+          setStyleSettings(newSettings);
+          updateContent(JSON.stringify(newSettings));
+          setStreamedJson('');
+        }
+        console.log('Random style generated:', parsed);
+      } catch (error) {
+        setJsonError('Style generation was interrupted or invalid.');
+        console.log('Style generation was interrupted or invalid:', error);
+      }
+    } catch (error) {
+      setJsonError('Error generating random style.');
+      console.error('Error generating random style:', error);
+    } finally {
+      setStyleGenerationInProgress(false);
+    }
+  };
+
+  return (
+    <div className="tab-container scenario-editor-panel">
+      <div className="scenario-tab-title">
+        Story Style
+      </div>
+      <div className="tab-description" style={{ color: '#bfc7d5', fontWeight: 500, marginBottom: 32 }}>
+        Use these options to influence the style of your story. All fields are optional.
+      </div>
+      <div className="tab-actions">
+        <div className="tab-actions-primary">
+          {!styleGenerationInProgress ? (
+            <ActionButton
+              onClick={handleGenerateRandomStyle}
+              label="✨ Generate Random Style"
+              variant="success"
+              title="Generate a random writing style using AI"
+              disabled={styleGenerationInProgress}
+            />
+          ) : (
+            <ActionButton
+              onClick={() => { }}
+              label="✨ Generating Style..."
+              variant="default"
+              disabled={true}
+            />
+          )}
+        </div>
+        <div className="tab-actions-secondary">
+          <ImportButton
+            onClick={() => setShowImportModal(true)}
+            title="Import style settings from another scenario"
+            label="Import Style"
+          />
+        </div>
+      </div>
+
+
+      <div style={{ width: '100%', margin: '0 auto 16px auto', textAlign: 'center' }}>
+        {styleGenerationInProgress && streamedJson && (
+          <div style={{
+            background: '#23272f',
+            color: '#90caf9',
+            fontFamily: 'monospace',
+            fontSize: '1rem',
+            padding: '12px 18px',
+            borderRadius: '8px',
+            margin: '12px auto',
+            maxWidth: 700,
+            wordBreak: 'break-all',
+            whiteSpace: 'pre-wrap',
+            border: '1px solid #444',
+          }}>
+            {streamedJson}
+          </div>
+        )}
+        {jsonError && (
+          <div style={{ color: '#ff5252', fontWeight: 600, margin: '8px 0' }}>{jsonError}</div>
+        )}
+      </div>
+
+      <div className="style-options-container" style={{
+        background: '#23272f',
+        border: '1.5px solid #444',
+        borderRadius: '10px',
+        color: '#fff',
+        boxShadow: '0 4px 16px rgba(0,0,0,0.18)',
+        margin: '0 auto 24px auto',
+        padding: '32px 32px 22px 32px',
+        minWidth: '580px',
+        maxWidth: '820px',
+        fontSize: '1.08rem',
+        fontFamily: 'inherit',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '22px',
+      }}>
+        <AIGenerateDropdown
+          label="Style"
+          value={styleSettings.style}
+          onChange={value => handleSettingChange('style', value)}
+          onAIGenerate={() => {}}
+          loading={false}
+          options={styleOptions}
+        />
+        <AIGenerateDropdown
+          label="Genre"
+          value={styleSettings.genre}
+          onChange={value => handleSettingChange('genre', value)}
+          onAIGenerate={() => {}}
+          loading={false}
+          options={genreOptions}
+        />
+        <AIGenerateDropdown
+          label="Tone"
+          value={styleSettings.tone}
+          onChange={value => handleSettingChange('tone', value)}
+          onAIGenerate={() => {}}
+          loading={false}
+          options={toneOptions}
+        />
+        <AIGenerateDropdown
+          label="Language"
+          value={styleSettings.language}
+          onChange={value => handleSettingChange('language', value)}
+          onAIGenerate={() => {}}
+          loading={false}
+          options={languageOptions}
+        />
+        <AIGenerateDropdown
+          label="Theme"
+          value={styleSettings.theme}
+          onChange={value => handleSettingChange('theme', value)}
+          onAIGenerate={() => {}}
+          loading={false}
+          options={themeOptions}
+        />
+        <AIGenerateTextarea
+          value={styleSettings.other}
+          onChange={value => handleSettingChange('other', value)}
+          onAIGenerate={() => {}}
+          loading={false}
+          placeholder="Add any additional style instructions here..."
+          label="Other Instructions"
+          minRows={4}
+        />
+      </div>
+
+      <ImportModal
+        show={showImportModal}
+        onClose={() => setShowImportModal(false)}
+        title="Import Style Settings"
+        onImport={handleImport}
+        renderItemLabel={(styleSettings) => {
+          // Simply display the settings we have
+          const hasStyle = !!styleSettings.style;
+          const hasGenre = !!styleSettings.genre;
+          const hasTone = !!styleSettings.tone;
+          const hasLanguage = !!styleSettings.language;
+          const hasTheme = !!styleSettings.theme;
+
+          return (
+            <div className="style-settings-preview">
+              <div className="style-settings-grid">
+                {hasStyle && <div><strong>Style:</strong> {styleSettings.style}</div>}
+                {hasGenre && <div><strong>Genre:</strong> {styleSettings.genre}</div>}
+                {hasTone && <div><strong>Tone:</strong> {styleSettings.tone}</div>}
+                {hasLanguage && <div><strong>Language:</strong> {styleSettings.language}</div>}
+                {hasTheme && <div><strong>Theme:</strong> {styleSettings.theme}</div>}
+              </div>
+            </div>
+          );
+        }}
+        extractContent={(scenario) => {
+          if (!scenario) return { style: '', genre: '', tone: '', language: '', theme: '', other: '' };
+
+          try {
+            // Default empty result
+            const result = {
+              style: '',
+              genre: '',
+              tone: '',
+              language: '',
+              theme: '',
+              other: ''
+            };
+
+            // First priority: check for writingStyle property (backend format)
+            if (scenario.writingStyle) {
+              return {
+                style: scenario.writingStyle.style || '',
+                genre: scenario.writingStyle.genre || '',
+                tone: scenario.writingStyle.tone || '',
+                language: scenario.writingStyle.language || '',
+                theme: scenario.writingStyle.theme || '',
+                other: scenario.writingStyle.other || ''
+              };
+            }
+
+            // Second priority: try to parse style as JSON
+            if (scenario.style) {
+              if (typeof scenario.style === 'string') {
+                try {
+                  const parsedStyle = JSON.parse(scenario.style);
+                  if (typeof parsedStyle === 'object' && parsedStyle !== null) {
+                    return {
+                      style: parsedStyle.style || '',
+                      genre: parsedStyle.genre || '',
+                      tone: parsedStyle.tone || '',
+                      language: parsedStyle.language || '',
+                      theme: parsedStyle.theme || '',
+                      other: parsedStyle.other || ''
+                    };
+                  } else {
+                    result.style = scenario.style;
+                  }
+                } catch {
+                  result.style = scenario.style;
+                }
+              } else if (typeof scenario.style === 'object' && scenario.style !== null) {
+                Object.assign(result, scenario.style);
+              }
+            }
+
+            // Finally check for direct properties on scenario
+            if (typeof scenario.genre === 'string') result.genre = scenario.genre;
+            if (typeof scenario.tone === 'string') result.tone = scenario.tone;
+            if (typeof scenario.language === 'string') result.language = scenario.language;
+            if (typeof scenario.theme === 'string') result.theme = scenario.theme;
+            if (typeof scenario.other === 'string') result.other = scenario.other;
+
+            return result;
+          } catch (error) {
+            console.error('Error extracting style settings:', error);
+            return {
+              style: '',
+              genre: '',
+              tone: '',
+              language: '',
+              theme: '',
+              other: ''
+            };
+          }
+        }}
+      />
+    </div>
+  );
+};
+
+export default StoryStyleTab;

@@ -10,6 +10,7 @@ import TermsOfService from './pages/legal/TermsOfService';
 import Login from './pages/Login';
 import MarketingHome from './pages/MarketingHome';
 import PricingPage from './pages/PricingPage';
+import Scenarios from './pages/Scenarios';
 import Settings from './pages/Settings';
 import Signup from './pages/Signup';
 import Stories from './pages/Stories';
@@ -67,6 +68,14 @@ const getRoutes = ({ setIsLoading, seed }: RoutesProps): RouteObject[] => {
       element: (
         <ProtectedRoute>
           <Stories />
+        </ProtectedRoute>
+      )
+    },
+    { 
+      path: '/scenarios', 
+      element: (
+        <ProtectedRoute>
+          <Scenarios />
         </ProtectedRoute>
       )
     },

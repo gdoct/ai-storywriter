@@ -370,8 +370,8 @@ export async function generateRandomCharacter(
     temperature?: number,
     seed?: number | null
   } = {},
-  setAiStatus = () => {},
-  setShowAIBusyModal = () => {}
+  setAiStatus: (status: AI_STATUS) => void = () => {},
+  setShowAIBusyModal: (show: boolean) => void = () => {}
 ): Promise<{ result: Promise<any>; cancelGeneration: () => void }> {
   let cancelled = false;
   let cancelGeneration = () => { cancelled = true; };

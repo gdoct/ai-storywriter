@@ -4,11 +4,12 @@
   "scripts": {
     "build:frontend": "cd frontend && npm install && npm run build",
     "build:backend": "cd backend && pip install -r requirements.txt",
-    "build": "npm run build:frontend && npm run build:backend",
+    "build": "cd frontend && npm run build:frontend && npm run build:backend",
     "dev:frontend": "cd frontend && npm install && npm start",
     "dev:backend": "cd backend && python app.py",
-    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
-    "release": "npm run build && cd backend && python app.py"
+    "dev": "cd frontend && concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "release": "cd frontend && npm run build && cd backend && python app.py",
+    "typecheck": "cd frontend && tsc --noEmit"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"

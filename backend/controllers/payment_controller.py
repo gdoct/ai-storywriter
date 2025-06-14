@@ -144,11 +144,11 @@ def get_user_profile():
     
     profile = {
         'username': user['username'],
-        'email': user.get('email', ''),
-        'tier': user.get('tier', 'free'),
-        'credits': user.get('credits', 0),
-        'created_at': user.get('created_at', ''),
-        'last_active': user.get('last_active', '')
+        'email': user['email'] if 'email' in user.keys() else '',
+        'tier': user['tier'] if 'tier' in user.keys() else 'free',
+        'credits': user['credits'] if 'credits' in user.keys() else 0,
+        'created_at': user['created_at'] if 'created_at' in user.keys() else '',
+        'last_active': user['last_active'] if 'last_active' in user.keys() else ''
     }
     
     return jsonify(profile), 200

@@ -1,6 +1,16 @@
-import React, { Dispatch, SetStateAction } from 'react';
-import { Link } from 'react-router-dom';
+import React, { Dispatch, SetStateAction, useEffect, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../services/AuthContext';
+import {
+    DashboardStats,
+    deleteScenario,
+    fetchDashboardStats,
+    fetchRecentScenarios,
+    fetchRecentStories,
+    formatRelativeTime,
+    RecentScenario,
+    RecentStory
+} from '../services/dashboardService';
 import './Dashboard.css';
 
 interface DashboardProps {
@@ -9,28 +19,79 @@ interface DashboardProps {
 }
 
 const Dashboard: React.FC<DashboardProps> = ({ setIsLoading }) => {
-  const { username } = useAuth();
+  const { username, email } = useAuth();
+  const navigate = useNavigate();
+  
+  // State for dashboard data
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [recentScenarios, setRecentScenarios] = useState<RecentScenario[]>([]);
+  const [recentStories, setRecentStories] = useState<RecentStory[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const stats = {
-    scenariosCreated: 12,
-    storiesGenerated: 14,
-    modelsUsed: 3,
-    lastActivity: '2 hours ago'
+  // Load dashboard data
+  useEffect(() => {
+    const loadDashboardData = async () => {
+      try {
+        setLoading(true);
+        setIsLoading(true);
+        
+        // Fetch all dashboard data in parallel
+        const [statsData, scenariosData, storiesData] = await Promise.all([
+          fetchDashboardStats(),
+          fetchRecentScenarios(5, 0),
+          fetchRecentStories(4, 0)
+        ]);
+        
+        setStats(statsData);
+        setRecentScenarios(scenariosData.scenarios);
+        setRecentStories(storiesData.stories);
+        setError(null);
+      } catch (err) {
+        console.error('Error loading dashboard data:', err);
+        setError('Failed to load dashboard data. Please try refreshing the page.');
+      } finally {
+        setLoading(false);
+        setIsLoading(false);
+      }
+    };
+
+    loadDashboardData();
+  }, [setIsLoading]);
+
+  const handleEditScenario = (scenarioId: string) => {
+    // Navigate to the scenario editor with the specific scenario ID
+    navigate(`/app?scenario=${scenarioId}`);
   };
 
-  const recentScenarios = [
-    { id: 1, title: 'The Mysterious Garden', created: '2 days ago', generatedStoryCount: 3 },
-    { id: 2, title: 'Space Adventure Chronicles', created: '1 week ago', generatedStoryCount: 4 },
-    { id: 3, title: 'Detective in the Rain', created: '2 weeks ago', generatedStoryCount: 7 },
-  ];
+  const handleDeleteScenario = async (scenarioId: string, scenarioTitle: string) => {
+    if (!window.confirm(`Are you sure you want to delete "${scenarioTitle}"? This action cannot be undone.`)) {
+      return;
+    }
+    
+    try {
+      await deleteScenario(scenarioId);
+      
+      // Reload dashboard data
+      const [statsData, scenariosData, storiesData] = await Promise.all([
+        fetchDashboardStats(),
+        fetchRecentScenarios(5, 0),
+        fetchRecentStories(4, 0)
+      ]);
+      
+      setStats(statsData);
+      setRecentScenarios(scenariosData.scenarios);
+      setRecentStories(storiesData.stories);
+    } catch (err) {
+      console.error('Error deleting scenario:', err);
+      alert('Failed to delete scenario. Please try again.');
+    }
+  };
 
-  const recentStories = [
-    { id: 1, title: 'The Mysterious Garden', created: '2 days ago', wordCount: 3150, rating: 4.5 },
-    { id: 2, title: 'The Mysterious Garden', created: '2 days ago', wordCount: 2850, rating: 2.0 },
-    { id: 3, title: 'The Mysterious Garden', created: '2 days ago', wordCount: 4950, rating: 3.5 },
-    { id: 4, title: 'Space Adventure Chronicles', created: '1 week ago', wordCount: 4200, rating: 4.0 },
-  ];
-
+  const handleReadStory = async (story: RecentStory) => {
+    // Navigate to Stories page and open the story modal
+    navigate('/stories', { state: { openStoryId: story.id } });
+  };
 
   const quickActions = [
     { title: 'New Scenario', icon: '✏️', link: '/app', description: 'Start writing a new scenario' },
@@ -41,12 +102,52 @@ const Dashboard: React.FC<DashboardProps> = ({ setIsLoading }) => {
     { title: 'Templates', icon: '📝', link: '/templates', description: 'Browse scenario templates' },
   ];
 
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="dashboard">
+        <div className="dashboard-container">
+          <div className="loading-state">
+            <div className="loading-spinner"></div>
+            <p>Loading your dashboard...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <div className="dashboard">
+        <div className="dashboard-container">
+          <div className="error-state">
+            <div className="error-icon">⚠️</div>
+            <h3>Something went wrong</h3>
+            <p>{error}</p>
+            <button 
+              className="btn btn-primary" 
+              onClick={() => window.location.reload()}
+            >
+              Try Again
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show main dashboard (stats should be loaded at this point)
+  if (!stats) {
+    return null;
+  }
+
   return (
     <div className="dashboard">
       <div className="dashboard-container">
         <header className="dashboard-header">
           <div className="welcome-section">
-            <h1>Welcome back, {username}!</h1>
+            <h1>Welcome back, {username || email || 'User'}!</h1>
             <p>Ready to create some amazing stories today?</p>
           </div>
           <Link to="/app" className="btn btn-primary btn-large">
@@ -80,10 +181,26 @@ const Dashboard: React.FC<DashboardProps> = ({ setIsLoading }) => {
                   <div className="stat-label">AI Models Used</div>
                 </div>
               </div>
+            </div>
+             <div className="stats-grid">
+              <div className="stat-card">
+                <div className="stat-icon">✍️</div>
+                <div className="stat-content">
+                  <div className="stat-number">{stats.storiesPublished}</div>
+                  <div className="stat-label">Stories published</div>
+                </div>
+              </div>
+              <div className="stat-card">
+                <div className="stat-icon">🤖</div>
+                <div className="stat-content">
+                  <div className="stat-number">{stats.scenariosPublished}</div>
+                  <div className="stat-label">Scenarios published</div>
+                </div>
+              </div>
               <div className="stat-card">
                 <div className="stat-icon">⏰</div>
                 <div className="stat-content">
-                  <div className="stat-number">{stats.lastActivity}</div>
+                  <div className="stat-number">{formatRelativeTime(stats.lastActivity)}</div>
                   <div className="stat-label">Last Activity</div>
                 </div>
               </div>
@@ -102,13 +219,23 @@ const Dashboard: React.FC<DashboardProps> = ({ setIsLoading }) => {
                     <div className="story-info">
                       <h4 className="story-title">{scenario.title}</h4>
                       <div className="story-meta">
-                        <span className="story-date">{scenario.created}</span>
-                        <span className="story-words">{scenario.generatedStoryCount} words</span>
+                        <span className="story-date">{formatRelativeTime(scenario.created)}</span>
+                        <span className="story-words">{scenario.generatedStoryCount} generated stories</span>
                       </div>
                     </div>
                     <div className="story-actions">
-                      <button className="btn btn-text">Edit</button>
-                      <button className="btn btn-text">View</button>
+                      <button 
+                        className="btn btn-text"
+                        onClick={() => handleEditScenario(scenario.id)}
+                      >
+                        Edit
+                      </button>
+                      <button 
+                        className="btn btn-text"
+                        onClick={() => handleDeleteScenario(scenario.id, scenario.title)}
+                      >
+                        Delete
+                      </button>
                     </div>
                   </div>
                 ))}
@@ -132,15 +259,20 @@ const Dashboard: React.FC<DashboardProps> = ({ setIsLoading }) => {
                   {recentStories.map(story => (
                     <div key={story.id} className="story-card">
                       <div className="story-info">
-                        <h4 className="story-title">{story.title}</h4>
+                        <h4 className="story-title">{story.scenarioTitle}</h4>
                         <div className="story-meta">
-                          <span className="story-date">{story.created}</span>
+                          <span className="story-date">{formatRelativeTime(story.created)}</span>
                           <span className="story-words">{story.wordCount} words</span>
                         </div>
                       </div>
                       <div className="story-actions">
-                        <button className="btn btn-text">Edit</button>
-                        <button className="btn btn-text">View</button>
+                        <button 
+                          className="btn btn-text"
+                          onClick={() => handleReadStory(story)}
+                        >
+                          Read
+                        </button>
+                        <button className="btn btn-text">Publish</button>
                       </div>
                     </div>
                   ))}

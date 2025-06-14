@@ -1,0 +1,133 @@
+/* Scenario Editor Styles */
+.scenario-editor {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background-color: #f8fafc;
+}
+
+.scenario-editor__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.5rem;
+  background: white;
+  border-bottom: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+  gap: 1rem;
+  flex-shrink: 0;
+}
+
+.scenario-editor__title-section {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  flex: 1;
+}
+
+.scenario-editor__title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.scenario-editor__dirty-indicator {
+  color: #ef4444;
+  margin-left: 0.25rem;
+}
+
+.scenario-editor__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-shrink: 0;
+}
+
+.scenario-editor__content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.scenario-editor__tabs {
+  flex-shrink: 0;
+}
+
+.scenario-editor__tab-content {
+  flex: 1;
+  background: white;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.scenario-editor__errors {
+  position: fixed;
+  bottom: 1rem;
+  right: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  z-index: 50;
+}
+
+.scenario-editor__error {
+  background-color: #fef2f2;
+  border: 1px solid #fca5a5;
+  color: #dc2626;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  max-width: 300px;
+  word-wrap: break-word;
+}
+
+/* Responsive design */
+@media (max-width: 1024px) {
+  .scenario-editor__header {
+    padding: 1rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .scenario-editor__header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+  }
+  
+  .scenario-editor__title-section {
+    text-align: center;
+  }
+  
+  .scenario-editor__actions {
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  
+  .scenario-editor__title {
+    font-size: 1.25rem;
+  }
+  
+  .scenario-editor__errors {
+    bottom: 0.5rem;
+    right: 0.5rem;
+    left: 0.5rem;
+  }
+  
+  .scenario-editor__error {
+    max-width: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .scenario-editor__actions {
+    flex-direction: column;
+  }
+}

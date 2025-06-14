@@ -6,9 +6,10 @@ import './Navigation.css';
 
 interface AuthenticatedNavProps {
   username: string | null;
+  email: string | null;
 }
 
-const AuthenticatedNav: React.FC<AuthenticatedNavProps> = ({ username }) => {
+const AuthenticatedNav: React.FC<AuthenticatedNavProps> = ({ username, email }) => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const { setAuthenticated } = useAuth();
   const navigate = useNavigate();
@@ -24,7 +25,8 @@ const AuthenticatedNav: React.FC<AuthenticatedNavProps> = ({ username }) => {
     <div className="nav-container">
       <nav className="nav-links">
         <Link to="/dashboard" className="nav-link">Dashboard</Link>
-        <Link to="/app" className="nav-link">Stories</Link>
+        <Link to="/scenarios" className="nav-link">My Scenarios</Link>
+        <Link to="/stories" className="nav-link">My Stories</Link>
         <Link to="/buy-credits" className="nav-link">Buy Credits</Link>
       </nav>
       <div className="user-dropdown">
@@ -43,7 +45,7 @@ const AuthenticatedNav: React.FC<AuthenticatedNavProps> = ({ username }) => {
         {dropdownOpen && (
           <div className="dropdown-menu">
             <div className="dropdown-header">
-              <span className="dropdown-username">{username}</span>
+              <span className="dropdown-username">{email || username}</span>
             </div>
             <Link 
               to="/dashboard" 

@@ -3,6 +3,7 @@ import os
 from datetime import timedelta
 
 from controllers.auth_controller import auth_bp
+from controllers.dashboard_controller import dashboard_bp
 from controllers.payment_controller import payment_bp
 from controllers.scenario_controller import scenario_bp
 from controllers.settings_controller import settings_controller
@@ -37,6 +38,7 @@ CORS(app, resources={r"/api/*": {"origins": "*"}})  # Configure CORS for API end
 
 # Register blueprints
 app.register_blueprint(auth_bp)
+app.register_blueprint(dashboard_bp)
 app.register_blueprint(payment_bp)
 app.register_blueprint(scenario_bp)
 app.register_blueprint(llm_proxy)
