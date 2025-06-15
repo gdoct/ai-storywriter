@@ -6,6 +6,8 @@ export interface LLMChatOptions {
   model?: string;
   temperature?: number;
   max_tokens?: number;
+  keepAlive?: string;
+  signal?: AbortSignal;
 }
 
 export type LLMStreamCallback = (chunk: string, isDone: boolean) => void;
@@ -61,13 +63,18 @@ export async function streamChatCompletionWithStatus(
 ): Promise<void> {
   try {
     const messages = buildMessagesFromRequest(prompt);
-    const payload = {
+    const payload: any = {
       model: options.model || '',
       messages,
       temperature: options.temperature ?? 0.8,
       max_tokens: options.max_tokens ?? 1024,
-      keep_alive: '10m',
     };
+    
+    // Only include keep_alive if explicitly requested
+    if (options.keepAlive) {
+      payload.keep_alive = options.keepAlive;
+    }
+    
     if (!options.model || options.model.trim() === '') {
       throw new Error('Model must be specified');
     }
@@ -75,6 +82,7 @@ export async function streamChatCompletionWithStatus(
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
+      signal: options.signal,
     });
     await handle409Error(response, setAiStatus, setShowAIBusyModal);
     if (!response.body) throw new Error('No response body');
@@ -130,14 +138,19 @@ export async function chatCompletionWithStatus(
   setShowAIBusyModal: (b: boolean) => void
 ): Promise<string> {
   const messages = buildMessagesFromRequest(prompt);
-  const payload = {
+  const payload: any = {
     model: options.model || '',
     messages,
     temperature: options.temperature ?? 0.8,
     max_tokens: options.max_tokens ?? 1024,
-    keep_alive: '10m',
     stream: false,
   };
+  
+  // Only include keep_alive if explicitly requested
+  if (options.keepAlive) {
+    payload.keep_alive = options.keepAlive;
+  }
+  
   if (!options.model || options.model.trim() === '') {
     throw new Error('Model must be specified');
   }
@@ -145,6 +158,7 @@ export async function chatCompletionWithStatus(
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
+    signal: options.signal,
   });
   await handle409Error(response, setAiStatus, setShowAIBusyModal);
   if (!response.ok) {

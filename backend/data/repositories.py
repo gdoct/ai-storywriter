@@ -59,11 +59,62 @@ class UserRepository:
 
     @staticmethod
     def update_user_credits(user_id, credits):
-        """Update user's credit balance"""
+        pass # This method is now obsolete, credits are managed via transactions
+
+    @staticmethod
+    def add_credit_transaction(user_id, transaction_type, amount, description=None, related_entity_id=None, checkpoint_balance=None):
         conn = get_db_connection()
-        conn.execute('UPDATE users SET credits = ? WHERE id = ?', (credits, user_id))
+        transaction_id = str(uuid.uuid4())
+        now = datetime.now(timezone.utc).isoformat()
+        conn.execute('''INSERT INTO credit_transactions
+                        (id, user_id, transaction_type, amount, description, related_entity_id, created_at, checkpoint_balance)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?)''',
+                     (transaction_id, user_id, transaction_type, amount, description, related_entity_id, now, checkpoint_balance))
         conn.commit()
         conn.close()
+
+    @staticmethod
+    def get_user_credit_balance(user_id):
+        conn = get_db_connection()
+        # First, try to get the latest checkpoint
+        latest_checkpoint = conn.execute('''
+            SELECT checkpoint_balance, created_at
+            FROM credit_transactions
+            WHERE user_id = ? AND transaction_type = 'checkpoint'
+            ORDER BY created_at DESC
+            LIMIT 1
+        ''', (user_id,)).fetchone()
+
+        balance = 0
+        since_timestamp = None
+
+        if latest_checkpoint:
+            balance = latest_checkpoint['checkpoint_balance']
+            since_timestamp = latest_checkpoint['created_at']
+
+        # Sum transactions since the last checkpoint (or all if no checkpoint)
+        query = '''
+            SELECT SUM(amount)
+            FROM credit_transactions
+            WHERE user_id = ?
+        '''
+        params = [user_id]
+
+        if since_timestamp:
+            query += ' AND created_at > ?'
+            params.append(since_timestamp)
+        
+        # Exclude checkpoint amounts themselves from the sum if we started from a checkpoint
+        if latest_checkpoint:
+             query += ' AND transaction_type != \'checkpoint\''
+
+        result = conn.execute(query, tuple(params)).fetchone()
+        conn.close()
+
+        if result and result[0] is not None:
+            balance += result[0]
+        
+        return balance
 
 class ScenarioRepository:
     @staticmethod

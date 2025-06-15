@@ -1,4 +1,3 @@
-\
 import uuid
 from datetime import datetime
 
@@ -9,6 +8,18 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
 Base = declarative_base()
+
+class CreditTransaction(Base):
+    __tablename__ = 'credit_transactions'
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = Column(UUID(as_uuid=True), nullable=False) # Assuming user_id is UUID
+    transaction_type = Column(String, nullable=False)  # e.g., 'purchase', 'usage', 'refund', 'checkpoint'
+    amount = Column(Integer, nullable=False)  # Can be positive (addition) or negative (deduction)
+    description = Column(String) # Optional description, e.g., "Purchased Starter Pack" or "Used for story generation"
+    related_entity_id = Column(String) # Optional: ID of related entity, e.g., purchase_id, story_id
+    created_at = Column(DateTime, default=datetime.utcnow)
+    checkpoint_balance = Column(Integer) # For checkpoint type transactions
 
 class Policy(Base):
     __tablename__ = 'policies'

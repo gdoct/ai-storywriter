@@ -206,11 +206,24 @@ const ImportModal: React.FC<ImportModalProps> = ({
           <div className="content-preview">
             <h4>Content Preview:</h4>
             <div className="preview-text">
-              {typeof extractContent(scenarioContent) === 'string' ? 
-                truncateText(extractContent(scenarioContent), 8) : 
-                (title.includes("Style") ? 
-                  renderItemLabel(extractContent(scenarioContent)) : 
-                  JSON.stringify(extractContent(scenarioContent)).substring(0, 50) + '...')}
+              {(() => {
+                const content = extractContent(scenarioContent);
+                if (typeof content === 'string') {
+                  return truncateText(content, 8);
+                } else if (title.includes("Style") && content && typeof content === 'object') {
+                  // Handle StyleSettings object
+                  const styleContent = content as any;
+                  const parts = [];
+                  if (styleContent.style) parts.push(`Style: ${styleContent.style}`);
+                  if (styleContent.genre) parts.push(`Genre: ${styleContent.genre}`);
+                  if (styleContent.tone) parts.push(`Tone: ${styleContent.tone}`);
+                  if (styleContent.language) parts.push(`Language: ${styleContent.language}`);
+                  if (styleContent.theme) parts.push(`Theme: ${styleContent.theme}`);
+                  return parts.length > 0 ? parts.join(', ') : 'No style settings found';
+                } else {
+                  return JSON.stringify(content).substring(0, 100) + '...';
+                }
+              })()}
             </div>
           </div>
         )}

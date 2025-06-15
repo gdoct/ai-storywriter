@@ -3,41 +3,49 @@
   display: flex;
   flex-direction: column;
   height: 100vh;
-  background-color: #f8fafc;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
 }
 
+/* ScenarioEditor Header - Match Scenarios Page Style */
 .scenario-editor__header {
+  background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.85) 100%);
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  padding: 2rem;
+  margin: 1.5rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  padding: 1rem 1.5rem;
-  background: white;
-  border-bottom: 1px solid #e2e8f0;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
-  gap: 1rem;
+  align-items: flex-start;
+  gap: 2rem;
   flex-shrink: 0;
 }
 
-.scenario-editor__title-section {
-  display: flex;
-  align-items: center;
-  min-width: 0;
-  flex: 1;
+.scenario-editor__header .header-content h1 {
+  font-size: 2.75rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin: 0 0 0.5rem 0;
+  letter-spacing: -0.02em;
 }
 
-.scenario-editor__title {
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: #1f2937;
+.scenario-editor__header .header-content p {
+  color: #64748b;
+  font-size: 1.1rem;
   margin: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  font-weight: 500;
 }
 
-.scenario-editor__dirty-indicator {
+.dirty-indicator {
   color: #ef4444;
   margin-left: 0.25rem;
+  font-weight: 700;
 }
 
 .scenario-editor__actions {

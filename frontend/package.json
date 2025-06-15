@@ -22,7 +22,7 @@
   },
   "scripts": {
     "start": "BROWSER=none react-scripts start",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && echo 'TypeScript type check passed!'",
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
     "lint:fix": "eslint . --ext .js,.jsx,.ts,.tsx --fix",
     "prettier": "prettier --write \"src/**/*.{js,jsx,ts,tsx,json,css,md}\"",

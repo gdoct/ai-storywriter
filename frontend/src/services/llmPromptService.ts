@@ -76,6 +76,32 @@ export function createRewriteBackstoryPrompt(scenario: Scenario): llmCompletionR
   };
 }
 
+export function createSummaryPrompt(scenario: Scenario, story: string): llmCompletionRequestMessage {
+  if (!scenario) {
+    console.error("Error: scenario is null or undefined");
+    scenario = {
+      id: 'error-fallback',
+      userId: 'system',
+      createdAt: new Date(),
+      writingStyle: { genre: "General Fiction" }
+    };
+  }
+  const writingStyle = scenario.writingStyle || { genre: "General Fiction" };
+  let prompt = "You are a masterful storyteller specializing in providing summarized content for the genre " + writingStyle.genre + ". Rewrite the story below this prompt.\n";
+  prompt += "Keep the core elements of the story but make it short and high-level.:\n";
+  prompt += "- Make it clear and structured\n";
+  prompt += "- Keep it short and high-level (only add details that are needed for clarity)\n";
+  prompt += "- Do not provide character descriptions or backstories\n";
+  prompt += "- Write in a neutral tone, only a few paragraphs, as if it's the back cover of a book. \n";
+  prompt += "Do not include any markdown, formatting, or meta-commentary - only the rewritten story itself.\n";
+  prompt += "Here is the story to summarize:\n-----------------\n\n";
+  prompt += story + "\n\n-----------------\n";
+  return {
+    systemMessage: 'You are a masterful storyteller specializing in summarizing stories.',
+    userMessage: prompt
+  };
+}
+
 export function createScenarioPrompt(scenario: Scenario): llmCompletionRequestMessage {
   if (!scenario) {
     console.error("Error: scenario is null or undefined");

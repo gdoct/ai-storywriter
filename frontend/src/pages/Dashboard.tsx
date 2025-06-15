@@ -1,15 +1,17 @@
 import React, { Dispatch, SetStateAction, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import DashboardCard from '../components/DashboardCard';
+import MarketingFooter from '../components/marketing/MarketingFooter';
 import { useAuth } from '../services/AuthContext';
 import {
-    DashboardStats,
-    deleteScenario,
-    fetchDashboardStats,
-    fetchRecentScenarios,
-    fetchRecentStories,
-    formatRelativeTime,
-    RecentScenario,
-    RecentStory
+  DashboardStats,
+  deleteScenario,
+  fetchDashboardStats,
+  fetchRecentScenarios,
+  fetchRecentStories,
+  formatRelativeTime,
+  RecentScenario,
+  RecentStory
 } from '../services/dashboardService';
 import './Dashboard.css';
 
@@ -92,15 +94,6 @@ const Dashboard: React.FC<DashboardProps> = ({ setIsLoading }) => {
     // Navigate to Stories page and open the story modal
     navigate('/stories', { state: { openStoryId: story.id } });
   };
-
-  const quickActions = [
-    { title: 'New Scenario', icon: '✏️', link: '/app', description: 'Start writing a new scenario' },
-    { title: 'Browse Scenarios', icon: '📚', link: '/scenarios', description: 'View your scenario collection' },
-    { title: 'Browse Stories', icon: '📚', link: '/stories', description: 'View your generated story collection' },
-    { title: 'Buy Credits', icon: '💳', link: '/buy-credits', description: 'Purchase credits for premium features' },
-    { title: 'Settings', icon: '⚙️', link: '/settings', description: 'Configure AI models and preferences' },
-    { title: 'Templates', icon: '📝', link: '/templates', description: 'Browse scenario templates' },
-  ];
 
   // Show loading state
   if (loading) {
@@ -215,29 +208,26 @@ const Dashboard: React.FC<DashboardProps> = ({ setIsLoading }) => {
               </div>
               <div className="stories-list">
                 {recentScenarios.map(scenario => (
-                  <div key={scenario.id} className="story-card">
-                    <div className="story-info">
-                      <h4 className="story-title">{scenario.title}</h4>
-                      <div className="story-meta">
-                        <span className="story-date">{formatRelativeTime(scenario.created)}</span>
-                        <span className="story-words">{scenario.generatedStoryCount} generated stories</span>
-                      </div>
-                    </div>
-                    <div className="story-actions">
-                      <button 
-                        className="btn btn-text"
-                        onClick={() => handleEditScenario(scenario.id)}
-                      >
-                        Edit
-                      </button>
-                      <button 
-                        className="btn btn-text"
-                        onClick={() => handleDeleteScenario(scenario.id, scenario.title)}
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </div>
+                  <DashboardCard
+                    key={scenario.id}
+                    title={scenario.title}
+                    metadata={[
+                      { icon: "📅", text: formatRelativeTime(scenario.created) },
+                      { icon: "📝", text: `${scenario.generatedStoryCount} generated stories` }
+                    ]}
+                    actions={[
+                      {
+                        label: "Edit",
+                        onClick: () => handleEditScenario(scenario.id),
+                        variant: "text"
+                      },
+                      {
+                        label: "Delete",
+                        onClick: () => handleDeleteScenario(scenario.id, scenario.title),
+                        variant: "text"
+                      }
+                    ]}
+                  />
                 ))}
                 {recentScenarios.length === 0 && (
                   <div className="empty-state">
@@ -257,24 +247,26 @@ const Dashboard: React.FC<DashboardProps> = ({ setIsLoading }) => {
                 </div>
                 <div className="stories-list">
                   {recentStories.map(story => (
-                    <div key={story.id} className="story-card">
-                      <div className="story-info">
-                        <h4 className="story-title">{story.scenarioTitle}</h4>
-                        <div className="story-meta">
-                          <span className="story-date">{formatRelativeTime(story.created)}</span>
-                          <span className="story-words">{story.wordCount} words</span>
-                        </div>
-                      </div>
-                      <div className="story-actions">
-                        <button 
-                          className="btn btn-text"
-                          onClick={() => handleReadStory(story)}
-                        >
-                          Read
-                        </button>
-                        <button className="btn btn-text">Publish</button>
-                      </div>
-                    </div>
+                    <DashboardCard
+                      key={story.id}
+                      title={story.scenarioTitle}
+                      metadata={[
+                        { icon: "📅", text: formatRelativeTime(story.created) },
+                        { icon: "📝", text: `${story.wordCount} words` }
+                      ]}
+                      actions={[
+                        {
+                          label: "Read",
+                          onClick: () => handleReadStory(story),
+                          variant: "text"
+                        },
+                        {
+                          label: "Publish",
+                          onClick: () => {}, // TODO: implement publish functionality
+                          variant: "text"
+                        }
+                      ]}
+                    />
                   ))}
                   {recentStories.length === 0 && (
                     <div className="empty-state">
@@ -286,25 +278,10 @@ const Dashboard: React.FC<DashboardProps> = ({ setIsLoading }) => {
                   )}
                 </div>
               </div>
-
-
-              <div className="quick-actions-section">
-                <h3>Quick Actions</h3>
-                <div className="quick-actions-grid">
-                  {quickActions.map((action, index) => (
-                    <Link key={index} to={action.link} className="quick-action-card">
-                      <div className="action-icon">{action.icon}</div>
-                      <div className="action-content">
-                        <h4 className="action-title">{action.title}</h4>
-                        <p className="action-description">{action.description}</p>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              </div>
             </div>
           </div>
         </div>
+         <MarketingFooter />
       </div>
       );
 };

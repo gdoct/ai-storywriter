@@ -6,6 +6,7 @@ const AnonymousNav: React.FC = () => {
   return (
     <div className="nav-container">
       <nav className="nav-links">
+        <Link to="/marketplace" className="nav-link">Marketplace</Link>
         <Link to="/features" className="nav-link">Features</Link>
         <Link to="/pricing" className="nav-link">Pricing</Link>
         <Link to="/login" className="nav-link">Login</Link>

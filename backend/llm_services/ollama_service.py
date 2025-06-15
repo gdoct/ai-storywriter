@@ -38,6 +38,10 @@ class OllamaService(BaseLLMService):
                 'options': {}
             }
             
+            # Add keep_alive if provided (this controls conversation context persistence)
+            if 'keep_alive' in payload and payload['keep_alive'] is not None:
+                ollama_payload['keep_alive'] = payload['keep_alive']
+            
             # Add temperature if provided
             if 'temperature' in payload and payload['temperature'] is not None:
                 ollama_payload['options']['temperature'] = float(payload['temperature'])

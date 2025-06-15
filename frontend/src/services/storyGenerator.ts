@@ -2,6 +2,7 @@ import { AI_STATUS } from '../contexts/AIStatusContext';
 import { llmCompletionRequestMessage } from '../types/LLMTypes';
 import { GeneratedStory, Scenario } from '../types/ScenarioTypes';
 import * as llmPromptService from './llmPromptService';
+import { createRewriteStoryArcPrompt, createStoryArcPrompt, createSummaryPrompt } from './llmPromptService';
 import { streamChatCompletionWithStatus } from './llmService';
 import { getSelectedModel } from './modelSelection';
 
@@ -86,7 +87,7 @@ export async function generateChapter(
 /**
  * Generate a summary for a chapter using the backend LLM proxy
  */
-export async function generateChapterSummary(
+export async function generateChapterSummary(scenario: Scenario,
   chapterText: string,
   options: {
     onProgress?: (text: string) => void,
@@ -96,9 +97,7 @@ export async function generateChapterSummary(
   setShowAIBusyModal = () => {}
 ): Promise<string> {
   // No createChapterSummaryPrompt exists, so use inline prompt
-  const promptObj: llmCompletionRequestMessage = {
-    userMessage: `Summarize the following chapter in 2-3 sentences, focusing on the main events and character developments. Do not include any meta-commentary or formatting.\n\nChapter:\n${chapterText}`
-  };
+  const promptObj = createSummaryPrompt(scenario, chapterText);
   let fullText = '';
   await streamChatCompletionWithStatus(
     promptObj,
@@ -132,8 +131,8 @@ export async function generateStory(
   setShowAIBusyModal = () => {}
 ): Promise<{ result: Promise<GeneratedStory>; cancelGeneration: () => void }> {
   const promptObj = llmPromptService.createScenarioPrompt(scenario);
-  let cancelled = false;
-  let cancelGeneration = () => { cancelled = true; };
+  const abortController = new AbortController();
+  let cancelGeneration = () => { abortController.abort(); };
   const resultPromise = new Promise<GeneratedStory>(async (resolve, reject) => {
     try {
       const selectedModel = getSelectedModel();
@@ -141,24 +140,25 @@ export async function generateStory(
       await streamChatCompletionWithStatus(
         promptObj,
         (text) => {
-          if (!cancelled) {
-            if (options.onProgress) options.onProgress(text.slice(fullText.length));
-            fullText = text;
-          }
+          if (options.onProgress) options.onProgress(text.slice(fullText.length));
+          fullText = text;
         },
         { 
           model: selectedModel || undefined,
           temperature: options.temperature, 
-          max_tokens: 6000
+          max_tokens: 6000,
+          signal: abortController.signal
         },
         setAiStatus,
         setShowAIBusyModal
       );
-      if (!cancelled) {
-        resolve({ completeText: fullText, chapters: [] });
-      }
+      resolve({ completeText: fullText, chapters: [] });
     } catch (error) {
-      reject(error);
+      if (error instanceof Error && error.name === 'AbortError') {
+        reject(new Error('Generation was cancelled'));
+      } else {
+        reject(error);
+      }
     }
   });
   return { result: resultPromise, cancelGeneration };
@@ -178,8 +178,8 @@ export async function generateBackstory(
   setShowAIBusyModal: (show: boolean) => void = () => {}
 ): Promise<{ result: Promise<string>; cancelGeneration: () => void }> {
   const promptObj = llmPromptService.createBackstoryPrompt(scenario);
-  let cancelled = false;
-  let cancelGeneration = () => { cancelled = true; };
+  const abortController = new AbortController();
+  let cancelGeneration = () => { abortController.abort(); };
   let fullText = '';
   const resultPromise = new Promise<string>(async (resolve, reject) => {
     try {
@@ -187,26 +187,25 @@ export async function generateBackstory(
       await streamChatCompletionWithStatus(
         promptObj,
         (text) => {
-          if (!cancelled) {
-            if (options.onProgress) options.onProgress(text.slice(fullText.length));
-            fullText = text;
-          }
+          if (options.onProgress) options.onProgress(text.slice(fullText.length));
+          fullText = text;
         },
         { 
           model: selectedModel || undefined,
           temperature: options.temperature, 
-          max_tokens: 1000
+          max_tokens: 1000,
+          signal: abortController.signal
         },
         setAiStatus,
         setShowAIBusyModal
       );
-      if (!cancelled) {
-        resolve(fullText);
-      } else {
-        reject(new Error('Generation was cancelled'));
-      }
+      resolve(fullText);
     } catch (error) {
-      reject(error);
+      if (error instanceof Error && error.name === 'AbortError') {
+        reject(new Error('Generation was cancelled'));
+      } else {
+        reject(error);
+      }
     }
   });
   return { result: resultPromise, cancelGeneration };
@@ -225,44 +224,35 @@ export async function rewriteBackstory(
   setAiStatus: (status: AI_STATUS) => void = () => {},
   setShowAIBusyModal: (show: boolean) => void = () => {}
 ): Promise<{ result: Promise<string>; cancelGeneration: () => void }> {
-  const prompt = `You are a masterful storyteller specializing in improving existing content in the genre ${scenario.writingStyle?.genre || "General Fiction"}. Rewrite the following backstory:\n\n` +
-                 `"${scenario.backstory || ""}"\n\n` +
-                 `Keep the core elements of the backstory but make it short and high-level. improve it by:\n` +
-                 `- Making it clear and structured\n` +
-                 `- Keeping it short and high-level (only add details that are needed for clarity)\n` +
-                 `- Preserving all key plot points and character relationships\n` +
-                 `- Write in a neutral tone, as if it's the back cover of a book. \n\n` +
-                 `Do not include any markdown, formatting, or meta-commentary - only the rewritten backstory itself.`;
-  let cancelled = false;
-  let cancelGeneration = () => { cancelled = true; };
+  const promptObj = llmPromptService.createRewriteBackstoryPrompt(scenario);
+  const abortController = new AbortController();
+  let cancelGeneration = () => { abortController.abort(); };
   const resultPromise = new Promise<string>(async (resolve, reject) => {
     try {
       const selectedModel = getSelectedModel();
       let fullText = '';
-      const promptObj: llmCompletionRequestMessage = {
-        userMessage: prompt
-      };
       await streamChatCompletionWithStatus(
         promptObj,
         (text) => {
-          if (!cancelled) {
-            if (options.onProgress) options.onProgress(text.slice(fullText.length));
-            fullText = text;
-          }
+          if (options.onProgress) options.onProgress(text.slice(fullText.length));
+          fullText = text;
         },
         { 
           model: selectedModel || undefined,
           temperature: options.temperature, 
-          max_tokens: 1000
+          max_tokens: 1000,
+          signal: abortController.signal
         },
         setAiStatus,
         setShowAIBusyModal
       );
-      if (!cancelled) {
-        resolve(fullText);
-      }
+      resolve(fullText);
     } catch (error) {
-      reject(error);
+      if (error instanceof Error && error.name === 'AbortError') {
+        reject(new Error('Generation was cancelled'));
+      } else {
+        reject(error);
+      }
     }
   });
   return { result: resultPromise, cancelGeneration };
@@ -281,40 +271,36 @@ export async function rewriteStoryArc(
   setAiStatus = () => {},
   setShowAIBusyModal = () => {}
 ): Promise<{ result: Promise<string>; cancelGeneration: () => void }> {
-  const prompt = `You are a masterful story architect specializing in improving story arcs for ${scenario.writingStyle?.genre || "General Fiction"} fiction. Rewrite the following story arc to be more compelling, clear, and high-level:\n\n` +
-                 `"${scenario.storyarc || ""}"\n\n` +
-                 `Keep the core plot points and character arcs, but improve structure and flow.\n` +
-                 `Do not include any markdown, formatting, or meta-commentary - only the rewritten story arc itself.`;
-  let cancelled = false;
-  let cancelGeneration = () => { cancelled = true; };
+  const prompt = createRewriteStoryArcPrompt(scenario);
+  const abortController = new AbortController();
+  let cancelGeneration = () => { abortController.abort(); };
   const resultPromise = new Promise<string>(async (resolve, reject) => {
     try {
       const selectedModel = getSelectedModel();
       let fullText = '';
-      const promptObj: llmCompletionRequestMessage = {
-        userMessage: prompt
-      };
+      
       await streamChatCompletionWithStatus(
-        promptObj,
+        prompt,
         (text) => {
-          if (!cancelled) {
-            if (options.onProgress) options.onProgress(text.slice(fullText.length));
-            fullText = text;
-          }
+          if (options.onProgress) options.onProgress(text.slice(fullText.length));
+          fullText = text;
         },
         { 
           model: selectedModel || undefined,
           temperature: options.temperature, 
-          max_tokens: 1000
+          max_tokens: 1000,
+          signal: abortController.signal
         },
         setAiStatus,
         setShowAIBusyModal
       );
-      if (!cancelled) {
-        resolve(fullText);
-      }
+      resolve(fullText);
     } catch (error) {
-      reject(error);
+      if (error instanceof Error && error.name === 'AbortError') {
+        reject(new Error('Generation was cancelled'));
+      } else {
+        reject(error);
+      }
     }
   });
   return { result: resultPromise, cancelGeneration };
@@ -332,8 +318,8 @@ export async function generateRandomWritingStyle(
   setAiStatus = () => {},
   setShowAIBusyModal = () => {}
 ): Promise<{ result: Promise<any>; cancelGeneration: () => void }> {
-  let cancelled = false;
-  let cancelGeneration = () => { cancelled = true; };
+  const abortController = new AbortController();
+  let cancelGeneration = () => { abortController.abort(); };
   const promptObj = llmPromptService.createWritingStylePrompt();
   const resultPromise = new Promise<any>(async (resolve, reject) => {
     try {
@@ -342,19 +328,27 @@ export async function generateRandomWritingStyle(
       await streamChatCompletionWithStatus(
         promptObj,
         (text) => {
-          if (!cancelled && options.onProgress) options.onProgress(text.slice(fullText.length));
+          if (options.onProgress) options.onProgress(text.slice(fullText.length));
           fullText = text;
         },
         { 
           model: selectedModel || undefined,
           temperature: options.temperature, 
-          max_tokens: 1000
+          max_tokens: 1000,
+          signal: abortController.signal
         },
         setAiStatus,
         setShowAIBusyModal
       );
-      if (!cancelled) { console.log(fullText); resolve(fullText); }
-    } catch (e) { reject(e); }
+      console.log(fullText); 
+      resolve(fullText);
+    } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') {
+        reject(new Error('Generation was cancelled'));
+      } else {
+        reject(error);
+      }
+    }
   });
   return { result: resultPromise, cancelGeneration };
 }
@@ -373,8 +367,8 @@ export async function generateRandomCharacter(
   setAiStatus: (status: AI_STATUS) => void = () => {},
   setShowAIBusyModal: (show: boolean) => void = () => {}
 ): Promise<{ result: Promise<any>; cancelGeneration: () => void }> {
-  let cancelled = false;
-  let cancelGeneration = () => { cancelled = true; };
+  const abortController = new AbortController();
+  let cancelGeneration = () => { abortController.abort(); };
   const promptObj = llmPromptService.createCharacterPrompt(scenario, characterType);
   const resultPromise = new Promise<any>(async (resolve, reject) => {
     try {
@@ -383,29 +377,34 @@ export async function generateRandomCharacter(
       await streamChatCompletionWithStatus(
         promptObj,
         (text) => {
-          if (!cancelled && options.onProgress) options.onProgress(text.slice(fullText.length));
+          if (options.onProgress) options.onProgress(text.slice(fullText.length));
           fullText = text;
         },
         { 
           model: selectedModel || undefined,
           temperature: options.temperature, 
-          max_tokens: 1000
+          max_tokens: 1000,
+          signal: abortController.signal
         },
         setAiStatus,
         setShowAIBusyModal
       );
-      if (!cancelled) {
-        // Remove markdown code block if present
-        let cleaned = fullText.trim();
-        if (cleaned.startsWith('```json')) {
-          cleaned = cleaned.slice(7);
-        }
-        if (cleaned.endsWith('```')) {
-          cleaned = cleaned.slice(0, -3);
-        }
-        resolve(cleaned.trim());
+      // Remove markdown code block if present
+      let cleaned = fullText.trim();
+      if (cleaned.startsWith('```json')) {
+        cleaned = cleaned.slice(7);
       }
-    } catch (e) { reject(e); }
+      if (cleaned.endsWith('```')) {
+        cleaned = cleaned.slice(0, -3);
+      }
+      resolve(cleaned.trim());
+    } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') {
+        reject(new Error('Generation was cancelled'));
+      } else {
+        reject(error);
+      }
+    }
   });
   return { result: resultPromise, cancelGeneration };
 }
@@ -440,40 +439,35 @@ export async function generateStoryArc(
   setAiStatus = () => {},
   setShowAIBusyModal = () => {}
 ): Promise<{ result: Promise<string>; cancelGeneration: () => void }> {
-  const prompt = `You are a masterful story architect. Write a high-level story arc for a ${scenario.writingStyle?.genre || "General Fiction"} story based on the following scenario.\n\n` +
-                 `The story arc should outline the main plot points, character arcs, and key events from beginning to end.\n\n` +
-                 `Do not include any markdown, formatting, or meta-commentary - only the story arc itself.\n\nScenario details:\n\n` +
-                 `${JSON.stringify(scenario, null, 2)}`;
-  let cancelled = false;
-  let cancelGeneration = () => { cancelled = true; };
+  const prompt = createStoryArcPrompt(scenario);
+  const abortController = new AbortController();
+  let cancelGeneration = () => { abortController.abort(); };
   const resultPromise = new Promise<string>(async (resolve, reject) => {
     try {
       const selectedModel = getSelectedModel();
       let fullText = '';
-      const promptObj: llmCompletionRequestMessage = {
-        userMessage: prompt
-      };
       await streamChatCompletionWithStatus(
-        promptObj,
+        prompt,
         (text) => {
-          if (!cancelled) {
-            if (options.onProgress) options.onProgress(text.slice(fullText.length));
-            fullText = text;
-          }
+          if (options.onProgress) options.onProgress(text.slice(fullText.length));
+          fullText = text;
         },
         { 
           model: selectedModel || undefined,
           temperature: options.temperature, 
-          max_tokens: 1000
+          max_tokens: 1000,
+          signal: abortController.signal
         },
         setAiStatus,
         setShowAIBusyModal
       );
-      if (!cancelled) {
-        resolve(fullText);
-      }
+      resolve(fullText);
     } catch (error) {
-      reject(error);
+      if (error instanceof Error && error.name === 'AbortError') {
+        reject(new Error('Generation was cancelled'));
+      } else {
+        reject(error);
+      }
     }
   });
   return { result: resultPromise, cancelGeneration };

@@ -26,16 +26,15 @@ def migrate_user_tiers():
             raise e
     
     try:
+        # Remove credits column from users table
         c.execute('''
-            ALTER TABLE users ADD COLUMN credits INTEGER DEFAULT 0
-        ''')
-        print("Added credits column to users table")
+            ALTER TABLE users DROP COLUMN credits
+        ''') # This might not be supported in all SQLite versions directly, may need to recreate table
+        print("Removed credits column from users table (if it existed and was supported)")
     except sqlite3.OperationalError as e:
-        if "duplicate column name" in str(e):
-            print("Credits column already exists")
-        else:
-            raise e
-    
+        # Handle cases where column doesn't exist or DROP COLUMN is not supported
+        print(f"Could not remove credits column: {e}")
+
     try:
         c.execute('''
             ALTER TABLE users ADD COLUMN api_key_encrypted TEXT
@@ -59,6 +58,22 @@ def migrate_user_tiers():
         else:
             raise e
     
+    # Create credit_transactions table
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS credit_transactions (
+            id TEXT PRIMARY KEY,
+            user_id TEXT NOT NULL,
+            transaction_type TEXT NOT NULL, -- 'purchase', 'usage', 'refund', 'checkpoint'
+            amount INTEGER NOT NULL,
+            description TEXT,
+            related_entity_id TEXT, -- Optional: ID of related entity, e.g., purchase_id, story_id
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+            checkpoint_balance INTEGER, -- For 'checkpoint' type transactions
+            FOREIGN KEY(user_id) REFERENCES users(id)
+        )
+    ''')
+    print("Created credit_transactions table")
+
     # Create credit usage tracking table
     c.execute('''
         CREATE TABLE IF NOT EXISTS credit_usage (

@@ -1,5 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import PublishStoryModal from '../components/PublishStoryModal';
+import StoryPageCard from '../components/StoryPageCard';
 import ReadingModal from '../components/StoryReader/ReadingModal';
 import StoryReader from '../components/StoryReader/StoryReader';
 import { fetchRecentStories, formatRelativeTime, RecentStory } from '../services/dashboardService';
@@ -24,6 +26,10 @@ const Stories: React.FC = () => {
   const [showStoryModal, setShowStoryModal] = useState(false);
   const [storyContent, setStoryContent] = useState<string>('');
   const [loadingStoryContent, setLoadingStoryContent] = useState(false);
+  
+  // Publish modal state
+  const [showPublishModal, setShowPublishModal] = useState(false);
+  const [storyToPublish, setStoryToPublish] = useState<RecentStory | null>(null);
   
   const storiesPerPage = 12;
 
@@ -143,6 +149,22 @@ const Stories: React.FC = () => {
     navigate(`/app?scenario=${scenarioId}`);
   };
 
+  const handlePublishStory = (story: RecentStory) => {
+    setStoryToPublish(story);
+    setShowPublishModal(true);
+  };
+
+  const handlePublishSuccess = () => {
+    alert('Story published successfully! It will appear in the marketplace once AI processing is complete.');
+    setShowPublishModal(false);
+    setStoryToPublish(null);
+  };
+
+  const handleClosePublishModal = () => {
+    setShowPublishModal(false);
+    setStoryToPublish(null);
+  };
+
   // Group and filter stories
   const filteredStories = stories
     .filter(story =>
@@ -252,42 +274,30 @@ const Stories: React.FC = () => {
           {Object.keys(groupedStories).length > 0 ? (
             Object.entries(groupedStories).map(([scenarioTitle, stories]) => (
               <div key={scenarioTitle} className="scenario-group">
-                <div className="scenario-title" style={{ cursor: 'pointer', userSelect: 'none', display: 'flex', alignItems: 'center' }} onClick={() => toggleGroup(scenarioTitle)}>
-                  <span style={{ fontSize: 22, marginRight: 8 }}>{collapsedGroups[scenarioTitle] ? '▶' : '▼'}</span>
-                  {scenarioTitle}
+                <div className="scenario-header" onClick={() => toggleGroup(scenarioTitle)}>
+                  <span className="collapse-icon">
+                    {collapsedGroups[scenarioTitle] ? '▶' : '▼'}
+                  </span>
+                  <h2 className="scenario-title">{scenarioTitle}</h2>
+                  <span className="story-count">{stories.length} stories</span>
                 </div>
                 {!collapsedGroups[scenarioTitle] && (
                   <div className="stories-grid">
                     {stories.map(story => (
-                      <div key={story.id} className="story-card">
-                        <div className="story-header">
-                          <h3 className="story-title">{story.scenarioTitle}</h3>
-                        </div>
-                        <p className="story-excerpt">{story.preview}</p>
-                        <div className="story-footer">
-                          <div className="story-meta">
-                            <span className="story-date">
-                              Created {formatRelativeTime(story.created)}
-                            </span>
-                            <span className="story-separator">•</span>
-                            <span className="story-words">{story.wordCount} words</span>
-                          </div>
-                          <div className="story-actions">
-                            <button 
-                              className="btn btn-secondary"
-                              onClick={() => handleViewStory(story)}
-                            >
-                              View
-                            </button>
-                            <button 
-                              className="btn btn-text"
-                              onClick={() => handleEditScenario(story.scenarioId)}
-                            >
-                              Edit Scenario
-                            </button>
-                          </div>
-                        </div>
-                      </div>
+                      <StoryPageCard
+                        key={story.id}
+                        story={{
+                          id: story.id,
+                          scenarioTitle: story.scenarioTitle,
+                          created: story.created,
+                          wordCount: story.wordCount,
+                          preview: story.preview
+                        }}
+                        onView={() => handleViewStory(story)}
+                        onPublish={() => handlePublishStory(story)}
+                        onSaveAs={() => handleEditScenario(story.scenarioId)}
+                        onDelete={() => handleDeleteStory(story.id, story.scenarioTitle)}
+                      />
                     ))}
                   </div>
                 )}
@@ -356,6 +366,17 @@ const Stories: React.FC = () => {
           onDelete={selectedStory ? () => handleDeleteStory(selectedStory.id, selectedStory.scenarioTitle) : undefined}
         />
       </ReadingModal>
+
+      {/* Publish Story Modal */}
+      {storyToPublish && (
+        <PublishStoryModal
+          isOpen={showPublishModal}
+          onClose={handleClosePublishModal}
+          storyId={storyToPublish.id}
+          storyTitle={storyToPublish.scenarioTitle}
+          onSuccess={handlePublishSuccess}
+        />
+      )}
     </div>
   );
 };

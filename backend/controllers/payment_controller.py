@@ -56,13 +56,19 @@ def mock_purchase():
             }
         }), 400
     
-    # Update user credits
-    current_credits = user.get('credits', 0)
-    new_credits = current_credits + credits
-    
-    # Update user in database
+    # Update user credits by adding a transaction
     try:
-        UserRepository.update_user_credits(user['id'], new_credits)
+        # Get current balance to correctly reflect it in the transaction description if needed
+        # This is optional, the core logic relies on summing transactions
+        # current_balance_before_purchase = UserRepository.get_user_credit_balance(user['id'])
+        
+        UserRepository.add_credit_transaction(
+            user_id=user['id'],
+            transaction_type='purchase',
+            amount=credits,
+            description=f"Purchased {credits} credits with package {package_id}",
+            related_entity_id=package_id
+        )
     except Exception as e:
         print(f"Failed to update user credits: {e}")
         return jsonify({
@@ -88,11 +94,12 @@ def mock_purchase():
     
     # In a real implementation, we would store this transaction in a database
     # For now, we'll just return it in the response
+    new_balance = UserRepository.get_user_credit_balance(user['id'])
     
     return jsonify({
         'success': True,
         'transaction': transaction,
-        'newBalance': new_credits
+        'newBalance': new_balance
     }), 200
 
 @payment_bp.route('/api/payment/packages', methods=['GET'])
@@ -142,11 +149,14 @@ def get_user_profile():
     if not user:
         return jsonify({'error': 'User not found'}), 404
     
+    # Get credit balance from transactions
+    credit_balance = UserRepository.get_user_credit_balance(user['id'])
+
     profile = {
         'username': user['username'],
         'email': user['email'] if 'email' in user.keys() else '',
         'tier': user['tier'] if 'tier' in user.keys() else 'free',
-        'credits': user['credits'] if 'credits' in user.keys() else 0,
+        'credits': credit_balance,
         'created_at': user['created_at'] if 'created_at' in user.keys() else '',
         'last_active': user['last_active'] if 'last_active' in user.keys() else ''
     }

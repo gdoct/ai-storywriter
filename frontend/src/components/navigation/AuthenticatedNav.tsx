@@ -25,8 +25,8 @@ const AuthenticatedNav: React.FC<AuthenticatedNavProps> = ({ username, email }) 
     <div className="nav-container">
       <nav className="nav-links">
         <Link to="/dashboard" className="nav-link">Dashboard</Link>
-        <Link to="/scenarios" className="nav-link">My Scenarios</Link>
-        <Link to="/stories" className="nav-link">My Stories</Link>
+        <Link to="/marketplace" className="nav-link">Marketplace</Link>
+        
         <Link to="/buy-credits" className="nav-link">Buy Credits</Link>
       </nav>
       <div className="user-dropdown">

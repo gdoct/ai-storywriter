@@ -173,17 +173,17 @@ const Scenarios: React.FC = () => {
               <div className="scenarios-grid">
                 {filteredScenarios.map(scenario => (
                   <div key={scenario.id} className="scenario-card">
-                    <div className="scenario-header">
-                      <h3 className="scenario-title">{scenario.title}</h3>
-                    </div>
-                    
-                    <div className="scenario-stats">
-                      <span className="stat">
-                        <strong>{scenario.generatedStoryCount}</strong> generated stories
-                      </span>
-                    </div>
-                    
-                    <div className="scenario-footer">
+                    <div className="scenario-content">
+                      <div className="scenario-header">
+                        <h3 className="scenario-title">{scenario.title}</h3>
+                      </div>
+                      
+                      <div className="scenario-stats">
+                        <span className="stat">
+                          <strong>{scenario.generatedStoryCount}</strong> generated stories
+                        </span>
+                      </div>
+                      
                       <div className="scenario-meta">
                         <span className="scenario-date">
                           Created {formatRelativeTime(scenario.created)}
@@ -193,27 +193,31 @@ const Scenarios: React.FC = () => {
                           Modified {formatRelativeTime(scenario.lastModified)}
                         </span>
                       </div>
-                      <div className="scenario-actions">
-                        <button 
-                          className="btn btn-secondary"
-                          onClick={() => handleEditScenario(scenario.id)}
-                        >
-                          Edit
-                        </button>
-                        <Link 
-                          to={`/stories?scenario=${scenario.id}`} 
-                          className="btn btn-text"
-                        >
-                          View Stories
-                        </Link>
-                        <button 
-                          className="btn btn-text delete-btn"
-                          onClick={() => handleDeleteScenario(scenario.id, scenario.title)}
-                          title="Delete scenario"
-                        >
-                          Delete
-                        </button>
-                      </div>
+                    </div>
+                    
+                    <div className="scenario-actions">
+                      <button 
+                        className="btn btn-primary btn-small"
+                        onClick={() => handleEditScenario(scenario.id)}
+                      >
+                        <span className="btn-icon">✏️</span>
+                        Edit
+                      </button>
+                      <Link 
+                        to={`/stories?scenario=${scenario.id}`} 
+                        className="btn btn-text btn-small"
+                      >
+                        <span className="btn-icon">📚</span>
+                        View Stories
+                      </Link>
+                      <button 
+                        className="btn btn-text delete-btn btn-small"
+                        onClick={() => handleDeleteScenario(scenario.id, scenario.title)}
+                        title="Delete scenario"
+                      >
+                        <span className="btn-icon">🗑️</span>
+                        Delete
+                      </button>
                     </div>
                   </div>
                 ))}

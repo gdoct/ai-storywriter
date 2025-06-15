@@ -220,12 +220,15 @@ export const GeneralTab: React.FC<TabProps> = ({
         title="Import Writing Style"
         onImport={handleImport}
         extractContent={(scenario) => {
+          console.log('Extracting content from scenario:', scenario);
+          
           // Handle multiple possible sources for style data
           if (scenario.writingStyle) {
+            console.log('Found writingStyle:', scenario.writingStyle);
             return scenario.writingStyle;
           }
           
-          // Check if style data is stored differently
+          // Initialize default style settings
           const result: StyleSettings = {
             style: '',
             genre: '',
@@ -235,11 +238,13 @@ export const GeneralTab: React.FC<TabProps> = ({
             other: '',
           };
 
+          // Check if style data is stored in the style field
           if (scenario.style) {
             if (typeof scenario.style === 'string') {
               try {
                 const parsedStyle = JSON.parse(scenario.style);
                 if (typeof parsedStyle === 'object' && parsedStyle !== null) {
+                  console.log('Parsed style from string:', parsedStyle);
                   return {
                     style: parsedStyle.style || '',
                     genre: parsedStyle.genre || '',
@@ -251,21 +256,24 @@ export const GeneralTab: React.FC<TabProps> = ({
                 } else {
                   result.style = scenario.style;
                 }
-              } catch {
+              } catch (error) {
+                console.warn('Failed to parse style string:', error);
                 result.style = scenario.style;
               }
             } else if (typeof scenario.style === 'object' && scenario.style !== null) {
+              console.log('Using style object:', scenario.style);
               Object.assign(result, scenario.style);
             }
           }
 
           // Check for direct properties on scenario
-          if (typeof scenario.genre === 'string') result.genre = scenario.genre;
-          if (typeof scenario.tone === 'string') result.tone = scenario.tone;
-          if (typeof scenario.language === 'string') result.language = scenario.language;
-          if (typeof scenario.theme === 'string') result.theme = scenario.theme;
-          if (typeof scenario.other === 'string') result.other = scenario.other;
+          if (scenario.genre && typeof scenario.genre === 'string') result.genre = scenario.genre;
+          if (scenario.tone && typeof scenario.tone === 'string') result.tone = scenario.tone;
+          if (scenario.language && typeof scenario.language === 'string') result.language = scenario.language;
+          if (scenario.theme && typeof scenario.theme === 'string') result.theme = scenario.theme;
+          if (scenario.other && typeof scenario.other === 'string') result.other = scenario.other;
 
+          console.log('Extracted style result:', result);
           return result;
         }}
       />

@@ -162,10 +162,16 @@ export const ScenarioEditor: React.FC<ScenarioEditorProps> = ({
       
     } catch (error) {
       console.error('Failed to generate story:', error);
-      dispatch({ 
-        type: 'SET_ERROR', 
-        payload: { field: 'generation', message: 'Failed to generate story. Please try again.' }
-      });
+      // Don't show error message for cancellation
+      if (error instanceof Error && error.message === 'Generation was cancelled') {
+        // Just log that it was cancelled, don't show error to user
+        console.log('Story generation was cancelled by user');
+      } else {
+        dispatch({ 
+          type: 'SET_ERROR', 
+          payload: { field: 'generation', message: 'Failed to generate story. Please try again.' }
+        });
+      }
     } finally {
       dispatch({ type: 'SET_GENERATING', payload: false });
       cancelGenerationRef.current = null; // Clear the cancel function
@@ -191,6 +197,32 @@ export const ScenarioEditor: React.FC<ScenarioEditorProps> = ({
     
     // Note: Removed auto-generation - user must click "Generate Story" button
   }, [dispatch, state.scenario.id, state.generatedStory]);
+
+  const handleReloadScenario = useCallback(() => {
+    dispatch({ type: 'SET_LOADING', payload: true });
+    dispatch({ type: 'CLEAR_ALL_ERRORS' });
+    // Reload the scenario from the initial state or API
+    if (initialScenario) {
+      dispatch({ type: 'SET_SCENARIO', payload: initialScenario });
+    } else {
+      // If no initial scenario, create a new empty scenario
+      const username = localStorage.getItem('username') || 'anonymous';
+      const newScenario: Scenario = {
+        id: '',
+        userId: username,
+        title: '',
+        synopsis: '',
+        createdAt: new Date(),
+        characters: [],
+        scenes: [],
+        storyarc: '',
+        backstory: '',
+        notes: '',
+      };
+      dispatch({ type: 'SET_SCENARIO', payload: newScenario });
+    }
+    dispatch({ type: 'SET_LOADING', payload: false });
+  }, [initialScenario, dispatch]);
 
   const handleSaveStory = useCallback(async () => {
     if (state.generatedStory && state.scenario.id) {
@@ -228,11 +260,11 @@ export const ScenarioEditor: React.FC<ScenarioEditorProps> = ({
   return (
     <div className="scenario-editor">
       <div className="scenario-editor__header">
-        <div className="scenario-editor__title-section">
-          <h1 className="scenario-editor__title">Scenario: 
-            {state.scenario.title || 'Untitled Story'}
-            {state.isDirty && <span className="scenario-editor__dirty-indicator">*</span>}
-          </h1>
+        <div className="header-content">
+          <h1>Scenario Editor</h1>
+          <p>{state.scenario.title || 'Untitled Story'}
+            {state.isDirty && <span className="dirty-indicator">*</span>}
+          </p>
         </div>
         
         <div className="scenario-editor__actions">
@@ -243,6 +275,14 @@ export const ScenarioEditor: React.FC<ScenarioEditorProps> = ({
             disabled={state.isLoading}
           >
             View Story
+          </Button>
+          <Button
+            variant="danger"
+            onClick={handleReloadScenario}
+            disabled={state.isSaving || state.isLoading}
+            loading={state.isSaving}
+          >
+            Reload
           </Button>
           <Button
             variant="secondary"

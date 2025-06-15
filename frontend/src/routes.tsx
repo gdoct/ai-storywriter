@@ -9,11 +9,13 @@ import PrivacyPolicy from './pages/legal/PrivacyPolicy';
 import TermsOfService from './pages/legal/TermsOfService';
 import Login from './pages/Login';
 import MarketingHome from './pages/MarketingHome';
+import Marketplace from './pages/Marketplace';
 import PricingPage from './pages/PricingPage';
 import Scenarios from './pages/Scenarios';
 import Settings from './pages/Settings';
 import Signup from './pages/Signup';
 import Stories from './pages/Stories';
+import StoryDetail from './pages/StoryDetail';
 import Templates from './pages/Templates';
 import { useAuth } from './services/AuthContext';
 
@@ -95,6 +97,8 @@ const getRoutes = ({ setIsLoading, seed }: RoutesProps): RouteObject[] => {
         </ProtectedRoute>
       )
     },
+    { path: '/marketplace', element: <Marketplace /> },
+    { path: '/marketplace/story/:id', element: <StoryDetail /> },
     { path: '/features', element: <FeaturesPage /> },
     { path: '/pricing', element: <PricingPage /> },
     { path: '/login', element: <Login /> },
