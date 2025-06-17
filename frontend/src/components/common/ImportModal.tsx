@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { fetchAllScenarios, fetchScenarioById } from '../../services/scenario';
 import './ImportModal.css';
 import Modal from './Modal';
@@ -32,6 +32,16 @@ const ImportModal: React.FC<ImportModalProps> = ({
   const [scenarioContent, setScenarioContent] = useState<any>(null);
   const [selectedItems, setSelectedItems] = useState<{[key: string]: boolean}>({});
 
+  // Use refs to store stable references to prop functions
+  const getCheckboxItemsRef = useRef(getCheckboxItems);
+  const renderItemLabelRef = useRef(renderItemLabel);
+  
+  // Update refs when props change
+  useEffect(() => {
+    getCheckboxItemsRef.current = getCheckboxItems;
+    renderItemLabelRef.current = renderItemLabel;
+  });
+
   // Fetch scenario content function
   const fetchScenarioContent = useCallback(async (scenarioId: string) => {
     if (!scenarioId) return;
@@ -50,7 +60,7 @@ const ImportModal: React.FC<ImportModalProps> = ({
   // Initialize selected items when scenario content changes
   useEffect(() => {
     if (scenarioContent && renderCheckboxes) {
-      const items = getCheckboxItems(scenarioContent);
+      const items = getCheckboxItemsRef.current(scenarioContent);
       const initialSelectedState: {[key: string]: boolean} = {};
       items.forEach(item => {
         initialSelectedState[item.id] = true; // Default all to checked
@@ -60,7 +70,7 @@ const ImportModal: React.FC<ImportModalProps> = ({
       // Clear selected items for non-checkbox mode
       setSelectedItems({});
     }
-  }, [scenarioContent, renderCheckboxes]); // Added getCheckboxItems back to dependencies since we're using it directly
+  }, [scenarioContent, renderCheckboxes]);
 
   // Reset state when modal opens/closes
   useEffect(() => {
@@ -103,9 +113,9 @@ const ImportModal: React.FC<ImportModalProps> = ({
 
   // Memoize the expensive operations with getCheckboxItems function
   const getCheckboxItemsMemoized = useCallback((scenario: any) => {
-    if (!getCheckboxItems || !scenario) return [];
-    return getCheckboxItems(scenario);
-  }, [getCheckboxItems]);
+    if (!getCheckboxItemsRef.current || !scenario) return [];
+    return getCheckboxItemsRef.current(scenario);
+  }, []);
 
   const handleImport = () => {
     if (!scenarioContent) return;
@@ -155,13 +165,13 @@ const ImportModal: React.FC<ImportModalProps> = ({
                 checked={!!selectedItems[item.id]}
                 onChange={() => handleCheckboxChange(item.id)}
               />
-              <label htmlFor={`item-${item.id}`}>{renderItemLabel(item)}</label>
+              <label htmlFor={`item-${item.id}`}>{renderItemLabelRef.current(item)}</label>
             </div>
           ))
         )}
       </div>
     );
-  }, [renderCheckboxes, scenarioContent, getCheckboxItemsMemoized, itemType, selectedItems, renderItemLabel]);
+  }, [renderCheckboxes, scenarioContent, getCheckboxItemsMemoized, itemType, selectedItems]);
 
   return (
     <Modal 

@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { FaDice, FaDownload, FaRandom } from 'react-icons/fa';
 import { StyleSettings } from '../../../types/ScenarioTypes';
 import ImportModal from '../../common/ImportModal';
@@ -21,7 +21,8 @@ export const GeneralTab: React.FC<TabProps> = ({
   isDirty,
   isLoading,
 }) => {
-  const writingStyle: StyleSettings = scenario.writingStyle || {};
+  // Wrap writingStyle in useMemo to stabilize reference for useCallback deps
+  const writingStyle: StyleSettings = useMemo(() => scenario.writingStyle || {}, [scenario.writingStyle]);
   const [showImportModal, setShowImportModal] = useState(false);
 
   const handleBasicFieldChange = useCallback((field: string, value: string) => {

@@ -2,6 +2,7 @@ flask
 flask-jwt-extended
 flask-cors
 python-dotenv
+Pillow>=9.0.0
 
 requests
 

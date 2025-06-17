@@ -1,7 +1,6 @@
 import os
 import sqlite3
-
-DB_PATH = os.path.join(os.path.dirname(__file__), 'storywriter.db')
+from db_config import DB_PATH
 
 def check_schema():
     conn = sqlite3.connect(DB_PATH)

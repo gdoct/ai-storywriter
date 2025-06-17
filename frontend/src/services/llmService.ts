@@ -1,6 +1,7 @@
 // frontend/src/services/llmService.ts
 import { AI_STATUS } from '../contexts/AIStatusContext';
 import { llmCompletionRequestMessage, LLMMessage } from '../types/LLMTypes';
+import { getToken } from './security';
 
 export interface LLMChatOptions {
   model?: string;
@@ -78,13 +79,42 @@ export async function streamChatCompletionWithStatus(
     if (!options.model || options.model.trim() === '') {
       throw new Error('Model must be specified');
     }
+    
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json'
+    };
+    
+    const token = getToken();
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
+    
     const response = await fetch(LLM_PROXY_ENDPOINT, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify(payload),
       signal: options.signal,
     });
+    
     await handle409Error(response, setAiStatus, setShowAIBusyModal);
+    
+    // Handle other error status codes
+    if (!response.ok) {
+      let errorMessage = `Request failed with status ${response.status}`;
+      try {
+        const errorData = await response.json();
+        if (response.status === 402) {
+          // Insufficient credits error
+          errorMessage = errorData.error || 'Insufficient credits to complete this request. Please purchase more credits to continue.';
+        } else {
+          errorMessage = errorData.error || errorData.message || errorMessage;
+        }
+      } catch (e) {
+        // If we can't parse the error response, use the default message
+      }
+      throw new Error(errorMessage);
+    }
+    
     if (!response.body) throw new Error('No response body');
     const reader = response.body.getReader();
     let done = false;
@@ -94,32 +124,29 @@ export async function streamChatCompletionWithStatus(
       done = doneReading;
       if (value) {
         const chunk = new TextDecoder().decode(value);
+        // eslint-disable-next-line
         chunk.split('\n').forEach(line => {
           if (line.startsWith('data: ')) {
             const data = line.slice(6);
             if (data === '[DONE]') return;
             try {
-              const json = JSON.parse(data);
-              const choices = json.choices || [];
-              for (const choice of choices) {
-                const delta = choice.delta || {};
-                const content = delta.content;
-                if (content) {
-                  assistantText += content;
-                  onStream(assistantText, false);
-                }
+              const parsed = JSON.parse(data);
+              if (parsed.choices && parsed.choices[0] && parsed.choices[0].delta && parsed.choices[0].delta.content) {
+                const content = parsed.choices[0].delta.content;
+                assistantText += content;
+                onStream(content, false);
               }
-            } catch {
-              // Not JSON, ignore
+            } catch (e) {
+              // Ignore malformed lines
             }
           }
         });
       }
     }
     onStream(assistantText, true);
+  } catch (err) {
     setAiStatus(AI_STATUS.IDLE);
-  } catch (err: any) {
-    if (err.message !== '409') setAiStatus(AI_STATUS.ERROR);
+    setShowAIBusyModal(false);
     throw err;
   }
 }
@@ -154,16 +181,40 @@ export async function chatCompletionWithStatus(
   if (!options.model || options.model.trim() === '') {
     throw new Error('Model must be specified');
   }
+  
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json'
+  };
+  
+  const token = getToken();
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+  
   const response = await fetch(LLM_PROXY_ENDPOINT, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers,
     body: JSON.stringify(payload),
     signal: options.signal,
   });
+  
   await handle409Error(response, setAiStatus, setShowAIBusyModal);
+  
   if (!response.ok) {
     setAiStatus(AI_STATUS.ERROR);
-    throw new Error(`LLM backend error: ${response.statusText}`);
+    let errorMessage = `LLM backend error: ${response.statusText}`;
+    try {
+      const errorData = await response.json();
+      if (response.status === 402) {
+        // Insufficient credits error
+        errorMessage = errorData.error || 'Insufficient credits to complete this request. Please purchase more credits to continue.';
+      } else {
+        errorMessage = errorData.error || errorData.message || errorMessage;
+      }
+    } catch (e) {
+      // If we can't parse the error response, use the default message
+    }
+    throw new Error(errorMessage);
   }
   const data = await response.json();
   const choices = data.choices || [];

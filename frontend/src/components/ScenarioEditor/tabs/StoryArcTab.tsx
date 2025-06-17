@@ -1,6 +1,6 @@
 import React, { useCallback, useState } from 'react';
 import { FaDownload, FaProjectDiagram, FaTimes } from 'react-icons/fa';
-import { useAIStatus } from '../../../contexts/AIStatusContext';
+import { useAuthenticatedUser } from '../../../contexts/AuthenticatedUserContext';
 import { generateStoryArc, rewriteStoryArc } from '../../../services/storyGenerator';
 import ImportModal from '../../common/ImportModal';
 import { Button } from '../common/Button';
@@ -17,7 +17,7 @@ export const StoryArcTab: React.FC<TabProps> = ({
   const [isGenerating, setIsGenerating] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
   const [cancelGeneration, setCancelGeneration] = useState<(() => void) | null>(null);
-  const { setAiStatus, setShowAIBusyModal } = useAIStatus();
+  const { refreshCredits } = useAuthenticatedUser();
 
   const handleStoryArcChange = useCallback((value: string) => {
     onScenarioChange({ storyarc: value });
@@ -44,9 +44,17 @@ export const StoryArcTab: React.FC<TabProps> = ({
       try {
         const generatedStoryArc = await generationResult.result;
         onScenarioChange({ storyarc: generatedStoryArc });
+        // Refresh credits after successful generation with a small delay
+        setTimeout(() => {
+          refreshCredits();
+        }, 1000);
       } catch (error) {
         console.log('Story arc generation was interrupted:', error);
         // Keep the accumulated text
+        // Still refresh credits in case of partial consumption with a small delay
+        setTimeout(() => {
+          refreshCredits();
+        }, 1000);
       }
     } catch (error) {
       console.error('Error generating story arc:', error);
@@ -81,9 +89,17 @@ export const StoryArcTab: React.FC<TabProps> = ({
       try {
         const rewrittenStoryArc = await generationResult.result;
         onScenarioChange({ storyarc: rewrittenStoryArc });
+        // Refresh credits after successful generation with a small delay
+        setTimeout(() => {
+          refreshCredits();
+        }, 1000);
       } catch (error) {
         console.log('Story arc rewriting was interrupted:', error);
         // Keep the accumulated text
+        // Still refresh credits in case of partial consumption with a small delay
+        setTimeout(() => {
+          refreshCredits();
+        }, 1000);
       }
     } catch (error) {
       console.error('Error rewriting story arc:', error);

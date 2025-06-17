@@ -1,8 +1,7 @@
 import os
 import sqlite3
 from datetime import datetime
-
-DB_PATH = os.path.join(os.path.dirname(__file__), 'storywriter.db')
+from db_config import DB_PATH
 
 def recreate_db():
     # Remove existing DB if it exists

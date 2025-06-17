@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import CreditsBadge from '../components/CreditsBadge';
 import StoryCard from '../components/StoryCard';
+import { useAuthenticatedUser } from '../contexts/AuthenticatedUserContext';
 import { getByGenre, getLatest, getMostPopular, getStaffPicks, getTopRated } from '../services/marketPlaceApi';
 import { MarketStoryCard } from '../types/marketplace';
 import './Marketplace.css';
@@ -14,6 +16,7 @@ interface SectionData {
 
 const Marketplace: React.FC = () => {
   const navigate = useNavigate();
+  const { creditRefreshTrigger } = useAuthenticatedUser();
   const [searchQuery, setSearchQuery] = useState('');
   const [sections, setSections] = useState<Record<string, SectionData>>({
     staffPicks: { title: 'Staff Picks', stories: [], loading: true, error: null },
@@ -140,6 +143,7 @@ const Marketplace: React.FC = () => {
             <p>Discover amazing stories from our community of writers</p>
           </div>
           <div className="header-actions">
+            <CreditsBadge className="header-badge" refreshTrigger={creditRefreshTrigger} />
             <form onSubmit={handleSearch} className="search-form">
               <div className="search-container">
                 <input

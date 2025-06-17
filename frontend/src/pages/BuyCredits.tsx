@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import CreditPackageCard from '../components/payments/CreditPackageCard';
 import MockPaymentModal from '../components/payments/MockPaymentModal';
 import { useAuth } from '../services/AuthContext';
@@ -78,11 +78,8 @@ const BuyCredits: React.FC = () => {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchUserProfile();
-  }, [username]);
-
-  const fetchUserProfile = async () => {
+  // Memoize fetchUserProfile to avoid redefining on every render
+  const fetchUserProfile = useCallback(async () => {
     if (!username) return;
     
     try {
@@ -101,7 +98,11 @@ const BuyCredits: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [username]);
+
+  useEffect(() => {
+    fetchUserProfile();
+  }, [fetchUserProfile]);
 
   const handlePackageSelect = (pkg: CreditPackage) => {
     setSelectedPackage(pkg);

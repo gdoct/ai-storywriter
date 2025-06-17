@@ -1,5 +1,12 @@
 import { MarketStory } from "../types/marketplace";
+import axios from "./http";
 import { fakestories } from "./mockedStoryService";
+
+interface CreditsResponse {
+    credits: number;
+    cached: boolean;
+}
+
 /**export interface MarketStory {
   id: number;
   title: string;
@@ -117,4 +124,29 @@ export function publishStory(storyId: number, {
             throw new Error("Story not found");
         }
     });
+}
+
+/**
+ * Get the current user's credit balance
+ */
+export async function getUserCredits(): Promise<CreditsResponse> {
+    try {
+        const response = await axios.get('/api/marketplace/user/credits');
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching user credits:', error);
+        throw error;
+    }
+}
+
+/**
+ * Clear the user's credits cache (useful after transactions)
+ */
+export async function clearCreditsCache(): Promise<void> {
+    try {
+        await axios.post('/api/marketplace/user/credits/clear-cache');
+    } catch (error) {
+        console.error('Error clearing credits cache:', error);
+        throw error;
+    }
 }

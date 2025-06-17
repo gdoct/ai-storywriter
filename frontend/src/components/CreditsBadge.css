@@ -1,0 +1,76 @@
+.credits-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 500;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+  cursor: pointer;
+  user-select: none;
+}
+
+.credits-badge:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.credits-badge.loading {
+  background: linear-gradient(135deg, #e0e0e0 0%, #bdbdbd 100%);
+  color: #666;
+}
+
+.credits-badge.error {
+  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+  color: white;
+}
+
+.credits-icon {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.credits-text {
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .credits-badge {
+    padding: 5px 10px;
+    font-size: 13px;
+  }
+  
+  .credits-icon {
+    font-size: 14px;
+  }
+  
+  .credits-text {
+    font-size: 13px;
+  }
+}
+
+/* Variant for header placement */
+.credits-badge.header-badge {
+  margin-left: 16px;
+}
+
+/* Variant for compact display */
+.credits-badge.compact {
+  padding: 4px 8px;
+  font-size: 12px;
+}
+
+.credits-badge.compact .credits-icon {
+  font-size: 14px;
+}
+
+.credits-badge.compact .credits-text {
+  font-size: 12px;
+}

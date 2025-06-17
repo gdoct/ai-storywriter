@@ -162,3 +162,29 @@ def get_user_profile():
     }
     
     return jsonify(profile), 200
+
+@payment_bp.route('/api/user/add-credits', methods=['POST'])
+@jwt_required()
+def add_credits():
+    """Developer utility: Add credits to the current user (for testing only)"""
+    username = get_jwt_identity()
+    user = UserRepository.get_user_by_username(username)
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
+    data = request.get_json()
+    credits = data.get('credits')
+    if not isinstance(credits, int) or credits <= 0:
+        return jsonify({'error': 'Invalid credits value'}), 400
+    try:
+        UserRepository.add_credit_transaction(
+            user_id=user['id'],
+            transaction_type='test_add',
+            amount=credits,
+            description=f"Test add {credits} credits",
+            related_entity_id=None
+        )
+    except Exception as e:
+        print(f"Failed to add credits: {e}")
+        return jsonify({'error': 'Failed to add credits'}), 500
+    new_balance = UserRepository.get_user_credit_balance(user['id'])
+    return jsonify({'success': True, 'newBalance': new_balance}), 200

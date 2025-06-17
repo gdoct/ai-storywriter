@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { FaComment, FaTimes } from 'react-icons/fa';
 import { AI_STATUS, useAIStatus } from '../../../contexts/AIStatusContext';
+import { useAuthenticatedUser } from '../../../contexts/AuthenticatedUserContext';
 import { createContextAwareChatPrompt } from '../../../services/llmPromptService';
 import { streamChatCompletionWithStatus } from '../../../services/llmService';
 import { getSelectedModel } from '../../../services/modelSelection';
@@ -74,6 +75,7 @@ export const ChatAgent: React.FC<ChatAgentProps> = ({ scenario }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const { aiStatus, setAiStatus, setShowAIBusyModal } = useAIStatus();
+  const { refreshCredits } = useAuthenticatedUser();
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -116,10 +118,14 @@ export const ChatAgent: React.FC<ChatAgentProps> = ({ scenario }) => {
       await streamChatCompletionWithStatus(
         promptObj,
         (assistantText, isDone) => {
-          fullResponse = assistantText;
+          if (isDone) {
+            fullResponse = assistantText;
+          } else {
+            fullResponse += assistantText;
+          }
           
           // During streaming, extract and show just the answer content
-          const displayText = extractAnswerFromPartialJson(assistantText);
+          const displayText = extractAnswerFromPartialJson(fullResponse);
           setMessages(prev => {
             const updated = [...prev];
             for (let i = updated.length - 1; i >= 0; i--) {
@@ -167,6 +173,10 @@ export const ChatAgent: React.FC<ChatAgentProps> = ({ scenario }) => {
       });
     } finally {
       setIsGenerating(false);
+      // Refresh credits after chat completion with a small delay
+      setTimeout(() => {
+        refreshCredits();
+      }, 1000);
     }
   };
 
@@ -207,10 +217,14 @@ export const ChatAgent: React.FC<ChatAgentProps> = ({ scenario }) => {
             await streamChatCompletionWithStatus(
               promptObj,
               (assistantText, isDone) => {
-                fullResponse = assistantText;
+                if (isDone) {
+                  fullResponse = assistantText;
+                } else {
+                  fullResponse += assistantText;
+                }
                 
                 // During streaming, extract and show just the answer content
-                const displayText = extractAnswerFromPartialJson(assistantText);
+                const displayText = extractAnswerFromPartialJson(fullResponse);
                 setMessages(prev => {
                   const updated = [...prev];
                   for (let i = updated.length - 1; i >= 0; i--) {
@@ -258,6 +272,10 @@ export const ChatAgent: React.FC<ChatAgentProps> = ({ scenario }) => {
             });
           } finally {
             setIsGenerating(false);
+            // Refresh credits after chat completion with a small delay
+            setTimeout(() => {
+              refreshCredits();
+            }, 1000);
           }
         })();
       }, 100);

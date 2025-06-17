@@ -148,14 +148,15 @@ def proxy_chat_completions():
             total_response_tokens = 0
             accumulated_content = []
             try:
-                for chunk_str in service.chat_completion_stream(payload):
+                for chunk in service.chat_completion_stream(payload): # Changed chunk_str to chunk
+                    chunk_str = chunk.decode('utf-8') # Decode bytes to string
                     # Assuming chunk_str is a string representation of the JSON event
-                    # e.g., "data: {...}\n\n"
+                    # e.g., "data: {...}\\n\\n"
                     if chunk_str.startswith("data:"):
                         try:
-                            content_str = chunk_str[len("data:"):].strip()
+                            content_str = chunk_str[len("data:"):].strip() # Added .strip()
                             if content_str == "[DONE]":
-                                yield chunk_str # Pass DONE sentinel through
+                                yield "data: [DONE]\\n\\n" # Ensure DONE is also properly formatted for SSE
                                 continue
                             
                             chunk_json = json.loads(content_str)
@@ -175,7 +176,7 @@ def proxy_chat_completions():
                             # Handle cases where a chunk might not be perfect JSON (e.g. just a string part)
                             # This part needs to be robust based on actual stream format
                             pass # Or log error, count raw chunk string if applicable
-                    yield chunk_str # Yield the original chunk to the client
+                    yield chunk # Yield the original chunk (binary) to the client
             finally:
                 # After stream finishes (or breaks), calculate and deduct response tokens
                 final_response_text = "".join(accumulated_content)
@@ -205,4 +206,5 @@ def proxy_chat_completions():
 
     finally:
         # Release the lock so the next request can proceed.
-        ai_lock.release()
+        if ai_lock.locked(): # Check if the lock is actually held by the current thread/context
+            ai_lock.release()

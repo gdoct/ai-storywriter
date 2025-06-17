@@ -6,7 +6,7 @@ Handles all marketplace-related API endpoints for publishing, browsing, rating, 
 import json
 import sqlite3
 import threading
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from ai_marketplace_processor import AIMarketplaceProcessor
 from data.db import get_db_connection
@@ -15,6 +15,30 @@ from flask import Blueprint, jsonify, request
 from flask_jwt_extended import get_jwt_identity, jwt_required
 
 marketplace_bp = Blueprint('marketplace', __name__)
+
+# Simple in-memory cache for user credits
+_credits_cache = {}
+_cache_expiry = {}
+CACHE_DURATION_MINUTES = 5
+
+def _get_cached_credits(user_id):
+    """Get credits from cache if available and not expired"""
+    if user_id in _credits_cache and user_id in _cache_expiry:
+        if datetime.utcnow() < _cache_expiry[user_id]:
+            return _credits_cache[user_id]
+    return None
+
+def _cache_credits(user_id, credits):
+    """Cache user credits with expiry time"""
+    _credits_cache[user_id] = credits
+    _cache_expiry[user_id] = datetime.utcnow() + timedelta(minutes=CACHE_DURATION_MINUTES)
+
+def _clear_user_cache(user_id):
+    """Clear cache for specific user"""
+    if user_id in _credits_cache:
+        del _credits_cache[user_id]
+    if user_id in _cache_expiry:
+        del _cache_expiry[user_id]
 
 @marketplace_bp.route('/api/marketplace/publish/<int:original_story_id>', methods=['POST'])
 @jwt_required()
@@ -601,6 +625,58 @@ def get_by_genre(genre_name):
         
         conn.close()
         return jsonify({'stories': stories})
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@marketplace_bp.route('/api/marketplace/user/credits', methods=['GET'])
+@jwt_required()
+def get_user_credits():
+    """Get current user's credit balance with light caching"""
+    try:
+        username = get_jwt_identity()
+        user = UserRepository.get_user_by_username(username)
+        if not user:
+            return jsonify({'error': 'User not found'}), 404
+        
+        user_id = user['id']
+        
+        # Check cache first
+        cached_credits = _get_cached_credits(user_id)
+        if cached_credits is not None:
+            return jsonify({
+                'credits': cached_credits,
+                'cached': True
+            })
+        
+        # Calculate credits from transactions
+        credits = UserRepository.get_user_credit_balance(user_id)
+        
+        # Cache the result
+        _cache_credits(user_id, credits)
+        
+        return jsonify({
+            'credits': credits,
+            'cached': False
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@marketplace_bp.route('/api/marketplace/user/credits/clear-cache', methods=['POST'])
+@jwt_required()
+def clear_user_credits_cache():
+    """Clear the credits cache for the current user (useful after transactions)"""
+    try:
+        username = get_jwt_identity()
+        user = UserRepository.get_user_by_username(username)
+        if not user:
+            return jsonify({'error': 'User not found'}), 404
+        
+        user_id = user['id']
+        _clear_user_cache(user_id)
+        
+        return jsonify({'message': 'Cache cleared successfully'})
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500

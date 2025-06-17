@@ -36,12 +36,16 @@ export async function generateCharacterField(
       let fullText = '';
       await streamChatCompletionWithStatus(
         promptObj,
-        (text: string) => {
+        (text: string, isDone: boolean) => {
           if (!cancelled) {
-            if (options.onProgress) {
-              options.onProgress(text);
+            if (isDone) {
+              fullText = text;
+            } else {
+              fullText += text;
             }
-            fullText = text;
+            if (options.onProgress) {
+              options.onProgress(fullText);
+            }
           }
         },
         {

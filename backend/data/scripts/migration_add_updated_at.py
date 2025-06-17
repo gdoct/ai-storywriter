@@ -6,9 +6,7 @@ Database migration to add updated_at column to scenarios table
 import os
 import sqlite3
 from datetime import datetime
-
-# Get database path
-DB_PATH = os.environ.get('STORYWRITER_DB_PATH', os.path.join(os.path.dirname(__file__), 'storywriter.db'))
+from db_config import DB_PATH
 
 def migrate_add_updated_at():
     """Add updated_at column to scenarios table"""

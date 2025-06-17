@@ -8,8 +8,7 @@ rating, and donations.
 import os
 import sqlite3
 from datetime import datetime
-
-DB_PATH = os.environ.get('STORYWRITER_DB_PATH', os.path.join(os.path.dirname(__file__), 'storywriter.db'))
+from db_config import DB_PATH
 
 def run_migration():
     """Add marketplace tables to the database"""

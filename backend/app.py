@@ -3,6 +3,8 @@ import os
 from datetime import timedelta
 
 from controllers.auth_controller import auth_bp
+from controllers.character_appearance_controller import character_appearance_bp
+from controllers.character_photo_controller import character_photo_bp
 from controllers.dashboard_controller import dashboard_bp
 from controllers.marketplace_controller import marketplace_bp
 from controllers.payment_controller import payment_bp
@@ -39,6 +41,8 @@ CORS(app, resources={r"/api/*": {"origins": "*"}})  # Configure CORS for API end
 
 # Register blueprints
 app.register_blueprint(auth_bp)
+app.register_blueprint(character_appearance_bp)
+app.register_blueprint(character_photo_bp)
 app.register_blueprint(dashboard_bp)
 app.register_blueprint(marketplace_bp)
 app.register_blueprint(payment_bp)

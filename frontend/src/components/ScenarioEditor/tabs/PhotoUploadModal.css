@@ -1,0 +1,248 @@
+.photo-upload-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.photo-upload-modal {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+  max-width: 600px;
+  width: 100%;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.photo-upload-modal__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px 24px 0 24px;
+  border-bottom: 1px solid #e5e5e5;
+  margin-bottom: 24px;
+}
+
+.photo-upload-modal__header h3 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.photo-upload-modal__close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 6px;
+  color: #6b7280;
+  transition: all 0.2s ease;
+}
+
+.photo-upload-modal__close:hover {
+  background-color: #f3f4f6;
+  color: #374151;
+}
+
+.photo-upload-modal__close:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.photo-upload-modal__content {
+  padding: 0 24px;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.photo-upload-section {
+  margin-bottom: 24px;
+}
+
+.photo-upload-label {
+  display: block;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.photo-drop-zone {
+  border: 2px dashed #d1d5db;
+  border-radius: 12px;
+  padding: 40px 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background-color: #fafafa;
+}
+
+.photo-drop-zone:hover {
+  border-color: #6366f1;
+  background-color: #f8faff;
+}
+
+.photo-drop-zone__icon {
+  font-size: 48px;
+  color: #9ca3af;
+  margin-bottom: 16px;
+}
+
+.photo-drop-zone p {
+  margin: 0 0 8px 0;
+  color: #374151;
+  font-weight: 500;
+}
+
+.photo-drop-zone__hint {
+  font-size: 12px;
+  color: #6b7280;
+  margin: 0;
+}
+
+.photo-preview {
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #e5e5e5;
+}
+
+.photo-preview__image {
+  width: 100%;
+  height: auto;
+  max-height: 300px;
+  object-fit: contain;
+  background-color: #f9fafb;
+}
+
+.photo-preview__remove {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: rgba(0, 0, 0, 0.7);
+  border: none;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.photo-preview__remove:hover {
+  background: rgba(0, 0, 0, 0.9);
+}
+
+.photo-preview__remove:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.character-details-section {
+  margin-bottom: 24px;
+}
+
+.character-detail-label {
+  display: block;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 4px;
+  font-size: 14px;
+}
+
+.character-detail-hint {
+  font-size: 12px;
+  color: #6b7280;
+  margin: 0 0 16px 0;
+  line-height: 1.4;
+}
+
+.input-group {
+  margin-bottom: 16px;
+}
+
+.input-label {
+  display: block;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 6px;
+  font-size: 14px;
+}
+
+.input-textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #374151;
+  background-color: white;
+  transition: all 0.2s ease;
+  resize: vertical;
+  min-height: 80px;
+  font-family: inherit;
+}
+
+.input-textarea:focus {
+  outline: none;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.input-textarea:disabled {
+  background-color: #f9fafb;
+  color: #6b7280;
+  cursor: not-allowed;
+}
+
+.input-textarea::placeholder {
+  color: #9ca3af;
+}
+
+.photo-upload-modal__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 24px;
+  border-top: 1px solid #e5e5e5;
+  margin-top: auto;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .photo-upload-modal {
+    margin: 20px;
+    max-width: none;
+  }
+  
+  .photo-upload-modal__header {
+    padding: 20px 20px 0 20px;
+  }
+  
+  .photo-upload-modal__content {
+    padding: 0 20px;
+  }
+  
+  .photo-upload-modal__footer {
+    padding: 20px;
+    flex-direction: column;
+  }
+  
+  .photo-drop-zone {
+    padding: 30px 15px;
+  }
+}

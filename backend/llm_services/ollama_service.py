@@ -1,6 +1,9 @@
+import base64
 import json
+import re
 
 import requests
+from config.app_config import get_vision_model_config
 from llm_services.llm_service import BaseLLMService
 
 
@@ -129,3 +132,55 @@ class OllamaService(BaseLLMService):
             print(f"Ollama error: {str(e)}")
             print(traceback.format_exc())
             raise
+
+    def vision_completion(self, image_data, prompt, model=None):
+        """Process image with vision AI and return character data using Ollama."""
+        try:
+            # Convert image to base64
+            image_base64 = base64.b64encode(image_data).decode('utf-8')
+            
+            # Get vision config settings
+            vision_config = get_vision_model_config('ollama', model)
+            
+            # Get the model from config (already includes any override from the model parameter)
+            vision_model = vision_config['model']
+            
+            # Prepare the vision request payload for Ollama
+            ollama_payload = {
+                "model": vision_model,
+                "prompt": prompt,
+                "images": [image_base64],
+                "stream": False
+            }
+            
+            # Add any additional options from config
+            if vision_config.get('options'):
+                ollama_payload.update(vision_config.get('options', {}))
+            
+            # Send vision request to Ollama
+            response = requests.post(
+                f"{self.base_url}/api/generate",
+                json=ollama_payload,
+                timeout=vision_config.get('timeout', 30)
+            )
+            
+            if response.status_code != 200:
+                raise Exception(f"Ollama Vision API error: {response.status_code}")
+            
+            # Parse the response
+            response_data = response.json()
+            vision_response = response_data.get('response', '')
+            
+            return self._parse_vision_response(vision_response)
+            
+        except Exception as e:
+            print(f"Ollama vision error: {str(e)}")
+            raise
+
+    def _parse_vision_response(self, vision_response):
+        """Parse the vision response to extract structured data."""
+        from config.character_config import (CHARACTER_REQUIRED_FIELDS,
+                                             CHARACTER_SCHEMA_SAMPLE)
+        from llm_services.llm_service import parse_json_response
+        
+        return parse_json_response(vision_response, CHARACTER_REQUIRED_FIELDS, CHARACTER_SCHEMA_SAMPLE)

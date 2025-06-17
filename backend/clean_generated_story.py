@@ -6,13 +6,16 @@ import json
 import sqlite3
 from pathlib import Path
 
+from data.db_config import get_db_path
+
+
 def clean_generated_story_from_scenarios():
     """Remove generatedStory field from all scenarios in the database"""
     
     # Get the database path
-    db_path = Path(__file__).parent / "backend" / "data" / "storywriter.db"
+    db_path = get_db_path()
     
-    if not db_path.exists():
+    if not Path(db_path).exists():
         print(f"Database not found at {db_path}")
         return
     

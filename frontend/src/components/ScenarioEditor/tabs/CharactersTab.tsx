@@ -1,15 +1,19 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { FaDownload, FaPlus, FaRandom, FaTimes, FaTrash, FaUser } from 'react-icons/fa';
 import { v4 as uuidv4 } from 'uuid';
-import { useAIStatus } from '../../../contexts/AIStatusContext';
+import { AI_STATUS, useAIStatus } from '../../../contexts/AIStatusContext';
+import { useAuthenticatedUser } from '../../../contexts/AuthenticatedUserContext';
 import { generateCharacterField } from '../../../services/characterFieldGenerator';
 import { generateRandomCharacter } from '../../../services/storyGenerator';
 import { Character } from '../../../types/ScenarioTypes';
+import { showUserFriendlyError } from '../../../utils/errorHandling';
 import ImportModal from '../../common/ImportModal';
 import { Button } from '../common/Button';
 import { Input } from '../common/Input';
 import { TabProps } from '../types';
+import { CharacterPhoto } from './CharacterPhoto';
 import './CharactersTab.css';
+import { PhotoUploadModal } from './PhotoUploadModal';
 
 export const CharactersTab: React.FC<TabProps> = ({
   scenario,
@@ -17,15 +21,18 @@ export const CharactersTab: React.FC<TabProps> = ({
   isDirty,
   isLoading,
 }) => {
-  const characters = scenario.characters || [];
+  // Wrap characters in useMemo to stabilize reference for useCallback deps
+  const characters = useMemo(() => scenario.characters || [], [scenario.characters]);
   const [expandedCharacter, setExpandedCharacter] = useState<string | null>(null);
   const [showImportModal, setShowImportModal] = useState(false);
+  const [showPhotoUploadModal, setShowPhotoUploadModal] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [cancelGeneration, setCancelGeneration] = useState<(() => void) | null>(null);
   const [fieldGenerationInProgress, setFieldGenerationInProgress] = useState<{ characterId: string; fieldName: string } | null>(null);
   const [fieldStreamedText, setFieldStreamedText] = useState('');
   const [fieldCancelGeneration, setFieldCancelGeneration] = useState<(() => void) | null>(null);
   const { setAiStatus, setShowAIBusyModal } = useAIStatus();
+  const { refreshCredits } = useAuthenticatedUser();
 
   const handleAddCharacter = useCallback(() => {
     const newCharacter: Character = {
@@ -43,7 +50,29 @@ export const CharactersTab: React.FC<TabProps> = ({
     setExpandedCharacter(newCharacter.id);
   }, [characters, onScenarioChange]);
 
-  const handleRemoveCharacter = useCallback((characterId: string) => {
+  const handleRemoveCharacter = useCallback(async (characterId: string) => {
+    // Find the character to check if it has a photo
+    const characterToRemove = characters.find(c => c.id === characterId);
+    
+    // If character has a photo, delete it from the backend
+    if (characterToRemove?.photoId) {
+      try {
+        const token = localStorage.getItem('token');
+        if (token) {
+          await fetch(`/api/characters/photos/${characterToRemove.photoId}`, {
+            method: 'DELETE',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+            },
+          });
+        }
+      } catch (error) {
+        console.error('Error deleting character photo:', error);
+        // Continue with character deletion even if photo deletion fails
+      }
+    }
+    
+    // Remove character from the scenario
     const updatedCharacters = characters.filter(c => c.id !== characterId);
     onScenarioChange({ characters: updatedCharacters });
     if (expandedCharacter === characterId) {
@@ -73,6 +102,17 @@ export const CharactersTab: React.FC<TabProps> = ({
     }));
     onScenarioChange({ characters: [...characters, ...newCharacters] });
   }, [characters, onScenarioChange]);
+
+  const handleCharacterFromPhoto = useCallback((newCharacter: Character) => {
+    // Add the new character from photo
+    const updatedCharacters = [...characters, newCharacter];
+    onScenarioChange({ characters: updatedCharacters });
+    setExpandedCharacter(newCharacter.id);
+    // Refresh credits after successful generation
+    setTimeout(() => {
+      refreshCredits();
+    }, 1000);
+  }, [characters, onScenarioChange, refreshCredits]);
 
   const handleGenerateRandomCharacter = useCallback(async () => {
     try {
@@ -119,11 +159,23 @@ export const CharactersTab: React.FC<TabProps> = ({
         const updatedCharacters = [...characters, newCharacter];
         onScenarioChange({ characters: updatedCharacters });
         setExpandedCharacter(newCharacter.id);
+        // Refresh credits after successful generation with a small delay
+        setTimeout(() => {
+          refreshCredits();
+        }, 1000);
       } catch (error) {
         console.log('Character generation was interrupted:', error);
+        // Still refresh credits in case of partial consumption with a small delay
+        setTimeout(() => {
+          refreshCredits();
+        }, 1000);
       }
     } catch (error) {
       console.error('Error generating character:', error);
+      // Show user-friendly error with credit purchase option if needed
+      if (error instanceof Error) {
+        showUserFriendlyError(error, 'Character Generation');
+      }
     } finally {
       setIsGenerating(false);
       setCancelGeneration(null);
@@ -144,6 +196,62 @@ export const CharactersTab: React.FC<TabProps> = ({
     setFieldStreamedText('');
     
     try {
+      // Special handling for appearance field when a photo is available
+      if (fieldName === 'appearance' && character.photoId) {
+        setAiStatus(AI_STATUS.BUSY);
+        setShowAIBusyModal(true);
+        
+        try {
+          // Import the services we need
+          const photoServiceModule = await import('../../../services/characterPhotoService');
+          const promptServiceModule = await import('../../../services/llmPromptService');
+          
+          // Create a proper prompt for appearance generation
+          const prompt = promptServiceModule.createPhotoBasedAppearancePrompt(character, scenario);
+          
+          // Generate appearance based on the photo with the proper prompt
+          const { appearance } = await photoServiceModule.generateAppearanceFromPhoto(
+            character.photoId,
+            prompt
+          );
+          
+          // Update the character with the generated appearance
+          const updatedCharacters = characters.map(char =>
+            char.id === characterId
+              ? { ...char, appearance }
+              : char
+          );
+          onScenarioChange({ characters: updatedCharacters });
+          
+          // Reset states and refresh credits
+          setFieldStreamedText('');
+          setFieldGenerationInProgress(null);
+          setFieldCancelGeneration(null);
+          setAiStatus(AI_STATUS.IDLE);
+          setShowAIBusyModal(false);
+          
+          setTimeout(() => { refreshCredits(); }, 1000);
+          return;
+        } catch (error) {
+          console.error('Photo-based appearance generation failed:', error);
+          
+          // Reset states
+          setFieldStreamedText('');
+          setFieldGenerationInProgress(null);
+          setAiStatus(AI_STATUS.IDLE);
+          setShowAIBusyModal(false);
+          
+          // Show error and refresh credits
+          if (error instanceof Error) {
+            showUserFriendlyError(error, 'Photo-based Appearance Generation');
+          }
+          
+          setTimeout(() => { refreshCredits(); }, 1000);
+          return;
+        }
+      }
+      
+      // Regular field generation using LLM
       const generationResult = await generateCharacterField(
         scenario,
         character,
@@ -174,18 +282,30 @@ export const CharactersTab: React.FC<TabProps> = ({
         setFieldStreamedText('');
         setFieldGenerationInProgress(null);
         setFieldCancelGeneration(null);
+        
+        // Refresh credits
+        setTimeout(() => { refreshCredits(); }, 1000);
       } catch (error) {
         console.error('Field generation failed:', error);
         setFieldStreamedText('');
         setFieldGenerationInProgress(null);
         setFieldCancelGeneration(null);
+        
+        // Refresh credits anyway
+        setTimeout(() => { refreshCredits(); }, 1000);
       }
     } catch (error) {
       console.error('Error starting field generation:', error);
+      
+      // Show user-friendly error
+      if (error instanceof Error) {
+        showUserFriendlyError(error, `${fieldDisplayName} Generation`);
+      }
+      
       setFieldGenerationInProgress(null);
       setFieldCancelGeneration(null);
     }
-  }, [scenario, characters, onScenarioChange, setAiStatus, setShowAIBusyModal]);
+  }, [scenario, characters, onScenarioChange, setAiStatus, setShowAIBusyModal, refreshCredits]);
 
   const handleCancelFieldGeneration = useCallback(() => {
     if (fieldCancelGeneration) {
@@ -195,6 +315,13 @@ export const CharactersTab: React.FC<TabProps> = ({
     setFieldGenerationInProgress(null);
     setFieldStreamedText('');
   }, [fieldCancelGeneration]);
+
+  const handleCharacterPhotoUpdate = useCallback((updatedCharacter: Character) => {
+    const updatedCharacters = characters.map(char =>
+      char.id === updatedCharacter.id ? updatedCharacter : char
+    );
+    onScenarioChange({ characters: updatedCharacters });
+  }, [characters, onScenarioChange]);
 
   // Field Generate Button component
   const FieldGenerateButton: React.FC<{
@@ -265,6 +392,15 @@ export const CharactersTab: React.FC<TabProps> = ({
             </Button>
           )}
           <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => setShowPhotoUploadModal(true)}
+            icon={<FaUser />}
+            disabled={isLoading}
+          >
+            Create from photo...
+          </Button>
+          <Button
             variant="ghost"
             size="sm"
             onClick={() => setShowImportModal(true)}
@@ -292,28 +428,48 @@ export const CharactersTab: React.FC<TabProps> = ({
                   className="character-card__header"
                   onClick={() => toggleCharacterExpanded(character.id)}
                 >
-                  <div className="character-card__info">
-                    <h4 className="character-card__name">
-                      {character.name || 'Unnamed Character'}
-                    </h4>
-                    {character.role && (
-                      <span className="character-card__role">{character.role}</span>
-                    )}
+                  <div className="character-card__header-left">
+                    <div className="character-card__thumbnail">
+                      <CharacterPhoto
+                        character={character}
+                        onPhotoUpdate={handleCharacterPhotoUpdate}
+                        size="small"
+                        editable={false}
+                      />
+                    </div>
+                    <div className="character-card__info">
+                      <h4 className="character-card__name">
+                        {character.name || 'Unnamed Character'}
+                      </h4>
+                      {character.role && (
+                        <span className="character-card__role">{character.role}</span>
+                      )}
+                    </div>
                   </div>
                   <div className="character-card__actions">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleRemoveCharacter(character.id)}
-                      icon={<FaTrash />}
-                    >
-                      Remove
-                    </Button>
+                    <div onClick={(e) => e.stopPropagation()}>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleRemoveCharacter(character.id)}
+                        icon={<FaTrash />}
+                      >
+                        Remove
+                      </Button>
+                    </div>
                   </div>
                 </div>
 
                 {expandedCharacter === character.id && (
                   <div className="character-card__details">
+                    <div className="character-card__photo">
+                      <CharacterPhoto
+                        character={character}
+                        onPhotoUpdate={handleCharacterPhotoUpdate}
+                        size="medium"
+                        editable={!isLoading && !fieldGenerationInProgress}
+                      />
+                    </div>
                     <div className="character-card__grid">
                       <div className="input-with-generate">
                         <Input
@@ -489,6 +645,15 @@ export const CharactersTab: React.FC<TabProps> = ({
               {character.role && <span> - {character.role}</span>}
             </span>
           )}
+        />
+      )}
+      
+      {showPhotoUploadModal && (
+        <PhotoUploadModal
+          isOpen={showPhotoUploadModal}
+          onClose={() => setShowPhotoUploadModal(false)}
+          onCharacterCreated={handleCharacterFromPhoto}
+          scenario={scenario}
         />
       )}
     </div>

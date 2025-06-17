@@ -31,10 +31,10 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
   useEffect(() => {
     if (paymentMethod === 'card') {
       setIsFormValid(
-        cardDetails.number.length >= 16 &&
-        cardDetails.expiry.length >= 5 &&
-        cardDetails.cvv.length >= 3 &&
-        cardDetails.name.trim().length > 0
+        (cardDetails.number.length >= 16 &&
+          cardDetails.expiry.length >= 5 &&
+          cardDetails.cvv.length >= 3 &&
+          cardDetails.name.trim().length > 0)
       );
     } else {
       setIsFormValid(true); // PayPal doesn't need form validation
@@ -44,7 +44,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
   const formatCardNumber = (value: string) => {
     const v = value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
     const matches = v.match(/\d{4,16}/g);
-    const match = matches && matches[0] || '';
+    const match = (matches && matches[0]) || '';
     const parts = [];
     for (let i = 0, len = match.length; i < len; i += 4) {
       parts.push(match.substring(i, i + 4));

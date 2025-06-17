@@ -1,5 +1,6 @@
 import json
 
+from config.app_config import get_vision_model_config
 from data.db import get_db_connection
 from flask import Blueprint, jsonify, request
 from llm_services.llm_service import get_llm_service
@@ -89,3 +90,50 @@ def get_llm_status():
             'backend_type': backend_type,
             'error': str(e)
         })
+
+@settings_controller.route('/api/settings/vision', methods=['GET'])
+def get_vision_settings():
+    try:
+        # Get active backend type
+        settings = get_current_settings()
+        if not settings:
+            return jsonify({'status': 'error', 'message': 'No active LLM backend configured'}), 400
+            
+        backend_type = settings['backend_type']
+        
+        # Get vision config for the active backend
+        vision_config = get_vision_model_config(backend_type)
+        
+        return jsonify({
+            'status': 'success',
+            'backend_type': backend_type,
+            'vision_config': vision_config
+        })
+    except Exception as e:
+        return jsonify({'status': 'error', 'error': str(e)}), 500
+
+@settings_controller.route('/api/settings/vision', methods=['POST'])
+def update_vision_settings():
+    try:
+        data = request.get_json()
+        backend_type = data.get('backend_type')
+        model = data.get('model')
+        
+        if not backend_type:
+            # Get from active settings
+            settings = get_current_settings()
+            if not settings:
+                return jsonify({'status': 'error', 'message': 'No active LLM backend configured'}), 400
+            backend_type = settings['backend_type']
+        
+        # For now just return the config - in a real implementation
+        # we would update the database with custom vision settings
+        vision_config = get_vision_model_config(backend_type, model)
+        
+        return jsonify({
+            'status': 'success',
+            'backend_type': backend_type,
+            'vision_config': vision_config
+        })
+    except Exception as e:
+        return jsonify({'status': 'error', 'error': str(e)}), 500

@@ -6,9 +6,7 @@ Database migration to add legal agreement tracking to users table
 import os
 import sqlite3
 from datetime import datetime
-
-# Get database path
-DB_PATH = os.environ.get('STORYWRITER_DB_PATH', os.path.join(os.path.dirname(__file__), 'storywriter.db'))
+from db_config import DB_PATH
 
 def migrate_legal_agreement_tracking():
     """Add legal agreement tracking columns to users table"""

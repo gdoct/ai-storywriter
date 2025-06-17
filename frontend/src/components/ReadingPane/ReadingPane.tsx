@@ -3,6 +3,7 @@ import { AI_STATUS, useAIStatus } from '../../contexts/AIStatusContext';
 import { createContinueStoryPrompt } from '../../services/llmPromptService';
 import { generateChapterSummary, generateStory } from '../../services/storyGenerator';
 import { Scenario } from '../../types/ScenarioTypes';
+import { isInsufficientCreditsError } from '../../utils/errorHandling';
 import ContinueSummaryModal from './ContinueSummaryModal';
 import MarkdownViewer from './MarkDownViewer';
 import './ReadingPane.css';
@@ -196,9 +197,25 @@ const ReadingPane: React.FC<ReadingPaneProps> = ({
       }
     } catch (error) {
       console.error('Error generating story:', error);
+      // Show the actual error message to the user with better UX for credit errors
+      const errorMessage = error instanceof Error ? error.message : 'Failed to generate story. Please try again.';
+      
+      let displayContent = `❌ **Generation Error**\n\n${errorMessage}\n\nPlease try again.`;
+      
+      // If it's a credit error, provide a link to buy credits
+      if (error instanceof Error && isInsufficientCreditsError(error)) {
+        displayContent = `❌ **Insufficient Credits**\n\n${errorMessage}\n\n[Click here to purchase more credits](/buy-credits)`;
+      }
+      
       setTabs(prevGlobalTabs =>
         prevGlobalTabs.map(t =>
-          t.id === newTabId ? { ...t, title: 'Generation Failed', isGenerating: false, source: 'none' } : t
+          t.id === newTabId ? { 
+            ...t, 
+            title: 'Generation Failed', 
+            content: displayContent,
+            isGenerating: false, 
+            source: 'none' 
+          } : t
         )
       );
     } finally {

@@ -168,7 +168,7 @@ Summary:"""
         available_genres = [
             "Fantasy", "Science Fiction", "Mystery", "Romance", "Adventure", 
             "Horror", "Comedy", "Drama", "Thriller", "Historical Fiction",
-            "Young Adult", "Children's", "Literary Fiction", "Crime",
+            "Young Adult", "Children's", "Literary Fiction", "Crime", "Adult",
             "Supernatural", "Action", "Western", "Biography", "Non-Fiction"
         ]
         

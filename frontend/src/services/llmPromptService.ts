@@ -534,6 +534,61 @@ export function createCharacterFieldPrompt(
   };
 }
 
+export function createCharacterFromPhotoPrompt(
+  scenario: Scenario,
+  characterName?: string,
+  characterRole?: string,
+  additionalPrompt?: string
+): string {
+  let prompt = "You are an expert character creator for " + scenario.writingStyle.genre + " stories. Analyze the provided photo carefully and create a character based on what you see in the image and the story context.\n\n";
+  prompt += "IMPORTANT: Base your character description on the actual visual details from the photo - clothing, appearance, facial expressions, setting, activity, etc.\n";
+  prompt += "If the character is doing an activity in the photo, describe that activity in the character backstory as a favorite pastime.\n\n";
+  if (characterName && characterName.trim()) { prompt += `Character Name: ${characterName.trim()}\n`; }
+  else { prompt += 'Give this character a name based on what you see in the photo. The name should be appropriate for the genre, not be cliche, and the first name should NOT be "Silas" or "Seraphina".\n'; }
+  prompt += '  "Appearance": "(detailed physical description based on what you observe in the photo - include clothing, build, facial features, age, etc.)",\n';
+  if (characterRole && characterRole.trim()) { prompt += `Character Role: ${characterRole.trim()}\n`; }
+  if (additionalPrompt && additionalPrompt.trim()) { prompt += `Additional Context: ${additionalPrompt.trim()}\n`; }
+  prompt += `\nThe new character should fit in a story with these characteristics:\n`;
+  if (scenario && scenario.writingStyle) {
+    prompt += `Genre: ${scenario.writingStyle.genre || "General Fiction"}\n`;
+    if (scenario.writingStyle.tone) {
+      prompt += `Tone: ${scenario.writingStyle.tone}\n`;
+    }
+    if (scenario.writingStyle.theme) {
+      prompt += `Theme: ${scenario.writingStyle.theme}\n`;
+    }
+    if (scenario.writingStyle.other) {
+      prompt += `Style instructions: ${scenario.writingStyle.other}\n`;
+    }
+  } else {
+    prompt += "Genre: General Fiction\n";
+  }
+  if (scenario && scenario.title) {
+    prompt += `Story Title: ${scenario.title}\n`;
+  }
+  if (scenario && scenario.backstory) {
+    prompt += `Backstory: ${scenario.backstory}\n`;
+  }
+  if (scenario && scenario.storyarc) {
+    prompt += `Story Arc: ${scenario.storyarc}\n`;
+  }
+  if (scenario && scenario.notes) {
+    prompt += `Notes: ${scenario.notes}\n`;
+  }
+  prompt += `\n\nIMPORTANT: Your response must be in JSON format ONLY with the following structure:\n`;
+  prompt += `{\n`;
+  prompt += '  "name": "(name)",\n';
+  prompt += '  "alias": "(alias)",\n';
+  prompt += '  "role": "(role)",\n';
+  prompt += '  "gender": "(gender)",\n';
+  prompt += '  "appearance": "(appearance)",\n';
+  prompt += '  "backstory": "(backstory)",\n';
+  prompt += '  "extraInfo": "(extraInfo)"\n';
+  prompt += `}\n`;  
+
+  return prompt;
+}
+
 export function createContextAwareChatPrompt(scenario: Scenario, userMessage: string, chathistory: string): llmCompletionRequestMessage {
   if (!scenario) {
     console.error("Error: scenario is null or undefined");
@@ -567,4 +622,59 @@ return {
     systemMessage: systemprompt,
     userMessage: userprompt
   };
+}
+
+/**
+ * Create a prompt specifically for generating character appearance from a photo
+ * @param character Character with existing properties
+ * @param scenario Current scenario for context
+ * @returns Formatted prompt message for the LLM
+ */
+export function createPhotoBasedAppearancePrompt(
+  character: Character,
+  scenario: Scenario
+): string {
+  // Verify scenario is not null or undefined
+  if (!scenario) {
+    console.error("Error: scenario is null or undefined");
+    scenario = {
+      id: 'error-fallback',
+      userId: 'system',
+      createdAt: new Date(),
+      writingStyle: { genre: "General Fiction" }
+    };
+  }
+
+  // Get writing style and other details from scenario
+  const writingStyle = scenario.writingStyle || { genre: "General Fiction" };
+  const genre = writingStyle.genre || "General Fiction";
+  const tone = writingStyle.tone || "";
+  const style = writingStyle.style || "";
+
+  let prompt = `You are an expert character designer for ${genre} fiction. You need to provide a detailed physical appearance description for the following character based on their photo.\n\n`;
+  
+  // Add character context
+  prompt += "Character information:\n";
+  if (character.name) prompt += `- Name: ${character.name}\n`;
+  if (character.alias) prompt += `- Alias: ${character.alias}\n`;
+  if (character.role) prompt += `- Role: ${character.role}\n`;
+  if (character.gender) prompt += `- Gender: ${character.gender}\n`;
+  if (character.backstory) prompt += `- Backstory summary: ${character.backstory.slice(0, 150)}...\n`;
+  
+  prompt += "\nBased on the provided photo, describe the character's physical appearance in detail. Include:\n";
+  prompt += "- Physical features (face, hair, eyes, build, etc.)\n";
+  prompt += "- Clothing style and distinctive items\n";
+  prompt += "- Overall impression and presence\n";
+  
+  if (tone) {
+    prompt += `\nWrite with a ${tone} tone that matches the overall story style.`;
+  }
+  
+  if (style) {
+    prompt += `\nUse a ${style} writing style.`;
+  }
+  
+  prompt += "\nProvide only the appearance description, not labeled as JSON or with any additional commentary. Write 2-3 paragraphs of rich, detailed description.";
+  
+  return prompt;
 }

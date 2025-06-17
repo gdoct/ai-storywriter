@@ -3,9 +3,7 @@ Database migration to add user tier support
 """
 import os
 import sqlite3
-
-# Set DB_PATH directly to avoid import issues
-DB_PATH = os.environ.get('STORYWRITER_DB_PATH', os.path.join(os.path.dirname(__file__), 'storywriter.db'))
+from db_config import DB_PATH
 
 def migrate_user_tiers():
     """Add tier support to the existing database"""

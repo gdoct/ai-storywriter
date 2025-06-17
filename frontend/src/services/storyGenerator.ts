@@ -33,11 +33,15 @@ export async function streamPromptCompletionWithStatus({
   };
   await streamChatCompletionWithStatus(
     promptObj,
-    (text) => {
-      if (onProgress) {
-        onProgress(text.slice(fullText.length));
+    (text, isDone) => {
+      if (isDone) {
+        fullText = text;
+      } else {
+        fullText += text;
+        if (onProgress) {
+          onProgress(text);
+        }
       }
-      fullText = text;
     },
     {
       model: selectedModel || undefined,
@@ -139,9 +143,13 @@ export async function generateStory(
       let fullText = '';
       await streamChatCompletionWithStatus(
         promptObj,
-        (text) => {
-          if (options.onProgress) options.onProgress(text.slice(fullText.length));
-          fullText = text;
+        (text, isDone) => {
+          if (isDone) {
+            fullText = text;
+          } else {
+            fullText += text;
+            if (options.onProgress) options.onProgress(text);
+          }
         },
         { 
           model: selectedModel || undefined,
@@ -186,9 +194,16 @@ export async function generateBackstory(
       const selectedModel = getSelectedModel();
       await streamChatCompletionWithStatus(
         promptObj,
-        (text) => {
-          if (options.onProgress) options.onProgress(text.slice(fullText.length));
-          fullText = text;
+        (text, isDone) => {
+          if (isDone) {
+            // Final call with complete text
+            fullText = text;
+            if (options.onProgress) options.onProgress(text);
+          } else {
+            // Incremental chunk during streaming
+            fullText += text;
+            if (options.onProgress) options.onProgress(text);
+          }
         },
         { 
           model: selectedModel || undefined,
@@ -233,9 +248,16 @@ export async function rewriteBackstory(
       let fullText = '';
       await streamChatCompletionWithStatus(
         promptObj,
-        (text) => {
-          if (options.onProgress) options.onProgress(text.slice(fullText.length));
-          fullText = text;
+        (text, isDone) => {
+          if (isDone) {
+            // Final call with complete text
+            fullText = text;
+            if (options.onProgress) options.onProgress(text);
+          } else {
+            // Incremental chunk during streaming
+            fullText += text;
+            if (options.onProgress) options.onProgress(text);
+          }
         },
         { 
           model: selectedModel || undefined,
@@ -281,9 +303,13 @@ export async function rewriteStoryArc(
       
       await streamChatCompletionWithStatus(
         prompt,
-        (text) => {
-          if (options.onProgress) options.onProgress(text.slice(fullText.length));
-          fullText = text;
+        (text, isDone) => {
+          if (isDone) {
+            fullText = text;
+          } else {
+            fullText += text;
+            if (options.onProgress) options.onProgress(text);
+          }
         },
         { 
           model: selectedModel || undefined,
@@ -327,9 +353,13 @@ export async function generateRandomWritingStyle(
       let fullText = '';
       await streamChatCompletionWithStatus(
         promptObj,
-        (text) => {
-          if (options.onProgress) options.onProgress(text.slice(fullText.length));
-          fullText = text;
+        (text, isDone) => {
+          if (isDone) {
+            fullText = text;
+          } else {
+            fullText += text;
+            if (options.onProgress) options.onProgress(text);
+          }
         },
         { 
           model: selectedModel || undefined,
@@ -376,9 +406,13 @@ export async function generateRandomCharacter(
       let fullText = '';
       await streamChatCompletionWithStatus(
         promptObj,
-        (text) => {
-          if (options.onProgress) options.onProgress(text.slice(fullText.length));
-          fullText = text;
+        (text, isDone) => {
+          if (isDone) {
+            fullText = text;
+          } else {
+            fullText += text;
+            if (options.onProgress) options.onProgress(text);
+          }
         },
         { 
           model: selectedModel || undefined,
@@ -448,9 +482,13 @@ export async function generateStoryArc(
       let fullText = '';
       await streamChatCompletionWithStatus(
         prompt,
-        (text) => {
-          if (options.onProgress) options.onProgress(text.slice(fullText.length));
-          fullText = text;
+        (text, isDone) => {
+          if (isDone) {
+            fullText = text;
+          } else {
+            fullText += text;
+            if (options.onProgress) options.onProgress(text);
+          }
         },
         { 
           model: selectedModel || undefined,

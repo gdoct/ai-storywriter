@@ -1,0 +1,219 @@
+.character-photo {
+  position: relative;
+  display: inline-block;
+}
+
+.character-photo__container {
+  position: relative;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--color-background-secondary, #f5f5f5);
+  border: 2px solid var(--color-border-light, #e0e0e0);
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.character-photo--editable .character-photo__container {
+  cursor: pointer;
+}
+
+.character-photo--editable .character-photo__container:hover {
+  border-color: var(--color-primary, #007bff);
+  background: var(--color-background-hover, #f8f9fa);
+}
+
+/* Size variants */
+.character-photo--small .character-photo__container {
+  width: 60px;
+  height: 60px;
+}
+
+.character-photo--medium .character-photo__container {
+  width: 100px;
+  height: 100px;
+}
+
+.character-photo--large .character-photo__container {
+  width: 150px;
+  height: 150px;
+}
+
+/* Image display */
+.character-photo__image {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.character-photo__image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 6px;
+}
+
+/* Pictogram display */
+.character-photo__pictogram {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-muted, #6c757d);
+  font-size: 2em;
+}
+
+.character-photo--small .character-photo__pictogram {
+  font-size: 1.2em;
+}
+
+.character-photo--large .character-photo__pictogram {
+  font-size: 3em;
+}
+
+/* Gender icons */
+.gender-icon {
+  font-size: 1em;
+  font-weight: bold;
+}
+
+.gender-icon.male {
+  color: #007bff;
+}
+
+.gender-icon.female {
+  color: #e91e63;
+}
+
+.gender-icon.other {
+  color: #6f42c1;
+}
+
+/* Overlay for edit mode */
+.character-photo__overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  color: white;
+}
+
+.character-photo--editable:hover .character-photo__overlay {
+  opacity: 1;
+}
+
+.character-photo__camera-icon {
+  font-size: 1.5em;
+  margin-bottom: 4px;
+}
+
+.character-photo--small .character-photo__camera-icon {
+  font-size: 1em;
+  margin-bottom: 2px;
+}
+
+.character-photo__upload-text {
+  font-size: 0.75em;
+  text-align: center;
+  font-weight: 500;
+}
+
+.character-photo--small .character-photo__upload-text {
+  font-size: 0.6em;
+}
+
+/* Remove button */
+.character-photo__remove-btn {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  background: rgba(220, 53, 69, 0.9);
+  border: none;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  cursor: pointer;
+  font-size: 0.8em;
+  transition: background 0.2s ease;
+}
+
+.character-photo__remove-btn:hover {
+  background: rgba(220, 53, 69, 1);
+}
+
+.character-photo--small .character-photo__remove-btn {
+  width: 18px;
+  height: 18px;
+  font-size: 0.7em;
+  top: 2px;
+  right: 2px;
+}
+
+/* Loading states */
+.character-photo__loading,
+.character-photo__uploading {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-muted, #6c757d);
+  font-size: 0.8em;
+}
+
+.character-photo--loading .character-photo__container,
+.character-photo--uploading .character-photo__container {
+  cursor: not-allowed;
+}
+
+/* Spinner animation */
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #f3f3f3;
+  border-top: 2px solid var(--color-primary, #007bff);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 4px;
+}
+
+.character-photo--small .spinner {
+  width: 16px;
+  height: 16px;
+  border-width: 1.5px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Integration with character cards */
+.character-card__photo {
+  margin-bottom: 12px;
+  display: flex;
+  justify-content: center;
+}
+
+.character-card__photo .character-photo {
+  align-self: center;
+}

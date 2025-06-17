@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useAuthenticatedUser } from '../../contexts/AuthenticatedUserContext';
 import { useAuth } from '../../services/AuthContext';
 import { logout } from '../../services/security';
+import CreditsBadge from '../CreditsBadge';
 import './Navigation.css';
 
 interface AuthenticatedNavProps {
@@ -12,6 +14,7 @@ interface AuthenticatedNavProps {
 const AuthenticatedNav: React.FC<AuthenticatedNavProps> = ({ username, email }) => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const { setAuthenticated } = useAuth();
+  const { creditRefreshTrigger } = useAuthenticatedUser();
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -27,7 +30,7 @@ const AuthenticatedNav: React.FC<AuthenticatedNavProps> = ({ username, email }) 
         <Link to="/dashboard" className="nav-link">Dashboard</Link>
         <Link to="/marketplace" className="nav-link">Marketplace</Link>
         
-        <Link to="/buy-credits" className="nav-link">Buy Credits</Link>
+        <Link to="/buy-credits" className="nav-link"><CreditsBadge className="header-badge" refreshTrigger={creditRefreshTrigger} /></Link>
       </nav>
       <div className="user-dropdown">
         <button 

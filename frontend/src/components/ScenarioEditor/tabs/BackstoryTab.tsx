@@ -1,7 +1,9 @@
 import React, { useCallback, useState } from 'react';
 import { FaBook, FaDownload, FaTimes } from 'react-icons/fa';
 import { useAIStatus } from '../../../contexts/AIStatusContext';
+import { useAuthenticatedUser } from '../../../contexts/AuthenticatedUserContext';
 import { generateBackstory, rewriteBackstory } from '../../../services/storyGenerator';
+import { showUserFriendlyError } from '../../../utils/errorHandling';
 import ImportModal from '../../common/ImportModal';
 import { Button } from '../common/Button';
 import { Input } from '../common/Input';
@@ -18,6 +20,7 @@ export const BackstoryTab: React.FC<TabProps> = ({
   const [showImportModal, setShowImportModal] = useState(false);
   const [cancelGeneration, setCancelGeneration] = useState<(() => void) | null>(null);
   const { setAiStatus, setShowAIBusyModal } = useAIStatus();
+  const { refreshCredits } = useAuthenticatedUser();
 
   const handleBackstoryChange = useCallback((value: string) => {
     onScenarioChange({ backstory: value });
@@ -46,12 +49,24 @@ export const BackstoryTab: React.FC<TabProps> = ({
       try {
         const generatedBackstory = await generationResult.result;
         onScenarioChange({ backstory: generatedBackstory });
+        // Refresh credits after successful generation with a small delay
+        setTimeout(() => {
+          refreshCredits();
+        }, 1000);
       } catch (error) {
         console.log('Backstory generation was interrupted:', error);
         // Keep the accumulated text
+        // Still refresh credits in case of partial consumption with a small delay
+        setTimeout(() => {
+          refreshCredits();
+        }, 1000);
       }
     } catch (error) {
       console.error('Error generating backstory:', error);
+      // Show user-friendly error with credit purchase option if needed
+      if (error instanceof Error) {
+        showUserFriendlyError(error, 'Backstory Generation');
+      }
     } finally {
       setIsGenerating(false);
       setCancelGeneration(null);
@@ -85,9 +100,17 @@ export const BackstoryTab: React.FC<TabProps> = ({
       try {
         const rewrittenBackstory = await generationResult.result;
         onScenarioChange({ backstory: rewrittenBackstory });
+        // Refresh credits after successful generation with a small delay
+        setTimeout(() => {
+          refreshCredits();
+        }, 1000);
       } catch (error) {
         console.log('Backstory rewriting was interrupted:', error);
         // Keep the accumulated text
+        // Still refresh credits in case of partial consumption with a small delay
+        setTimeout(() => {
+          refreshCredits();
+        }, 1000);
       }
     } catch (error) {
       console.error('Error rewriting backstory:', error);

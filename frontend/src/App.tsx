@@ -6,6 +6,7 @@ import Footer from './components/Footer/Footer';
 import TopBar from './components/TopBar';
 import { SceneHoverProvider } from './context/SceneHoverContext';
 import { AIStatusProvider } from './contexts/AIStatusContext';
+import { AuthenticatedUserProvider } from './contexts/AuthenticatedUserContext';
 import { useAIStatusPolling } from './hooks/useAIStatusPolling';
 import getRoutes from './routes';
 import { AuthProvider } from './services/AuthContext';
@@ -51,9 +52,11 @@ function App() {
   return (
     <Router>
       <AIStatusProvider>
-        <SceneHoverProvider>
-          <AppContent />
-        </SceneHoverProvider>
+        <AuthenticatedUserProvider>
+          <SceneHoverProvider>
+            <AppContent />
+          </SceneHoverProvider>
+        </AuthenticatedUserProvider>
       </AIStatusProvider>
     </Router>
   );

@@ -1,10 +1,10 @@
 import React, { useCallback, useEffect, useRef } from 'react';
 import { FaBook, FaEye, FaSave, FaStickyNote, FaUser, FaUsers } from 'react-icons/fa';
-import { useAIStatus } from '../../contexts/AIStatusContext';
 import { createScenario, updateScenario } from '../../services/scenario';
 import { generateStory } from '../../services/storyGenerator';
 import { getStoriesByScenario, saveStory } from '../../services/storyService';
 import { Scenario } from '../../types/ScenarioTypes';
+import { isInsufficientCreditsError } from '../../utils/errorHandling';
 import { Button } from './common/Button';
 import { ChatAgent } from './common/ChatAgent';
 import { Tabs } from './common/Tabs';
@@ -64,8 +64,29 @@ export const ScenarioEditor: React.FC<ScenarioEditorProps> = ({
   onClose,
 }) => {
   const { state, dispatch } = useScenarioEditor();
-  const { setAiStatus, setShowAIBusyModal } = useAIStatus();
   const cancelGenerationRef = useRef<(() => void) | null>(null);
+
+  // Reset scroll position when component mounts
+  useEffect(() => {
+    // Multiple approaches to ensure scroll reset works
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    
+    // Also try after next render cycle
+    setTimeout(() => {
+      window.scrollTo(0, 0);
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    }, 0);
+    
+    // And after a short delay to handle any router animations
+    setTimeout(() => {
+      window.scrollTo(0, 0);
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    }, 100);
+  }, []);
 
   // Initialize scenario when component mounts or initialScenario changes
   useEffect(() => {
@@ -167,10 +188,27 @@ export const ScenarioEditor: React.FC<ScenarioEditorProps> = ({
         // Just log that it was cancelled, don't show error to user
         console.log('Story generation was cancelled by user');
       } else {
-        dispatch({ 
-          type: 'SET_ERROR', 
-          payload: { field: 'generation', message: 'Failed to generate story. Please try again.' }
-        });
+        // Show the actual error message from the backend
+        const errorMessage = error instanceof Error ? error.message : 'Failed to generate story. Please try again.';
+        
+        // Check if this is a credit-related error and provide a better experience
+        if (error instanceof Error && isInsufficientCreditsError(error)) {
+          const shouldRedirect = window.confirm(
+            `❌ Story Generation Failed - Insufficient Credits\n\n` +
+            `${errorMessage}\n\n` +
+            `Would you like to purchase more credits now?\n\n` +
+            `Click OK to go to the Buy Credits page, or Cancel to stay here.`
+          );
+          
+          if (shouldRedirect) {
+            window.location.href = '/buy-credits';
+          }
+        } else {
+          dispatch({ 
+            type: 'SET_ERROR', 
+            payload: { field: 'generation', message: errorMessage }
+          });
+        }
       }
     } finally {
       dispatch({ type: 'SET_GENERATING', payload: false });
