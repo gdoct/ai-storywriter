@@ -1,10 +1,9 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { FaDownload, FaPlus, FaRandom, FaTimes, FaTrash, FaUser } from 'react-icons/fa';
+import { FaDownload, FaPlus, FaRandom, FaTrash, FaUser } from 'react-icons/fa';
 import { v4 as uuidv4 } from 'uuid';
 import { AI_STATUS, useAIStatus } from '../../../contexts/AIStatusContext';
 import { useAuthenticatedUser } from '../../../contexts/AuthenticatedUserContext';
 import { generateCharacterField } from '../../../services/characterFieldGenerator';
-import { generateRandomCharacter } from '../../../services/storyGenerator';
 import { Character } from '../../../types/ScenarioTypes';
 import { showUserFriendlyError } from '../../../utils/errorHandling';
 import ImportModal from '../../common/ImportModal';
@@ -14,6 +13,7 @@ import { TabProps } from '../types';
 import { CharacterPhoto } from './CharacterPhoto';
 import './CharactersTab.css';
 import { PhotoUploadModal } from './PhotoUploadModal';
+import { RandomCharacterModal } from './RandomCharacterModal';
 
 export const CharactersTab: React.FC<TabProps> = ({
   scenario,
@@ -26,8 +26,7 @@ export const CharactersTab: React.FC<TabProps> = ({
   const [expandedCharacter, setExpandedCharacter] = useState<string | null>(null);
   const [showImportModal, setShowImportModal] = useState(false);
   const [showPhotoUploadModal, setShowPhotoUploadModal] = useState(false);
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [cancelGeneration, setCancelGeneration] = useState<(() => void) | null>(null);
+  const [showRandomCharacterModal, setShowRandomCharacterModal] = useState(false);
   const [fieldGenerationInProgress, setFieldGenerationInProgress] = useState<{ characterId: string; fieldName: string } | null>(null);
   const [fieldStreamedText, setFieldStreamedText] = useState('');
   const [fieldCancelGeneration, setFieldCancelGeneration] = useState<(() => void) | null>(null);
@@ -114,79 +113,16 @@ export const CharactersTab: React.FC<TabProps> = ({
     }, 1000);
   }, [characters, onScenarioChange, refreshCredits]);
 
-  const handleGenerateRandomCharacter = useCallback(async () => {
-    try {
-      setIsGenerating(true);
-      
-      // Determine character type based on existing characters
-      const existingRoles = characters.map(c => c.role?.toLowerCase());
-      let characterType = 'supporting'; // Default
-      
-      if (!existingRoles.includes('protagonist')) {
-        characterType = 'protagonist';
-      } else if (!existingRoles.includes('antagonist')) {
-        characterType = 'antagonist';
-      }
-      
-      const generationResult = await generateRandomCharacter(
-        scenario,
-        characterType,
-        {
-          onProgress: () => {}, // No need for progress on character generation
-          temperature: 0.8
-        },
-        setAiStatus,
-        setShowAIBusyModal
-      );
-      
-      setCancelGeneration(() => generationResult.cancelGeneration);
-      
-      try {
-        const characterJson = await generationResult.result;
-        const generatedCharacterData = JSON.parse(characterJson);
-        
-        const newCharacter: Character = {
-          id: uuidv4(),
-          name: generatedCharacterData.name || '',
-          alias: generatedCharacterData.alias || '',
-          role: generatedCharacterData.role || characterType,
-          gender: generatedCharacterData.gender || '',
-          appearance: generatedCharacterData.appearance || '',
-          backstory: generatedCharacterData.backstory || '',
-          extraInfo: generatedCharacterData.extraInfo || '',
-        };
-        
-        const updatedCharacters = [...characters, newCharacter];
-        onScenarioChange({ characters: updatedCharacters });
-        setExpandedCharacter(newCharacter.id);
-        // Refresh credits after successful generation with a small delay
-        setTimeout(() => {
-          refreshCredits();
-        }, 1000);
-      } catch (error) {
-        console.log('Character generation was interrupted:', error);
-        // Still refresh credits in case of partial consumption with a small delay
-        setTimeout(() => {
-          refreshCredits();
-        }, 1000);
-      }
-    } catch (error) {
-      console.error('Error generating character:', error);
-      // Show user-friendly error with credit purchase option if needed
-      if (error instanceof Error) {
-        showUserFriendlyError(error, 'Character Generation');
-      }
-    } finally {
-      setIsGenerating(false);
-      setCancelGeneration(null);
-    }
-  }, [scenario, characters, onScenarioChange, setAiStatus, setShowAIBusyModal]);
+  const handleGenerateRandomCharacter = useCallback(() => {
+    setShowRandomCharacterModal(true);
+  }, []);
 
-  const handleCancelGeneration = useCallback(() => {
-    if (cancelGeneration) {
-      cancelGeneration();
-    }
-  }, [cancelGeneration]);
+  const handleRandomCharacterCreated = useCallback((newCharacter: Character) => {
+    // Add the new character from random generation
+    const updatedCharacters = [...characters, newCharacter];
+    onScenarioChange({ characters: updatedCharacters });
+    setExpandedCharacter(newCharacter.id);
+  }, [characters, onScenarioChange]);
 
   const handleGenerateField = useCallback(async (characterId: string, fieldName: string, fieldDisplayName: string) => {
     const character = characters.find(c => c.id === characterId);
@@ -371,26 +307,15 @@ export const CharactersTab: React.FC<TabProps> = ({
           >
             Add Character
           </Button>
-          {!isGenerating ? (
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={handleGenerateRandomCharacter}
-              icon={<FaRandom />}
-              disabled={isLoading}
-            >
-              Generate Character
-            </Button>
-          ) : (
-            <Button
-              variant="danger"
-              size="sm"
-              onClick={handleCancelGeneration}
-              icon={<FaTimes />}
-            >
-              Cancel Generation
-            </Button>
-          )}
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={handleGenerateRandomCharacter}
+            icon={<FaRandom />}
+            disabled={isLoading}
+          >
+            Generate Character
+          </Button>
           <Button
             variant="secondary"
             size="sm"
@@ -653,6 +578,15 @@ export const CharactersTab: React.FC<TabProps> = ({
           isOpen={showPhotoUploadModal}
           onClose={() => setShowPhotoUploadModal(false)}
           onCharacterCreated={handleCharacterFromPhoto}
+          scenario={scenario}
+        />
+      )}
+      
+      {showRandomCharacterModal && (
+        <RandomCharacterModal
+          isOpen={showRandomCharacterModal}
+          onClose={() => setShowRandomCharacterModal(false)}
+          onCharacterCreated={handleRandomCharacterCreated}
           scenario={scenario}
         />
       )}

@@ -392,14 +392,17 @@ export async function generateRandomCharacter(
   options: {
     onProgress?: (text: string) => void,
     temperature?: number,
-    seed?: number | null
+    seed?: number | null,
+    additionalInstructions?: string
   } = {},
   setAiStatus: (status: AI_STATUS) => void = () => {},
   setShowAIBusyModal: (show: boolean) => void = () => {}
 ): Promise<{ result: Promise<any>; cancelGeneration: () => void }> {
   const abortController = new AbortController();
   let cancelGeneration = () => { abortController.abort(); };
-  const promptObj = llmPromptService.createCharacterPrompt(scenario, characterType);
+  const promptObj = options.additionalInstructions 
+    ? llmPromptService.createRandomCharacterPrompt(scenario, characterType, options.additionalInstructions)
+    : llmPromptService.createCharacterPrompt(scenario, characterType);
   const resultPromise = new Promise<any>(async (resolve, reject) => {
     try {
       const selectedModel = getSelectedModel();
