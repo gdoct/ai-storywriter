@@ -3,13 +3,13 @@ import { BrowserRouter as Router, useLocation, useRoutes } from 'react-router-do
 import './App.css';
 import AIBusyModal from './components/common/AIBusyModal';
 import Footer from './components/Footer/Footer';
-import TopBar from './components/TopBar';
+import TopBar from './components/TopBar/TopBar';
 import { SceneHoverProvider } from './context/SceneHoverContext';
 import { AIStatusProvider } from './contexts/AIStatusContext';
+import { AuthProvider } from './contexts/AuthContext';
 import { AuthenticatedUserProvider } from './contexts/AuthenticatedUserContext';
 import { useAIStatusPolling } from './hooks/useAIStatusPolling';
 import getRoutes from './routes';
-import { AuthProvider } from './services/AuthContext';
 
 // AppContent component to use the useRoutes hook (it must be used inside Router context)
 const AppContent = () => {

@@ -10,7 +10,7 @@ interface DashboardCardProps {
   actions: Array<{
     label: string;
     onClick: () => void;
-    variant?: 'primary' | 'secondary' | 'text';
+    variant?: 'primary' | 'secondary' | 'text' | 'warning'  ;
   }>;
 }
 

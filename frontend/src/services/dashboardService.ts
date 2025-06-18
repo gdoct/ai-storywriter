@@ -25,6 +25,7 @@ export interface RecentStory {
   created: string;
   wordCount: number;
   preview: string;
+  isPublished: boolean;
 }
 
 export interface PaginationInfo {

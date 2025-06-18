@@ -1,6 +1,5 @@
-import { MarketStory } from "../types/marketplace";
+import { MarketStoriesResponse, MarketStory, MarketplaceFilters } from "../types/marketplace";
 import axios from "./http";
-import { fakestories } from "./mockedStoryService";
 
 interface CreditsResponse {
     credits: number;
@@ -25,89 +24,120 @@ interface CreditsResponse {
 } */
 
   
-export function getStaffPicks(count: number): Promise<Array<MarketStory>> {
-    // return fake data for now
-    return new Promise((resolve) => {
-        // pick six random items from the randomstories and return in random order
-        const staffPicks = fakestories.sort(() => 0.5 - Math.random()).slice(0, count);
-        resolve(staffPicks);
-    });
+export async function getStaffPicks(count: number): Promise<Array<MarketStory>> {
+    try {
+        const response = await axios.get(`/api/marketplace/sections/staff-picks?limit=${count}`);
+        return response.data.stories;
+    } catch (error) {
+        console.error('Error fetching staff picks:', error);
+        throw error;
+    }
 }
 
 // also implement these functions:
-export function getMarketStory(storyId: number): Promise<MarketStory | null> {
-    return new Promise((resolve) => {
-        const story = fakestories.find(s => s.id === storyId) || null;
-        resolve(story);
-    });
+export async function getMarketStory(storyId: number): Promise<MarketStory | null> {
+    try {
+        const response = await axios.get(`/api/marketplace/market-stories/${storyId}`);
+        return response.data;
+    } catch (error: any) {
+        if (error.response?.status === 404) {
+            return null;
+        }
+        console.error('Error fetching market story:', error);
+        throw error;
+    }
 }
-export function downloadStory(storyId: number): Promise<void> {
-    return getMarketStory(storyId).then(story => {
-        if (story) {
-            // Simulate download logic
-            console.log(`Downloading story: ${story.title}`);
-        } else {
+export async function downloadStory(storyId: number): Promise<void> {
+    try {
+        await axios.post(`/api/marketplace/market-stories/${storyId}/download`);
+        console.log(`Downloaded story with ID: ${storyId}`);
+    } catch (error: any) {
+        if (error.response?.status === 404) {
             throw new Error("Story not found");
         }
-    });
+        console.error('Error downloading story:', error);
+        throw error;
+    }
 }
 
-export function rateStory(
+export async function rateStory(
     storyId: number,
     rating: number
 ): Promise<{ average_rating: number; rating_count: number }> {
-    return getMarketStory(storyId).then(story => {
-        if (story) {
-            // Simulate rating logic
-            console.log(`Rating story: ${story.title} with ${rating} stars`);
-            return {
-                average_rating: (story.average_rating * story.rating_count + rating) / (story.rating_count + 1),
-                rating_count: story.rating_count + 1
-            };
-        } else {
+    try {
+        const response = await axios.post(`/api/marketplace/market-stories/${storyId}/rate`, {
+            rating
+        });
+        return {
+            average_rating: response.data.average_rating,
+            rating_count: response.data.rating_count
+        };
+    } catch (error: any) {
+        if (error.response?.status === 404) {
             throw new Error("Story not found");
+        } else if (error.response?.status === 400) {
+            throw new Error(error.response.data?.error || "Invalid rating");
         }
-    });
+        console.error('Error rating story:', error);
+        throw error;
+    }
 }
 
-export function donateCredits(storyId: number, donationAmount: number): Promise<{ message: string }> {
-    return getMarketStory(storyId).then(story => {
-        if (story) {
-            // Simulate donation logic
-            console.log(`Donating ${donationAmount} credits to story: ${story.title}`);
-            return { message: 'thank you for your donation' };
-        } else {
+export async function donateCredits(storyId: number, donationAmount: number): Promise<{ message: string }> {
+    try {
+        const response = await axios.post(`/api/marketplace/market-stories/${storyId}/donate`, {
+            credits: donationAmount
+        });
+        return { message: response.data.message || 'Thank you for your donation!' };
+    } catch (error: any) {
+        if (error.response?.status === 404) {
             throw new Error("Story not found");
+        } else if (error.response?.status === 400) {
+            throw new Error(error.response.data?.error || "Invalid donation amount");
         }
-    });
+        console.error('Error donating credits:', error);
+        throw error;
+    }
 }
 
-export function getTopRated(count: number): Promise<Array<MarketStory>> {
-    return new Promise((resolve) => {
-        const topRated = fakestories.sort((a, b) => b.average_rating - a.average_rating).slice(0, count);
-        resolve(topRated);
-    });
+export async function getTopRated(count: number): Promise<Array<MarketStory>> {
+    try {
+        const response = await axios.get(`/api/marketplace/sections/top-rated?limit=${count}`);
+        return response.data.stories;
+    } catch (error) {
+        console.error('Error fetching top rated stories:', error);
+        throw error;
+    }
 }
-export function getMostPopular(count: number): Promise<Array<MarketStory>> {
-    return new Promise((resolve) => {
-        const mostPopular = fakestories.sort((a, b) => b.total_downloads - a.total_downloads).slice(0, count);
-        resolve(mostPopular);
-    });
+export async function getMostPopular(count: number): Promise<Array<MarketStory>> {
+    try {
+        const response = await axios.get(`/api/marketplace/sections/most-popular?limit=${count}`);
+        return response.data.stories;
+    } catch (error) {
+        console.error('Error fetching most popular stories:', error);
+        throw error;
+    }
 }
-export function getLatest(count: number): Promise<Array<MarketStory>> {
-    return new Promise((resolve) => {
-        const latest = fakestories.sort((a, b) => new Date(b.published_at).getTime() - new Date(a.published_at).getTime()).slice(0, count);
-        resolve(latest);
-    });
+export async function getLatest(count: number): Promise<Array<MarketStory>> {
+    try {
+        const response = await axios.get(`/api/marketplace/sections/latest?limit=${count}`);
+        return response.data.stories;
+    } catch (error) {
+        console.error('Error fetching latest stories:', error);
+        throw error;
+    }
 }
-export function getByGenre(genre: string, count: number): Promise<Array<MarketStory>> {
-    return new Promise((resolve) => {
-        const byGenre = fakestories.filter(story => story.ai_genres.includes(genre)).slice(0, count);
-        resolve(byGenre);
-    });
+export async function getByGenre(genre: string, count: number): Promise<Array<MarketStory>> {
+    try {
+        const response = await axios.get(`/api/marketplace/sections/genre/${encodeURIComponent(genre)}?limit=${count}`);
+        return response.data.stories;
+    } catch (error) {
+        console.error('Error fetching stories by genre:', error);
+        throw error;
+    }
 }
 
-export function publishStory(storyId: number, {
+export async function publishStory(storyId: number, {
         title,
         allow_ai,
         terms_accepted
@@ -116,14 +146,24 @@ export function publishStory(storyId: number, {
         allow_ai: boolean;
         terms_accepted: boolean;
       }): Promise<void> {
-    return getMarketStory(storyId).then(story => {
-        if (story) {
-            // Simulate publish logic
-            console.log(`Publishing story: ${story.title}`);
+    try {
+        const response = await axios.post(`/api/marketplace/publish/${storyId}`, {
+            title,
+            allow_ai,
+            terms_accepted
+        });
+        return response.data;
+    } catch (error: any) {
+        if (error.response?.status === 404) {
+            throw new Error("Story not found or access denied");
+        } else if (error.response?.status === 409) {
+            throw new Error("Story is already published to marketplace");
+        } else if (error.response?.data?.error) {
+            throw new Error(error.response.data.error);
         } else {
-            throw new Error("Story not found");
+            throw new Error("Failed to publish story");
         }
-    });
+    }
 }
 
 /**
@@ -147,6 +187,31 @@ export async function clearCreditsCache(): Promise<void> {
         await axios.post('/api/marketplace/user/credits/clear-cache');
     } catch (error) {
         console.error('Error clearing credits cache:', error);
+        throw error;
+    }
+}
+
+/**
+ * Get marketplace stories with filtering, sorting, and pagination
+ */
+export async function getMarketStories(
+    page: number = 1,
+    perPage: number = 20,
+    filters: MarketplaceFilters = {}
+): Promise<MarketStoriesResponse> {
+    try {
+        const params = new URLSearchParams({
+            page: page.toString(),
+            per_page: perPage.toString(),
+            ...Object.fromEntries(
+                Object.entries(filters).filter(([_, value]) => value !== undefined && value !== "")
+            )
+        });
+
+        const response = await axios.get(`/api/marketplace/market-stories?${params}`);
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching marketplace stories:', error);
         throw error;
     }
 }

@@ -41,6 +41,15 @@ const StoryCard: React.FC<StoryCardProps> = ({ story, onClick, compact = false }
     return summary.substring(0, length) + '...';
   };
 
+  const getTooltipText = () => {
+    const synopsis = story.ai_summary || 'No synopsis available';
+    // Truncate very long synopses for better tooltip readability
+    if (synopsis.length > 300) {
+      return synopsis.substring(0, 300) + '...';
+    }
+    return synopsis;
+  };
+
   return (
     <div 
       className={`story-card ${compact ? 'compact' : ''} ${story.is_staff_pick ? 'staff-pick' : ''}`}
@@ -48,6 +57,8 @@ const StoryCard: React.FC<StoryCardProps> = ({ story, onClick, compact = false }
       role="button"
       tabIndex={0}
       onKeyPress={(e) => e.key === 'Enter' && onClick(story.id)}
+      title={getTooltipText()}
+      data-tooltip={getTooltipText()}
     >
       {story.is_staff_pick && (
         <div className="staff-pick-badge">

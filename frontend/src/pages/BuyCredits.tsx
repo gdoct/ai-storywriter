@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import CreditPackageCard from '../components/payments/CreditPackageCard';
 import MockPaymentModal from '../components/payments/MockPaymentModal';
-import { useAuth } from '../services/AuthContext';
+import { useAuth } from '../contexts/AuthContext';
 import './BuyCredits.css';
 
 export interface CreditPackage {
@@ -74,13 +74,13 @@ const creditPackages: CreditPackage[] = [
 const BuyCredits: React.FC = () => {
   const [selectedPackage, setSelectedPackage] = useState<CreditPackage | null>(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const { username } = useAuth();
+  const { userProfile: authUserProfile } = useAuth();
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
   // Memoize fetchUserProfile to avoid redefining on every render
   const fetchUserProfile = useCallback(async () => {
-    if (!username) return;
+    if (!authUserProfile?.username) return;
     
     try {
       const response = await fetch(`/api/user/profile`, {
@@ -98,7 +98,7 @@ const BuyCredits: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [username]);
+  }, [authUserProfile?.username]);
 
   useEffect(() => {
     fetchUserProfile();

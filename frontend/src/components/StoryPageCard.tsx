@@ -8,6 +8,7 @@ interface StoryPageCardProps {
     created: string;
     wordCount: number;
     preview: string;
+    isPublished?: boolean;
   };
   onView: () => void;
   onPublish: () => void;
@@ -44,7 +45,12 @@ export const StoryPageCard: React.FC<StoryPageCardProps> = ({
     <div className="story-page-card">
       <div className="story-page-card-content">
         <div className="story-page-card-header">
-          <h3 className="story-page-card-title">{story.scenarioTitle}</h3>
+          <h3 className="story-page-card-title">
+            {story.scenarioTitle}
+            {story.isPublished && (
+              <span className="published-badge">Published</span>
+            )}
+          </h3>
           <div className="story-page-card-meta">
             <span className="story-page-card-date">
               {formatRelativeTime(story.created)}
@@ -62,14 +68,16 @@ export const StoryPageCard: React.FC<StoryPageCardProps> = ({
           <span className="btn-icon">👁️</span>
           View
         </button>
-        <button 
-          className="btn btn-marketplace btn-small"
-          onClick={onPublish}
-          title="Publish to Marketplace"
-        >
-          <span className="btn-icon">🏪</span>
-          Publish
-        </button>
+        {!story.isPublished && (
+          <button 
+            className="btn btn-marketplace btn-small"
+            onClick={onPublish}
+            title="Publish to Marketplace"
+          >
+            <span className="btn-icon">🏪</span>
+            Publish
+          </button>
+        )}
         <button 
           className="btn btn-secondary btn-small"
           onClick={onSaveAs}

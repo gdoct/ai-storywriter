@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 import { useAuthenticatedUser } from '../../contexts/AuthenticatedUserContext';
-import { useAuth } from '../../services/AuthContext';
 import { logout } from '../../services/security';
 import CreditsBadge from '../CreditsBadge';
+import { AdminOnly, ModeratorOnly } from '../PermissionGate';
 import './Navigation.css';
 
 interface AuthenticatedNavProps {
@@ -13,13 +14,13 @@ interface AuthenticatedNavProps {
 
 const AuthenticatedNav: React.FC<AuthenticatedNavProps> = ({ username, email }) => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const { setAuthenticated } = useAuth();
+  const { userProfile, logout: authLogout } = useAuth();
   const { creditRefreshTrigger } = useAuthenticatedUser();
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    logout();
-    setAuthenticated(false);
+    logout(); // Clear old auth state
+    authLogout(); // Clear new auth state 
     navigate('/');
     setDropdownOpen(false);
   };
@@ -29,6 +30,19 @@ const AuthenticatedNav: React.FC<AuthenticatedNavProps> = ({ username, email }) 
       <nav className="nav-links">
         <Link to="/dashboard" className="nav-link">Dashboard</Link>
         <Link to="/marketplace" className="nav-link">Marketplace</Link>
+        
+        {/* Role-based navigation links */}
+        <ModeratorOnly>
+          <Link to="/moderation" className="nav-link moderation-link">
+            Moderation
+          </Link>
+        </ModeratorOnly>
+        
+        <AdminOnly>
+          <Link to="/admin" className="nav-link admin-link">
+            Admin Panel
+          </Link>
+        </AdminOnly>
         
         <Link to="/buy-credits" className="nav-link"><CreditsBadge className="header-badge" refreshTrigger={creditRefreshTrigger} /></Link>
       </nav>
@@ -49,6 +63,19 @@ const AuthenticatedNav: React.FC<AuthenticatedNavProps> = ({ username, email }) 
           <div className="dropdown-menu">
             <div className="dropdown-header">
               <span className="dropdown-username">{email || username}</span>
+              {/* Show user tier and roles */}
+              {userProfile && (
+                <div className="user-badges">
+                  <span className={`tier-badge tier-${userProfile.tier}`}>
+                    {userProfile.tier.toUpperCase()}
+                  </span>
+                  {userProfile.roles.map(role => (
+                    <span key={role} className={`role-badge role-${role}`}>
+                      {role.toUpperCase()}
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
             <Link 
               to="/dashboard" 
@@ -64,6 +91,28 @@ const AuthenticatedNav: React.FC<AuthenticatedNavProps> = ({ username, email }) 
             >
               Settings
             </Link>
+            
+            {/* Role-based dropdown items */}
+            <ModeratorOnly>
+              <Link 
+                to="/moderation" 
+                className="dropdown-item moderation-item"
+                onClick={() => setDropdownOpen(false)}
+              >
+                Moderation Dashboard
+              </Link>
+            </ModeratorOnly>
+            
+            <AdminOnly>
+              <Link 
+                to="/admin" 
+                className="dropdown-item admin-item"
+                onClick={() => setDropdownOpen(false)}
+              >
+                Admin Panel
+              </Link>
+            </AdminOnly>
+            
             <button 
               onClick={handleLogout}
               className="dropdown-item logout-item"

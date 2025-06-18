@@ -7,7 +7,9 @@ from controllers.character_appearance_controller import character_appearance_bp
 from controllers.character_photo_controller import character_photo_bp
 from controllers.dashboard_controller import dashboard_bp
 from controllers.marketplace_controller import marketplace_bp
+from controllers.moderation_controller import moderation_bp
 from controllers.payment_controller import payment_bp
+from controllers.role_controller import roles_bp
 from controllers.scenario_controller import scenario_bp
 from controllers.settings_controller import settings_controller
 from data.db import DB_PATH, init_db
@@ -45,7 +47,9 @@ app.register_blueprint(character_appearance_bp)
 app.register_blueprint(character_photo_bp)
 app.register_blueprint(dashboard_bp)
 app.register_blueprint(marketplace_bp)
+app.register_blueprint(moderation_bp)
 app.register_blueprint(payment_bp)
+app.register_blueprint(roles_bp)
 app.register_blueprint(scenario_bp)
 app.register_blueprint(llm_proxy)
 app.register_blueprint(settings_controller)

@@ -116,6 +116,113 @@ class UserRepository:
         
         return balance
 
+    @staticmethod
+    def get_user_with_roles(user_id):
+        """Get user with their roles included"""
+        conn = get_db_connection()
+        user = conn.execute('SELECT * FROM users WHERE id = ? AND is_deleted = 0', (user_id,)).fetchone()
+        
+        if user:
+            # Get user roles
+            roles_cursor = conn.execute('''
+                SELECT role FROM user_roles 
+                WHERE user_id = ? AND revoked_at IS NULL
+            ''', (user_id,))
+            roles = [row['role'] for row in roles_cursor.fetchall()]
+            
+            # Convert user row to dict and add roles
+            user_dict = dict(user)
+            user_dict['roles'] = roles
+            conn.close()
+            return user_dict
+        
+        conn.close()
+        return None
+
+    @staticmethod
+    def get_user_by_username_with_roles(username):
+        """Get user by username with their roles included"""
+        conn = get_db_connection()
+        user = conn.execute('SELECT * FROM users WHERE username = ? AND is_deleted = 0', (username,)).fetchone()
+        
+        if user:
+            # Get user roles
+            roles_cursor = conn.execute('''
+                SELECT role FROM user_roles 
+                WHERE user_id = ? AND revoked_at IS NULL
+            ''', (user['id'],))
+            roles = [row['role'] for row in roles_cursor.fetchall()]
+            
+            # Convert user row to dict and add roles
+            user_dict = dict(user)
+            user_dict['roles'] = roles
+            conn.close()
+            return user_dict
+        
+        conn.close()
+        return None
+
+    @staticmethod
+    def list_all_users(limit=100, offset=0, include_deleted=False):
+        """List all users with pagination and optional role information"""
+        conn = get_db_connection()
+        
+        where_clause = "" if include_deleted else "WHERE is_deleted = 0"
+        
+        cursor = conn.execute(f'''
+            SELECT u.*, 
+                   GROUP_CONCAT(ur.role) as roles
+            FROM users u
+            LEFT JOIN user_roles ur ON u.id = ur.user_id AND ur.revoked_at IS NULL
+            {where_clause}
+            GROUP BY u.id
+            ORDER BY u.created_at DESC
+            LIMIT ? OFFSET ?
+        ''', (limit, offset))
+        
+        users = []
+        for row in cursor.fetchall():
+            user_dict = dict(row)
+            # Parse roles from GROUP_CONCAT
+            roles_str = user_dict.pop('roles', '')
+            user_dict['roles'] = roles_str.split(',') if roles_str else []
+            users.append(user_dict)
+        
+        conn.close()
+        return users
+
+    @staticmethod
+    def count_users(include_deleted=False):
+        """Count total number of users"""
+        conn = get_db_connection()
+        where_clause = "" if include_deleted else "WHERE is_deleted = 0"
+        
+        cursor = conn.execute(f'SELECT COUNT(*) as count FROM users {where_clause}')
+        count = cursor.fetchone()['count']
+        conn.close()
+        return count
+
+    @staticmethod
+    def update_user_tier(user_id, new_tier):
+        """Update user's tier"""
+        valid_tiers = ['free', 'byok', 'premium']
+        if new_tier not in valid_tiers:
+            raise ValueError(f"Invalid tier: {new_tier}. Must be one of {valid_tiers}")
+        
+        conn = get_db_connection()
+        conn.execute('UPDATE users SET tier = ? WHERE id = ?', (new_tier, user_id))
+        conn.commit()
+        conn.close()
+
+    @staticmethod
+    def get_users_by_tier(tier):
+        """Get all users with a specific tier"""
+        conn = get_db_connection()
+        cursor = conn.execute('SELECT * FROM users WHERE tier = ? AND is_deleted = 0', (tier,))
+        users = [dict(row) for row in cursor.fetchall()]
+        conn.close()
+        return users
+
 class ScenarioRepository:
     @staticmethod
     def get_scenarios_by_user(user_id):

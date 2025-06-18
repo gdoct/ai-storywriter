@@ -1,6 +1,10 @@
 import React, { Dispatch, SetStateAction } from 'react';
 import { RouteObject } from 'react-router-dom';
+import { AdminPanel } from './components/admin/AdminPanel';
+import { ModerationDashboard } from './components/moderation/ModerationDashboard';
+import { AdminOnly, ModeratorOnly } from './components/PermissionGate';
 import ProtectedRoute from './components/ProtectedRoute';
+import { useAuth } from './contexts/AuthContext';
 import BuyCredits from './pages/BuyCredits';
 import Dashboard from './pages/Dashboard';
 import FeaturesPage from './pages/FeaturesPage';
@@ -17,7 +21,6 @@ import Signup from './pages/Signup';
 import Stories from './pages/Stories';
 import StoryDetail from './pages/StoryDetail';
 import Templates from './pages/Templates';
-import { useAuth } from './services/AuthContext';
 
 interface RoutesProps {
   setIsLoading: Dispatch<SetStateAction<boolean>>;
@@ -104,7 +107,31 @@ const getRoutes = ({ setIsLoading, seed }: RoutesProps): RouteObject[] => {
     { path: '/login', element: <Login /> },
     { path: '/signup', element: <Signup /> },
     { path: '/privacy', element: <PrivacyPolicy /> },
-    { path: '/terms', element: <TermsOfService /> }
+    { path: '/terms', element: <TermsOfService /> },
+    
+    // Admin-only routes
+    { 
+      path: '/admin', 
+      element: (
+        <ProtectedRoute>
+          <AdminOnly fallback={<div>Access Denied: Admin privileges required</div>}>
+            <AdminPanel />
+          </AdminOnly>
+        </ProtectedRoute>
+      )
+    },
+    
+    // Moderation routes (accessible to both moderators and admins)
+    { 
+      path: '/moderation', 
+      element: (
+        <ProtectedRoute>
+          <ModeratorOnly fallback={<div>Access Denied: Moderation privileges required</div>}>
+            <ModerationDashboard />
+          </ModeratorOnly>
+        </ProtectedRoute>
+      )
+    }
   ];
 };
 

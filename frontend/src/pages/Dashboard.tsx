@@ -2,7 +2,8 @@ import React, { Dispatch, SetStateAction, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import DashboardCard from '../components/DashboardCard';
 import MarketingFooter from '../components/marketing/MarketingFooter';
-import { useAuth } from '../services/AuthContext';
+import PublishStoryModal from '../components/PublishStoryModal';
+import { useAuth } from '../contexts/AuthContext';
 import {
   DashboardStats,
   deleteScenario,
@@ -21,7 +22,9 @@ interface DashboardProps {
 }
 
 const Dashboard: React.FC<DashboardProps> = ({ setIsLoading }) => {
-  const { username, email } = useAuth();
+  const { userProfile } = useAuth();
+  const username = userProfile?.username;
+  const email = userProfile?.email;
   const navigate = useNavigate();
   
   // State for dashboard data
@@ -30,6 +33,10 @@ const Dashboard: React.FC<DashboardProps> = ({ setIsLoading }) => {
   const [recentStories, setRecentStories] = useState<RecentStory[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // Publish modal state
+  const [showPublishModal, setShowPublishModal] = useState(false);
+  const [storyToPublish, setStoryToPublish] = useState<RecentStory | null>(null);
 
   // Load dashboard data
   useEffect(() => {
@@ -93,6 +100,22 @@ const Dashboard: React.FC<DashboardProps> = ({ setIsLoading }) => {
   const handleReadStory = async (story: RecentStory) => {
     // Navigate to Stories page and open the story modal
     navigate('/stories', { state: { openStoryId: story.id } });
+  };
+
+  const handlePublishStory = (story: RecentStory) => {
+    setStoryToPublish(story);
+    setShowPublishModal(true);
+  };
+
+  const handlePublishSuccess = () => {
+    alert('Story published successfully! It will appear in the marketplace once AI processing is complete.');
+    setShowPublishModal(false);
+    setStoryToPublish(null);
+  };
+
+  const handleClosePublishModal = () => {
+    setShowPublishModal(false);
+    setStoryToPublish(null);
   };
 
   // Show loading state
@@ -212,20 +235,20 @@ const Dashboard: React.FC<DashboardProps> = ({ setIsLoading }) => {
                     key={scenario.id}
                     title={scenario.title}
                     metadata={[
-                      { icon: "📅", text: formatRelativeTime(scenario.created) },
+                      { icon: "📅", text: formatRelativeTime(scenario.lastModified) },
                       { icon: "📝", text: `${scenario.generatedStoryCount} generated stories` }
                     ]}
                     actions={[
+                      {
+                        label: "Delete",
+                        onClick: () => handleDeleteScenario(scenario.id, scenario.title),
+                        variant: "warning"
+                      },
                       {
                         label: "Edit",
                         onClick: () => handleEditScenario(scenario.id),
                         variant: "text"
                       },
-                      {
-                        label: "Delete",
-                        onClick: () => handleDeleteScenario(scenario.id, scenario.title),
-                        variant: "text"
-                      }
                     ]}
                   />
                 ))}
@@ -255,16 +278,16 @@ const Dashboard: React.FC<DashboardProps> = ({ setIsLoading }) => {
                         { icon: "📝", text: `${story.wordCount} words` }
                       ]}
                       actions={[
+                        ...(story.isPublished ? [] : [{
+                          label: "Publish",
+                          onClick: () => handlePublishStory(story),
+                          variant: "secondary" as const
+                        }]),
                         {
                           label: "Read",
                           onClick: () => handleReadStory(story),
-                          variant: "text"
+                          variant: "primary" as const
                         },
-                        {
-                          label: "Publish",
-                          onClick: () => {}, // TODO: implement publish functionality
-                          variant: "text"
-                        }
                       ]}
                     />
                   ))}
@@ -281,9 +304,20 @@ const Dashboard: React.FC<DashboardProps> = ({ setIsLoading }) => {
             </div>
           </div>
         </div>
-         <MarketingFooter />
+        <MarketingFooter />
+
+        {/* Publish Story Modal */}
+        {storyToPublish && (
+          <PublishStoryModal
+            isOpen={showPublishModal}
+            onClose={handleClosePublishModal}
+            storyId={storyToPublish.id}
+            storyTitle={storyToPublish.scenarioTitle}
+            onSuccess={handlePublishSuccess}
+          />
+        )}
       </div>
-      );
+    );
 };
 
-      export default Dashboard;
+export default Dashboard;

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import MarketingFooter from '../components/marketing/MarketingFooter';
-import { useAuth } from '../services/AuthContext';
+import { useAuth } from '../contexts/AuthContext';
 import { signup } from '../services/security';
 import './Signup.css';
 
@@ -16,7 +16,7 @@ const Signup: React.FC = () => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-  const { setAuthenticated } = useAuth();
+  const { login } = useAuth();
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -71,8 +71,13 @@ const Signup: React.FC = () => {
     setIsLoading(false);
     
     if (success) {
-      setAuthenticated(true);
-      navigate('/dashboard');
+      // After successful signup, log the user in
+      const loginSuccess = await login(formData.email, formData.password);
+      if (loginSuccess) {
+        navigate('/dashboard');
+      } else {
+        setErrors({ general: 'Signup successful but login failed. Please try logging in manually.' });
+      }
     } else {
       setErrors({ general: 'Signup failed. Please try again.' });
     }

@@ -160,3 +160,17 @@
 .story-page-card-actions .btn-icon {
   font-size: 0.9em;
 }
+
+/* Published badge styling */
+.published-badge {
+  display: inline-block;
+  background: #059669;
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.375rem;
+  margin-left: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}

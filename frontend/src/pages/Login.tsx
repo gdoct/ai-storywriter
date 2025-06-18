@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../services/AuthContext';
-import { login } from '../services/security';
+import { useAuth } from '../contexts/AuthContext';
 import './Login.css';
 
 const Login: React.FC = () => {
@@ -10,7 +9,7 @@ const Login: React.FC = () => {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-  const { authenticated, setAuthenticated } = useAuth();
+  const { authenticated, login } = useAuth();
 
   // Redirect to dashboard if already authenticated
   useEffect(() => {
@@ -33,7 +32,6 @@ const Login: React.FC = () => {
     setIsLoading(false);
     
     if (success) {
-      setAuthenticated(true); // Update auth context
       navigate('/dashboard');
     } else {
       setError('Login failed. Please check your credentials.');

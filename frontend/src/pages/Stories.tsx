@@ -291,7 +291,8 @@ const Stories: React.FC = () => {
                           scenarioTitle: story.scenarioTitle,
                           created: story.created,
                           wordCount: story.wordCount,
-                          preview: story.preview
+                          preview: story.preview,
+                          isPublished: story.isPublished
                         }}
                         onView={() => handleViewStory(story)}
                         onPublish={() => handlePublishStory(story)}

@@ -1,7 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import CreditsBadge from '../components/CreditsBadge';
+import EnhancedStoryCard from '../components/EnhancedStoryCard';
 import StoryCard from '../components/StoryCard';
+import StoryModal from '../components/StoryModal';
+import { useAuth } from '../contexts/AuthContext';
 import { useAuthenticatedUser } from '../contexts/AuthenticatedUserContext';
 import { getByGenre, getLatest, getMostPopular, getStaffPicks, getTopRated } from '../services/marketPlaceApi';
 import { MarketStoryCard } from '../types/marketplace';
@@ -16,8 +19,11 @@ interface SectionData {
 
 const Marketplace: React.FC = () => {
   const navigate = useNavigate();
+  const { hasRole } = useAuth();
   const { creditRefreshTrigger } = useAuthenticatedUser();
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedStoryId, setSelectedStoryId] = useState<number | null>(null);
+  const [showStoryModal, setShowStoryModal] = useState(false);
   const [sections, setSections] = useState<Record<string, SectionData>>({
     staffPicks: { title: 'Staff Picks', stories: [], loading: true, error: null },
     topRated: { title: 'Top Rated', stories: [], loading: true, error: null },
@@ -70,7 +76,13 @@ const Marketplace: React.FC = () => {
   };
 
   const handleStoryClick = (storyId: number) => {
-    navigate(`/marketplace/story/${storyId}`);
+    setSelectedStoryId(storyId);
+    setShowStoryModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setShowStoryModal(false);
+    setSelectedStoryId(null);
   };
 
   const handleViewMore = (sectionKey: string) => {
@@ -87,6 +99,35 @@ const Marketplace: React.FC = () => {
       navigate('/marketplace/browse?staff_picks=true');
     } else {
       navigate(`/marketplace/browse?section=${sectionTitles[sectionKey]}`);
+    }
+  };
+
+  const handleModerationAction = (storyId: number, action: string) => {
+    // Refresh the sections after moderation action
+    loadSections();
+  };
+
+  const renderStoryCard = (story: MarketStoryCard) => {
+    // Use enhanced story card for moderators/admins, regular for others
+    if (hasRole('moderator') || hasRole('admin')) {
+      return (
+        <EnhancedStoryCard
+          key={story.id}
+          story={story}
+          onClick={handleStoryClick}
+          onModerationAction={handleModerationAction}
+          compact
+        />
+      );
+    } else {
+      return (
+        <StoryCard
+          key={story.id}
+          story={story}
+          onClick={handleStoryClick}
+          compact
+        />
+      );
     }
   };
 
@@ -121,14 +162,7 @@ const Marketplace: React.FC = () => {
 
     return (
       <div className="stories-carousel">
-        {section.stories.map(story => (
-          <StoryCard
-            key={story.id}
-            story={story}
-            onClick={handleStoryClick}
-            compact
-          />
-        ))}
+        {section.stories.map(story => renderStoryCard(story))}
       </div>
     );
   };
@@ -307,6 +341,13 @@ const Marketplace: React.FC = () => {
         </section>
         </div>
       </div>
+
+      {/* Story Modal */}
+      <StoryModal
+        storyId={selectedStoryId}
+        show={showStoryModal}
+        onClose={handleCloseModal}
+      />
     </div>
   );
 };

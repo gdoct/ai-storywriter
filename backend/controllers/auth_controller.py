@@ -4,6 +4,7 @@ from data.repositories import UserRepository
 from flask import Blueprint, jsonify, request
 from flask_cors import cross_origin
 from flask_jwt_extended import create_access_token
+from services.role_manager import RoleManager
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -29,10 +30,17 @@ def login():
     token_expiry = timedelta(days=365)  # 1 year
     access_token = create_access_token(identity=user['username'], expires_delta=token_expiry)
     
-    # Return token in response
+    # Get user roles and permissions
+    user_roles = RoleManager.get_user_roles(user['id'])
+    user_permissions = RoleManager.get_user_permissions(user['id'])
+    
+    # Return token in response with user profile
     return jsonify({
         "access_token": access_token,
         "username": user['username'],
         "email": user['email'],
+        "tier": user['tier'] if user['tier'] else 'free',
+        "roles": user_roles,
+        "permissions": user_permissions,
         "message": "Login successful"
     }), 200

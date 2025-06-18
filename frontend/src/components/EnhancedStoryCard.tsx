@@ -1,0 +1,229 @@
+/**
+ * Enhanced Story Card with Moderation Controls
+ * Includes additional controls for moderators and admins
+ */
+import React, { useState } from 'react';
+import { useAuth } from '../contexts/AuthContext';
+import http from '../services/http';
+import { MarketStoryCard } from '../types/marketplace';
+import { ModeratorOnly } from './PermissionGate';
+import './StoryCard.css';
+
+interface EnhancedStoryCardProps {
+  story: MarketStoryCard;
+  onClick: (storyId: number) => void;
+  compact?: boolean;
+  onModerationAction?: (storyId: number, action: string) => void;
+}
+
+export const EnhancedStoryCard: React.FC<EnhancedStoryCardProps> = ({ 
+  story, 
+  onClick, 
+  compact = false,
+  onModerationAction 
+}) => {
+  const { userProfile, hasPermission } = useAuth();
+  const [showModerationMenu, setShowModerationMenu] = useState(false);
+  const [moderationLoading, setModerationLoading] = useState(false);
+
+  const renderStars = (rating: number, count: number) => {
+    const stars = [];
+    const fullStars = Math.floor(rating);
+    const hasHalfStar = rating % 1 >= 0.5;
+    
+    for (let i = 0; i < 5; i++) {
+      if (i < fullStars) {
+        stars.push(<span key={i} className="star full">★</span>);
+      } else if (i === fullStars && hasHalfStar) {
+        stars.push(<span key={i} className="star half">★</span>);
+      } else {
+        stars.push(<span key={i} className="star empty">☆</span>);
+      }
+    }
+    
+    return (
+      <div className="rating">
+        <div className="stars">{stars}</div>
+        <span className="rating-text">
+          {rating > 0 ? rating.toFixed(1) : 'No ratings'} 
+          {count > 0 && ` (${count})`}
+        </span>
+      </div>
+    );
+  };
+
+  const truncateSummary = (summary: string, length: number = 150) => {
+    if (!summary) return 'No summary available';
+    if (summary.length <= length) return summary;
+    return summary.substring(0, length) + '...';
+  };
+
+  const handleModerationAction = async (action: string) => {
+    if (!window.confirm(`Are you sure you want to ${action} this story?`)) {
+      return;
+    }
+
+    setModerationLoading(true);
+    try {
+      let endpoint = '';
+      let method = 'POST';
+      
+      switch (action) {
+        case 'remove':
+          endpoint = `/api/moderate/stories/${story.id}`;
+          method = 'DELETE';
+          break;
+        case 'flag':
+          endpoint = `/api/moderate/stories/${story.id}/flag`;
+          break;
+        case 'suspend_author':
+          endpoint = `/api/moderate/users/${story.author_id}/suspend`;
+          break;
+        default:
+          throw new Error('Unknown moderation action');
+      }
+
+      const response = await http.request({
+        method,
+        url: endpoint,
+        data: {
+          reason: `Moderated by ${userProfile?.username}`,
+          moderator_notes: `Action: ${action}`
+        }
+      });
+
+      if (response.status === 200) {
+        alert(`Story ${action} successful`);
+        onModerationAction?.(story.id, action);
+        setShowModerationMenu(false);
+      }
+    } catch (error) {
+      console.error('Moderation action failed:', error);
+      alert('Moderation action failed. Please try again.');
+    } finally {
+      setModerationLoading(false);
+    }
+  };
+
+  const handleCardClick = (e: React.MouseEvent) => {
+    // Don't trigger story view if clicking on moderation controls
+    if ((e.target as Element).closest('.moderation-controls')) {
+      return;
+    }
+    onClick(story.id);
+  };
+
+  const getTooltipText = () => {
+    const synopsis = story.ai_summary || 'No synopsis available';
+    // Truncate very long synopses for better tooltip readability
+    if (synopsis.length > 300) {
+      return synopsis.substring(0, 300) + '...';
+    }
+    return synopsis;
+  };
+
+  return (
+    <div 
+      className={`story-card enhanced ${compact ? 'compact' : ''} ${story.is_staff_pick ? 'staff-pick' : ''}`}
+      onClick={handleCardClick}
+      role="button"
+      tabIndex={0}
+      onKeyPress={(e) => e.key === 'Enter' && !showModerationMenu && onClick(story.id)}
+      title={getTooltipText()}
+      data-tooltip={getTooltipText()}
+    >
+      {story.is_staff_pick && (
+        <div className="staff-pick-badge">
+          <span>✨ Staff Pick</span>
+        </div>
+      )}
+
+      {/* Moderation Controls */}
+      <ModeratorOnly>
+        <div className="moderation-controls">
+          <button
+            className="moderation-menu-toggle"
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowModerationMenu(!showModerationMenu);
+            }}
+            disabled={moderationLoading}
+            aria-label="Moderation options"
+          >
+            ⚙️
+          </button>
+          
+          {showModerationMenu && (
+            <div className="moderation-menu">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleModerationAction('flag');
+                }}
+                className="moderation-action flag"
+                disabled={moderationLoading}
+              >
+                🚩 Flag Story
+              </button>
+              
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleModerationAction('remove');
+                }}
+                className="moderation-action remove"
+                disabled={moderationLoading}
+              >
+                🗑️ Remove Story
+              </button>
+              
+              {hasPermission('suspend_users') && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleModerationAction('suspend_author');
+                  }}
+                  className="moderation-action suspend"
+                  disabled={moderationLoading}
+                >
+                  🔒 Suspend Author
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      </ModeratorOnly>
+      
+      <div className="story-card-content">
+        <div className="story-header">
+          <h3 className="story-title">{story.title}</h3>
+          <p className="story-author">by {story.author}</p>
+        </div>
+        
+        <div className="story-genres">
+          {story.ai_genres && story.ai_genres.map((genre, index) => (
+            <span key={index} className="genre-tag">{genre}</span>
+          ))}
+        </div>
+        
+        {!compact && (
+          <div className="story-summary">
+            <p>{truncateSummary(story.ai_summary)}</p>
+          </div>
+        )}
+        
+        <div className="story-stats">
+          {renderStars(story.average_rating, story.rating_count)}
+          
+          <div className="additional-stats">
+            <span className="downloads">
+              📥 {story.total_downloads} downloads
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default EnhancedStoryCard;

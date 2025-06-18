@@ -21,6 +21,11 @@ axios.interceptors.response.use(
       // Redirect to login if unauthorized
       localStorage.removeItem('token');
       localStorage.removeItem('username');
+      localStorage.removeItem('email');
+      localStorage.removeItem('tier');
+      localStorage.removeItem('roles');
+      localStorage.removeItem('permissions');
+      localStorage.removeItem('user_id');
       window.location.href = '/login';
     }
     return Promise.reject(error);

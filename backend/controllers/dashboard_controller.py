@@ -33,6 +33,13 @@ def get_dashboard_stats():
             (user_id,)
         ).fetchone()['count']
         
+        # Count stories published by user
+        published_stories_count = conn.execute(
+            '''SELECT COUNT(*) as count FROM market_stories ms
+               WHERE ms.user_id = ?''',
+            (user_id,)
+        ).fetchone()['count']
+        
         # Get last activity (most recent created_at from scenarios or stories)
         last_activity = conn.execute(
             '''SELECT MAX(created_at) as last_activity FROM (
@@ -48,7 +55,7 @@ def get_dashboard_stats():
         return jsonify({
             'scenariosCreated': scenarios_count,
             'storiesGenerated': stories_count,
-            'storiesPublished': 0,    # placeholder for future feature
+            'storiesPublished': published_stories_count,
             'scenariosPublished': 0,  # placeholder for future feature
             'modelsUsed': 0,          # placeholder until AI model tracking implemented
             'lastActivity': last_activity
@@ -155,9 +162,11 @@ def get_recent_stories():
                       s.title as scenario_title,
                       LENGTH(st.text) as word_count,
                       SUBSTR(st.text, 1, 100) as preview,
-                      COUNT(*) OVER() as total_count
+                      COUNT(*) OVER() as total_count,
+                      CASE WHEN ms.id IS NOT NULL THEN 1 ELSE 0 END as is_published
                FROM stories st
                JOIN scenarios s ON st.scenario_id = s.id
+               LEFT JOIN market_stories ms ON st.id = ms.original_story_id
                WHERE s.user_id = ? AND s.is_deleted = 0
                ORDER BY st.created_at DESC
                LIMIT ? OFFSET ?''',
@@ -182,7 +191,8 @@ def get_recent_stories():
                 'scenarioTitle': row['scenario_title'] or 'Untitled Scenario',
                 'created': row['created_at'],
                 'wordCount': row['word_count'] or 0,
-                'preview': preview
+                'preview': preview,
+                'isPublished': bool(row['is_published'])
             })
         
         # Calculate pagination info

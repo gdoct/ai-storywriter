@@ -21,6 +21,7 @@ export interface MarketStoryCard {
   id: number;
   title: string;
   author: string;
+  author_id?: string; // Add optional author_id for moderation actions
   ai_summary: string;
   ai_genres: string[];
   average_rating: number;

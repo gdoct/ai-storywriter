@@ -23,6 +23,12 @@
   min-width: 0;
 }
 
+.dashboard-card .btn-secondary:hover {
+  background: #f3f4f6;
+  color: #374151;
+  border-color: #d1d5db;
+}
+
 .dashboard-card-title {
   font-size: 1.1rem;
   font-weight: 700;
@@ -43,7 +49,7 @@
   align-items: center;
   gap: 0.25rem;
   padding: 0.25rem 0.5rem;
-  background: rgba(102, 126, 234, 0.1);
+  background: rgba(255, 221, 77, 0.1);
   color: #667eea;
   border-radius: 6px;
   font-size: 0.75rem;
@@ -99,6 +105,18 @@
 }
 
 .dashboard-card-actions .btn-text:hover {
-  background: rgba(102, 126, 234, 0.1);
+  background: #f8fafc;
+  color: black;
   border-color: #667eea;
+}
+
+.dashboard-card-actions .btn-warning {
+  background: #f59e42;
+  color: white;
+  border-color: #e0882a;
+}
+
+.dashboard-card-actions .btn-warning:hover {
+  background: #e0882a;
+  border-color: #c97c1a;
 }

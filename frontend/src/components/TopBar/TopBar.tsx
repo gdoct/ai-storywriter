@@ -1,12 +1,12 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { useAuth } from '../../services/AuthContext';
+import { useAuth } from '../../contexts/AuthContext';
 import AnonymousNav from '../navigation/AnonymousNav';
 import AuthenticatedNav from '../navigation/AuthenticatedNav';
 import './TopBar.css';
 
 const TopBar: React.FC = () => {
-  const { authenticated, username, email } = useAuth();
+  const { authenticated, userProfile } = useAuth();
   const location = useLocation();
   const isMarketingPage = location.pathname === '/' && !authenticated;
 
@@ -22,7 +22,10 @@ const TopBar: React.FC = () => {
       {/* Dynamic navigation based on auth state */}
       <div className="topbar-right">
         {authenticated ? (
-          <AuthenticatedNav username={username} email={email} />
+          <AuthenticatedNav 
+            username={userProfile?.username || null} 
+            email={userProfile?.email || null} 
+          />
         ) : (
           <AnonymousNav />
         )}
