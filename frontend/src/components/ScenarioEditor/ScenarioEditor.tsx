@@ -308,6 +308,7 @@ export const ScenarioEditor: React.FC<ScenarioEditorProps> = ({
         <div className="scenario-editor__actions">
           <Button
             variant="secondary"
+            data-test-id="showStoryButton"
             onClick={handleShowStory}
             icon={<FaEye />}
             disabled={state.isLoading}

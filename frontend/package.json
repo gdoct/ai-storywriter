@@ -3,12 +3,14 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@faker-js/faker": "^9.8.0",
     "@testing-library/dom": "^10.4.0",
     "@types/node": "^16.18.126",
     "@types/react": "^19.1.6",
     "@types/react-dom": "^19.1.5",
     "@types/react-router-dom": "^5.3.3",
     "axios": "^1.9.0",
+    "dotenv": "^16.5.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-icons": "^5.5.0",
@@ -31,7 +33,7 @@
     "format:check": "npm run prettier:check && npm run lint",
     "build": "react-scripts build",
     "test": "jest",
-    "test:puppeteer": "jest --config=jest.config.js --runInBand",
+    "test:puppeteer": "jest --config=jest-puppeteer.config.js --runInBand",
     "eject": "react-scripts eject",
     "dev": "react-scripts start"
   },

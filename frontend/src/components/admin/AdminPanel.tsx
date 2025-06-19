@@ -18,6 +18,7 @@ export const AdminPanel: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [updatingUser, setUpdatingUser] = useState<string | null>(null);
 
   useEffect(() => {
     fetchUsers();
@@ -64,31 +65,62 @@ export const AdminPanel: React.FC = () => {
     }
   };
 
-  const handleUpdateTier = async (userId: string, newTier: UserTier) => {
-    if (!window.confirm(`Update user tier to ${newTier}?`)) return;
+  const createTierChangeHandler = (user: AdminUser) => {
+    return (e: React.ChangeEvent<HTMLSelectElement>) => {
+      const newTier = e.target.value as UserTier;
+      handleUpdateTier((user as any).id, newTier, user.username);
+    };
+  };
 
+  const handleUpdateTier = async (userId: string, newTier: UserTier, username?: string) => {
+    const currentUser = users.find(u => (u as any).id === userId);
+    
+    if (!currentUser) {
+      alert('Error: User not found');
+      return;
+    }
+    
+    const currentTier = currentUser.tier || 'unknown';
+    const userDisplayName = username || currentUser.username;
+    
+    // Don't do anything if it's the same tier
+    if (currentTier === newTier) return;
+    
+    if (!window.confirm(`Update user "${userDisplayName}" tier from ${currentTier} to ${newTier}?\n\nThis will change their access level and available features.`)) return;
+
+    setUpdatingUser(userId);
     try {
-      // TODO: Implement tier update in API service
-      // await adminApi.updateUserTier(userId, newTier);
-      alert('Tier update not yet implemented');
-      // fetchUsers(); // Refresh user list
-    } catch (error) {
+      const response = await adminApi.updateUserTier(userId, newTier);
+      alert(`User tier updated from ${response.old_tier} to ${response.new_tier} successfully`);
+      fetchUsers(); // Refresh user list
+    } catch (error: any) {
       console.error('Failed to update tier:', error);
-      alert('Failed to update tier');
+      const errorMessage = error.response?.data?.error || 'Failed to update tier';
+      alert(`Error: ${errorMessage}`);
+      // Reset the select to the original value
+      fetchUsers();
+    } finally {
+      setUpdatingUser(null);
     }
   };
 
   const handleDeleteUser = async (userId: string, username: string) => {
-    if (!window.confirm(`Delete user "${username}"? This action cannot be undone.`)) return;
+    const currentUser = users.find(u => (u as any).id === userId);
+    const userInfo = `${username} (${currentUser?.email || 'no email'})`;
+    
+    if (!window.confirm(`Delete user "${userInfo}"?\n\nThis action cannot be undone. The user will no longer be able to access their account and all their data will be marked as deleted.`)) return;
 
+    setUpdatingUser(userId);
     try {
-      // TODO: Implement user deletion in API service
-      // await adminApi.deleteUser(userId);
-      alert('User deletion not yet implemented');
-      // fetchUsers(); // Refresh user list
-    } catch (error) {
+      const response = await adminApi.deleteUser(userId);
+      alert(`User ${username} deleted successfully`);
+      fetchUsers(); // Refresh user list
+    } catch (error: any) {
       console.error('Failed to delete user:', error);
-      alert('Failed to delete user');
+      const errorMessage = error.response?.data?.error || 'Failed to delete user';
+      alert(`Error: ${errorMessage}`);
+    } finally {
+      setUpdatingUser(null);
     }
   };
 
@@ -146,23 +178,27 @@ export const AdminPanel: React.FC = () => {
                 </thead>
                 <tbody>
                   {users.map((user) => (
-                    <tr key={user.user_id}>
+                    <tr key={(user as any).id}>
                       <td>
                         <strong>{user.username}</strong>
                         <br />
-                        <small>{user.user_id}</small>
+                        <small>{(user as any).id}</small>
                       </td>
                       <td>{user.email || 'N/A'}</td>
                       <td>
                         <select
                           value={user.tier}
-                          onChange={(e) => handleUpdateTier(user.user_id, e.target.value as UserTier)}
+                          onChange={createTierChangeHandler(user)}
                           className={`tier-select tier-${user.tier}`}
+                          disabled={updatingUser === (user as any).id}
                         >
-                          <option value="free">Free</option>
-                          <option value="byok">BYOK</option>
-                          <option value="premium">Premium</option>
+                          <option value="free" key="free">Free</option>
+                          <option value="byok" key="byok">BYOK</option>
+                          <option value="premium" key="premium">Premium</option>
                         </select>
+                        {updatingUser === (user as any).id && (
+                          <div className="updating-indicator">Updating...</div>
+                        )}
                       </td>
                       <td>
                         <div className="roles-cell">
@@ -171,10 +207,10 @@ export const AdminPanel: React.FC = () => {
                               <span className="no-roles">No roles</span>
                             ) : (
                               user.roles.map(role => (
-                                <span key={role} className={`role-badge role-${role}`}>
+                                <span key={`${(user as any).id}-${role}`} className={`role-badge role-${role}`}>
                                   {role}
                                   <button
-                                    onClick={() => handleRevokeRole(user.user_id, role)}
+                                    onClick={() => handleRevokeRole((user as any).id, role)}
                                     className="revoke-role"
                                     title={`Revoke ${role} role`}
                                   >
@@ -187,7 +223,8 @@ export const AdminPanel: React.FC = () => {
                           <div className="role-actions">
                             {!user.roles.includes('moderator') && (
                               <button
-                                onClick={() => handleGrantRole(user.user_id, 'moderator')}
+                                key={`grant-moderator-${(user as any).id}`}
+                                onClick={() => handleGrantRole((user as any).id, 'moderator')}
                                 className="btn btn-small btn-secondary"
                               >
                                 + Moderator
@@ -195,7 +232,8 @@ export const AdminPanel: React.FC = () => {
                             )}
                             {!user.roles.includes('admin') && (
                               <button
-                                onClick={() => handleGrantRole(user.user_id, 'admin')}
+                                key={`grant-admin-${(user as any).id}`}
+                                onClick={() => handleGrantRole((user as any).id, 'admin')}
                                 className="btn btn-small btn-primary"
                               >
                                 + Admin
@@ -210,11 +248,11 @@ export const AdminPanel: React.FC = () => {
                       <td>
                         <div className="user-actions">
                           <button
-                            onClick={() => handleDeleteUser(user.user_id, user.username)}
+                            onClick={() => handleDeleteUser((user as any).id, user.username)}
                             className="btn btn-small btn-danger"
-                            disabled={user.user_id === userProfile?.user_id}
+                            disabled={(user as any).id === userProfile?.user_id || updatingUser === (user as any).id}
                           >
-                            Delete
+                            {updatingUser === (user as any).id ? 'Deleting...' : 'Delete'}
                           </button>
                         </div>
                       </td>
@@ -227,16 +265,18 @@ export const AdminPanel: React.FC = () => {
             {pagination && pagination.pages > 1 && (
               <div className="pagination">
                 <button
+                  key="prev-page"
                   onClick={() => setCurrentPage(currentPage - 1)}
                   disabled={currentPage === 1}
                   className="btn btn-secondary"
                 >
                   Previous
                 </button>
-                <span className="page-info">
+                <span key="page-info" className="page-info">
                   Page {currentPage} of {pagination.pages}
                 </span>
                 <button
+                  key="next-page"
                   onClick={() => setCurrentPage(currentPage + 1)}
                   disabled={currentPage === pagination.pages}
                   className="btn btn-secondary"

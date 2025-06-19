@@ -70,12 +70,14 @@ export const GeneralTab: React.FC<TabProps> = ({
         <div className="general-tab__grid">
           <Input
             label="Story Title"
+            data-test-id="story-title-input"
             value={scenario.title || ''}
             onChange={(value) => handleBasicFieldChange('title', value)}
             placeholder="Enter your story title..."
           />
           <Input
             label="Synopsis"
+            data-test-id="story-synopsis-input"
             value={scenario.synopsis || ''}
             onChange={(value) => handleBasicFieldChange('synopsis', value)}
             placeholder="Brief description of your story..."
@@ -91,6 +93,7 @@ export const GeneralTab: React.FC<TabProps> = ({
           <Button
             variant="secondary"
             size="sm"
+            data-test-id="randomize-all-style-btn"
             onClick={randomizeAllStyle}
             icon={<FaRandom />}
           >
@@ -129,6 +132,7 @@ export const GeneralTab: React.FC<TabProps> = ({
           <div className="general-tab__style-field">
             <Dropdown
               label="Genre"
+              data-test-id="genre-dropdown"
               value={writingStyle.genre || ''}
               onChange={(value) => handleStyleChange('genre', value)}
               options={genreOptions}

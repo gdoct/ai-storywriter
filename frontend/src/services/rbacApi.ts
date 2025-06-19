@@ -49,6 +49,16 @@ export const adminApi = {
     return response.data;
   },
 
+  async updateUserTier(userId: string, tier: string): Promise<{ message: string; user_id: string; old_tier: string; new_tier: string }> {
+    const response = await http.put(`/api/admin/users/${userId}/tier`, { tier });
+    return response.data;
+  },
+
+  async deleteUser(userId: string): Promise<{ message: string; user_id: string }> {
+    const response = await http.delete(`/api/admin/users/${userId}`);
+    return response.data;
+  },
+
   async listUsersWithRole(role: string): Promise<AdminUser[]> {
     const response = await http.get(`/api/admin/roles/${role}/users`);
     return response.data;

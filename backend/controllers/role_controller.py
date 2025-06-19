@@ -213,6 +213,28 @@ def update_user_tier(user_id):
         logger.error(f"Error updating user tier: {e}")
         return jsonify({'error': 'Internal server error'}), 500
 
+@roles_bp.route('/api/admin/users/find/<email>', methods=['GET'])
+@require_role(['admin'])
+def find_user(email):
+    """Find a user by email"""
+    try:
+        user = UserRepository.get_user_by_email(email)
+        
+        if not user:
+            return jsonify({'error': 'User not found'}), 404
+        
+        return jsonify({
+            'user_id': user['user_id'],
+            'username': user['username'],
+            'email': user.get('email'),
+            'tier': user['tier'],
+            'roles': user['roles']
+        })
+        
+    except Exception as e:
+        logger.error(f"Error finding user: {e}")
+        return jsonify({'error': 'Internal server error'}), 500
+
 @roles_bp.route('/api/admin/users/<user_id>', methods=['DELETE'])
 @require_role(['admin'])
 def delete_user(user_id):

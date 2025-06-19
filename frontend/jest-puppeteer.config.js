@@ -1,6 +1,18 @@
 module.exports = {
-  launch: {
+ launch: {
     headless: true,
     args: ['--no-sandbox', '--disable-setuid-sandbox'],
+  },  preset: 'ts-jest',
+  testEnvironment: 'node',
+  testMatch: [
+    '<rootDir>/__tests__/**/*.puppeteer.test.ts?(x)',
+  ],
+  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
+  roots: ['<rootDir>/src', '<rootDir>/__tests__'],
+  globals: {
+    'ts-jest': {
+      tsconfig: 'tsconfig.json',
+    },
   },
+  setupFilesAfterEnv: ['<rootDir>/setupTests.ts'],
 };

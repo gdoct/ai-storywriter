@@ -58,7 +58,7 @@ if (credits === null || credits === 0) {
   return (
     <div className={`credits-badge ${className}`} title={`You have ${credits} credits`}>
       <span className="credits-icon">💳</span>
-      <span className="credits-text">{credits} credits</span>
+      <span className="credits-text" data-test-id="credits-amount">{credits} credits</span>
     </div>
   );
 };

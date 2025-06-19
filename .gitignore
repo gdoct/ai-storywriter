@@ -126,3 +126,4 @@ scenarios/
 stories/
 uploads/
 storywriter.db
+*.db

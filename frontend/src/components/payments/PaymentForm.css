@@ -1,269 +1,367 @@
-/* PaymentForm.css */
+/* PaymentForm.css - High contrast, dark mode override */
+
+/* Main payment form container - force light mode */
 .payment-form {
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 2rem !important;
+  background-color: #ffffff !important;
+  color: #000000 !important;
+  padding: 2rem !important;
+  border-radius: 12px !important;
+  border: 2px solid #333333 !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
 }
 
+/* Order summary - white background with dark text */
 .order-summary {
-  background: #f8fafc;
-  padding: 1.5rem;
-  border-radius: 12px;
-  border: 1px solid #e2e8f0;
+  background: #ffffff !important;
+  color: #000000 !important;
+  padding: 1.5rem !important;
+  border-radius: 8px !important;
+  border: 2px solid #000000 !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
+  margin-bottom: 1rem !important;
 }
 
 .order-summary h3 {
-  margin: 0 0 1rem 0;
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: #2d3748;
+  margin: 0 0 1rem 0 !important;
+  font-size: 1.2rem !important;
+  font-weight: 700 !important;
+  color: #000000 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
 }
 
 .summary-content {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0.75rem !important;
 }
 
 .summary-line {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  color: #4a5568;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  color: #333333 !important;
+  font-weight: 600 !important;
+  font-size: 1rem !important;
 }
 
 .summary-divider {
-  height: 1px;
-  background: #e2e8f0;
-  margin: 0.5rem 0;
+  height: 2px !important;
+  background: #000000 !important;
+  margin: 0.75rem 0 !important;
 }
 
 .summary-total {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-weight: 700;
-  font-size: 1.1rem;
-  color: #2d3748;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  font-weight: 800 !important;
+  font-size: 1.3rem !important;
+  color: #000000 !important;
+  padding-top: 0.5rem !important;
+  border-top: 2px solid #000000 !important;
 }
 
+/* Payment methods section */
 .payment-methods h3 {
-  margin: 0 0 1rem 0;
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: #2d3748;
+  margin: 0 0 1rem 0 !important;
+  font-size: 1.2rem !important;
+  font-weight: 700 !important;
+  color: #000000 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
 }
 
 .method-selector {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1rem;
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 1rem !important;
+  margin-bottom: 2rem !important;
 }
 
+/* Payment method buttons - high contrast */
 .method-btn {
-  padding: 1rem;
-  border: 2px solid #e2e8f0;
-  background: white;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 1rem;
-  font-weight: 600;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
+  padding: 1.2rem !important;
+  border: 3px solid #000000 !important;
+  background: #ffffff !important;
+  color: #000000 !important;
+  border-radius: 8px !important;
+  cursor: pointer !important;
+  font-size: 1.1rem !important;
+  font-weight: 700 !important;
+  transition: all 0.2s ease !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.5rem !important;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
 }
 
 .method-btn:hover {
-  border-color: #cbd5e0;
+  border-color: #0066cc !important;
+  background: #f0f8ff !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3) !important;
+  color: #0066cc !important;
 }
 
 .method-btn.active {
-  border-color: #667eea;
-  background: #f0f4ff;
-  color: #667eea;
+  border-color: #0066cc !important;
+  background: #0066cc !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 8px rgba(0, 102, 204, 0.4) !important;
 }
 
+/* Form fields */
 .card-form {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 1.5rem !important;
 }
 
 .form-row {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0.5rem !important;
 }
 
 .form-row label {
-  font-weight: 600;
-  color: #2d3748;
-  font-size: 0.9rem;
+  font-weight: 700 !important;
+  color: #000000 !important;
+  font-size: 1rem !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
 }
 
 .form-input {
-  padding: 0.75rem;
-  border: 2px solid #e2e8f0;
-  border-radius: 8px;
-  font-size: 1rem;
-  transition: border-color 0.2s ease;
-  background: white;
+  padding: 1rem !important;
+  border: 2px solid #000000 !important;
+  border-radius: 6px !important;
+  font-size: 1.1rem !important;
+  transition: border-color 0.2s ease !important;
+  background: #ffffff !important;
+  color: #000000 !important;
+  font-weight: 600 !important;
 }
 
 .form-input:focus {
-  outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  outline: none !important;
+  border-color: #0066cc !important;
+  box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.2) !important;
+}
+
+.form-input::placeholder {
+  color: #666666 !important;
+  font-weight: 500 !important;
 }
 
 .form-row-group {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1rem;
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 1rem !important;
 }
 
+/* PayPal info */
 .paypal-info {
-  padding: 2rem;
-  background: #f8fafc;
-  border-radius: 12px;
-  border: 1px solid #e2e8f0;
-  text-align: center;
+  padding: 2rem !important;
+  background: #ffffff !important;
+  border-radius: 8px !important;
+  border: 2px solid #0066cc !important;
+  text-align: center !important;
+  color: #000000 !important;
 }
 
 .paypal-notice p {
-  color: #4a5568;
-  margin: 0;
-  line-height: 1.5;
+  color: #000000 !important;
+  margin: 0 !important;
+  line-height: 1.6 !important;
+  font-weight: 600 !important;
+  font-size: 1rem !important;
 }
 
+/* Dev controls - high visibility warning style */
 .dev-controls {
-  padding: 1rem;
-  background: #fff5f0;
-  border-radius: 8px;
-  border: 1px solid #fed7cc;
+  padding: 1.5rem !important;
+  background: #fff3cd !important;
+  border-radius: 8px !important;
+  border: 3px solid #ff6600 !important;
+  color: #cc5500 !important;
+  margin: 1rem 0 !important;
 }
 
 .checkbox-label {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  cursor: pointer;
-  user-select: none;
-  color: #744210;
-  font-size: 0.9rem;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.75rem !important;
+  cursor: pointer !important;
+  user-select: none !important;
+  color: #cc5500 !important;
+  font-size: 1rem !important;
+  font-weight: 700 !important;
 }
 
 .checkbox-label input[type="checkbox"] {
-  display: none;
+  display: none !important;
 }
 
 .checkmark {
-  width: 20px;
-  height: 20px;
-  border: 2px solid #d69e2e;
-  border-radius: 4px;
-  position: relative;
-  background: white;
-  transition: all 0.2s ease;
+  width: 24px !important;
+  height: 24px !important;
+  border: 3px solid #ff6600 !important;
+  border-radius: 4px !important;
+  position: relative !important;
+  background: #ffffff !important;
+  transition: all 0.2s ease !important;
 }
 
 .checkbox-label input[type="checkbox"]:checked + .checkmark {
-  background: #d69e2e;
+  background: #ff6600 !important;
 }
 
 .checkbox-label input[type="checkbox"]:checked + .checkmark::after {
-  content: '✓';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  color: white;
-  font-size: 12px;
-  font-weight: bold;
+  content: '✓' !important;
+  position: absolute !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  color: #ffffff !important;
+  font-size: 14px !important;
+  font-weight: bold !important;
 }
 
+/* Form actions */
 .form-actions {
-  display: flex;
-  gap: 1rem;
-  justify-content: flex-end;
-  padding-top: 1rem;
-  border-top: 1px solid #e2e8f0;
+  display: flex !important;
+  gap: 1rem !important;
+  justify-content: flex-end !important;
+  padding-top: 2rem !important;
+  border-top: 2px solid #000000 !important;
+  margin-top: 2rem !important;
 }
 
+/* Secondary button - high contrast */
 .secondary-btn {
-  padding: 0.75rem 1.5rem;
-  border: 2px solid #e2e8f0;
-  background: white;
-  color: #4a5568;
-  border-radius: 8px;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
+  padding: 1rem 2rem !important;
+  border: 3px solid #000000 !important;
+  background: #ffffff !important;
+  color: #000000 !important;
+  border-radius: 8px !important;
+  font-size: 1.1rem !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
 }
 
 .secondary-btn:hover {
-  border-color: #cbd5e0;
-  background: #f7fafc;
+  border-color: #666666 !important;
+  background: #f5f5f5 !important;
+  color: #000000 !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2) !important;
 }
 
+/* Primary button - high contrast blue */
 .primary-btn {
-  padding: 0.75rem 1.5rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
+  padding: 1rem 2rem !important;
+  background: #0066cc !important;
+  color: #ffffff !important;
+  border: 3px solid #0066cc !important;
+  border-radius: 8px !important;
+  font-size: 1.1rem !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  box-shadow: 0 4px 8px rgba(0, 102, 204, 0.3) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
 }
 
 .primary-btn:hover:not(:disabled) {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  background: #0052a3 !important;
+  border-color: #0052a3 !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 12px rgba(0, 82, 163, 0.4) !important;
 }
 
 .primary-btn:disabled {
-  background: #cbd5e0;
-  color: #a0aec0;
-  cursor: not-allowed;
-  transform: none;
-  box-shadow: none;
+  background: #cccccc !important;
+  color: #666666 !important;
+  border-color: #cccccc !important;
+  cursor: not-allowed !important;
+  transform: none !important;
+  box-shadow: none !important;
 }
 
 /* Responsive design */
 @media (max-width: 768px) {
   .method-selector {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr !important;
   }
   
   .form-row-group {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr !important;
   }
   
   .form-actions {
-    flex-direction: column;
+    flex-direction: column !important;
   }
   
   .form-actions button {
-    width: 100%;
+    width: 100% !important;
+  }
+  
+  .payment-form {
+    padding: 1rem !important;
+    gap: 1.5rem !important;
   }
 }
 
 @media (max-width: 480px) {
   .payment-form {
-    gap: 1.5rem;
+    gap: 1rem !important;
   }
   
   .order-summary,
   .dev-controls {
-    padding: 1rem;
+    padding: 1rem !important;
   }
   
   .form-input {
-    padding: 0.6rem;
+    padding: 0.8rem !important;
+    font-size: 1rem !important;
   }
+  
+  .method-btn {
+    padding: 1rem !important;
+    font-size: 1rem !important;
+  }
+}
+
+/* Force override any dark mode styles */
+.payment-form * {
+  box-sizing: border-box !important;
+}
+
+.payment-form,
+.payment-form *:not(.primary-btn):not(.method-btn.active):not(.checkmark) {
+  background-color: #ffffff !important;
+  color: #000000 !important;
+}
+
+/* Ensure text inputs are readable */
+.payment-form input[type="text"],
+.payment-form input[type="email"],
+.payment-form input[type="tel"],
+.payment-form input {
+  background: #ffffff !important;
+  color: #000000 !important;
+  border: 2px solid #000000 !important;
 }

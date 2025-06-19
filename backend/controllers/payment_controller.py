@@ -21,7 +21,7 @@ def mock_purchase():
     package_id = data.get('packageId')
     credits = data.get('credits')
     amount = data.get('amount')
-    simulate_failure = data.get('simulateFailure', False)
+    simulate_failure = False # data.get('simulateFailure', False)
     payment_method = data.get('paymentMethod', 'card')
     
     # Validate required fields
@@ -100,7 +100,7 @@ def mock_purchase():
         'success': True,
         'transaction': transaction,
         'newBalance': new_balance
-    }), 200
+    }, 200)
 
 @payment_bp.route('/api/payment/packages', methods=['GET'])
 def get_credit_packages():
@@ -188,3 +188,42 @@ def add_credits():
         return jsonify({'error': 'Failed to add credits'}), 500
     new_balance = UserRepository.get_user_credit_balance(user['id'])
     return jsonify({'success': True, 'newBalance': new_balance}), 200
+
+@payment_bp.route('/api/admin/upgrade-user', methods=['POST'])
+@jwt_required()
+def upgrade_user_to_premium():
+    """Upgrade a user to premium and add credits. Admin only."""
+    username = get_jwt_identity()
+    admin_user = UserRepository.get_user_by_username_with_roles(username)
+
+    if not admin_user or 'admin' not in admin_user['roles'] :
+        return jsonify({'error': 'Unauthorized access'}), 403
+
+    data = request.get_json()
+    email = data.get('email')
+
+    if not email:
+        return jsonify({'error': 'Email is required'}), 400
+
+    user = UserRepository.get_user_by_email(email)
+
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
+
+    try:
+        # Upgrade user to premium
+        UserRepository.update_user_tier(user['id'], 'premium')
+
+        # Add 100,000 credits to the user
+        UserRepository.add_credit_transaction(
+            user_id=user['id'],
+            transaction_type='admin_upgrade',
+            amount=100000,
+            description='Admin upgrade to premium with 100,000 credits',
+            related_entity_id=None
+        )
+    except Exception as e:
+        print(f"Failed to upgrade user: {e}")
+        return jsonify({'error': 'Failed to upgrade user'}), 500
+
+    return jsonify({'success': True, 'message': f"User {email} upgraded to premium with 100,000 credits"}), 200

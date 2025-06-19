@@ -1,12 +1,18 @@
 CREATE TABLE users (
             id TEXT PRIMARY KEY,
-            username TEXT UNIQUE NOT NULL,
-            email TEXT,
+            username TEXT NOT NULL,
+            email TEXT UNIQUE,
+            password_hash TEXT,
             is_deleted INTEGER DEFAULT 0,
-            created_at TEXT DEFAULT CURRENT_TIMESTAMP
-        , terms_agreed_at TEXT, privacy_agreed_at TEXT, terms_version TEXT DEFAULT '1.0', privacy_version TEXT DEFAULT '1.0', tier TEXT DEFAULT 'free' 
-            CHECK (tier IN ('free', 'byok', 'premium')), api_key_encrypted TEXT, api_provider TEXT DEFAULT 'openai'
-            CHECK (api_provider IN ('openai', 'anthropic', 'google')));
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+            terms_agreed_at TEXT,
+            privacy_agreed_at TEXT,
+            terms_version TEXT DEFAULT '1.0',
+            privacy_version TEXT DEFAULT '1.0',
+            tier TEXT DEFAULT 'free' CHECK (tier IN ('free', 'byok', 'premium')),
+            api_key_encrypted TEXT,
+            api_provider TEXT DEFAULT 'openai' CHECK (api_provider IN ('openai', 'anthropic', 'google'))
+        );
 CREATE TABLE scenarios (
             id TEXT PRIMARY KEY,
             user_id TEXT,

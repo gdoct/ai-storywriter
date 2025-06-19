@@ -30,7 +30,7 @@ export const login = async (email: string, password: string): Promise<boolean> =
 
 export const signup = async (signupData: SignupData): Promise<boolean> => {
   try {
-    const response = await axios.post<LoginResponse>('/api/login', signupData);
+    const response = await axios.post<LoginResponse>('/api/signup', signupData);
     if (response.data.access_token) {
       // Store the token and user info in localStorage
       localStorage.setItem('token', response.data.access_token);

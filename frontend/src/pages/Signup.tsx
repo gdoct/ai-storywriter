@@ -169,6 +169,7 @@ const Signup: React.FC = () => {
             <label className="checkbox-label">
               <input
                 type="checkbox"
+                data-test-id="agreeToTerms"
                 checked={formData.agreeToTerms}
                 onChange={(e) => handleInputChange('agreeToTerms', e.target.checked.toString())}
                 className={errors.agreeToTerms ? 'error' : ''}
@@ -191,6 +192,7 @@ const Signup: React.FC = () => {
             type="submit" 
             disabled={isLoading}
             className="signup-btn"
+            data-test-id="signupButton"
           >
             {isLoading ? 'Creating Account...' : 'Create Account'}
           </button>

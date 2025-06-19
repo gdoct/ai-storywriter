@@ -1,3 +1,4 @@
+import json
 import uuid
 from datetime import datetime, timezone
 
@@ -23,7 +24,7 @@ class UserRepository:
         return user
 
     @staticmethod
-    def create_user(username, email=None, agreed_to_terms=False):
+    def create_user(username, email=None, password_hash=None, agreed_to_terms=False):
         conn = get_db_connection()
         user_id = str(uuid.uuid4())
         now = datetime.now(timezone.utc).isoformat()
@@ -35,9 +36,9 @@ class UserRepository:
         privacy_version = '1.0' if agreed_to_terms else None
         
         conn.execute('''INSERT INTO users 
-                        (id, username, email, created_at, terms_agreed_at, privacy_agreed_at, terms_version, privacy_version) 
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?)''', 
-                    (user_id, username, email, now, terms_agreed_at, privacy_agreed_at, terms_version, privacy_version))
+                        (id, username, email, password_hash, created_at, terms_agreed_at, privacy_agreed_at, terms_version, privacy_version) 
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)''', 
+                    (user_id, username, email, password_hash, now, terms_agreed_at, privacy_agreed_at, terms_version, privacy_version))
         conn.commit()
         user = conn.execute('SELECT * FROM users WHERE username = ?', (username,)).fetchone()
         conn.close()
@@ -51,9 +52,38 @@ class UserRepository:
         conn.close()
 
     @staticmethod
+    def update_user_password(user_id, password_hash):
+        """Update a user's password hash."""
+        conn = get_db_connection()
+        conn.execute('UPDATE users SET password_hash = ? WHERE id = ?', (password_hash, user_id))
+        conn.commit()
+        conn.close()
+        return True
+
+    @staticmethod
     def delete_user(user_id):
         conn = get_db_connection()
-        conn.execute('UPDATE users SET is_deleted = 1 WHERE id = ?', (user_id,))
+        # soft delete the user by marking them as deleted
+        # Note: This does not delete the user from the database, it just marks them as deleted
+        # We generate a random id to postfix the email address with, so they can signup again with their
+        # original email if they want to, but we keep the old data for historical purposes
+        cursor = conn.cursor()
+        cursor.execute("SELECT email FROM users WHERE id = ?", (user_id,))
+        row = cursor.fetchone()
+        if not row:
+            conn.close()
+            return
+
+        original_email = row[0]
+        random_prefix = f"DELETED_{str(uuid.uuid4())[:8]}_"
+
+        if '@' in original_email:
+            parts = original_email.split('@', 1)
+            new_email = random_prefix + parts[0] + '@' + parts[1]
+        else:
+            new_email = random_prefix + original_email
+        
+        conn.execute('UPDATE users SET is_deleted = 1, email = ? WHERE id = ?', (new_email, user_id))
         conn.commit()
         conn.close()
 
@@ -235,6 +265,18 @@ class ScenarioRepository:
     def create_scenario(user_id, title, jsondata):
         conn = get_db_connection()
         scenario_id = str(uuid.uuid4())
+        # jsondata has an "id" property that needs to be updated before saving
+        if isinstance(jsondata, dict):
+            jsondata['id'] = scenario_id
+        elif isinstance(jsondata, str):
+            try:
+                json_obj = json.loads(jsondata)
+                json_obj['id'] = scenario_id
+                jsondata = json.dumps(json_obj)
+            except json.JSONDecodeError:
+                raise ValueError("Invalid JSON data provided")
+        else:
+            raise ValueError("jsondata must be a dict or a JSON string")
         now = datetime.now(timezone.utc).isoformat()
         conn.execute('INSERT INTO scenarios (id, user_id, title, jsondata, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)',
                      (scenario_id, user_id, title, jsondata, now, now))

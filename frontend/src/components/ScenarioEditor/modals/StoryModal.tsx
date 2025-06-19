@@ -124,6 +124,7 @@ export const StoryModal: React.FC<StoryModalProps> = ({
                 variant="primary"
                 size="sm"
                 onClick={onRegenerate}
+                data-test-id="generateStoryButton"
                 icon={<FaRedo />}
               >
                 Generate Story
@@ -134,6 +135,7 @@ export const StoryModal: React.FC<StoryModalProps> = ({
             {isGenerating && (
               <Button
                 variant="secondary"
+                data-test-id="cancelGenerationButton"
                 size="sm"
                 onClick={onCancelGeneration}
                 icon={<FaTimes />}
@@ -160,6 +162,7 @@ export const StoryModal: React.FC<StoryModalProps> = ({
                 <Button
                   variant="primary"
                   size="sm"
+                  data-test-id="saveStoryButton"
                   onClick={onSaveStory}
                   disabled={isStorySaved}
                   icon={<FaSave />}

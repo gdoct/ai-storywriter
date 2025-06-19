@@ -3,9 +3,7 @@ module.exports = {
   testEnvironment: 'node',
   testMatch: [
     '<rootDir>/__tests__/**/*.test.ts?(x)',
-    '<rootDir>/__tests__/**/*.test.js',
-    '<rootDir>/__tests__/**/*.puppeteer.js',
-    '<rootDir>/__tests__/**/*.puppeteer.test.js'
+    '!<rootDir>/__tests__/**/*.puppeteer.test.ts?(x)'
   ],
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
   roots: ['<rootDir>/src', '<rootDir>/__tests__'],

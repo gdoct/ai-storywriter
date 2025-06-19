@@ -278,6 +278,24 @@
   }
 }
 
+/* Loading/updating indicators */
+.updating-indicator {
+  font-size: 0.75rem;
+  color: #6b7280;
+  font-style: italic;
+  margin-top: 0.25rem;
+}
+
+.tier-select:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 @media (max-width: 768px) {
   .users-table th,
   .users-table td {

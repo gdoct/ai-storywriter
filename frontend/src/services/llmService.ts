@@ -223,4 +223,100 @@ export async function chatCompletionWithStatus(
   return choices[0].message?.content || '';
 }
 
+/**
+ * Non-streaming chat completion with AI status context handling.
+ * @param prompt
+ * @param options
+ * @param setAiStatus
+ * @param setShowAIBusyModal
+ */
+export async function chatCompletion(
+  prompt: llmCompletionRequestMessage,
+  options: LLMChatOptions = {},
+  token: string | null = null
+): Promise<string> {
+  const messages = buildMessagesFromRequest(prompt);
+  const payload: any = {
+    model: options.model || '',
+    messages,
+    temperature: options.temperature ?? 0.8,
+    max_tokens: options.max_tokens ?? 1024,
+    stream: false,
+  };
+  
+  // Only include keep_alive if explicitly requested
+  if (options.keepAlive) {
+    payload.keep_alive = options.keepAlive;
+  }
+  
+  if (!options.model || options.model.trim() === '') {
+    throw new Error('Model must be specified');
+  }
+  
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json'
+  };
+  
+  const usertoken = token ?? getToken();
+  if (usertoken) {
+    headers.Authorization = `Bearer ${usertoken}`;
+  }
+  
+  const response = await fetch(LLM_PROXY_ENDPOINT, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(payload),
+    signal: options.signal,
+  });
+  
+   if (response.status === 409) {
+    throw new Error('409');
+  }
+  
+  if (!response.ok) {
+    let errorMessage = `LLM backend error: ${response.statusText}`;
+    try {
+      const errorData = await response.json();
+      if (response.status === 402) {
+        // Insufficient credits error
+        errorMessage = errorData.error || 'Insufficient credits to complete this request. Please purchase more credits to continue.';
+      } else {
+        errorMessage = errorData.error || errorData.message || errorMessage;
+      }
+    } catch (e) {
+      // If we can't parse the error response, use the default message
+    }
+    throw new Error(errorMessage);
+  }
+  // read response to a string non-json plain text
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let done = false;
+  let assistantText = '';
+  while (!done) {
+    const { value, done: doneReading } = await reader.read();
+    done = doneReading;
+    const chunk = decoder.decode(value, { stream: !done });
+
+    // Process each "data:" line
+    const lines = chunk.split('\n').filter(line => line.startsWith('data:'));
+    for (const line of lines) {
+      try {
+        if (line === "[DONE]\n\n") {
+          break; // End of stream
+        }
+        const json = JSON.parse(line.slice(5).trim()); // Remove "data:" prefix and parse JSON
+        const content = json.choices?.[0]?.delta?.content;
+        if (content) {
+          assistantText += content;
+        }
+      } catch (error) {
+        console.error('Failed to parse chunk:', line, error);
+      }
+    }
+  }
+
+  return assistantText;
+}
+
 export type { LLMMessage };
