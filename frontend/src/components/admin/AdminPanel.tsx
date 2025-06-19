@@ -5,14 +5,17 @@
 
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useModals } from '../../hooks/useModals';
 import type { AdminUser } from '../../services/rbacApi';
 import { adminApi } from '../../services/rbacApi';
 import { UserRole, UserTier } from '../../types/auth';
+import { AlertModal, ConfirmModal } from '../Modal';
 import { AdminOnly } from '../PermissionGate';
 import './AdminPanel.css';
 
 export const AdminPanel: React.FC = () => {
   const { userProfile } = useAuth();
+  const { alertState, confirmState, hideAlert, hideConfirm, customAlert, customConfirm } = useModals();
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [pagination, setPagination] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -40,28 +43,47 @@ export const AdminPanel: React.FC = () => {
   };
 
   const handleGrantRole = async (userId: string, role: UserRole) => {
-    if (!window.confirm(`Grant ${role} role to this user?`)) return;
+    const confirmed = await customConfirm(
+      `Grant ${role} role to this user?`,
+      {
+        title: 'Confirm Grant Role',
+        confirmText: 'Grant',
+        cancelText: 'Cancel'
+      }
+    );
+
+    if (!confirmed) return;
 
     try {
       await adminApi.grantRole(userId, role);
-      alert(`${role} role granted successfully`);
+      customAlert(`${role} role granted successfully`, 'Success');
       fetchUsers(); // Refresh user list
     } catch (error) {
       console.error('Failed to grant role:', error);
-      alert('Failed to grant role');
+      customAlert('Failed to grant role', 'Error');
     }
   };
 
   const handleRevokeRole = async (userId: string, role: UserRole) => {
-    if (!window.confirm(`Revoke ${role} role from this user?`)) return;
+    const confirmed = await customConfirm(
+      `Revoke ${role} role from this user?`,
+      {
+        title: 'Confirm Revoke Role',
+        confirmText: 'Revoke',
+        cancelText: 'Cancel',
+        variant: 'danger'
+      }
+    );
+
+    if (!confirmed) return;
 
     try {
       await adminApi.revokeRole(userId, role);
-      alert(`${role} role revoked successfully`);
+      customAlert(`${role} role revoked successfully`, 'Success');
       fetchUsers(); // Refresh user list
     } catch (error) {
       console.error('Failed to revoke role:', error);
-      alert('Failed to revoke role');
+      customAlert('Failed to revoke role', 'Error');
     }
   };
 
@@ -76,7 +98,7 @@ export const AdminPanel: React.FC = () => {
     const currentUser = users.find(u => (u as any).id === userId);
     
     if (!currentUser) {
-      alert('Error: User not found');
+      customAlert('Error: User not found', 'Error');
       return;
     }
     
@@ -86,17 +108,26 @@ export const AdminPanel: React.FC = () => {
     // Don't do anything if it's the same tier
     if (currentTier === newTier) return;
     
-    if (!window.confirm(`Update user "${userDisplayName}" tier from ${currentTier} to ${newTier}?\n\nThis will change their access level and available features.`)) return;
+    const confirmed = await customConfirm(
+      `Update user "${userDisplayName}" tier from ${currentTier} to ${newTier}?\n\nThis will change their access level and available features.`,
+      {
+        title: 'Confirm Tier Update',
+        confirmText: 'Update',
+        cancelText: 'Cancel'
+      }
+    );
+
+    if (!confirmed) return;
 
     setUpdatingUser(userId);
     try {
       const response = await adminApi.updateUserTier(userId, newTier);
-      alert(`User tier updated from ${response.old_tier} to ${response.new_tier} successfully`);
+      customAlert(`User tier updated from ${response.old_tier} to ${response.new_tier} successfully`, 'Success');
       fetchUsers(); // Refresh user list
     } catch (error: any) {
       console.error('Failed to update tier:', error);
       const errorMessage = error.response?.data?.error || 'Failed to update tier';
-      alert(`Error: ${errorMessage}`);
+      customAlert(`Error: ${errorMessage}`, 'Error');
       // Reset the select to the original value
       fetchUsers();
     } finally {
@@ -108,17 +139,27 @@ export const AdminPanel: React.FC = () => {
     const currentUser = users.find(u => (u as any).id === userId);
     const userInfo = `${username} (${currentUser?.email || 'no email'})`;
     
-    if (!window.confirm(`Delete user "${userInfo}"?\n\nThis action cannot be undone. The user will no longer be able to access their account and all their data will be marked as deleted.`)) return;
+    const confirmed = await customConfirm(
+      `Delete user "${userInfo}"?\n\nThis action cannot be undone. The user will no longer be able to access their account and all their data will be marked as deleted.`,
+      {
+        title: 'Confirm Delete User',
+        confirmText: 'Delete',
+        cancelText: 'Cancel',
+        variant: 'danger'
+      }
+    );
+
+    if (!confirmed) return;
 
     setUpdatingUser(userId);
     try {
       const response = await adminApi.deleteUser(userId);
-      alert(`User ${username} deleted successfully`);
+      customAlert(`User ${username} deleted successfully`, 'Success');
       fetchUsers(); // Refresh user list
     } catch (error: any) {
       console.error('Failed to delete user:', error);
       const errorMessage = error.response?.data?.error || 'Failed to delete user';
-      alert(`Error: ${errorMessage}`);
+      customAlert(`Error: ${errorMessage}`, 'Error');
     } finally {
       setUpdatingUser(null);
     }
@@ -286,6 +327,25 @@ export const AdminPanel: React.FC = () => {
               </div>
             )}
           </div>
+
+          {/* Custom Modal Components */}
+          <AlertModal
+            isOpen={alertState.isOpen}
+            onClose={hideAlert}
+            message={alertState.message}
+            title={alertState.title}
+          />
+          
+          <ConfirmModal
+            isOpen={confirmState.isOpen}
+            onClose={hideConfirm}
+            onConfirm={confirmState.onConfirm || (() => {})}
+            message={confirmState.message}
+            title={confirmState.title}
+            confirmText={confirmState.confirmText}
+            cancelText={confirmState.cancelText}
+            variant={confirmState.variant}
+          />
         </div>
       </div>
     </AdminOnly>

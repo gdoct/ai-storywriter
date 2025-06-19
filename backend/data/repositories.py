@@ -72,7 +72,7 @@ class UserRepository:
         row = cursor.fetchone()
         if not row:
             conn.close()
-            return
+            return False
 
         original_email = row[0]
         random_prefix = f"DELETED_{str(uuid.uuid4())[:8]}_"
@@ -86,6 +86,7 @@ class UserRepository:
         conn.execute('UPDATE users SET is_deleted = 1, email = ? WHERE id = ?', (new_email, user_id))
         conn.commit()
         conn.close()
+        return True
 
     @staticmethod
     def update_user_credits(user_id, credits):
@@ -189,6 +190,27 @@ class UserRepository:
             conn.close()
             return user_dict
         
+        conn.close()
+        return None
+
+    @staticmethod
+    def get_user_by_email_with_roles(email):
+        """Get user by email with their roles included"""
+        conn = get_db_connection()
+        user = conn.execute('SELECT * FROM users WHERE email = ? AND is_deleted = 0', (email,)).fetchone()
+        if user:
+            user_id = user['id'] if 'id' in user.keys() else user[0]
+            # Get user roles
+            roles_cursor = conn.execute('''
+                SELECT role FROM user_roles 
+                WHERE user_id = ? AND revoked_at IS NULL
+            ''', (user_id,))
+            roles = [row['role'] for row in roles_cursor.fetchall()]
+            user_dict = dict(user)
+            user_dict['user_id'] = user_id  # Map id to user_id for API
+            user_dict['roles'] = roles
+            conn.close()
+            return user_dict
         conn.close()
         return None
 

@@ -1,4 +1,5 @@
 // All prompt generation logic for LLM scenario/storywriting
+import { faker } from '@faker-js/faker';
 import { llmCompletionRequestMessage } from '../types/LLMTypes';
 import { Character, Scenario, StyleSettings } from '../types/ScenarioTypes';
 import { formatScenarioAsMarkdown, formatScenarioAsMarkdownWithoutBackStory, formatScenarioAsMarkdownWithoutStoryArc } from '../utils/scenarioToMarkdown';
@@ -371,6 +372,12 @@ export function createCharacterPrompt(scenario: Scenario, characterType: string)
     prompt += "Create a memorable supporting character who adds depth to the story world.\n";
     prompt += "The character should have their own goals and personality while complementing the main characters.\n";
   }
+  // Use faker to create a fake person. 
+  const gender = faker.person.sexType();
+  const fullname = faker.person.fullName({ sex: gender });
+  prompt += `\Use these characteristics for this ${characterType} character:\n`;
+  prompt += `- name: ${fullname}\n`;
+  prompt += `- gender: ${gender}\n`;
 
   // Add context from existing characters, if any
   if (existingCharacters.length > 0) {
@@ -381,11 +388,11 @@ export function createCharacterPrompt(scenario: Scenario, characterType: string)
     prompt += "\nCreate a character that would interact well with these existing characters.\n";
   }
 
+
+
   // Request specific details
   prompt += "\nProvide the following information in JSON format:\n";
-  prompt += "- name: A fitting name for this character\n";
   prompt += "- alias: An optional nickname or alias (can be empty string)\n";
-  prompt += "- gender: The character's gender\n";
   prompt += "- role: Their specific role ('Protagonist', 'Antagonist', or 'Supporting')\n";
   prompt += "- appearance: A concise description of their physical appearance\n";
   prompt += "- backstory: A brief but compelling backstory for the character\n";
@@ -447,6 +454,11 @@ export function createRandomCharacterPrompt(scenario: Scenario, characterType: s
     prompt += "Create a memorable supporting character who adds depth to the story world.\n";
     prompt += "The character should have their own goals and personality while complementing the main characters.\n";
   }
+  const gender = faker.person.sexType();
+  const fullname = faker.person.fullName({ sex: gender });
+  prompt += `\Use these characteristics for this ${characterType} character:\n`;
+  prompt += `- name: ${fullname}\n`;
+  prompt += `- gender: ${gender}\n`;
 
   // Add additional instructions if provided
   if (additionalInstructions && additionalInstructions.trim()) {
@@ -464,9 +476,7 @@ export function createRandomCharacterPrompt(scenario: Scenario, characterType: s
 
   // Request specific details
   prompt += "\nProvide the following information in JSON format:\n";
-  prompt += "- name: A fitting name for this character\n";
   prompt += "- alias: An optional nickname or alias (can be empty string)\n";
-  prompt += "- gender: The character's gender\n";
   prompt += "- role: Their specific role ('Protagonist', 'Antagonist', or 'Supporting')\n";
   prompt += "- appearance: A concise description of their physical appearance\n";
   prompt += "- backstory: A brief but compelling backstory for the character\n";

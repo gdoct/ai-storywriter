@@ -1,10 +1,12 @@
 import React, { useCallback, useEffect, useRef } from 'react';
 import { FaBook, FaEye, FaSave, FaStickyNote, FaUser, FaUsers } from 'react-icons/fa';
+import { useModals } from '../../hooks/useModals';
 import { createScenario, updateScenario } from '../../services/scenario';
 import { generateStory } from '../../services/storyGenerator';
 import { getStoriesByScenario, saveStory } from '../../services/storyService';
 import { Scenario } from '../../types/ScenarioTypes';
-import { isInsufficientCreditsError } from '../../utils/errorHandling';
+import { isInsufficientCreditsError, showUserFriendlyErrorWithModals } from '../../utils/errorHandling';
+import { AlertModal, ConfirmModal } from '../Modal';
 import { Button } from './common/Button';
 import { ChatAgent } from './common/ChatAgent';
 import { Tabs } from './common/Tabs';
@@ -64,6 +66,7 @@ export const ScenarioEditor: React.FC<ScenarioEditorProps> = ({
   onClose,
 }) => {
   const { state, dispatch } = useScenarioEditor();
+  const { alertState, confirmState, hideAlert, hideConfirm, customAlert, customConfirm } = useModals();
   const cancelGenerationRef = useRef<(() => void) | null>(null);
 
   // Reset scroll position when component mounts
@@ -193,16 +196,7 @@ export const ScenarioEditor: React.FC<ScenarioEditorProps> = ({
         
         // Check if this is a credit-related error and provide a better experience
         if (error instanceof Error && isInsufficientCreditsError(error)) {
-          const shouldRedirect = window.confirm(
-            `❌ Story Generation Failed - Insufficient Credits\n\n` +
-            `${errorMessage}\n\n` +
-            `Would you like to purchase more credits now?\n\n` +
-            `Click OK to go to the Buy Credits page, or Cancel to stay here.`
-          );
-          
-          if (shouldRedirect) {
-            window.location.href = '/buy-credits';
-          }
+          await showUserFriendlyErrorWithModals(error, 'Story Generation', customAlert, customConfirm);
         } else {
           dispatch({ 
             type: 'SET_ERROR', 
@@ -337,6 +331,7 @@ export const ScenarioEditor: React.FC<ScenarioEditorProps> = ({
             disabled={state.isSaving || state.isLoading}
             loading={state.isSaving}
             icon={<FaSave />}
+            className='scenario-editor__save-button'
           >
             Save
           </Button>
@@ -389,6 +384,25 @@ export const ScenarioEditor: React.FC<ScenarioEditorProps> = ({
 
       {/* Chat Agent */}
       <ChatAgent scenario={state.scenario} />
+
+      {/* Custom Modal Components */}
+      <AlertModal
+        isOpen={alertState.isOpen}
+        onClose={hideAlert}
+        message={alertState.message}
+        title={alertState.title}
+      />
+      
+      <ConfirmModal
+        isOpen={confirmState.isOpen}
+        onClose={hideConfirm}
+        onConfirm={confirmState.onConfirm || (() => {})}
+        message={confirmState.message}
+        title={confirmState.title}
+        confirmText={confirmState.confirmText}
+        cancelText={confirmState.cancelText}
+        variant={confirmState.variant}
+      />
     </div>
   );
 };

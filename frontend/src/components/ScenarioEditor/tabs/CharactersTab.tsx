@@ -310,6 +310,8 @@ export const CharactersTab: React.FC<TabProps> = ({
           <Button
             variant="secondary"
             size="sm"
+            data-testid="generate-random-character-button"
+            className='generate-random-character-btn'
             onClick={handleGenerateRandomCharacter}
             icon={<FaRandom />}
             disabled={isLoading}

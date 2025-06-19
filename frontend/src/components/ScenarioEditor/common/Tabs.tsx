@@ -23,6 +23,7 @@ export const Tabs: React.FC<TabsProps> = ({
           return (
             <button
               key={tab.id}
+              data-testid={`${tab.id}-tab`}
               className={`tabs__tab ${
                 activeTab === tab.id ? 'tabs__tab--active' : ''
               }`}

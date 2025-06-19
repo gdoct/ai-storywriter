@@ -1,6 +1,8 @@
 import React, { useEffect, useImperativeHandle, useState } from 'react';
+import { useModals } from '../../hooks/useModals';
 import { deleteDBStory, fetchDBStories, saveDBStory } from '../../services/scenario';
 import ActionButton from '../common/ActionButton';
+import { AlertModal, ConfirmModal } from '../Modal';
 import './ReadingPane.css';
 import SavedStoriesDropdown from './SavedStoriesDropdown';
 
@@ -58,6 +60,7 @@ const ReadingPaneHeader = React.forwardRef<any, ReadingPaneHeaderProps>((props, 
     openTabs = [], // Default to empty array
   } = props;
 
+  const { alertState, confirmState, hideAlert, hideConfirm, customAlert, customConfirm } = useModals();
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [loadingVersions, setLoadingVersions] = useState<boolean>(false);
@@ -157,7 +160,18 @@ const ReadingPaneHeader = React.forwardRef<any, ReadingPaneHeaderProps>((props, 
   };
 
   const handleDeleteStory = async (storyId: number) => {
-    if (!window.confirm('Are you sure you want to delete this story?')) return;
+    const confirmed = await customConfirm(
+      'Are you sure you want to delete this story?',
+      {
+        title: 'Confirm Delete',
+        confirmText: 'Delete',
+        cancelText: 'Cancel',
+        variant: 'danger'
+      }
+    );
+
+    if (!confirmed) return;
+
     try {
       await deleteDBStory(storyId);
       if (currentScenario && currentScenario.id) {
@@ -168,7 +182,7 @@ const ReadingPaneHeader = React.forwardRef<any, ReadingPaneHeaderProps>((props, 
         if (onStorySelectedFromDb) onStorySelectedFromDb(null);
       }
     } catch (e) {
-      alert('Failed to delete story.');
+      customAlert('Failed to delete story.', 'Error');
     }
   };
 
@@ -255,6 +269,25 @@ const ReadingPaneHeader = React.forwardRef<any, ReadingPaneHeaderProps>((props, 
             />
           </>
         )}
+
+        {/* Custom Modal Components */}
+        <AlertModal
+          isOpen={alertState.isOpen}
+          onClose={hideAlert}
+          message={alertState.message}
+          title={alertState.title}
+        />
+        
+        <ConfirmModal
+          isOpen={confirmState.isOpen}
+          onClose={hideConfirm}
+          onConfirm={confirmState.onConfirm || (() => {})}
+          message={confirmState.message}
+          title={confirmState.title}
+          confirmText={confirmState.confirmText}
+          cancelText={confirmState.cancelText}
+          variant={confirmState.variant}
+        />
       </div>
     </div>
   );

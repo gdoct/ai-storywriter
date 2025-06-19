@@ -26,6 +26,7 @@ const CTASection: React.FC = () => {
             🔒 Free forever • No hidden fees • Cancel anytime
           </p>
         </div>
+        
       </div>
     </section>
   );

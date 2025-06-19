@@ -2,17 +2,19 @@ import React, { Dispatch, SetStateAction, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import DashboardCard from '../components/DashboardCard';
 import MarketingFooter from '../components/marketing/MarketingFooter';
+import { AlertModal, ConfirmModal } from '../components/Modal';
 import PublishStoryModal from '../components/PublishStoryModal';
 import { useAuth } from '../contexts/AuthContext';
+import { useModals } from '../hooks/useModals';
 import {
-  DashboardStats,
-  deleteScenario,
-  fetchDashboardStats,
-  fetchRecentScenarios,
-  fetchRecentStories,
-  formatRelativeTime,
-  RecentScenario,
-  RecentStory
+    DashboardStats,
+    deleteScenario,
+    fetchDashboardStats,
+    fetchRecentScenarios,
+    fetchRecentStories,
+    formatRelativeTime,
+    RecentScenario,
+    RecentStory
 } from '../services/dashboardService';
 import './Dashboard.css';
 
@@ -26,6 +28,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setIsLoading }) => {
   const username = userProfile?.username;
   const email = userProfile?.email;
   const navigate = useNavigate();
+  const { alertState, confirmState, hideAlert, hideConfirm, customAlert, customConfirm } = useModals();
   
   // State for dashboard data
   const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -74,7 +77,17 @@ const Dashboard: React.FC<DashboardProps> = ({ setIsLoading }) => {
   };
 
   const handleDeleteScenario = async (scenarioId: string, scenarioTitle: string) => {
-    if (!window.confirm(`Are you sure you want to delete "${scenarioTitle}"? This action cannot be undone.`)) {
+    const confirmed = await customConfirm(
+      `Are you sure you want to delete "${scenarioTitle}"? This action cannot be undone.`,
+      {
+        title: 'Confirm Delete',
+        confirmText: 'Delete',
+        cancelText: 'Cancel',
+        variant: 'danger'
+      }
+    );
+
+    if (!confirmed) {
       return;
     }
     
@@ -93,7 +106,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setIsLoading }) => {
       setRecentStories(storiesData.stories);
     } catch (err) {
       console.error('Error deleting scenario:', err);
-      alert('Failed to delete scenario. Please try again.');
+      customAlert('Failed to delete scenario. Please try again.', 'Error');
     }
   };
 
@@ -108,7 +121,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setIsLoading }) => {
   };
 
   const handlePublishSuccess = () => {
-    alert('Story published successfully! It will appear in the marketplace once AI processing is complete.');
+    customAlert('Story published successfully! It will appear in the marketplace once AI processing is complete.', 'Success');
     setShowPublishModal(false);
     setStoryToPublish(null);
   };
@@ -316,6 +329,25 @@ const Dashboard: React.FC<DashboardProps> = ({ setIsLoading }) => {
             onSuccess={handlePublishSuccess}
           />
         )}
+
+        {/* Custom Modal Components */}
+        <AlertModal
+          isOpen={alertState.isOpen}
+          onClose={hideAlert}
+          message={alertState.message}
+          title={alertState.title}
+        />
+        
+        <ConfirmModal
+          isOpen={confirmState.isOpen}
+          onClose={hideConfirm}
+          onConfirm={confirmState.onConfirm || (() => {})}
+          message={confirmState.message}
+          title={confirmState.title}
+          confirmText={confirmState.confirmText}
+          cancelText={confirmState.cancelText}
+          variant={confirmState.variant}
+        />
       </div>
     );
 };

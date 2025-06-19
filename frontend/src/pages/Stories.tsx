@@ -1,9 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { AlertModal, ConfirmModal } from '../components/Modal';
 import PublishStoryModal from '../components/PublishStoryModal';
 import StoryPageCard from '../components/StoryPageCard';
 import ReadingModal from '../components/StoryReader/ReadingModal';
 import StoryReader from '../components/StoryReader/StoryReader';
+import { useModals } from '../hooks/useModals';
 import { fetchRecentStories, formatRelativeTime, RecentStory } from '../services/dashboardService';
 import { deleteDBStory, fetchSingleDBStory } from '../services/scenario';
 import './Stories.css';
@@ -11,6 +13,7 @@ import './Stories.css';
 const Stories: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { alertState, confirmState, hideAlert, hideConfirm, customAlert, customConfirm } = useModals();
   const [stories, setStories] = useState<RecentStory[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -114,7 +117,17 @@ const Stories: React.FC = () => {
   };
 
   const handleDeleteStory = async (storyId: number, storyTitle: string) => {
-    if (!window.confirm(`Are you sure you want to delete this story? This action cannot be undone.`)) {
+    const confirmed = await customConfirm(
+      `Are you sure you want to delete this story? This action cannot be undone.`,
+      {
+        title: 'Confirm Delete',
+        confirmText: 'Delete',
+        cancelText: 'Cancel',
+        variant: 'danger'
+      }
+    );
+
+    if (!confirmed) {
       return;
     }
 
@@ -140,7 +153,7 @@ const Stories: React.FC = () => {
       }
     } catch (err) {
       console.error('Error deleting story:', err);
-      alert('Failed to delete story. Please try again.');
+      customAlert('Failed to delete story. Please try again.', 'Error');
     }
   };
 
@@ -155,7 +168,7 @@ const Stories: React.FC = () => {
   };
 
   const handlePublishSuccess = () => {
-    alert('Story published successfully! It will appear in the marketplace once AI processing is complete.');
+    customAlert('Story published successfully! It will appear in the marketplace once AI processing is complete.', 'Success');
     setShowPublishModal(false);
     setStoryToPublish(null);
   };
@@ -378,6 +391,25 @@ const Stories: React.FC = () => {
           onSuccess={handlePublishSuccess}
         />
       )}
+
+      {/* Custom Modal Components */}
+      <AlertModal
+        isOpen={alertState.isOpen}
+        onClose={hideAlert}
+        message={alertState.message}
+        title={alertState.title}
+      />
+      
+      <ConfirmModal
+        isOpen={confirmState.isOpen}
+        onClose={hideConfirm}
+        onConfirm={confirmState.onConfirm || (() => {})}
+        message={confirmState.message}
+        title={confirmState.title}
+        confirmText={confirmState.confirmText}
+        cancelText={confirmState.cancelText}
+        variant={confirmState.variant}
+      />
     </div>
   );
 };

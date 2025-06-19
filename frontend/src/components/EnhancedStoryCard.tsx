@@ -4,8 +4,10 @@
  */
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { useModals } from '../hooks/useModals';
 import http from '../services/http';
 import { MarketStoryCard } from '../types/marketplace';
+import { ConfirmModal } from './Modal';
 import { ModeratorOnly } from './PermissionGate';
 import './StoryCard.css';
 
@@ -23,6 +25,7 @@ export const EnhancedStoryCard: React.FC<EnhancedStoryCardProps> = ({
   onModerationAction 
 }) => {
   const { userProfile, hasPermission } = useAuth();
+  const { confirmState, hideConfirm, customConfirm } = useModals();
   const [showModerationMenu, setShowModerationMenu] = useState(false);
   const [moderationLoading, setModerationLoading] = useState(false);
 
@@ -59,7 +62,17 @@ export const EnhancedStoryCard: React.FC<EnhancedStoryCardProps> = ({
   };
 
   const handleModerationAction = async (action: string) => {
-    if (!window.confirm(`Are you sure you want to ${action} this story?`)) {
+    const confirmed = await customConfirm(
+      `Are you sure you want to ${action} this story?`,
+      {
+        title: 'Confirm Moderation Action',
+        confirmText: action.charAt(0).toUpperCase() + action.slice(1),
+        cancelText: 'Cancel',
+        variant: 'danger'
+      }
+    );
+
+    if (!confirmed) {
       return;
     }
 
@@ -221,6 +234,18 @@ export const EnhancedStoryCard: React.FC<EnhancedStoryCardProps> = ({
             </span>
           </div>
         </div>
+
+        {/* Custom Modal Components */}
+        <ConfirmModal
+          isOpen={confirmState.isOpen}
+          onClose={hideConfirm}
+          onConfirm={confirmState.onConfirm || (() => {})}
+          message={confirmState.message}
+          title={confirmState.title}
+          confirmText={confirmState.confirmText}
+          cancelText={confirmState.cancelText}
+          variant={confirmState.variant}
+        />
       </div>
     </div>
   );

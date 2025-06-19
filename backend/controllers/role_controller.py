@@ -218,22 +218,20 @@ def update_user_tier(user_id):
 def find_user(email):
     """Find a user by email"""
     try:
-        user = UserRepository.get_user_by_email(email)
-        
+        user = UserRepository.get_user_by_email_with_roles(email)
         if not user:
-            return jsonify({'error': 'User not found'}), 404
-        
+            return jsonify({'error': 'User not found : ' + email}), 404
+        # Safely access keys with fallback
         return jsonify({
-            'user_id': user['user_id'],
-            'username': user['username'],
-            'email': user.get('email'),
-            'tier': user['tier'],
-            'roles': user['roles']
+            'user_id': user['user_id'] if 'user_id' in user else None,
+            'username': user['username'] if 'username' in user else None,
+            'email': user['email'] if 'email' in user else email,
+            'tier': user['tier'] if 'tier' in user else None,
+            'roles': user['roles'] if 'roles' in user else []
         })
-        
     except Exception as e:
-        logger.error(f"Error finding user: {e}")
-        return jsonify({'error': 'Internal server error'}), 500
+        logger.error(f"Error finding user: {e}", exc_info=True)
+        return jsonify({'error': f'Internal server error: {str(e)}'}), 500
 
 @roles_bp.route('/api/admin/users/<user_id>', methods=['DELETE'])
 @require_role(['admin'])
@@ -252,8 +250,15 @@ def delete_user(user_id):
             return jsonify({'error': 'Cannot delete your own account'}), 400
         
         # Soft delete the user
-        UserRepository.delete_user(user_id)
+        try:
+            deleted = UserRepository.delete_user(user_id)
+        except Exception as e:
+            logger.error(f"Error in UserRepository.delete_user: {e}")
+            return jsonify({'error': 'Failed to delete user'}), 400
         
+        if not deleted:
+            return jsonify({'error': 'User ' + user_id + ' could not be deleted or already deleted'}), 400
+
         logger.info(f"User {user_id} deleted by {current_user['username']}")
         
         return jsonify({

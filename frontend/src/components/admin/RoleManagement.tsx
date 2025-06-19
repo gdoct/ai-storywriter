@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
+import { useModals } from '../../hooks/useModals';
 import http from '../../services/http';
+import { AlertModal } from '../Modal';
 import './RoleManagement.css';
 
 interface User {
@@ -21,6 +23,7 @@ interface RoleHistory {
 }
 
 const RoleManagement: React.FC = () => {
+  const { alertState, hideAlert, customAlert } = useModals();
   const [users, setUsers] = useState<User[]>([]);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [roleHistory, setRoleHistory] = useState<RoleHistory[]>([]);
@@ -66,7 +69,7 @@ const RoleManagement: React.FC = () => {
       }
     } catch (error) {
       console.error('Error granting role:', error);
-      alert('Failed to grant role');
+      customAlert('Failed to grant role', 'Error');
     }
   };
 
@@ -84,7 +87,7 @@ const RoleManagement: React.FC = () => {
       }
     } catch (error) {
       console.error('Error revoking role:', error);
-      alert('Failed to revoke role');
+      customAlert('Failed to revoke role', 'Error');
     }
   };
 
@@ -98,7 +101,7 @@ const RoleManagement: React.FC = () => {
       await loadUsers(currentPage);
     } catch (error) {
       console.error('Error updating user tier:', error);
-      alert('Failed to update user tier');
+      customAlert('Failed to update user tier', 'Error');
     }
   };
 
@@ -288,6 +291,14 @@ const RoleManagement: React.FC = () => {
             </div>
           )}
         </div>
+
+        {/* Custom Modal Components */}
+        <AlertModal
+          isOpen={alertState.isOpen}
+          onClose={hideAlert}
+          message={alertState.message}
+          title={alertState.title}
+        />
       </div>
     </div>
   );

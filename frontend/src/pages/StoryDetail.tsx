@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { AlertModal } from '../components/Modal';
+import { useModals } from '../hooks/useModals';
 import { donateCredits, downloadStory, getMarketStory, rateStory } from '../services/marketPlaceApi';
 import { MarketStory } from '../types/marketplace';
 import './StoryDetail.css';
@@ -7,6 +9,7 @@ import './StoryDetail.css';
 const StoryDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { alertState, hideAlert, customAlert } = useModals();
   const [story, setStory] = useState<MarketStory | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -58,7 +61,7 @@ const StoryDetail: React.FC = () => {
       // Update download count in UI
       setStory(prev => prev ? { ...prev, total_downloads: prev.total_downloads + 1 } : null);
     } catch (error) {
-      alert('Failed to download story');
+      customAlert('Failed to download story', 'Error');
     }
   };
 
@@ -76,7 +79,7 @@ const StoryDetail: React.FC = () => {
         user_rating: rating
       } : null);
     } catch (error) {
-      alert(error instanceof Error ? error.message : 'Failed to rate story');
+      customAlert(error instanceof Error ? error.message : 'Failed to rate story', 'Error');
     } finally {
       setIsRating(false);
     }
@@ -88,14 +91,14 @@ const StoryDetail: React.FC = () => {
     try {
       setIsDonating(true);
       const response = await donateCredits(story.id, donationAmount);
-      alert(response.message);
+      customAlert(response.message, 'Success');
       setShowDonateModal(false);
       setStory(prev => prev ? {
         ...prev,
         total_donated_credits: prev.total_donated_credits + donationAmount
       } : null);
     } catch (error) {
-      alert(error instanceof Error ? error.message : 'Failed to donate credits');
+      customAlert(error instanceof Error ? error.message : 'Failed to donate credits', 'Error');
     } finally {
       setIsDonating(false);
     }
@@ -275,6 +278,14 @@ const StoryDetail: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Custom Modal Components */}
+      <AlertModal
+        isOpen={alertState.isOpen}
+        onClose={hideAlert}
+        message={alertState.message}
+        title={alertState.title}
+      />
     </div>
   );
 };

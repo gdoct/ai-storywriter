@@ -27,7 +27,7 @@ describe('User Flow - Story Generation and Publishing', () => {
   beforeAll(async () => {
     browser = await puppeteer.launch({ 
       headless: false, 
-      slowMo: 10, 
+      slowMo: 2, 
       defaultViewport: { width: 1200, height: 1080 } 
     });
     page = await browser.newPage();
@@ -174,7 +174,6 @@ describe('User Flow - Story Generation and Publishing', () => {
     if (!authToken) {
       throw new Error('ADMIN_TOKEN is not set in environment variables');
     }
-
     // find user by calling /api/admin/users/find/<email>
     const findResponse = await fetch(`http://localhost:3000/api/admin/users/find/${userEmail}`, {
       method: 'GET',
@@ -192,14 +191,12 @@ describe('User Flow - Story Generation and Publishing', () => {
     if (!userData || !userData.user_id) {
       throw new Error(`User with email ${userEmail} not found`);
     }
-    console.log('Deleting user...');
-    const deleteResponse = await fetch(`http://localhost:3000/api/admin/delete-user`, {
+    const deleteResponse = await fetch(`http://localhost:3000/api/admin/users/${userData.user_id}`, {
       method: 'DELETE',
       headers: {
         'Authorization': `Bearer ${authToken}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ user_id: userData.user_id }),
     });
 
     if (!deleteResponse.ok) {
@@ -248,10 +245,7 @@ describe('User Flow - Story Generation and Publishing', () => {
     console.log('Story form filled successfully');
 
     // Click the "Save Scenario" button
-    const saveScenarioButton = await page.waitForSelector(
-      '::-p-xpath(//button[contains(concat(" ", normalize-space(@class), " "), " btn--primary ") and .//span[contains(@class, "btn__text") and normalize-space(text())="Save"]])',
-      { visible: true }
-    );
+    const saveScenarioButton = await page.waitForSelector('.scenario-editor__save-button', { visible: true });
     
     if (!saveScenarioButton) {
       throw new Error('Save Scenario button not found');
@@ -259,6 +253,8 @@ describe('User Flow - Story Generation and Publishing', () => {
     
     await saveScenarioButton.click();
     console.log('Scenario saved successfully');
+    // wait 50 ms before continuing
+    await new Promise(res => setTimeout(res, 50));
   }
 
   // Helper function: Generate story content
@@ -295,24 +291,11 @@ describe('User Flow - Story Generation and Publishing', () => {
 
   // Helper function: Wait for story generation and save
   async function waitForStoryGenerationAndSave(): Promise<void> {
-    const xpathForSaveStory = '//button[contains(concat(" ", normalize-space(@class), " "), " btn--primary ") and .//span[contains(@class, "btn__text") and normalize-space(text())="Save story"]]';
-    return;
+    // "/html/body/div/div/div/div/div[3]/div/div[1]/div/button[2]"
+    const selector = "button.btn--primary:nth-child(2)";
     console.log('Waiting for story generation to complete...');
-    await page.waitForFunction(
-      (xpath) => {
-        const button = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue as HTMLButtonElement;
-        return button && !button.disabled;
-      },
-      {},
-      xpathForSaveStory,
-      { timeout: 900000 } // wait up to 15 minutes
-    );
+    const saveStoryButton = await page.waitForSelector(selector, { visible: true, timeout: 900000 }); // wait up to 15 minutes
 
-    // Click the save story button
-    const saveStoryButton = await page.evaluateHandle((xpath) => {
-      return document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue as HTMLButtonElement;
-    }, xpathForSaveStory);
-    
     if (!saveStoryButton) {
       throw new Error('Save Story button not found after waiting');
     }
@@ -320,6 +303,54 @@ describe('User Flow - Story Generation and Publishing', () => {
     console.log('Saving generated story...');
     await saveStoryButton.click();
     console.log('Story saved successfully!');
+  }
+
+  async function gotoDashboardAndPublishStory() : Promise<void> {
+    // Navigate to the dashboard
+    const dashboardlink = await page.waitForSelector('a.nav-link:nth-child(1)', { visible: true });
+    if (!dashboardlink) {
+      throw new Error('Dashboard link not found');
+    }
+    await dashboardlink.click();
+    console.log('Navigated to dashboard');
+    
+    // find link to the stories page
+    // div.recent-stories-section:nth-child(2) > div:nth-child(1) > a:nth-child(2)
+    const storiesLink = await page.waitForSelector('div.recent-stories-section:nth-child(2) > div:nth-child(1) > a:nth-child(2)', { visible: true });
+    if (!storiesLink) {
+      throw new Error('Stories link not found');
+    }
+    await storiesLink.click();
+    console.log('Navigated to stories page');
+    // Wait for the "Publish" button to be visible    
+    // class is .btn-marketplace
+    const publishButton = await page.waitForSelector('.btn-marketplace', { visible: true });
+    if (!publishButton) {
+      throw new Error('Publish button not found');
+    }
+    console.log('Clicking Publish button');
+    await publishButton.click();
+
+    // this shows the Publish modal
+    console.log('Publish modal opened');
+    const selector = '.required > span:nth-child(2)';
+    const agreeCheckbox = await page.waitForSelector(selector, { visible: true });
+    if (!agreeCheckbox) {
+      throw new Error('Agree checkbox not found');
+    }
+    await agreeCheckbox.click();
+    console.log('Agree checkbox clicked');
+
+    // Click the "Publish" button in the modal
+    const publishModalButton = await page.waitForSelector('div.scenario-group:nth-child(1) > div:nth-child(2) > div:nth-child(1) > div:nth-child(2) > button:nth-child(2)', { visible: true });
+    if (!publishModalButton) {
+      throw new Error('Publish button in modal not found');
+    }
+    await publishModalButton.click();
+
+    console.log('Story published successfully');
+    // Wait for 20 seconds to ensure the story is published
+    await new Promise(resolve => setTimeout(resolve, 20000));
   }
 
   describe('User Registration and Setup', () => {
@@ -364,6 +395,21 @@ describe('User Flow - Story Generation and Publishing', () => {
       console.log('Navigated to story creation and randomized settings');
     });
 
+    it('should select the characters tab and generate two random characters', async () => {
+      // Click on the Characters tab
+      const charactersTab = await page.waitForSelector('button[data-testid="characters-tab"]', { visible: true });
+      await charactersTab.click();  
+      for (let i = 0; i < 2; i++) {
+        const generateRandomCharacterButton = await page.waitForSelector('.generate-random-character-btn', { visible: true });
+        await generateRandomCharacterButton.click();
+        console.log('Clicked Generate Random Character button');
+
+        const finalButton = await page.waitForSelector('.random-character-modal__generate-button', { visible: true });
+        await finalButton.click();
+        console.log('Generated random character successfully');
+      }
+    });
+
     it('should generate story content and fill the form', async () => {
       // Get selected genre
       const genreField = await page.$('.general-tab__style-field');
@@ -379,7 +425,7 @@ describe('User Flow - Story Generation and Publishing', () => {
       
       expect(storyData.title).toBeTruthy();
       expect(storyData.synopsis).toBeTruthy();
-    });
+    }, 90000000);
   });
 
   describe('Story Generation and Publishing', () => {
@@ -392,5 +438,10 @@ describe('User Flow - Story Generation and Publishing', () => {
       await waitForStoryGenerationAndSave();
       console.log('Story generation completed and saved successfully');
     }, 900000); // 15 minutes timeout for story generation
+
+    it ('Should publish from the dashboard page after agreeing terms', async () => {
+      await gotoDashboardAndPublishStory();
+      console.log('Story published successfully');
+    }, 30000);
   });
 });

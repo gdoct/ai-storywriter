@@ -1,10 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { ConfirmModal } from '../components/Modal';
+import { useModals } from '../hooks/useModals';
 import { deleteScenario, fetchRecentScenarios, formatRelativeTime, RecentScenario } from '../services/dashboardService';
 import './Scenarios.css';
 
 const Scenarios: React.FC = () => {
   const navigate = useNavigate();
+  const { confirmState, hideConfirm, customConfirm } = useModals();
   const [scenarios, setScenarios] = useState<RecentScenario[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -65,7 +68,17 @@ const Scenarios: React.FC = () => {
   };
 
   const handleDeleteScenario = async (scenarioId: string, scenarioTitle: string) => {
-    if (!window.confirm(`Are you sure you want to delete "${scenarioTitle}"? This action cannot be undone.`)) {
+    const confirmed = await customConfirm(
+      `Are you sure you want to delete "${scenarioTitle}"? This action cannot be undone.`,
+      {
+        title: 'Confirm Delete',
+        confirmText: 'Delete',
+        cancelText: 'Cancel',
+        variant: 'danger'
+      }
+    );
+
+    if (!confirmed) {
       return;
     }
     
@@ -261,6 +274,18 @@ const Scenarios: React.FC = () => {
               <Link to="/app" className="btn btn-primary">Create Your First Scenario</Link>
             </div>
           )}
+
+          {/* Custom Modal Components */}
+          <ConfirmModal
+            isOpen={confirmState.isOpen}
+            onClose={hideConfirm}
+            onConfirm={confirmState.onConfirm || (() => {})}
+            message={confirmState.message}
+            title={confirmState.title}
+            confirmText={confirmState.confirmText}
+            cancelText={confirmState.cancelText}
+            variant={confirmState.variant}
+          />
         </div>
       </div>
     </div>

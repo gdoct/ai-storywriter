@@ -12,7 +12,37 @@ export function isInsufficientCreditsError(error: Error): boolean {
 }
 
 /**
- * Shows a user-friendly error message with appropriate actions
+ * Shows a user-friendly error message with appropriate actions using custom modal functions
+ */
+export async function showUserFriendlyErrorWithModals(
+  error: Error, 
+  context: string = 'operation',
+  customAlert: (message: string, title?: string) => void,
+  customConfirm: (message: string, options?: any) => Promise<boolean>
+): Promise<void> {
+  const errorMessage = error.message;
+  
+  if (isInsufficientCreditsError(error)) {
+    const shouldRedirect = await customConfirm(
+      `${errorMessage}\n\nWould you like to purchase more credits now?`,
+      {
+        title: `${context} Failed - Insufficient Credits`,
+        confirmText: 'Buy Credits',
+        cancelText: 'Cancel'
+      }
+    );
+    
+    if (shouldRedirect) {
+      window.location.href = '/buy-credits';
+    }
+  } else {
+    customAlert(errorMessage, `${context} Error`);
+  }
+}
+
+/**
+ * Shows a user-friendly error message with appropriate actions (legacy version using native dialogs)
+ * @deprecated Use showUserFriendlyErrorWithModals instead
  */
 export function showUserFriendlyError(error: Error, context: string = 'operation'): void {
   const errorMessage = error.message;

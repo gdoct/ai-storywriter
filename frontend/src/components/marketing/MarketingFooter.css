@@ -1,16 +1,17 @@
 /* Marketing Footer Styles */
 
 .marketing-footer {
-  background: #1e293b;
+  background: black;
   color: white;
-  padding: 60px 0 0;
-  margin-top: 80px;
+  position: relative;
 }
 
 .marketing-footer-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 20px;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  margin-top: auto;
 }
 
 .footer-content {

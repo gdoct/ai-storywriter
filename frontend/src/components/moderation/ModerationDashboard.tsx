@@ -5,13 +5,16 @@
 
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useModals } from '../../hooks/useModals';
 import http from '../../services/http';
 import { ModerationDashboard as ModerationDashboardData } from '../../types/auth';
+import { AlertModal, ConfirmModal } from '../Modal';
 import { ModeratorOnly } from '../PermissionGate';
 import './ModerationDashboard.css';
 
 export const ModerationDashboard: React.FC = () => {
   const { userProfile } = useAuth();
+  const { alertState, confirmState, hideAlert, hideConfirm, customAlert, customConfirm } = useModals();
   const [dashboardData, setDashboardData] = useState<ModerationDashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -158,22 +161,41 @@ export const ModerationDashboard: React.FC = () => {
             </div>
           </div>
         </div>
+
+        {/* Custom Modal Components */}
+        <AlertModal
+          isOpen={alertState.isOpen}
+          onClose={hideAlert}
+          message={alertState.message}
+          title={alertState.title}
+        />
+        
+        <ConfirmModal
+          isOpen={confirmState.isOpen}
+          onClose={hideConfirm}
+          onConfirm={confirmState.onConfirm || (() => {})}
+          message={confirmState.message}
+          title={confirmState.title}
+          confirmText={confirmState.confirmText}
+          cancelText={confirmState.cancelText}
+          variant={confirmState.variant}
+        />
       </div>
     </ModeratorOnly>
   );
 
   // Moderation action handlers
   async function handleFlagStory(storyId: number) {
-    const reason = prompt('Enter reason for flagging this story:');
+    const reason = window.prompt('Enter reason for flagging this story:');
     if (!reason) return;
 
     try {
       await http.post(`/api/moderate/stories/${storyId}/flag`, { reason });
-      alert('Story flagged successfully');
+      customAlert('Story flagged successfully', 'Success');
       fetchDashboardData(); // Refresh dashboard
     } catch (error) {
       console.error('Failed to flag story:', error);
-      alert('Failed to flag story');
+      customAlert('Failed to flag story', 'Error');
     }
   }
 
@@ -181,17 +203,27 @@ export const ModerationDashboard: React.FC = () => {
     const reason = window.prompt('Enter reason for removing this story:');
     if (!reason) return;
 
-    if (!window.confirm('Are you sure you want to remove this story? This action cannot be undone.')) {
+    const confirmed = await customConfirm(
+      'Are you sure you want to remove this story? This action cannot be undone.',
+      {
+        title: 'Confirm Remove Story',
+        confirmText: 'Remove',
+        cancelText: 'Cancel',
+        variant: 'danger'
+      }
+    );
+
+    if (!confirmed) {
       return;
     }
 
     try {
       await http.delete(`/api/moderate/stories/${storyId}`, { data: { reason } });
-      alert('Story removed successfully');
+      customAlert('Story removed successfully', 'Success');
       fetchDashboardData(); // Refresh dashboard
     } catch (error) {
       console.error('Failed to remove story:', error);
-      alert('Failed to remove story');
+      customAlert('Failed to remove story', 'Error');
     }
   }
 };

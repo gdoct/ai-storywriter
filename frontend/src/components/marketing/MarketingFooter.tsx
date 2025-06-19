@@ -5,6 +5,7 @@ import './MarketingFooter.css';
 const MarketingFooter: React.FC = () => {
   return (
     <footer className="marketing-footer">
+        <div style={{ minHeight: '300px' }} ></div>
       <div className="marketing-footer-container">
         <div className="footer-content">
           <div className="footer-brand">

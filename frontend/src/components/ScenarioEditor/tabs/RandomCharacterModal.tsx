@@ -148,6 +148,7 @@ export const RandomCharacterModal: React.FC<RandomCharacterModalProps> = ({
           variant="primary"
           onClick={handleGenerate}
           icon={<FaRandom />}
+          className='random-character-modal__generate-button'
           disabled={!characterType.trim()}
         >
           Generate Character
