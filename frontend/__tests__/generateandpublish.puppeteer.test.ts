@@ -85,6 +85,10 @@ describe('User Flow - Story Generation and Publishing', () => {
     const emailInput = await page.waitForSelector('input[type="email"], input[name="email"]', { visible: true });
     const passwordInputs = await page.$$('input[type="password"]');
 
+    if (!usernameInput || !emailInput) {
+      throw new Error('Username or email input not found');
+    }
+
     if (passwordInputs.length < 2) {
       throw new Error('Expected at least 2 password fields (password and confirm password)');
     }
@@ -104,6 +108,9 @@ describe('User Flow - Story Generation and Publishing', () => {
     console.log('Submitting signup form...');
     try {
       const signupButton = await page.waitForSelector('button[data-test-id="signupButton"]');
+      if (!signupButton) {
+        throw new Error('Signup button not found');
+      }
       await signupButton.click();
     } catch (e) {
       await page.screenshot({ path: 'debug-signup-form.png' });
@@ -237,9 +244,13 @@ describe('User Flow - Story Generation and Publishing', () => {
   async function fillStoryFormAndSave(storyData: StoryData): Promise<void> {
     // Fill in the title and synopsis fields
     const titleInput = await page.waitForSelector('[placeholder="Enter your story title..."]', { visible: true });
-    await titleInput.type(storyData.title);
-
     const synopsisInput = await page.waitForSelector('[placeholder="Brief description of your story..."]', { visible: true });
+
+    if (!titleInput || !synopsisInput) {
+      throw new Error('Title or synopsis input not found');
+    }
+
+    await titleInput.type(storyData.title);
     await synopsisInput.type(storyData.synopsis);
 
     console.log('Story form filled successfully');
@@ -386,6 +397,9 @@ describe('User Flow - Story Generation and Publishing', () => {
       // Navigate to story creation page
       console.log('Navigating to /app...');
       const linkToWriting = await page.waitForSelector('a[data-testid="start-writing-link"]', { visible: true });
+      if (!linkToWriting) {
+        throw new Error('Start writing link not found');
+      }
       await linkToWriting.click();
 
       // Click randomize button
@@ -398,13 +412,22 @@ describe('User Flow - Story Generation and Publishing', () => {
     it('should select the characters tab and generate two random characters', async () => {
       // Click on the Characters tab
       const charactersTab = await page.waitForSelector('button[data-testid="characters-tab"]', { visible: true });
+      if (!charactersTab) {
+        throw new Error('Characters tab not found');
+      }
       await charactersTab.click();  
       for (let i = 0; i < 2; i++) {
         const generateRandomCharacterButton = await page.waitForSelector('.generate-random-character-btn', { visible: true });
+        if (!generateRandomCharacterButton) {
+          throw new Error('Generate random character button not found');
+        }
         await generateRandomCharacterButton.click();
         console.log('Clicked Generate Random Character button');
 
         const finalButton = await page.waitForSelector('.random-character-modal__generate-button', { visible: true });
+        if (!finalButton) {
+          throw new Error('Generate button in modal not found');
+        }
         await finalButton.click();
         console.log('Generated random character successfully');
       }

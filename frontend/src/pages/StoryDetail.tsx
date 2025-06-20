@@ -31,7 +31,7 @@ const StoryDetail: React.FC = () => {
       setError(null);
       const storyData = await getMarketStory(storyId);
       setStory(storyData);
-      setUserRating(storyData.user_rating || 0);
+      setUserRating(storyData?.user_rating || 0);
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Failed to load story');
     } finally {
@@ -223,7 +223,7 @@ const StoryDetail: React.FC = () => {
         <div className="story-content">
           <h3>Story</h3>
           <div className="story-text">
-            {story.content.split('\n').map((paragraph, index) => (
+            {story.content?.split('\n').map((paragraph, index) => (
               <p key={index}>{paragraph}</p>
             ))}
           </div>

@@ -1,8 +1,10 @@
 module.exports = {
- launch: {
-    headless: true,
+  launch: {
+    headless: false,
     args: ['--no-sandbox', '--disable-setuid-sandbox'],
-  },  preset: 'ts-jest',
+    executablePath: 'chromium-browser', // Use the system-installed Chromium
+  },
+  preset: 'ts-jest',
   testEnvironment: 'node',
   testMatch: [
     '<rootDir>/__tests__/**/*.puppeteer.test.ts?(x)',

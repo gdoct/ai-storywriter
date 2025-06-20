@@ -624,7 +624,7 @@ export function createCharacterFromPhotoPrompt(
   characterRole?: string,
   additionalPrompt?: string
 ): string {
-  let prompt = "You are an expert character creator for " + scenario.writingStyle.genre + " stories. Analyze the provided photo carefully and create a character based on what you see in the image and the story context.\n\n";
+  let prompt = "You are an expert character creator for " + (scenario.writingStyle?.genre || "general") + " stories. Analyze the provided photo carefully and create a character based on what you see in the image and the story context.\n\n";
   prompt += "IMPORTANT: Base your character description on the actual visual details from the photo - clothing, appearance, facial expressions, setting, activity, etc.\n";
   prompt += "If the character is doing an activity in the photo, describe that activity in the character backstory as a favorite pastime.\n\n";
   if (characterName && characterName.trim()) { prompt += `Character Name: ${characterName.trim()}\n`; }

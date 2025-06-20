@@ -289,6 +289,9 @@ export async function chatCompletion(
     throw new Error(errorMessage);
   }
   // read response to a string non-json plain text
+  if (!response.body) {
+    throw new Error('Response body is null');
+  }
   const reader = response.body.getReader();
   const decoder = new TextDecoder();
   let done = false;

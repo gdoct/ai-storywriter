@@ -56,7 +56,7 @@ app.register_blueprint(settings_controller)
 
 # Initialize DB on app startup
 if not os.path.exists(DB_PATH):
-    print("Initializing database...")
+    print(f"Initializing database in {DB_PATH}")
     init_db()
 
 # Static file routes

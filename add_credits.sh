@@ -11,22 +11,25 @@ fi
 
 BASE_URL="http://localhost:5000"
 
-# Login and get JWT token
-TOKEN=$(curl -s -X POST "$BASE_URL/api/login" \
-  -H "Content-Type: application/json" \
-  -d "{\"email\": \"$EMAIL\"}" | jq -r '.access_token')
+# read the ADMIN_TOKEN from the .env file
+if [ -f frontend/.env ]; then
+  source frontend/.env
+else
+  echo "Error: .env file not found."
+  exit 1
+fi
 
-if [ "$TOKEN" == "null" ] || [ -z "$TOKEN" ]; then
+if [ "$ADMIN_TOKEN" == "null" ] || [ -z "$ADMIN_TOKEN" ]; then
   echo "Login failed. Check your email."
   exit 1
 fi
 
-echo "Login successful. Token: $TOKEN"
+echo "Login successful. Token: $ADMIN_TOKEN"
 
 # Add credits
 RESPONSE=$(curl -s -X POST "$BASE_URL/api/user/add-credits" \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer $TOKEN" \
+  -H "Authorization: Bearer $ADMIN_TOKEN" \
   -d "{\"credits\": $CREDITS}")
 
 echo "Add credits response: $RESPONSE"
