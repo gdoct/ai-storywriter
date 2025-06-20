@@ -64,6 +64,7 @@ const ModelSelector: React.FC = () => {
       <label htmlFor="model-select">Model:</label>
       <select
         id="model-select"
+        data-testid="model-selector"
         value={selectedModel}
         onChange={handleModelChange}
         disabled={!isLLMConnected || availableModels.length === 0}

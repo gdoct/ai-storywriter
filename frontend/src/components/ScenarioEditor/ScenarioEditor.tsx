@@ -27,6 +27,8 @@ const tabs: TabConfig[] = [
     label: 'General',
     icon: FaBook,
     component: GeneralTab,
+    className: 'scenario-editor__general-tab',
+
   },
   {
     id: 'characters',

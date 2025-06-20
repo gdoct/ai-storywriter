@@ -1,5 +1,5 @@
 import React from 'react';
-import { MarketStoryCard } from '../types/marketplace';
+import { MarketStoryCard } from '../../types/marketplace';
 import './StoryCard.css';
 
 interface StoryCardProps {

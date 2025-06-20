@@ -12,6 +12,7 @@
   left: 0;
   right: 0;
   margin-top: auto;
+  align-items: top !important;
 }
 
 .footer-content {
@@ -24,6 +25,7 @@
 .footer-brand {
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 16px;
 }
 
@@ -56,6 +58,8 @@
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 40px;
+  vertical-align: top;
+  align-items: top;;
 }
 
 .footer-section h4 {
@@ -88,7 +92,7 @@
 
 .footer-bottom {
   border-top: 1px solid #334155;
-  padding: 24px 0;
+  padding: 24px ;
 }
 
 .footer-bottom-content {
@@ -134,6 +138,7 @@
     grid-template-columns: 1fr;
     gap: 40px;
     text-align: center;
+    vertical-align: top ;
   }
   
   .footer-links {
@@ -160,7 +165,8 @@
   }
   
   .footer-section {
-    text-align: center;
+    text-align: top;
+    vertical-align: top ;
   }
   
   .footer-brand {

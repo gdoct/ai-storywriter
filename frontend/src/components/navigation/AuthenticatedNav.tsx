@@ -3,8 +3,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useAuthenticatedUser } from '../../contexts/AuthenticatedUserContext';
 import { logout } from '../../services/security';
-import CreditsBadge from '../CreditsBadge';
 import { AdminOnly, ModeratorOnly } from '../PermissionGate';
+import CreditsBadge from '../TopBar/CreditsBadge';
 import './Navigation.css';
 
 interface AuthenticatedNavProps {

@@ -10,7 +10,6 @@ const MarketingFooter: React.FC = () => {
         <div className="footer-content">
           <div className="footer-brand">
             <Link to="/" className="footer-logo">
-              <img src="/storywriter-logo-48.png" alt="StoryWriter" />
               <span className="footer-brand-name">StoryWriter</span>
             </Link>
             <p className="footer-description">
@@ -20,8 +19,8 @@ const MarketingFooter: React.FC = () => {
           
           <div className="footer-links">
             <div className="footer-section">
-              <h4>Product</h4>
               <ul>
+                <li><h4>Product</h4></li>
                 <li><Link to="/features">Features</Link></li>
                 <li><Link to="/pricing">Pricing</Link></li>
                 <li><Link to="/templates">Templates</Link></li>
@@ -29,16 +28,16 @@ const MarketingFooter: React.FC = () => {
             </div>
             
             <div className="footer-section">
-              <h4>Company</h4>
               <ul>
+                <h4>Company</h4>
                 <li><a href="mailto:support@storywriter.app">Support</a></li>
                 <li><a href="mailto:contact@storywriter.app">Contact</a></li>
               </ul>
             </div>
             
             <div className="footer-section">
-              <h4>Legal</h4>
               <ul>
+                <h4>Legal</h4>
                 <li><Link to="/privacy">Privacy Policy</Link></li>
                 <li><Link to="/terms">Terms of Service</Link></li>
               </ul>

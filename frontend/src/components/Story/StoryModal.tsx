@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { useAuth } from '../contexts/AuthContext';
-import { downloadStory, getMarketStory, rateStory } from '../services/marketPlaceApi';
-import { MarketStory } from '../types/marketplace';
-import Modal from './common/Modal';
+import { useAuth } from '../../contexts/AuthContext';
+import { downloadStory, getMarketStory, rateStory } from '../../services/marketPlaceApi';
+import { MarketStory } from '../../types/marketplace';
+import Modal from '../common/Modal';
 import './StoryModal.css';
 
 interface StoryModalProps {

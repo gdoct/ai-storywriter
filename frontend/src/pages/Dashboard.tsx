@@ -1,20 +1,24 @@
 import React, { Dispatch, SetStateAction, useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import DashboardCard from '../components/DashboardCard';
+import { useNavigate } from 'react-router-dom';
+import {
+  DashboardHeader,
+  RecentGeneratedStories,
+  RecentScenarios,
+  WritingStats
+} from '../components/Dashboard';
 import MarketingFooter from '../components/marketing/MarketingFooter';
 import { AlertModal, ConfirmModal } from '../components/Modal';
-import PublishStoryModal from '../components/PublishStoryModal';
+import PublishStoryModal from '../components/Story/PublishStoryModal';
 import { useAuth } from '../contexts/AuthContext';
 import { useModals } from '../hooks/useModals';
 import {
-    DashboardStats,
-    deleteScenario,
-    fetchDashboardStats,
-    fetchRecentScenarios,
-    fetchRecentStories,
-    formatRelativeTime,
-    RecentScenario,
-    RecentStory
+  DashboardStats,
+  deleteScenario,
+  fetchDashboardStats,
+  fetchRecentScenarios,
+  fetchRecentStories,
+  RecentScenario,
+  RecentStory
 } from '../services/dashboardService';
 import './Dashboard.css';
 
@@ -174,147 +178,22 @@ const Dashboard: React.FC<DashboardProps> = ({ setIsLoading }) => {
   return (
     <div className="dashboard">
       <div className="dashboard-container">
-        <header className="dashboard-header">
-          <div className="welcome-section">
-            <h1>Welcome back, {username || email || 'User'}!</h1>
-            <p>Ready to create some amazing stories today?</p>
-          </div>
-          <Link to="/app" className="btn btn-primary btn-large" data-testid="start-writing-link">
-            <span className="btn-icon">✏️</span>
-            Start Writing
-          </Link>
-        </header>
+        <DashboardHeader username={username} email={email} />
 
         <div className="dashboard-content">
-          <div className="stats-section">
-            <h2>Your Writing Stats</h2>
-            <div className="stats-grid">
-              <div className="stat-card">
-                <div className="stat-icon">📖</div>
-                <div className="stat-content">
-                  <div className="stat-number">{stats.scenariosCreated}</div>
-                  <div className="stat-label">Scenarios Created</div>
-                </div>
-              </div>
-              <div className="stat-card">
-                <div className="stat-icon">✍️</div>
-                <div className="stat-content">
-                  <div className="stat-number">{stats.storiesGenerated.toLocaleString()}</div>
-                  <div className="stat-label">Stories generated</div>
-                </div>
-              </div>
-              <div className="stat-card">
-                <div className="stat-icon">🤖</div>
-                <div className="stat-content">
-                  <div className="stat-number">{stats.modelsUsed}</div>
-                  <div className="stat-label">AI Models Used</div>
-                </div>
-              </div>
-            </div>
-             <div className="stats-grid">
-              <div className="stat-card">
-                <div className="stat-icon">✍️</div>
-                <div className="stat-content">
-                  <div className="stat-number">{stats.storiesPublished}</div>
-                  <div className="stat-label">Stories published</div>
-                </div>
-              </div>
-              <div className="stat-card">
-                <div className="stat-icon">🤖</div>
-                <div className="stat-content">
-                  <div className="stat-number">{stats.scenariosPublished}</div>
-                  <div className="stat-label">Scenarios published</div>
-                </div>
-              </div>
-              <div className="stat-card">
-                <div className="stat-icon">⏰</div>
-                <div className="stat-content">
-                  <div className="stat-number">{formatRelativeTime(stats.lastActivity)}</div>
-                  <div className="stat-label">Last Activity</div>
-                </div>
-              </div>
-            </div>
-          </div>
+          <WritingStats stats={stats} />
 
           <div className="dashboard-main">
-            <div className="recent-stories-section">
-              <div className="section-header">
-                <h3>Recent Scenarios</h3>
-                <Link to="/scenarios" className="btn btn-secondary btn-small">View All</Link>
-              </div>
-              <div className="stories-list">
-                {recentScenarios.map(scenario => (
-                  <DashboardCard
-                    key={scenario.id}
-                    title={scenario.title}
-                    metadata={[
-                      { icon: "📅", text: formatRelativeTime(scenario.lastModified) },
-                      { icon: "📝", text: `${scenario.generatedStoryCount} generated stories` }
-                    ]}
-                    actions={[
-                      {
-                        label: "Delete",
-                        onClick: () => handleDeleteScenario(scenario.id, scenario.title),
-                        variant: "warning"
-                      },
-                      {
-                        label: "Edit",
-                        onClick: () => handleEditScenario(scenario.id),
-                        variant: "text"
-                      },
-                    ]}
-                  />
-                ))}
-                {recentScenarios.length === 0 && (
-                  <div className="empty-state">
-                    <div className="empty-icon">📝</div>
-                    <h4>No scenarios yet</h4>
-                    <p>Create your first scenario to get started!</p>
-                    <Link to="/app" className="btn btn-primary">Start Writing</Link>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="recent-stories-section">
-                <div className="section-header">
-                  <h3>Recent Generated Stories</h3>
-                  <Link to="/stories" className="btn btn-secondary btn-small">View All</Link>
-                </div>
-                <div className="stories-list">
-                  {recentStories.map(story => (
-                    <DashboardCard
-                      key={story.id}
-                      title={story.scenarioTitle}
-                      metadata={[
-                        { icon: "📅", text: formatRelativeTime(story.created) },
-                        { icon: "📝", text: `${story.wordCount} words` }
-                      ]}
-                      actions={[
-                        ...(story.isPublished ? [] : [{
-                          label: "Publish",
-                          onClick: () => handlePublishStory(story),
-                          variant: "secondary" as const
-                        }]),
-                        {
-                          label: "Read",
-                          onClick: () => handleReadStory(story),
-                          variant: "primary" as const
-                        },
-                      ]}
-                    />
-                  ))}
-                  {recentStories.length === 0 && (
-                    <div className="empty-state">
-                      <div className="empty-icon">📝</div>
-                      <h4>You haven't generated any stories yet</h4>
-                      <p>Create your first scenario to get started!</p>
-                      <Link to="/app" className="btn btn-primary">Start Writing</Link>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
+            <RecentScenarios 
+              recentScenarios={recentScenarios} 
+              handleDeleteScenario={handleDeleteScenario} 
+              handleEditScenario={handleEditScenario} 
+            />
+            <RecentGeneratedStories 
+              recentStories={recentStories} 
+              handlePublishStory={handlePublishStory} 
+              handleReadStory={handleReadStory} 
+            />
           </div>
         </div>
         <MarketingFooter />
@@ -349,7 +228,8 @@ const Dashboard: React.FC<DashboardProps> = ({ setIsLoading }) => {
           variant={confirmState.variant}
         />
       </div>
-    );
+    </div>
+  );
 };
 
 export default Dashboard;

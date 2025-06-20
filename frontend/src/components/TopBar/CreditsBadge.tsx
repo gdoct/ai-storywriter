@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { getUserCredits } from '../services/marketPlaceApi';
+import { getUserCredits } from '../../services/marketPlaceApi';
 import './CreditsBadge.css';
 
 interface CreditsBadgeProps {

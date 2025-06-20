@@ -10,6 +10,7 @@ export interface TabConfig {
   label: string;
   icon: any;
   component: React.ComponentType<TabProps>;
+  className?: string;
 }
 
 // Common props for all tab components

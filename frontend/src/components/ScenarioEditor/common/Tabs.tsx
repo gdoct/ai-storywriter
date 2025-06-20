@@ -24,7 +24,7 @@ export const Tabs: React.FC<TabsProps> = ({
             <button
               key={tab.id}
               data-testid={`${tab.id}-tab`}
-              className={`tabs__tab ${
+              className={`tabs__tab tabs__${tab.id} ${
                 activeTab === tab.id ? 'tabs__tab--active' : ''
               }`}
               onClick={() => onTabChange(tab.id)}

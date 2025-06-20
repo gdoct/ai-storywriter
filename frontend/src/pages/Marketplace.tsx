@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import CreditsBadge from '../components/CreditsBadge';
-import EnhancedStoryCard from '../components/EnhancedStoryCard';
-import StoryCard from '../components/StoryCard';
-import StoryModal from '../components/StoryModal';
+import EnhancedStoryCard from '../components/Story/EnhancedStoryCard';
+import StoryCard from '../components/Story/StoryCard';
+import StoryModal from '../components/Story/StoryModal';
+import CreditsBadge from '../components/TopBar/CreditsBadge';
 import { useAuth } from '../contexts/AuthContext';
 import { useAuthenticatedUser } from '../contexts/AuthenticatedUserContext';
 import { getByGenre, getLatest, getMostPopular, getStaffPicks, getTopRated } from '../services/marketPlaceApi';

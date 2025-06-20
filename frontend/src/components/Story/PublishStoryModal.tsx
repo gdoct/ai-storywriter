@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { publishStory } from '../services/marketPlaceApi';
+import { publishStory } from '../../services/marketPlaceApi';
 import './PublishStoryModal.css';
 
 interface PublishStoryModalProps {
@@ -157,6 +157,7 @@ const PublishStoryModal: React.FC<PublishStoryModalProps> = ({
             <button
               type="submit"
               className="publish-button"
+              data-testid="publish-story-button"
               disabled={isPublishing || !title.trim() || !termsAccepted}
             >
               {isPublishing ? 'Publishing...' : 'Publish Story'}

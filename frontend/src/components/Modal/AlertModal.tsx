@@ -13,7 +13,7 @@ const AlertModal: React.FC<AlertModalProps> = ({ isOpen, onClose, message, title
     <Modal isOpen={isOpen} onClose={onClose} title={title} className="alert-modal">
       <div className="alert-message">{message}</div>
       <div className="alert-actions">
-        <button className="btn btn-primary" onClick={onClose}>
+        <button className="btn btn-primary" onClick={onClose} data-testid="confirm-button">
           OK
         </button>
       </div>

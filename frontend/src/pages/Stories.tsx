@@ -1,8 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { AlertModal, ConfirmModal } from '../components/Modal';
-import PublishStoryModal from '../components/PublishStoryModal';
-import StoryPageCard from '../components/StoryPageCard';
+import PublishStoryModal from '../components/Story/PublishStoryModal';
+import StoryPageCard from '../components/Story/StoryPageCard';
 import ReadingModal from '../components/StoryReader/ReadingModal';
 import StoryReader from '../components/StoryReader/StoryReader';
 import { useModals } from '../hooks/useModals';
