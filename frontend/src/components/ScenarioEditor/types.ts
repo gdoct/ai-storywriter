@@ -38,6 +38,7 @@ export interface ScenarioEditorState {
 // Action types for state management
 export type ScenarioEditorAction =
   | { type: 'SET_SCENARIO'; payload: Scenario }
+  | { type: 'DELETE_SCENARIO'; payload: Scenario }
   | { type: 'UPDATE_SCENARIO'; payload: Partial<Scenario> }
   | { type: 'SET_ACTIVE_TAB'; payload: TabId }
   | { type: 'SET_DIRTY'; payload: boolean }

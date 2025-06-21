@@ -81,7 +81,7 @@ describe('Scenario and Story generation workflows', () => {
     // "/html/body/div/div/div/div/div[3]/div/div[1]/div/button[2]"
     const selector = "button.btn--primary:nth-child(2)";
     console.log('Waiting for story generation to complete...');
-    const saveStoryButton = await page.waitForSelector(selector, { visible: true, timeout: 900000 }); // wait up to 15 minutes
+    const saveStoryButton = await page.waitForSelector(selector, { visible: true, timeout: expectingToTakeSeconds(900) }); // wait up to 15 minutes
 
     if (!saveStoryButton) {
       throw new Error('Save Story button not found after waiting');
@@ -122,14 +122,17 @@ describe('Scenario and Story generation workflows', () => {
       await generateRandomCharacterButton.click();
       console.log('Clicked Generate Random Character button');
 
-      const finalButton = await page.waitForSelector('button.random-character-modal__generate-button', { visible: true });
+      const finalButton = await page.waitForSelector('button.random-character-modal__generate-button', 
+        { visible: true, timeout: expectingToTakeSeconds(60) });
       if (!finalButton) {
         throw new Error('Generate button in modal not found');
       }
       await finalButton.click();
       console.log('Generated random character successfully');
       // wait for the character to appear
-      await page.waitForSelector('.character-card__header', { visible: true });
+      await page.waitForSelector('.character-card__header', 
+      { visible: true, timeout: expectingToTakeSeconds(900) });
+      await wait(1000); 
   }
   
   describe('Scenario Creation workflow', () => {
@@ -177,7 +180,7 @@ describe('Scenario and Story generation workflows', () => {
       await generateCharacter();
       //await generateCharacter();
 
-    }, expectingToTakeSeconds(10));
+    }, expectingToTakeSeconds(3000));
 
     it('should generate a story title', async () => {
       // Click on the Characters tab
@@ -194,7 +197,7 @@ describe('Scenario and Story generation workflows', () => {
       }
       await randomizeTitleButton.click();
       console.log('Clicked Randomize Title button to generate story title');
-    }, expectingToTakeSeconds(10));
+    }, expectingToTakeSeconds(30));
 
     it('should generate a story synopsis', async () => {
       // Click on the Characters tab
@@ -253,7 +256,7 @@ describe('Scenario and Story generation workflows', () => {
     it('should open story modal and start generation', async () => {
       await generateStory();
       console.log('Story generation process started');
-    }, expectingToTakeSeconds(10));
+    }, expectingToTakeSeconds(90));
 
     it('should wait for story generation to complete and save', async () => {
       await waitForStoryGenerationAndSave();

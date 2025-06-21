@@ -5,20 +5,18 @@ import DashboardCard from './DashboardCard';
 
 interface RecentScenariosProps {
   recentScenarios: RecentScenario[];
-  handleDeleteScenario: (scenarioId: string, scenarioTitle: string) => void;
   handleEditScenario: (scenarioId: string) => void;
 }
 
 const RecentScenarios: React.FC<RecentScenariosProps> = ({
   recentScenarios,
-  handleDeleteScenario,
   handleEditScenario,
 }) => {
   return (
     <div className="recent-stories-section">
       <div className="section-header">
         <h3>Recent Scenarios</h3>
-        <Link to="/scenarios" className="btn btn-secondary btn-small">View All</Link>
+        <Link to="/scenarios" className="btn btn-secondary btn-small btn__scenarios_all">View All</Link>
       </div>
       <div className="stories-list">
         {recentScenarios.map(scenario => (
@@ -30,11 +28,6 @@ const RecentScenarios: React.FC<RecentScenariosProps> = ({
               { icon: "📝", text: `${scenario.generatedStoryCount} generated stories` }
             ]}
             actions={[
-              {
-                label: "Delete",
-                onClick: () => handleDeleteScenario(scenario.id, scenario.title),
-                variant: "warning"
-              },
               {
                 label: "Edit",
                 onClick: () => handleEditScenario(scenario.id),

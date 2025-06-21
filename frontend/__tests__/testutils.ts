@@ -12,10 +12,10 @@ export interface TestUser {
 export const SMALL_TEST_LLM_MODEL = 'google/gemma-3-4b';
 export const LARGE_TEST_LLM_MODEL = 'omega-darker-gaslight_the-final-forgotten-fever-dream-24b-i1'
 
-export const TEST_DELAY = 10;
+export const TEST_DELAY = 5;
 export const TEST_LLM_MODEL = LARGE_TEST_LLM_MODEL;
-
-export const TIMEOUT_MULTIPLIER = 10;
+export const TEST_BASE_URL = 'http://localhost:3000';
+export const TIMEOUT_MULTIPLIER = 20;
 
 export function expectingToTakeSeconds(normalseconds: number): number {
     return normalseconds * TIMEOUT_MULTIPLIER * 1000; // Convert to milliseconds
@@ -29,7 +29,7 @@ export async function navigateToPage(page: Page, url: string): Promise<void> {
 
 // Helper function: Get user profile data
 export async function getUserProfile(jwt: string): Promise<any> {
-    const userProfile = await getResponse('http://localhost:3000/api/me/profile', 'GET', jwt);
+    const userProfile = await getResponse(`${TEST_BASE_URL}/api/me/profile`, 'GET', jwt);
 
     if (!userProfile.ok) {
         throw new Error(`Failed to fetch user profile: ${userProfile.status}`);
@@ -86,7 +86,7 @@ export async function upgradeUserToPremium(userEmail: string): Promise<void> {
 
     console.log('Upgrading user to premium...');
     const upgradeResponse = await getResponse(
-        'http://localhost:3000/api/admin/upgrade-user',
+        `${TEST_BASE_URL}/api/admin/upgrade-user`,
         'POST',
         authToken,
         { email: userEmail }
@@ -127,7 +127,7 @@ export async function deleteUser(userData: TestUser): Promise<void> {
         throw new Error(`User with email ${userData.email} not found`);
     }
     const deleteResponse = await getResponse(
-        `http://localhost:3000/api/admin/users/${userData.userId}`,
+        `${TEST_BASE_URL}/api/admin/users/${userData.userId}`,
         'DELETE',
         authToken
     );
@@ -161,7 +161,7 @@ export async function deleteExistingTestUser(): Promise<void> {
 }
 
 export async function isUserLoggedIn(page: Page): Promise<boolean> {
-    await page.goto('http://localhost:3000/', { waitUntil: 'networkidle2' });
+    await page.goto(TEST_BASE_URL + '/', { waitUntil: 'networkidle2' });
     // see if we have an element data-testid="start-writing-link"
     const signupLink = await page.waitForSelector('a[data-test-id="nav-signup"]');
     if (signupLink) {
@@ -179,7 +179,7 @@ export async function loginToSite(page: Page, testUser: TestUser): Promise<void>
         return;
     }
     console.log('Logging in with test user:', testUser.email);
-    await page.goto('http://localhost:3000/login', { waitUntil: 'networkidle2' });
+    await page.goto(`${TEST_BASE_URL}/login`, { waitUntil: 'networkidle2' });
     const emailInput = await page.waitForSelector('#email', { visible: true });
     const passwordInput = await page.waitForSelector('#password', { visible: true });
     if (!emailInput || !passwordInput) {

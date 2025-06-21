@@ -18,7 +18,7 @@ const RecentGeneratedStories: React.FC<RecentGeneratedStoriesProps> = ({
     <div className="recent-stories-section">
       <div className="section-header">
         <h3>Recent Generated Stories</h3>
-        <Link to="/stories" className="btn btn-secondary btn-small">View All</Link>
+        <Link to="/stories" className="btn btn-secondary btn-small btn__stories_all">View All</Link>
       </div>
       <div className="stories-list">
         {recentStories.map(story => (

@@ -186,7 +186,6 @@ const Dashboard: React.FC<DashboardProps> = ({ setIsLoading }) => {
           <div className="dashboard-main">
             <RecentScenarios 
               recentScenarios={recentScenarios} 
-              handleDeleteScenario={handleDeleteScenario} 
               handleEditScenario={handleEditScenario} 
             />
             <RecentGeneratedStories 

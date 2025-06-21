@@ -1,7 +1,8 @@
 import React, { useCallback, useEffect, useRef } from 'react';
-import { FaBook, FaEye, FaSave, FaStickyNote, FaUser, FaUsers } from 'react-icons/fa';
+import { FaBook, FaEye, FaRedo, FaSave, FaStickyNote, FaTrash, FaUser, FaUsers } from 'react-icons/fa';
+import { useNavigate } from 'react-router-dom';
 import { useModals } from '../../hooks/useModals';
-import { createScenario, updateScenario } from '../../services/scenario';
+import { createScenario, deleteScenario, updateScenario } from '../../services/scenario';
 import { generateStory } from '../../services/storyGenerator';
 import { getStoriesByScenario, saveStory } from '../../services/storyService';
 import { Scenario } from '../../types/ScenarioTypes';
@@ -69,6 +70,7 @@ export const ScenarioEditor: React.FC<ScenarioEditorProps> = ({
 }) => {
   const { state, dispatch } = useScenarioEditor();
   const { alertState, confirmState, hideAlert, hideConfirm, customAlert, customConfirm } = useModals();
+  const navigate = useNavigate();
   const cancelGenerationRef = useRef<(() => void) | null>(null);
 
   // Reset scroll position when component mounts
@@ -77,14 +79,14 @@ export const ScenarioEditor: React.FC<ScenarioEditorProps> = ({
     window.scrollTo(0, 0);
     document.documentElement.scrollTop = 0;
     document.body.scrollTop = 0;
-    
+
     // Also try after next render cycle
     setTimeout(() => {
       window.scrollTo(0, 0);
       document.documentElement.scrollTop = 0;
       document.body.scrollTop = 0;
     }, 0);
-    
+
     // And after a short delay to handle any router animations
     setTimeout(() => {
       window.scrollTo(0, 0);
@@ -148,8 +150,8 @@ export const ScenarioEditor: React.FC<ScenarioEditorProps> = ({
       onScenarioSave?.(savedScenario);
     } catch (error) {
       console.error('Failed to save scenario:', error);
-      dispatch({ 
-        type: 'SET_ERROR', 
+      dispatch({
+        type: 'SET_ERROR',
         payload: { field: 'save', message: 'Failed to save scenario. Please try again.' }
       });
     } finally {
@@ -169,7 +171,7 @@ export const ScenarioEditor: React.FC<ScenarioEditorProps> = ({
     dispatch({ type: 'CLEAR_ALL_ERRORS' });
     dispatch({ type: 'SET_GENERATED_STORY', payload: '' }); // Clear existing story
     dispatch({ type: 'SET_STORY_SAVED', payload: false }); // Reset saved status
-    
+
     try {
       let accumulatedText = '';
       const { result, cancelGeneration } = await generateStory(state.scenario, {
@@ -185,7 +187,7 @@ export const ScenarioEditor: React.FC<ScenarioEditorProps> = ({
 
       const fullStory = await result;
       dispatch({ type: 'SET_GENERATED_STORY', payload: fullStory.completeText });
-      
+
     } catch (error) {
       console.error('Failed to generate story:', error);
       // Don't show error message for cancellation
@@ -195,13 +197,13 @@ export const ScenarioEditor: React.FC<ScenarioEditorProps> = ({
       } else {
         // Show the actual error message from the backend
         const errorMessage = error instanceof Error ? error.message : 'Failed to generate story. Please try again.';
-        
+
         // Check if this is a credit-related error and provide a better experience
         if (error instanceof Error && isInsufficientCreditsError(error)) {
           await showUserFriendlyErrorWithModals(error, 'Story Generation', customAlert, customConfirm);
         } else {
-          dispatch({ 
-            type: 'SET_ERROR', 
+          dispatch({
+            type: 'SET_ERROR',
             payload: { field: 'generation', message: errorMessage }
           });
         }
@@ -214,7 +216,7 @@ export const ScenarioEditor: React.FC<ScenarioEditorProps> = ({
 
   const handleShowStory = useCallback(async () => {
     dispatch({ type: 'SET_SHOW_STORY_MODAL', payload: true });
-    
+
     // If we have a scenario ID, try to load the most recent story
     if (state.scenario.id && !state.generatedStory) {
       try {
@@ -228,9 +230,39 @@ export const ScenarioEditor: React.FC<ScenarioEditorProps> = ({
         console.error('Failed to load existing stories:', error);
       }
     }
-    
+
     // Note: Removed auto-generation - user must click "Generate Story" button
   }, [dispatch, state.scenario.id, state.generatedStory]);
+
+  const handleDeleteScenario = useCallback(async () => {
+    const response = await customConfirm('Are you sure you want to delete this scenario? This action cannot be undone.', {
+      title: 'Delete Scenario',
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      variant: 'danger'
+    });
+    if (!response) return; // User cancelled
+    
+    dispatch({ type: 'SET_LOADING', payload: true });
+    try {
+      // Call the delete API
+      if (state.scenario.id) {
+        await deleteScenario(state.scenario.id);
+      }
+      dispatch({ type: 'DELETE_SCENARIO', payload: state.scenario });
+      
+      // Navigate back to dashboard after successful deletion
+      navigate('/dashboard');
+    } catch (error) {
+      console.error('Failed to delete scenario:', error);
+      dispatch({
+        type: 'SET_ERROR',
+        payload: { field: 'delete', message: 'Failed to delete scenario. Please try again.' }
+      });
+    } finally {
+      dispatch({ type: 'SET_LOADING', payload: false });
+    }
+  }, [state.scenario, dispatch, customConfirm, navigate]);
 
   const handleReloadScenario = useCallback(() => {
     dispatch({ type: 'SET_LOADING', payload: true });
@@ -268,8 +300,8 @@ export const ScenarioEditor: React.FC<ScenarioEditorProps> = ({
         dispatch({ type: 'SET_SHOW_STORY_MODAL', payload: false });
       } catch (error) {
         console.error('Failed to save story:', error);
-        dispatch({ 
-          type: 'SET_ERROR', 
+        dispatch({
+          type: 'SET_ERROR',
           payload: { field: 'save', message: 'Failed to save story. Please try again.' }
         });
       }
@@ -300,7 +332,7 @@ export const ScenarioEditor: React.FC<ScenarioEditorProps> = ({
             {state.isDirty && <span className="dirty-indicator">*</span>}
           </p>
         </div>
-        
+
         <div className="scenario-editor__actions">
           <Button
             variant="secondary"
@@ -312,18 +344,29 @@ export const ScenarioEditor: React.FC<ScenarioEditorProps> = ({
             View Story
           </Button>
           <Button
-            variant="danger"
+            variant="success"
             onClick={handleReloadScenario}
             disabled={state.isSaving || state.isLoading}
             loading={state.isSaving}
+            icon={<FaRedo />}
           >
             Reload
+          </Button>
+          <Button
+            variant="danger"
+            onClick={handleDeleteScenario}
+            disabled={state.isSaving || state.isLoading}
+            loading={state.isSaving}
+            icon={<FaTrash />}
+          >
+            Delete
           </Button>
           <Button
             variant="secondary"
             onClick={handleSaveAs}
             disabled={state.isSaving || state.isLoading}
             loading={state.isSaving}
+            icon={<FaSave />}
           >
             Save As
           </Button>
@@ -347,7 +390,7 @@ export const ScenarioEditor: React.FC<ScenarioEditorProps> = ({
           onTabChange={handleTabChange}
           className="scenario-editor__tabs"
         />
-        
+
         <div className="scenario-editor__tab-content">
           {ActiveTabComponent && (
             <ActiveTabComponent
@@ -394,11 +437,11 @@ export const ScenarioEditor: React.FC<ScenarioEditorProps> = ({
         message={alertState.message}
         title={alertState.title}
       />
-      
+
       <ConfirmModal
         isOpen={confirmState.isOpen}
         onClose={hideConfirm}
-        onConfirm={confirmState.onConfirm || (() => {})}
+        onConfirm={confirmState.onConfirm || (() => { })}
         message={confirmState.message}
         title={confirmState.title}
         confirmText={confirmState.confirmText}

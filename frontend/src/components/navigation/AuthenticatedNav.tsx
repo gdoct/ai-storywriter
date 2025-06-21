@@ -28,8 +28,8 @@ const AuthenticatedNav: React.FC<AuthenticatedNavProps> = ({ username, email }) 
   return (
     <div className="nav-container">
       <nav className="nav-links">
-        <Link to="/dashboard" className="nav-link">Dashboard</Link>
-        <Link to="/marketplace" className="nav-link">Marketplace</Link>
+        <Link to="/dashboard" className="nav-link __topbar__dashboardlink">Dashboard</Link>
+        <Link to="/marketplace" className="nav-link __toppabr__marketplacelink">Marketplace</Link>
         
         {/* Role-based navigation links */}
         <ModeratorOnly>

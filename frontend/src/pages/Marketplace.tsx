@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import EnhancedStoryCard from '../components/Story/EnhancedStoryCard';
-import StoryCard from '../components/Story/StoryCard';
-import StoryModal from '../components/Story/StoryModal';
-import CreditsBadge from '../components/TopBar/CreditsBadge';
+import HeaderSection from '../components/MarketPlace/HeaderSection';
+import QuickActions from '../components/MarketPlace/QuickActions';
+import StorySections from '../components/MarketPlace/StorySections';
+import StoryTooltip from '../components/MarketPlace/StoryTooltip';
 import { useAuth } from '../contexts/AuthContext';
 import { useAuthenticatedUser } from '../contexts/AuthenticatedUserContext';
 import { getByGenre, getLatest, getMostPopular, getStaffPicks, getTopRated } from '../services/marketPlaceApi';
@@ -20,10 +20,10 @@ interface SectionData {
 const Marketplace: React.FC = () => {
   const navigate = useNavigate();
   const { hasRole } = useAuth();
-  const { creditRefreshTrigger } = useAuthenticatedUser();
+  const { creditRefreshTrigger } = useAuthenticatedUser(); // Ensure creditRefreshTrigger is of type number
   const [searchQuery, setSearchQuery] = useState('');
+  const [showTooltip, setShowTooltip] = useState(false);
   const [selectedStoryId, setSelectedStoryId] = useState<number | null>(null);
-  const [showStoryModal, setShowStoryModal] = useState(false);
   const [sections, setSections] = useState<Record<string, SectionData>>({
     staffPicks: { title: 'Staff Picks', stories: [], loading: true, error: null },
     topRated: { title: 'Top Rated', stories: [], loading: true, error: null },
@@ -77,11 +77,11 @@ const Marketplace: React.FC = () => {
 
   const handleStoryClick = (storyId: number) => {
     setSelectedStoryId(storyId);
-    setShowStoryModal(true);
+    setShowTooltip(true);
   };
 
-  const handleCloseModal = () => {
-    setShowStoryModal(false);
+  const handleCloseTooltip = () => {
+    setShowTooltip(false);
     setSelectedStoryId(null);
   };
 
@@ -107,247 +107,30 @@ const Marketplace: React.FC = () => {
     loadSections();
   };
 
-  const renderStoryCard = (story: MarketStoryCard) => {
-    // Use enhanced story card for moderators/admins, regular for others
-    if (hasRole('moderator') || hasRole('admin')) {
-      return (
-        <EnhancedStoryCard
-          key={story.id}
-          story={story}
-          onClick={handleStoryClick}
-          onModerationAction={handleModerationAction}
-          compact
-        />
-      );
-    } else {
-      return (
-        <StoryCard
-          key={story.id}
-          story={story}
-          onClick={handleStoryClick}
-          compact
-        />
-      );
-    }
-  };
-
-  const renderSection = (sectionKey: string) => {
-    const section = sections[sectionKey];
-    
-    if (section.loading) {
-      return (
-        <div className="section-loading">
-          <div className="loading-spinner"></div>
-          <span>Loading {section.title.toLowerCase()}...</span>
-        </div>
-      );
-    }
-
-    if (section.error) {
-      return (
-        <div className="section-error">
-          <p>Failed to load {section.title.toLowerCase()}</p>
-          <button onClick={loadSections} className="retry-button">Retry</button>
-        </div>
-      );
-    }
-
-    if (section.stories.length === 0) {
-      return (
-        <div className="section-empty">
-          <p>No stories available in {section.title.toLowerCase()}</p>
-        </div>
-      );
-    }
-
-    return (
-      <div className="stories-carousel">
-        {section.stories.map(story => renderStoryCard(story))}
-      </div>
-    );
-  };
-
   return (
     <div className="marketplace">
       <div className="marketplace-container">
-        {/* Header section similar to dashboard */}
-        <div className="marketplace-header">
-          <div className="marketplace-welcome-section">
-            <h1>Story Marketplace</h1>
-            <p>Discover amazing stories from our community of writers</p>
-          </div>
-          <div className="header-actions">
-            <CreditsBadge className="header-badge" refreshTrigger={creditRefreshTrigger} />
-            <form onSubmit={handleSearch} className="search-form">
-              <div className="search-container">
-                <input
-                  type="text"
-                  placeholder="Search stories..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="search-input"
-                />
-                <button type="submit" className="search-button">
-                  🔍
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+        <HeaderSection
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          creditRefreshTrigger={creditRefreshTrigger}
+        />
 
-        <div className="marketplace-content">
-          {/* Quick Access Badges */}
-          <div className="quick-actions">
-            <div className="quick-actions-grid">
-              <button
-                className="quick-action-card"
-                onClick={() => navigate('/marketplace/browse?sort_by=rating&sort_order=desc')}
-              >
-                <div className="quick-action-icon">⭐</div>
-                <div className="quick-action-content">
-                  <h3>Top Rated</h3>
-                  <p>Best stories by rating</p>
-                </div>
-              </button>
-              <button
-                className="quick-action-card"
-                onClick={() => navigate('/marketplace/browse?sort_by=downloads&sort_order=desc')}
-              >
-                <div className="quick-action-icon">🔥</div>
-                <div className="quick-action-content">
-                  <h3>Most Popular</h3>
-                  <p>Most downloaded stories</p>
-                </div>
-              </button>
-              <button
-                className="quick-action-card"
-                onClick={() => navigate('/marketplace/browse?sort_by=published_at&sort_order=desc')}
-              >
-                <div className="quick-action-icon">🆕</div>
-                <div className="quick-action-content">
-                  <h3>Latest Stories</h3>
-                  <p>Recently published</p>
-                </div>
-              </button>
-              <button
-                className="quick-action-card"
-                onClick={() => navigate('/stories')}
-              >
-                <div className="quick-action-icon">📝</div>
-                <div className="quick-action-content">
-                  <h3>Publish Story</h3>
-                  <p>Share your own stories</p>
-                </div>
-              </button>
-            </div>
-          </div>
+        <QuickActions />
 
-        {/* Staff Picks Section */}
-        {sections.staffPicks.stories.length > 0 && (
-          <section className="marketplace-section featured">
-            <div className="section-header">
-              <h2>✨ Staff Picks</h2>
-              <button 
-                className="view-more-button"
-                onClick={() => handleViewMore('staffPicks')}
-              >
-                View More
-              </button>
-            </div>
-            {renderSection('staffPicks')}
-          </section>
-        )}
+        <StorySections
+          sections={sections}
+          hasRole={hasRole}
+          handleModerationAction={handleModerationAction}
+          loadSections={loadSections}
+        />
 
-        {/* Top Rated Section */}
-        <section className="marketplace-section">
-          <div className="section-header">
-            <h2>⭐ Top Rated Stories</h2>
-            <button 
-              className="view-more-button"
-              onClick={() => handleViewMore('topRated')}
-            >
-              View More
-            </button>
-          </div>
-          {renderSection('topRated')}
-        </section>
-
-        {/* Most Popular Section */}
-        <section className="marketplace-section">
-          <div className="section-header">
-            <h2>🔥 Most Popular</h2>
-            <button 
-              className="view-more-button"
-              onClick={() => handleViewMore('mostPopular')}
-            >
-              View More
-            </button>
-          </div>
-          {renderSection('mostPopular')}
-        </section>
-
-        {/* Latest Stories Section */}
-        <section className="marketplace-section">
-          <div className="section-header">
-            <h2>🆕 Latest Stories</h2>
-            <button 
-              className="view-more-button"
-              onClick={() => handleViewMore('latest')}
-            >
-              View More
-            </button>
-          </div>
-          {renderSection('latest')}
-        </section>
-
-        {/* Genre Sections */}
-        <section className="marketplace-section">
-          <div className="section-header">
-            <h2>⚔️ Fantasy</h2>
-            <button 
-              className="view-more-button"
-              onClick={() => handleViewMore('fantasy')}
-            >
-              View More
-            </button>
-          </div>
-          {renderSection('fantasy')}
-        </section>
-
-        <section className="marketplace-section">
-          <div className="section-header">
-            <h2>🚀 Science Fiction</h2>
-            <button 
-              className="view-more-button"
-              onClick={() => handleViewMore('sciFi')}
-            >
-              View More
-            </button>
-          </div>
-          {renderSection('sciFi')}
-        </section>
-
-        <section className="marketplace-section">
-          <div className="section-header">
-            <h2>💕 Romance</h2>
-            <button 
-              className="view-more-button"
-              onClick={() => handleViewMore('romance')}
-            >
-              View More
-            </button>
-          </div>
-          {renderSection('romance')}
-        </section>
-        </div>
+        <StoryTooltip
+          storyId={selectedStoryId}
+          showTooltip={showTooltip}
+          handleCloseTooltip={handleCloseTooltip}
+        />
       </div>
-
-      {/* Story Modal */}
-      <StoryModal
-        storyId={selectedStoryId}
-        show={showStoryModal}
-        onClose={handleCloseModal}
-      />
     </div>
   );
 };

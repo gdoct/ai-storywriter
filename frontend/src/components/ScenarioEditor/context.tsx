@@ -46,7 +46,13 @@ function scenarioEditorReducer(
         scenario: { ...state.scenario, ...action.payload },
         isDirty: true,
       };
-
+    case 'DELETE_SCENARIO':
+      return {
+        ...state,
+        scenario: initialState.scenario, // Reset to initial state
+        isDirty: false,
+        errors: {},
+      };
     case 'SET_ACTIVE_TAB':
       return {
         ...state,

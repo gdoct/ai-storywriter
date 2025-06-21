@@ -87,7 +87,7 @@ export function createStoryTitlePrompt(scenario: Scenario): llmCompletionRequest
   prompt += "The title should be concise, memorable, and capture the reader's interest.\n";
   prompt += "Avoid generic or clichéd titles, and ensure it aligns with the story's themes and style.\n\n";
   prompt += "IMPORTANT: The title should not contain the words 'Echoes', 'Obsidian' or 'Mist'.\n";
-  prompt += "IMPORTANT: return ONLY the title as a single string without any additional text or formatting.\n\n";
+  prompt += "IMPORTANT: return ONLY the title as a single string without any additional text or formatting. Do NOT surround the title with quotes.\n\n";
   prompt += "Here is the scenario:\n\n";
   prompt += formatScenarioAsMarkdown(scenario) + "\n\n";
   return {

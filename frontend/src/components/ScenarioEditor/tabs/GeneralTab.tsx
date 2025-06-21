@@ -2,19 +2,13 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { FaDice, FaDownload, FaRandom } from 'react-icons/fa';
 import { generateScenarioSynopsis, generateStoryTitle } from '../../../services/storyGenerator';
 import { StyleSettings } from '../../../types/ScenarioTypes';
+import { GENRE_OPTIONS, LANGUAGE_OPTIONS, STYLE_OPTIONS, THEME_OPTIONS, TONE_OPTIONS } from '../../../types/styleoptions';
 import ImportModal from '../../common/ImportModal';
 import { Button } from '../common/Button';
 import { Input } from '../common/Input';
 import { TabProps } from '../types';
 import './GeneralTab.css';
 import StyleFields from './StyleFields';
-
-// Style option arrays
-const styleOptions    = ['Modern', 'Classic', 'Minimalist', 'Gothic', 'Stream of consciousness', 'Epistolary', 'Journalistic', 'Academic', 'Poetic', 'Narrative', 'Descriptive', 'Persuasive', 'Technical', 'Lyrical', 'Dramatic'];
-const genreOptions    = ['Science Fiction', 'Drama', 'Adventure', 'Fantasy', 'Mystery', 'Romance', 'Horror', 'Comedy', 'Thriller', 'Historical Fiction', "autobiography", "Manual", 'Self-help', 'Biography', 'Non-fiction', 'Poetry', 'Satire', 'Dystopian', 'Cyberpunk', 'Magical Realism'];
-const toneOptions     = ['Serious', 'Humorous', 'Whimsical', 'Dark', 'Inspirational', 'Satirical', 'Suspenseful', 'Melancholic', 'Romantic', 'Philosophical', 'Optimistic', 'Pessimistic', 'Nostalgic', 'Critical', 'Reflective', 'Urgent', 'Detached', 'Intimate', 'Cynical', 'Hopeful'];
-const languageOptions = ['Simple', 'Elaborate', 'Technical', 'Pirate', 'Conversational', 'Formal', 'Archaic', 'Slang-heavy',  'Minimal', 'Descriptive', 'Colloquial', 'Poetic', 'Jargon-heavy', 'Academic', 'Narrative', 'Journalistic', 'Lyrical', 'Streamlined', 'Verbose', 'Concise'];
-const themeOptions    = ['Coming of age', 'Redemption', 'Power and corruption', 'Love and sacrifice', 'Man vs. nature', 'Technology and humanity', 'Identity', 'Survival', 'Justice', 'Freedom', 'Isolation', 'Family and relationships', 'War and peace', 'Good vs. evil', 'Fate vs. free will', 'Memory and nostalgia', 'Courage and bravery', 'Greed and ambition', 'Tradition vs. change', 'Hope and despair', 'Truth and deception'];
 
 export const GeneralTab: React.FC<TabProps> = ({
   scenario,
@@ -68,11 +62,11 @@ export const GeneralTab: React.FC<TabProps> = ({
 
   const randomizeAllStyle = useCallback(() => {
     const randomStyle: StyleSettings = {
-      style: styleOptions[Math.floor(Math.random() * styleOptions.length)],
-      genre: genreOptions[Math.floor(Math.random() * genreOptions.length)],
-      tone: toneOptions[Math.floor(Math.random() * toneOptions.length)],
-      language: languageOptions[Math.floor(Math.random() * languageOptions.length)],
-      theme: themeOptions[Math.floor(Math.random() * themeOptions.length)],
+      style: STYLE_OPTIONS[Math.floor(Math.random() * STYLE_OPTIONS.length)],
+      genre: GENRE_OPTIONS[Math.floor(Math.random() * GENRE_OPTIONS.length)],
+      tone: TONE_OPTIONS[Math.floor(Math.random() * TONE_OPTIONS.length)],
+      language: LANGUAGE_OPTIONS[Math.floor(Math.random() * LANGUAGE_OPTIONS.length)],
+      theme: THEME_OPTIONS[Math.floor(Math.random() * THEME_OPTIONS.length)],
       other: '',
     };
     onScenarioChange({ writingStyle: randomStyle });

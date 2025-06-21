@@ -1,7 +1,7 @@
 import { faker } from '@faker-js/faker';
 import dotenv from 'dotenv';
 import puppeteer, { Browser, Page } from 'puppeteer';
-import { deleteExistingTestUser, expectingToTakeSeconds, getUserProfile, navigateToPage, saveTestUserToFile, TEST_DELAY, TestUser, upgradeUserToPremium } from './testutils';
+import { deleteExistingTestUser, expectingToTakeSeconds, getUserProfile, navigateToPage, saveTestUserToFile, TEST_BASE_URL, TEST_DELAY, TestUser, upgradeUserToPremium } from './testutils';
 dotenv.config();
 
 // Improved Puppeteer signup test with better click handling and debug output
@@ -50,7 +50,7 @@ describe('Register, Login and Logout workflows', () => {
   // Helper function: Perform user signup
   async function signupUser(user: TestUser): Promise<string> {
 
-    await navigateToPage(page, 'http://localhost:3000/signup');
+    await navigateToPage(page, `${TEST_BASE_URL}/signup`);
 
     // Wait for signup form to load
     try {
@@ -177,7 +177,7 @@ describe('Register, Login and Logout workflows', () => {
         throw new Error('Signup link not found after logout, user may not be logged out');
       }
       console.log('User successfully logged out, signup link is visible');
-      await navigateToPage(page, 'http://localhost:3000/');
+      await navigateToPage(page, TEST_BASE_URL + '/');
     }, expectingToTakeSeconds(10));
   });
 });

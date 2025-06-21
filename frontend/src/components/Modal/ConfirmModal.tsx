@@ -38,6 +38,7 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
           className={`btn ${variant === 'danger' ? 'btn-danger' : 'btn-primary'}`}
           onClick={handleConfirm}
           data-testid="confirm-button"
+          autoFocus
         >
           {confirmText}
         </button>
