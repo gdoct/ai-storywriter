@@ -1,6 +1,9 @@
 import dotenv from 'dotenv';
 import puppeteer, { Browser, Page } from 'puppeteer';
 import { expectingToTakeSeconds, loginToSite, readTestUserFromFile, TEST_DELAY, TEST_LLM_MODEL, TestUser } from './testutils';
+import { env } from 'process';
+import { StyleSettings } from '../src/types/ScenarioTypes';
+import { json } from 'stream/consumers';
 
 dotenv.config();
 
@@ -14,7 +17,7 @@ describe('Scenario and Story generation workflows', () => {
   let page: Page;
   let testUser: TestUser;
 
-  
+
   beforeAll(async () => {
     browser = await puppeteer.launch({
       headless: false,
@@ -35,7 +38,7 @@ describe('Scenario and Story generation workflows', () => {
     }
 
     await loginToSite(page, testUser);
-  }, expectingToTakeSeconds(60)); 
+  }, expectingToTakeSeconds(60));
 
   afterAll(async () => {
     //await deleteUser(testUser.email);
@@ -43,7 +46,7 @@ describe('Scenario and Story generation workflows', () => {
     await browser.close();
   });
 
-  
+
   // Helper function: Generate story content
   async function generateStory(): Promise<void> {
     // Click "View Story" button
@@ -116,25 +119,25 @@ describe('Scenario and Story generation workflows', () => {
 
   async function generateRandomCharacter() {
     const generateRandomCharacterButton = await page.waitForSelector('.generate-random-character-btn', { visible: true });
-      if (!generateRandomCharacterButton) {
-        throw new Error('Generate random character button not found');
-      }
-      await generateRandomCharacterButton.click();
-      console.log('Clicked Generate Random Character button');
+    if (!generateRandomCharacterButton) {
+      throw new Error('Generate random character button not found');
+    }
+    await generateRandomCharacterButton.click();
+    console.log('Clicked Generate Random Character button');
 
-      const finalButton = await page.waitForSelector('button.random-character-modal__generate-button', 
-        { visible: true, timeout: expectingToTakeSeconds(60) });
-      if (!finalButton) {
-        throw new Error('Generate button in modal not found');
-      }
-      await finalButton.click();
-      console.log('Generated random character successfully');
-      // wait for the character to appear
-      await page.waitForSelector('.character-card__header', 
+    const finalButton = await page.waitForSelector('button.random-character-modal__generate-button',
+      { visible: true, timeout: expectingToTakeSeconds(60) });
+    if (!finalButton) {
+      throw new Error('Generate button in modal not found');
+    }
+    await finalButton.click();
+    console.log('Generated random character successfully');
+    // wait for the character to appear
+    await page.waitForSelector('.character-card__header',
       { visible: true, timeout: expectingToTakeSeconds(900) });
-      await wait(1000); 
+    await wait(1000);
   }
-  
+
   describe('Scenario Creation workflow', () => {
     it('should navigate to story creation', async () => {
       // Navigate to story creation page
@@ -152,115 +155,152 @@ describe('Scenario and Story generation workflows', () => {
       await wait(500); // wait for 500 milliseconds to ensure the model is set
     }, expectingToTakeSeconds(1));
 
-    it('should randomize the genre settings', async () => {
-      // Wait for the randomize button to be visible
-      const randomizeButton = await page.waitForSelector('text/Randomize All', { visible: true });
-      if (!randomizeButton) {
-        throw new Error('Randomize button not found');
+    async function setDropdownValue(selector: string, value: string): Promise<void> {
+      const dropdown = await page.waitForSelector(selector, { visible: true });
+      if (!dropdown) {
+        throw new Error(`Dropdown with selector ${selector} not found`);
       }
-      await randomizeButton.click();
-
-      console.log('Navigated to story creation and randomized settings');
-    }, expectingToTakeSeconds(1));
-
-    async function generateCharacter() {
-      const generalTab = await page.waitForSelector('button[data-testid="general-tab"]', { visible: true });
-      await generalTab.click();
-      let charactersTab = page.locator('button[data-testid="characters-tab"]');
-      await charactersTab.click();
-      const existingCharacterCount = await page.$$eval('.character-card__header', headers => headers.length);
-      console.log(`Existing characters count: ${existingCharacterCount}`);
-      await generateRandomCharacter();
-      const newCharacterCount = await page.$$eval('.character-card__header', headers => headers.length);
-      console.log(`New characters count: ${newCharacterCount}`);
-      expect(newCharacterCount).toBeGreaterThan(existingCharacterCount);
+      await dropdown.type(value);
     }
+  it('should randomize the genre settings', async () => {
+    // Wait for the randomize button to be visible
+    const randomizeButton = await page.waitForSelector('text/Randomize All', { visible: true });
+    if (!randomizeButton) {
+      throw new Error('Randomize button not found');
+    }
+    await randomizeButton.click();
 
-    it('should select the characters tab and generate one random character', async () => {
-      await generateCharacter();
-      //await generateCharacter();
+    console.log('Navigated to story creation and randomized settings');
+  }, expectingToTakeSeconds(1));
 
-    }, expectingToTakeSeconds(3000));
-
-    it('should generate a story title', async () => {
-      // Click on the Characters tab
-      const generalTab = await page.waitForSelector('button[data-testid="general-tab"]', { visible: true });
-      if (!generalTab) {
-        throw new Error('general tab not found');
+  
+    it('should set the style override if it exists', async () => {
+      if (!env.STYLE_OVERRIDE || env.STYLE_OVERRIDE.length === 0) {
+        return;
       }
-      await generalTab.click();
-      console.log('Clicked General tab to select genre');
-      // button with classname general-tab__randomize-title-btn
-      const randomizeTitleButton = await page.waitForSelector('.general-tab__randomize-title-btn', { visible: true });
-      if (!randomizeTitleButton) {
-        throw new Error('Randomize title button not found');
+      const styleOverride: StyleSettings = JSON.parse(env.STYLE_OVERRIDE);
+      // fill these dropdowns with the values from the styleOverride
+      // .writingstyle__dropdown
+      // .genre__dropdown
+      // .tone__dropdown
+      // .language__dropdown
+      // .theme__dropdown
+      if (styleOverride.style) {
+        await setDropdownValue('.writingstyle__dropdown', styleOverride.style);
       }
-      await randomizeTitleButton.click();
-      console.log('Clicked Randomize Title button to generate story title');
-    }, expectingToTakeSeconds(30));
-
-    it('should generate a story synopsis', async () => {
-      // Click on the Characters tab
-      const generalTab = await page.waitForSelector('button[data-testid="general-tab"]', { visible: true });
-      if (!generalTab) {
-        throw new Error('general tab not found');
+      if (styleOverride.genre) {
+        await setDropdownValue('.genre__dropdown', styleOverride.genre);
       }
-      await generalTab.click();
-      console.log('Clicked General tab to select genre');
-      // button with classname general-tab__randomize-synopsis-btn
-      console.log('Waiting for Randomize Synopsis button to be visible');
-      const randomizeSynopsisButton = await page.waitForSelector('.general-tab__randomize-synopsis-btn', { visible: true });
-      if (!randomizeSynopsisButton) {
-        throw new Error('Randomize synopsis button not found');
+      if (styleOverride.tone) {
+        await setDropdownValue('.tone__dropdown', styleOverride.tone);
       }
-      console.log('Randomize Synopsis button found, clicking it');
-      await randomizeSynopsisButton.click();
-
-      console.log('Waiting for synopsis input to be populated');
-      /**
-       <div class="input-field general-tab__synopsis-input">
-         <label class="input-field__label">Synopsis</label>
-         <div class="input-field__wrapper">
-             <textarea placeholder="Brief description of your story..." 
-                       rows="4" 
-                       class="input-field__control input-field__textarea">
-              ....
-            </textarea>
-          </div>
-       </div> */
-      await page.waitForFunction(() => {
-        const textAreaSelector = '.general-tab__synopsis-input .input-field__textarea';
-        const synopsisInput = document.querySelector(textAreaSelector);
-        return synopsisInput && (synopsisInput as HTMLTextAreaElement).value.trim().length > 0;
-      }, { timeout: expectingToTakeSeconds(29) }); // wait up to 29 seconds
-      console.log('Synopsis generated successfully');
-      // wait for the synopsis to be generated
-      console.log('Clicked Randomize Synopsis button to generate story synopsis');
-    }, expectingToTakeSeconds(30));
-    
-    it('should save the current scenario', async () => {
-      // Click the "Save Scenario" button
-      const saveScenarioButton = await page.waitForSelector('.scenario-editor__save-button', { visible: true });
-      if (!saveScenarioButton) {
-        throw new Error('Save Scenario button not found');
+      if (styleOverride.language) {
+        await setDropdownValue('.language__dropdown', styleOverride.language);
       }
-      await saveScenarioButton.click();
-      console.log('Scenario saved successfully');
-      // wait 50 ms before continuing
-      await new Promise(res => setTimeout(res, 50));
-
-    }, expectingToTakeSeconds(10))
+      if (styleOverride.theme) {
+        await setDropdownValue('.theme__dropdown', styleOverride.theme);
+      }
+      console.log('Style override set successfully');
   });
 
-  describe('Story Generation workflow', () => {
-    it('should open story modal and start generation', async () => {
-      await generateStory();
-      console.log('Story generation process started');
-    }, expectingToTakeSeconds(90));
+  async function generateCharacter() {
+    const generalTab = await page.waitForSelector('button[data-testid="general-tab"]', { visible: true });
+    await generalTab.click();
+    let charactersTab = page.locator('button[data-testid="characters-tab"]');
+    await charactersTab.click();
+    const existingCharacterCount = await page.$$eval('.character-card__header', headers => headers.length);
+    console.log(`Existing characters count: ${existingCharacterCount}`);
+    await generateRandomCharacter();
+    const newCharacterCount = await page.$$eval('.character-card__header', headers => headers.length);
+    console.log(`New characters count: ${newCharacterCount}`);
+    expect(newCharacterCount).toBeGreaterThan(existingCharacterCount);
+  }
 
-    it('should wait for story generation to complete and save', async () => {
-      await waitForStoryGenerationAndSave();
-      console.log('Story generation completed and saved successfully');
-    }, expectingToTakeSeconds(300)); 
-  });
+  it('should select the characters tab and generate one random character', async () => {
+    await generateCharacter();
+    //await generateCharacter();
+
+  }, expectingToTakeSeconds(3000));
+
+  it('should generate a story title', async () => {
+    // Click on the Characters tab
+    const generalTab = await page.waitForSelector('button[data-testid="general-tab"]', { visible: true });
+    if (!generalTab) {
+      throw new Error('general tab not found');
+    }
+    await generalTab.click();
+    console.log('Clicked General tab to select genre');
+    // button with classname general-tab__randomize-title-btn
+    const randomizeTitleButton = await page.waitForSelector('.general-tab__randomize-title-btn', { visible: true });
+    if (!randomizeTitleButton) {
+      throw new Error('Randomize title button not found');
+    }
+    await randomizeTitleButton.click();
+    console.log('Clicked Randomize Title button to generate story title');
+  }, expectingToTakeSeconds(30));
+
+  it('should generate a story synopsis', async () => {
+    // Click on the Characters tab
+    const generalTab = await page.waitForSelector('button[data-testid="general-tab"]', { visible: true });
+    if (!generalTab) {
+      throw new Error('general tab not found');
+    }
+    await generalTab.click();
+    console.log('Clicked General tab to select genre');
+    // button with classname general-tab__randomize-synopsis-btn
+    console.log('Waiting for Randomize Synopsis button to be visible');
+    const randomizeSynopsisButton = await page.waitForSelector('.general-tab__randomize-synopsis-btn', { visible: true });
+    if (!randomizeSynopsisButton) {
+      throw new Error('Randomize synopsis button not found');
+    }
+    console.log('Randomize Synopsis button found, clicking it');
+    await randomizeSynopsisButton.click();
+
+    console.log('Waiting for synopsis input to be populated');
+    /**
+     <div class="input-field general-tab__synopsis-input">
+       <label class="input-field__label">Synopsis</label>
+       <div class="input-field__wrapper">
+           <textarea placeholder="Brief description of your story..." 
+                     rows="4" 
+                     class="input-field__control input-field__textarea">
+            ....
+          </textarea>
+        </div>
+     </div> */
+    await page.waitForFunction(() => {
+      const textAreaSelector = '.general-tab__synopsis-input .input-field__textarea';
+      const synopsisInput = document.querySelector(textAreaSelector);
+      return synopsisInput && (synopsisInput as HTMLTextAreaElement).value.trim().length > 0;
+    }, { timeout: expectingToTakeSeconds(29) }); // wait up to 29 seconds
+    console.log('Synopsis generated successfully');
+    // wait for the synopsis to be generated
+    console.log('Clicked Randomize Synopsis button to generate story synopsis');
+  }, expectingToTakeSeconds(30));
+
+  it('should save the current scenario', async () => {
+    // Click the "Save Scenario" button
+    const saveScenarioButton = await page.waitForSelector('.scenario-editor__save-button', { visible: true });
+    if (!saveScenarioButton) {
+      throw new Error('Save Scenario button not found');
+    }
+    await saveScenarioButton.click();
+    console.log('Scenario saved successfully');
+    // wait 50 ms before continuing
+    await new Promise(res => setTimeout(res, 50));
+
+  }, expectingToTakeSeconds(10))
+});
+
+describe('Story Generation workflow', () => {
+  it('should open story modal and start generation', async () => {
+    await generateStory();
+    console.log('Story generation process started');
+  }, expectingToTakeSeconds(90));
+
+  it('should wait for story generation to complete and save', async () => {
+    await waitForStoryGenerationAndSave();
+    console.log('Story generation completed and saved successfully');
+  }, expectingToTakeSeconds(600));
+});
 });

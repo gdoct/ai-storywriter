@@ -20,12 +20,13 @@ const StyleFields: React.FC<StyleFieldsProps> = ({ writingStyle, onStyleChange, 
 
   return (
     <div className="general-tab__style-grid">
-      <div className="general-tab__style-field">
+      <div className="general-tab__style-field ">
         <Dropdown
           label="Writing Style"
           value={writingStyle.style || ''}
           onChange={(value) => onStyleChange('style', value)}
           options={styleOptions}
+          className='writingstyle__dropdown'
           placeholder="Select or enter writing style..."
         />
         <Button
@@ -45,6 +46,7 @@ const StyleFields: React.FC<StyleFieldsProps> = ({ writingStyle, onStyleChange, 
           value={writingStyle.genre || ''}
           onChange={(value) => onStyleChange('genre', value)}
           options={genreOptions}
+          className='genre__dropdown'
           placeholder="Select or enter genre..."
         />
         <Button
@@ -64,6 +66,7 @@ const StyleFields: React.FC<StyleFieldsProps> = ({ writingStyle, onStyleChange, 
           value={writingStyle.tone || ''}
           onChange={(value) => onStyleChange('tone', value)}
           options={toneOptions}
+          className='tone__dropdown'
           placeholder="Select or enter tone..."
         />
         <Button
@@ -83,6 +86,7 @@ const StyleFields: React.FC<StyleFieldsProps> = ({ writingStyle, onStyleChange, 
           value={writingStyle.language || ''}
           onChange={(value) => onStyleChange('language', value)}
           options={languageOptions}
+          className='language__dropdown'
           placeholder="Select or enter language style..."
         />
         <Button
@@ -102,6 +106,7 @@ const StyleFields: React.FC<StyleFieldsProps> = ({ writingStyle, onStyleChange, 
           value={writingStyle.theme || ''}
           onChange={(value) => onStyleChange('theme', value)}
           options={themeOptions}
+          className='theme__dropdown'
           placeholder="Select or enter theme..."
         />
         <Button
