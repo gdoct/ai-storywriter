@@ -153,5 +153,3 @@ CREATE INDEX idx_character_photos_character_id ON character_photos (character_id
 CREATE INDEX idx_user_roles_user_id ON user_roles(user_id);
 CREATE INDEX idx_user_roles_role ON user_roles(role);
 CREATE INDEX idx_user_roles_active ON user_roles(user_id, role) WHERE revoked_at IS NULL;
-INSERT INTO user_roles VALUES (1, '9213cdfb-145d-4524-bb0f-094c63762088', 'admin', '9213cdfb-145d-4524-bb0f-094c63762088', '2025-06-18T07:45:41.142131+00:00', None);
-INSERT INTO user_roles VALUES (2, '4f53bc2e-62e2-4b1e-bebc-85fcb23a3379', 'moderator', '9213cdfb-145d-4524-bb0f-094c63762088', '2025-06-18T08:27:53.275164+00:00', None);

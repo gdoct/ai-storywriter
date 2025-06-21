@@ -6,6 +6,7 @@ import uuid
 from datetime import datetime
 
 from .db_config import DB_PATH, get_db_path
+from services.security_utils import hash_password
 
 
 def get_db_connection():
@@ -29,8 +30,13 @@ def init_db():
     with open(schema_path, 'r') as schema_file:
         schema_sql = schema_file.read()
 
-    # Execute the schema SQL
-    c.executescript(schema_sql)
+    # Execute the schema SQL with error handling
+    try:
+        c.executescript(schema_sql)
+    except sqlite3.Error as e:
+        print(f"Error executing schema SQL: {e}")
+        conn.close()
+        return
 
     conn.commit()
     conn.close()
@@ -52,13 +58,13 @@ def init_db():
     privacy_agreed_at = created_at
     terms_version = '1.0'
     privacy_version = '1.0'
-    tier = 'admin'
+    tier = 'premium'
     api_key_encrypted = None
-    api_provider = 'lmstudio'
+    api_provider = 'openai'
     is_deleted = 0
 
-    # Hash the password (simple SHA256 for demonstration; use a stronger hash in production)
-    password_hash = hashlib.sha256(admin_password.encode('utf-8')).hexdigest()
+    # Hash the password using the secure hash_password utility
+    password_hash = hash_password(admin_password)
 
     conn = get_db_connection()
     c = conn.cursor()
@@ -74,6 +80,28 @@ def init_db():
         tier, api_key_encrypted, api_provider
     ))
 
+    conn.commit()
+    conn.close()
+
+    # Insert admin roles for the created admin user
+    conn = get_db_connection()
+    c = conn.cursor()
+    now = datetime.now().isoformat()
+    # Grant both 'admin' and 'moderator' roles to the admin user
+    for role in ("admin", "moderator"):
+        c.execute('''
+            INSERT INTO user_roles (user_id, role, granted_by, granted_at)
+            VALUES (?, ?, ?, ?)
+        ''', (user_id, role, user_id, now))
+    # Add a purchase of 1,000,000 credits for the admin user
+    import uuid as _uuid
+    c.execute('''
+        INSERT INTO credit_transactions (
+            id, user_id, transaction_type, amount, description, related_entity_id, created_at, checkpoint_balance
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    ''', (
+        str(_uuid.uuid4()), user_id, 'purchase', 1000000, 'Initial admin credit grant', None, now, 1000000
+    ))
     conn.commit()
     conn.close()
 
