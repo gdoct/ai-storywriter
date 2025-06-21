@@ -1,6 +1,7 @@
 import dotenv from 'dotenv';
 import puppeteer, { Browser, Page } from 'puppeteer';
-import { expectingToTakeSeconds, loginToSite, readTestUserFromFile, TEST_DELAY, TEST_LLM_MODEL, TestUser } from './testutils';
+import { TEST_DELAY, TEST_LLM_MODEL } from './testsettings';
+import { expectingToTakeSeconds, loginToSite, readTestUserFromFile, TestUser } from './testutils';
 
 dotenv.config();
 

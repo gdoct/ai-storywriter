@@ -1,7 +1,8 @@
 import { faker } from '@faker-js/faker';
 import dotenv from 'dotenv';
 import puppeteer, { Browser, Page } from 'puppeteer';
-import { deleteExistingTestUser, expectingToTakeSeconds, getUserProfile, navigateToPage, saveTestUserToFile, TEST_BASE_URL, TEST_DELAY, TestUser, upgradeUserToPremium } from './testutils';
+import { TEST_BASE_URL, TEST_DELAY } from './testsettings';
+import { deleteExistingTestUser, expectingToTakeSeconds, getUserProfile, navigateToPage, saveTestUserToFile, TestUser, upgradeUserToPremium } from './testutils';
 dotenv.config();
 
 // Improved Puppeteer signup test with better click handling and debug output

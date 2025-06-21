@@ -1,6 +1,6 @@
 import React, { useCallback, useRef, useState } from 'react';
 import { FaPlus, FaTrash, FaUser } from 'react-icons/fa';
-import { deleteScenarioImage, uploadScenarioImage } from '../../../services/scenarioImageService';
+import { deleteScenarioImage, uploadScenarioImage, uploadImageWithScenarioData } from '../../../services/scenarioImageService';
 import { Scenario } from '../../../types/ScenarioTypes';
 import { showUserFriendlyError } from '../../../utils/errorHandling';
 import { Button } from '../common/Button';
@@ -57,7 +57,7 @@ export const ScenarioImage: React.FC<ScenarioImageProps> = ({
         });
       } else {
         // If scenario doesn't have an ID, upload with scenario data
-        result = await uploadScenarioImage(scenario.id, file);
+        result = await uploadImageWithScenarioData(scenario, file);
         
         // Update the entire scenario with the saved version including image info
         onScenarioChange(result.scenario);

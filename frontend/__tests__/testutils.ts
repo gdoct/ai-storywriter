@@ -1,5 +1,6 @@
 import { Page } from 'puppeteer';
 import { getResponse } from "../src/services/request";
+import { TEST_BASE_URL, TIMEOUT_MULTIPLIER } from './testsettings';
 
 export interface TestUser {
     username: string;
@@ -9,13 +10,7 @@ export interface TestUser {
     jwt?: string;
 };
 
-export const SMALL_TEST_LLM_MODEL = 'google/gemma-3-4b';
-export const LARGE_TEST_LLM_MODEL = 'omega-darker-gaslight_the-final-forgotten-fever-dream-24b-i1'
 
-export const TEST_DELAY = 5;
-export const TEST_LLM_MODEL = LARGE_TEST_LLM_MODEL;
-export const TEST_BASE_URL = 'http://localhost:3000';
-export const TIMEOUT_MULTIPLIER = 20;
 
 export function expectingToTakeSeconds(normalseconds: number): number {
     return normalseconds * TIMEOUT_MULTIPLIER * 1000; // Convert to milliseconds
@@ -199,3 +194,4 @@ export async function loginToSite(page: Page, testUser: TestUser): Promise<void>
     await page.waitForNavigation({ waitUntil: 'networkidle2' });
     console.log('Logged in successfully, waiting for dashboard to load...');
 }
+
