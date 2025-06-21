@@ -336,6 +336,101 @@ class ScenarioRepository:
         conn.close()
 
     @staticmethod
+    def get_scenario_by_id(scenario_id, user_id=None):
+        conn = get_db_connection()
+        if user_id:
+            scenario = conn.execute('SELECT * FROM scenarios WHERE id = ? AND user_id = ? AND is_deleted = 0', 
+                                  (scenario_id, user_id)).fetchone()
+        else:
+            scenario = conn.execute('SELECT * FROM scenarios WHERE id = ? AND is_deleted = 0', 
+                                  (scenario_id,)).fetchone()
+        conn.close()
+        return scenario
+
+    @staticmethod
+    def update_scenario_with_image(scenario_id, image_id, image_url):
+        """Update scenario with image information."""
+        conn = get_db_connection()
+        scenario = conn.execute('SELECT * FROM scenarios WHERE id = ?', (scenario_id,)).fetchone()
+        if not scenario:
+            conn.close()
+            return None
+        
+        # Parse existing scenario data
+        scenario_data = json.loads(scenario['jsondata'])
+        
+        # Update with image information
+        scenario_data['imageId'] = image_id
+        scenario_data['imageUrl'] = image_url
+        
+        # Save back to database
+        now = datetime.now(timezone.utc).isoformat()
+        conn.execute('UPDATE scenarios SET jsondata = ?, updated_at = ? WHERE id = ?', 
+                     (json.dumps(scenario_data), now, scenario_id))
+        conn.commit()
+        
+        # Return updated scenario
+        updated_scenario = conn.execute('SELECT * FROM scenarios WHERE id = ?', (scenario_id,)).fetchone()
+        conn.close()
+        return updated_scenario
+
+    @staticmethod
+    def remove_image_from_scenario(scenario_id):
+        """Remove image information from scenario."""
+        conn = get_db_connection()
+        scenario = conn.execute('SELECT * FROM scenarios WHERE id = ?', (scenario_id,)).fetchone()
+        if not scenario:
+            conn.close()
+            return None
+        
+        # Parse existing scenario data
+        scenario_data = json.loads(scenario['jsondata'])
+        
+        # Remove image information if it exists
+        old_image_id = scenario_data.pop('imageId', None)
+        scenario_data.pop('imageUrl', None)
+        
+        # Save back to database
+        now = datetime.now(timezone.utc).isoformat()
+        conn.execute('UPDATE scenarios SET jsondata = ?, updated_at = ? WHERE id = ?', 
+                     (json.dumps(scenario_data), now, scenario_id))
+        conn.commit()
+        conn.close()
+        return old_image_id
+
+    @staticmethod
+    def create_scenario_with_image(user_id, title, jsondata, image_id, image_url):
+        """Create a new scenario with image information."""
+        conn = get_db_connection()
+        scenario_id = str(uuid.uuid4())
+        
+        # Handle jsondata and add image information
+        if isinstance(jsondata, dict):
+            jsondata['id'] = scenario_id
+            jsondata['imageId'] = image_id
+            jsondata['imageUrl'] = image_url
+            jsondata_str = json.dumps(jsondata)
+        elif isinstance(jsondata, str):
+            try:
+                json_obj = json.loads(jsondata)
+                json_obj['id'] = scenario_id
+                json_obj['imageId'] = image_id
+                json_obj['imageUrl'] = image_url
+                jsondata_str = json.dumps(json_obj)
+            except json.JSONDecodeError:
+                raise ValueError("Invalid JSON data provided")
+        else:
+            raise ValueError("jsondata must be a dict or a JSON string")
+        
+        now = datetime.now(timezone.utc).isoformat()
+        conn.execute('INSERT INTO scenarios (id, user_id, title, jsondata, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)',
+                     (scenario_id, user_id, title, jsondata_str, now, now))
+        conn.commit()
+        scenario = conn.execute('SELECT * FROM scenarios WHERE id = ?', (scenario_id,)).fetchone()
+        conn.close()
+        return scenario
+
+    @staticmethod
     def delete_scenario(scenario_id):
         conn = get_db_connection()
         conn.execute('UPDATE scenarios SET is_deleted = 1 WHERE id = ?', (scenario_id,))

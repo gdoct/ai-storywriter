@@ -90,4 +90,8 @@ export type Scenario = {
     scenes? : Scene[];
     notes?: string;
     backstory?: string;
+    
+    // Image fields
+    imageId?: string; // ID of the associated image from scenario_images table
+    imageUrl?: string; // URL/path to the image file
 };

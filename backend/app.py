@@ -11,6 +11,7 @@ from controllers.moderation_controller import moderation_bp
 from controllers.payment_controller import payment_bp
 from controllers.role_controller import roles_bp
 from controllers.scenario_controller import scenario_bp
+from controllers.scenario_image_controller import scenario_image_bp
 from controllers.settings_controller import settings_controller
 from data.db import DB_PATH, init_db
 from dotenv import load_dotenv
@@ -51,6 +52,7 @@ app.register_blueprint(moderation_bp)
 app.register_blueprint(payment_bp)
 app.register_blueprint(roles_bp)
 app.register_blueprint(scenario_bp)
+app.register_blueprint(scenario_image_bp)
 app.register_blueprint(llm_proxy)
 app.register_blueprint(settings_controller)
 

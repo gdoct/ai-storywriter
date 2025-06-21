@@ -8,6 +8,7 @@ import { Button } from '../common/Button';
 import { Input } from '../common/Input';
 import { TabProps } from '../types';
 import './GeneralTab.css';
+import { ScenarioImage } from './ScenarioImage';
 import StyleFields from './StyleFields';
 
 export const GeneralTab: React.FC<TabProps> = ({
@@ -88,47 +89,61 @@ export const GeneralTab: React.FC<TabProps> = ({
     <div className="general-tab">
       <div className="general-tab__section">
         <h3 className="general-tab__section-title">Basic Information</h3>
-        <div className="general-tab__grid">
-          <Input
-            label="Story Title"
-            data-test-id="story-title-input"
-            value={scenario.title || ''}
-            onChange={(value) => handleBasicFieldChange('title', value)}
-            placeholder="Enter your story title..."
-          /> <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => randomizeTitle()}
-                    icon={<FaDice />}
-                    className="general-tab__randomize-title-btn"
-                  >
-                    Random
-                  </Button>
-          <Input
-            label="Synopsis"
-            data-test-id="story-synopsis-input"
-            value={scenario.synopsis || ''}
-            onChange={(value) => handleBasicFieldChange('synopsis', value)}
-            placeholder="Brief description of your story..."
-            className='general-tab__synopsis-input'
-            multiline
-            rows={4}
-          />
-          <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => randomizeSynopsis()}
-                    icon={<FaDice />}
-                    className="general-tab__randomize-synopsis-btn"
-                  >
-                    Random
-                  </Button>
+        <div className="general-tab__info-container">
+          <div className="general-tab__image-section">
+            <ScenarioImage 
+              scenario={scenario}
+              onScenarioChange={onScenarioChange}
+              className="general-tab__scenario-image"
+            />
+          </div>
+          <div className="general-tab__fields-section">
+            <div className="general-tab__field-with-button">
+              <Input
+                label="Scenario Title"
+                data-test-id="story-title-input"
+                value={scenario.title || ''}
+                onChange={(value) => handleBasicFieldChange('title', value)}
+                placeholder="Enter your scenario title..."
+              />
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => randomizeTitle()}
+                icon={<FaDice />}
+                className="general-tab__randomize-title-btn"
+              >
+                Random
+              </Button>
+            </div>
+            <div className="general-tab__field-with-button">
+              <Input
+                label="Synopsis"
+                data-test-id="story-synopsis-input"
+                value={scenario.synopsis || ''}
+                onChange={(value) => handleBasicFieldChange('synopsis', value)}
+                placeholder="Brief description of your scenario..."
+                className='general-tab__synopsis-input'
+                multiline
+                rows={4}
+              />
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => randomizeSynopsis()}
+                icon={<FaDice />}
+                className="general-tab__randomize-synopsis-btn"
+              >
+                Random
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
 
       <div className="general-tab__section">
         <div className="general-tab__section-header">
-          <h3 className="general-tab__section-title">Story Style</h3>
+          <h3 className="general-tab__section-title">Writing Style</h3>
           <Button
             variant="secondary"
             size="sm"
