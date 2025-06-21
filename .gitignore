@@ -127,4 +127,4 @@ stories/
 uploads/
 storywriter.db
 *.db
-testuser.txt
+.testuser

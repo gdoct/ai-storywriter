@@ -1,9 +1,9 @@
 import React from 'react';
 import { FaDice } from 'react-icons/fa';
+import { StyleSettings } from '../../../types/ScenarioTypes';
 import { Button } from '../common/Button';
 import { Dropdown } from '../common/Dropdown';
 import { Input } from '../common/Input';
-import { StyleSettings } from '../../../types/ScenarioTypes';
 
 interface StyleFieldsProps {
   writingStyle: StyleSettings;

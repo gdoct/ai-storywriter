@@ -134,7 +134,7 @@ export async function generateStory(
   setAiStatus = () => {},
   setShowAIBusyModal = () => {}
 ): Promise<{ result: Promise<GeneratedStory>; cancelGeneration: () => void }> {
-  const promptObj = llmPromptService.createScenarioPrompt(scenario);
+  const promptObj = llmPromptService.createFinalStoryPrompt(scenario);
   const abortController = new AbortController();
   let cancelGeneration = () => { abortController.abort(); };
   const resultPromise = new Promise<GeneratedStory>(async (resolve, reject) => {
@@ -224,6 +224,102 @@ export async function generateBackstory(
     }
   });
   return { result: resultPromise, cancelGeneration };
+}
+
+export async function generateStoryTitle(scenario: Scenario,
+  options: {
+    onProgress?: (text: string) => void,
+    temperature?: number,
+    seed?: number | null
+  } = {},
+  setAiStatus: (status: AI_STATUS) => void = () => {},
+  setShowAIBusyModal: (show: boolean) => void = () => {}
+): Promise<{ result: Promise<string>; cancelGeneration: () => void }> {
+  const promptObj = llmPromptService.createStoryTitlePrompt(scenario);
+  const selectedModel = getSelectedModel();
+  let fullText = '';
+  await streamChatCompletionWithStatus(
+    promptObj,
+    (text, isDone) => {
+      if (isDone) {
+        fullText = text;
+      } else {
+        fullText += text;
+        if (options.onProgress) options.onProgress(text);
+      }
+    },
+    { 
+      model: selectedModel || undefined,
+      temperature: options.temperature, 
+      max_tokens: 100,
+    },
+    setAiStatus,
+    setShowAIBusyModal
+  );
+  // Remove markdown code block if present
+  if (fullText.startsWith('```')) {
+    fullText = fullText.slice(3);
+  }
+  if (fullText.endsWith('```')) {
+    fullText = fullText.slice(0, -3);
+  }
+  // Trim whitespace and return
+  fullText = fullText.trim();
+  // Ensure we return a non-empty string
+  if (fullText.length === 0) {
+    fullText = 'Untitled Story';
+  }
+    
+  return { result: Promise.resolve(fullText), cancelGeneration: () => {}
+  };
+}
+
+export async function generateScenarioSynopsis(scenario: Scenario,
+  options: {
+    onProgress?: (text: string) => void,
+    temperature?: number,
+    seed?: number | null
+  } = {},
+  setAiStatus: (status: AI_STATUS) => void = () => {},
+  setShowAIBusyModal: (show: boolean) => void = () => {}
+): Promise<{ result: Promise<string>; cancelGeneration: () => void }> {
+  const promptObj = llmPromptService.createScenarioSynopsisPrompt(scenario);
+  const selectedModel = getSelectedModel();
+  let fullText = '';
+  await streamChatCompletionWithStatus(
+    promptObj,
+    (text, isDone) => {
+      if (isDone) {
+        fullText = text;
+      } else {
+        fullText += text;
+        if (options.onProgress) options.onProgress(text);
+      }
+    },
+    { 
+      model: selectedModel || undefined,
+      temperature: options.temperature, 
+      max_tokens: 100,
+    },
+    setAiStatus,
+    setShowAIBusyModal
+  );
+  // Remove markdown code block if present
+  if (fullText.startsWith('```')) {
+    fullText = fullText.slice(3);
+  }
+  if (fullText.endsWith('```')) {
+    fullText = fullText.slice(0, -3);
+  }
+  // Trim whitespace and return
+  fullText = fullText.trim();
+  // Ensure we return a non-empty string
+  if (fullText.length === 0) {
+    fullText = '(Synopsis unavailable)';
+  }
+    
+  return { result: Promise.resolve(fullText), cancelGeneration: () => {}
+  };
 }
 
 /**

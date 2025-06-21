@@ -1,82 +1,12 @@
 import { faker } from '@faker-js/faker';
 import dotenv from 'dotenv';
 import puppeteer, { Browser, Page } from 'puppeteer';
-import { getResponse } from '../src/services/request';
+import { deleteExistingTestUser, expectingToTakeSeconds, getUserProfile, navigateToPage, saveTestUserToFile, TEST_DELAY, TestUser, upgradeUserToPremium } from './testutils';
 dotenv.config();
-
-interface TestUser {
-  username: string;
-  email: string;
-  password: string;
-  userId?: string;
-  jwt?: string;
-}
-
- async function deleteUser(userData: TestUser): Promise<void> {
-    const authToken = process.env.ADMIN_TOKEN;
-    if (!authToken) {
-      throw new Error('ADMIN_TOKEN is not set in environment variables');
-    }
-    if (!userData || !userData.userId) {
-      throw new Error(`User with email ${userData.email} not found`);
-    }
-    const deleteResponse = await getResponse(
-      `http://localhost:3000/api/admin/users/${userData.userId}`,
-      'DELETE',
-      authToken
-    );
-
-    if (!deleteResponse.ok) {
-      const errorText = await deleteResponse.text();
-      throw new Error(`Failed to delete user: ${deleteResponse.status} ${errorText}`);
-    }
-
-    console.log('User deleted successfully');
-  }
-
-async function deleteExistingTestUser(): Promise<void> {
-  const fs = require('fs');
-    const path = require('path');
-    const userFilePath = path.join(__dirname, 'testuser.txt');
-    if (fs.exists(userFilePath, () => {})) {
-      try {
-        const data = await fs.promises.readFile(userFilePath, 'utf8');
-        const user = JSON.parse(data) as TestUser;
-        await deleteUser(user);
-        fs.remove(userFilePath, (err: any) => {
-          if (err) {
-            console.error('Error deleting testuser file:', err);
-          }
-          console.log('Existing testuser file deleted successfully');
-        });
-      } catch (error) {
-        console.error('Error reading testuser from file:', error);
-      }
-    }
-}
-
-async function saveTestUserToFile(user: TestUser): Promise<void> {
-  const fs = require('fs');
-  const path = require('path');
-  const tokenFilePath = path.join(__dirname, 'testuser.txt');
-
-  try {
-    await fs.writeFile(tokenFilePath, JSON.stringify(user, null, 2), 'utf8', (err: any) => {
-      if (err) {
-        console.error('Error writing to file:', err);
-      } else {
-        console.log(`Token saved to ${tokenFilePath}`);
-      }
-    });
-  } catch (error) {
-    console.error('Error saving token to file:', error);
-    throw error;
-  }
-}
 
 // Improved Puppeteer signup test with better click handling and debug output
 // Skip the entire test suite
-describe('Signup Page', () => {
+describe('Register, Login and Logout workflows', () => {
   let browser: Browser;
   let page: Page;
   let testUser: TestUser;
@@ -99,7 +29,7 @@ describe('Signup Page', () => {
   beforeAll(async () => {
     browser = await puppeteer.launch({
       headless: false,
-      slowMo: 50,
+      slowMo: TEST_DELAY,
       defaultViewport: { width: 1200, height: 1080 }
     });
     page = await browser.newPage();
@@ -114,12 +44,13 @@ describe('Signup Page', () => {
 
   afterAll(async () => {
     await browser.close();
+    await browser.disconnect();
   });
  
   // Helper function: Perform user signup
   async function signupUser(user: TestUser): Promise<string> {
 
-    await navigateToPage('http://localhost:3000/signup');
+    await navigateToPage(page, 'http://localhost:3000/signup');
 
     // Wait for signup form to load
     try {
@@ -192,49 +123,8 @@ describe('Signup Page', () => {
 
     return jwt;
   }
-
-
-  // Helper function: Upgrade user to premium
-  async function upgradeUserToPremium(userEmail: string): Promise<void> {
-    const authToken = process.env.ADMIN_TOKEN;
-    if (!authToken) {
-      throw new Error('ADMIN_TOKEN is not set in environment variables');
-    }
-
-    console.log('Upgrading user to premium...');
-    const upgradeResponse = await getResponse(
-      'http://localhost:3000/api/admin/upgrade-user',
-      'POST',
-      authToken,
-      { email: userEmail }
-    );
-
-    if (!upgradeResponse.ok) {
-      const errorText = await upgradeResponse.text();
-      throw new Error(`Failed to upgrade user: ${upgradeResponse.status} ${errorText}`);
-    }
-
-    console.log('User upgraded to premium successfully');
-  }
-
-  // Helper function: Navigate to page and wait for it to load
-  async function navigateToPage(url: string): Promise<void> {
-    console.log(`Navigating to ${url}...`);
-    await page.goto(url);
-  }
-
-  // Helper function: Get user profile data
-  async function getUserProfile(jwt: string): Promise<any> {
-    const userProfile = await getResponse('http://localhost:3000/api/me/profile', 'GET', jwt);
-
-    if (!userProfile.ok) {
-      throw new Error(`Failed to fetch user profile: ${userProfile.status}`);
-    }
-
-    return await userProfile.json();
-  }
-
-  describe('User Registration and Setup', () => {
+  
+  describe('User Registration workflow - Register, Upgrade and Logout', () => {
     it('should successfully register a new user', async () => {
       console.log('Starting user registration...');
       // remove the token from the extra fttp headers
@@ -244,8 +134,8 @@ describe('Signup Page', () => {
       const avatar = await page.$('.user-button');
       expect(avatar).toBeTruthy();
       expect(testUser.jwt).toBeTruthy();
-      saveTestUserToFile(testUser!);
-    }, 60000); // 60 seconds timeout for registration
+      await saveTestUserToFile(testUser!);
+    }, expectingToTakeSeconds(30)); 
 
     it('should get user profile and upgrade to premium', async () => {
       // Get user profile data
@@ -262,8 +152,33 @@ describe('Signup Page', () => {
       const upgradedUserData = await getUserProfile(testUser.jwt!);
       console.log('Upgraded user profile data:', upgradedUserData);
       expect(upgradedUserData.tier).toBe('premium');
-    }, 60000);
+    }, expectingToTakeSeconds(10));
+
+    it('should press the logout button', async () => {
+      // click on button class=user-button to make menu appear
+      const userButton = await page.waitForSelector('.user-button', { visible: true });
+      if (!userButton) {
+        throw new Error('User button not found');
+      }
+      await userButton.click();
+      console.log('User button clicked, menu should appear');
+      // wait for the logout button to appear
+      // <button class="dropdown-item logout-item">Logout</button>
+      const logoutButton = await page.waitForSelector('.logout-item', { visible: true });
+      if (!logoutButton) {
+        throw new Error('Logout button not found');
+      }
+      console.log('Logout button found, clicking it...');
+      await logoutButton.click();
+      console.log('Logout button clicked, user should be logged out');
+      // Verify user is logged out by checking if the signup link is visible
+      const signupLink = await page.waitForSelector('a[data-test-id="nav-signup"]', { visible: true });
+      if (!signupLink) {
+        throw new Error('Signup link not found after logout, user may not be logged out');
+      }
+      console.log('User successfully logged out, signup link is visible');
+      await navigateToPage(page, 'http://localhost:3000/');
+    }, expectingToTakeSeconds(10));
   });
-
-
 });
+

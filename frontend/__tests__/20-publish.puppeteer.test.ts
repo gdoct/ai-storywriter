@@ -1,53 +1,18 @@
 import dotenv from 'dotenv';
 import puppeteer, { Browser, Page } from 'puppeteer';
+import { expectingToTakeSeconds, loginToSite, readTestUserFromFile, TEST_DELAY, TestUser } from './testutils';
 
 dotenv.config();
 
-interface TestUser {
-  username: string;
-  email: string;
-  password: string;
-  userId?: string;
-  jwt?: string;
-}
-
-interface StoryData {
-  title: string;
-  synopsis: string;
-}
-
-describe('User Flow - Story Generation and Publishing', () => {
+describe('Marketplace publishing workflows', () => {
   let browser: Browser;
   let page: Page;
   let testUser: TestUser;
 
-  async function loginToSite(testUser: TestUser): Promise<void> {
-    console.log('Logging in with test user:', testUser.email);
-    await page.goto('http://localhost:3000/login', { waitUntil: 'networkidle2' });
-    const emailInput = await page.waitForSelector('#email', { visible: true });
-    const passwordInput = await page.waitForSelector('#password', { visible: true });
-    if (!emailInput || !passwordInput) {
-      throw new Error('Email or password input not found');
-    }
-    await emailInput.type(testUser.email);
-    await passwordInput.type(testUser.password);
-    console.log('Email and password entered');
-    // Click the login button
-    const loginButton = await page.waitForSelector('button[type="submit"]', { visible: true });
-    if (!loginButton) {
-      throw new Error('Login button not found');
-    }
-    await loginButton.click();
-    console.log('Login button clicked, waiting for navigation...');
-    // Wait for navigation to the dashboard
-    await page.waitForNavigation({ waitUntil: 'networkidle2' });
-    console.log('Logged in successfully, waiting for dashboard to load...');
-  }
-
   beforeAll(async () => {
     browser = await puppeteer.launch({
       headless: false,
-      slowMo: 50,
+      slowMo: TEST_DELAY,
       defaultViewport: { width: 1200, height: 1080 }
     });
     page = await browser.newPage();
@@ -63,26 +28,12 @@ describe('User Flow - Story Generation and Publishing', () => {
       throw new Error('Test user not found in file. Please run the signup test first.');
     }
 
-    await loginToSite(testUser);
-  }, 60000); // 60 seconds timeout for login
+    await loginToSite(page, testUser);
+  }, expectingToTakeSeconds(10)); // 60 seconds timeout for login
 
   afterAll(async () => {
     await browser.close();
   });
- 
- 
-  async function readTestUserFromFile(): Promise<TestUser | undefined> {
-     const fs = require('fs');
-    const path = require('path');
-    const tokenFilePath = path.join(__dirname, 'testuser.txt');
-    try {
-      const data = await fs.promises.readFile(tokenFilePath, 'utf8');
-      return JSON.parse(data) as TestUser;
-    } catch (error) {
-      console.error('Error reading testuser from file:', error);
-      return undefined;
-    }
-  }
 
   async function gotoDashboardAndPublishStory(): Promise<void> {
     // Navigate to the dashboard
@@ -142,11 +93,11 @@ describe('User Flow - Story Generation and Publishing', () => {
   async function wait(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
-  describe('Story Publishing flow', () => {
+  describe('Story Publishing workflow', () => {
 
     it('Should publish from the dashboard page after agreeing terms', async () => {
       await gotoDashboardAndPublishStory();
       console.log('Story published successfully');
-    }, 60000);
+    }, expectingToTakeSeconds(10));
   });
 });

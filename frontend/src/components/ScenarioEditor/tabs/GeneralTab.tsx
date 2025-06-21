@@ -1,5 +1,6 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { FaDownload, FaRandom } from 'react-icons/fa';
+import { FaDice, FaDownload, FaRandom } from 'react-icons/fa';
+import { generateScenarioSynopsis, generateStoryTitle } from '../../../services/storyGenerator';
 import { StyleSettings } from '../../../types/ScenarioTypes';
 import ImportModal from '../../common/ImportModal';
 import { Button } from '../common/Button';
@@ -29,6 +30,15 @@ export const GeneralTab: React.FC<TabProps> = ({
     onScenarioChange({ [field]: value });
   }, [onScenarioChange]);
 
+  const handleDynamicFieldChange = useCallback((field: string, value: Promise<string>) => {
+    value.then((resolvedValue) => {
+      onScenarioChange({ [field]: resolvedValue });
+    }).catch((error) => {
+      console.error(`Error resolving ${field}:`, error);
+    });
+  }, [onScenarioChange]);
+
+
   const handleStyleChange = useCallback((field: keyof StyleSettings, value: string) => {
     const updatedStyle = { ...writingStyle, [field]: value };
     onScenarioChange({ writingStyle: updatedStyle });
@@ -38,6 +48,23 @@ export const GeneralTab: React.FC<TabProps> = ({
     const randomOption = options[Math.floor(Math.random() * options.length)];
     handleStyleChange(field, randomOption);
   }, [handleStyleChange]);
+
+  const randomizeTitle = useCallback(() => {
+    generateStoryTitle(scenario).then((title) => {
+      handleDynamicFieldChange('title', title.result);
+    }
+    ).catch((error) => {
+      console.error('Error generating title:', error);
+    });
+  }, [handleBasicFieldChange]);
+
+  const randomizeSynopsis = useCallback(() => {
+    generateScenarioSynopsis(scenario).then((synopsis) => {
+      handleDynamicFieldChange('synopsis', synopsis.result);
+    }).catch((error) => {
+      console.error('Error generating synopsis:', error);
+    });
+  }, [scenario, handleBasicFieldChange]);
 
   const randomizeAllStyle = useCallback(() => {
     const randomStyle: StyleSettings = {
@@ -74,16 +101,34 @@ export const GeneralTab: React.FC<TabProps> = ({
             value={scenario.title || ''}
             onChange={(value) => handleBasicFieldChange('title', value)}
             placeholder="Enter your story title..."
-          />
+          /> <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => randomizeTitle()}
+                    icon={<FaDice />}
+                    className="general-tab__randomize-title-btn"
+                  >
+                    Random
+                  </Button>
           <Input
             label="Synopsis"
             data-test-id="story-synopsis-input"
             value={scenario.synopsis || ''}
             onChange={(value) => handleBasicFieldChange('synopsis', value)}
             placeholder="Brief description of your story..."
+            className='general-tab__synopsis-input'
             multiline
             rows={4}
           />
+          <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => randomizeSynopsis()}
+                    icon={<FaDice />}
+                    className="general-tab__randomize-synopsis-btn"
+                  >
+                    Random
+                  </Button>
         </div>
       </div>
 

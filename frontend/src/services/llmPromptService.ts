@@ -77,6 +77,42 @@ export function createRewriteBackstoryPrompt(scenario: Scenario): llmCompletionR
   };
 }
 
+export function createStoryTitlePrompt(scenario: Scenario): llmCompletionRequestMessage {
+  if (!scenario) {
+    throw new Error("Error: scenario is null or undefined");
+  }
+  let prompt = "You are a creative title generator for stories.\n\n";
+  prompt += "Generate a compelling title for the scenario below.\n";
+  prompt += "The title should capture the essence of the story, be engaging, and reflect the genre and tone.\n\n";
+  prompt += "The title should be concise, memorable, and capture the reader's interest.\n";
+  prompt += "Avoid generic or clichéd titles, and ensure it aligns with the story's themes and style.\n\n";
+  prompt += "IMPORTANT: The title should not contain the words 'Echoes', 'Obsidian' or 'Mist'.\n";
+  prompt += "IMPORTANT: return ONLY the title as a single string without any additional text or formatting.\n\n";
+  prompt += "Here is the scenario:\n\n";
+  prompt += formatScenarioAsMarkdown(scenario) + "\n\n";
+  return {
+    systemMessage: 'You are a creative title generator for stories.',
+    userMessage: prompt
+  };
+}
+
+export function createScenarioSynopsisPrompt(scenario: Scenario) {
+  if (!scenario) {
+    throw new Error("Error: scenario is null or undefined");
+  }
+  let prompt = "You are a creative scenario synopsis creator.\n\n";
+  prompt += "Generate a compelling synopsis for the scenario below.\n";
+  prompt += "The synopsis should capture the essence of the story, be engaging, and reflect the genre and tone.\n";
+  prompt += "The synopsis should resemble what you read on the back cover of a book, summarizing the backstory, hinting at the story arc, but without revealing any major plot points.\n\n";
+  prompt += "The synopsis should be concise, memorable, and capture the reader's interest.\n";
+  prompt += "IMPORTANT: return ONLY the synopsis as a single string without any additional text or formatting.\n\n";
+  prompt += formatScenarioAsMarkdown(scenario) + "\n\n";
+  return {
+    systemMessage: 'You are a creative synopsis generator for stories.',
+    userMessage: prompt
+  };
+}
+
 export function createSummaryPrompt(scenario: Scenario, story: string): llmCompletionRequestMessage {
   if (!scenario) {
     console.error("Error: scenario is null or undefined");
@@ -103,7 +139,7 @@ export function createSummaryPrompt(scenario: Scenario, story: string): llmCompl
   };
 }
 
-export function createScenarioPrompt(scenario: Scenario): llmCompletionRequestMessage {
+export function createFinalStoryPrompt(scenario: Scenario): llmCompletionRequestMessage {
   if (!scenario) {
     console.error("Error: scenario is null or undefined");
     return {
@@ -121,6 +157,7 @@ export function createScenarioPrompt(scenario: Scenario): llmCompletionRequestMe
   prompt += "Guidelines:\n";
   prompt += "- Write all chapters and scenes fully, but do not use chapter headers\n";
   prompt += "- Write the complete story up to the end\n";
+  prompt += "- IMPORTANT: do not use the names 'Silas', 'Blackwood' or 'Lyra'\n";
   prompt += "- Include meaningful character interactions and development\n";
   prompt += "- Honor the established character backgrounds and relationships\n";
   prompt += "- Maintain consistent pacing appropriate to the genre\n";
