@@ -125,6 +125,7 @@ export const StoryModal: React.FC<StoryModalProps> = ({
                 size="sm"
                 onClick={onRegenerate}
                 data-test-id="generateStoryButton"
+                className='scenario-editor__generate-story-button'
                 icon={<FaRedo />}
               >
                 Generate Story

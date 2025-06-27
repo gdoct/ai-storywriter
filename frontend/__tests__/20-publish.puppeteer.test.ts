@@ -95,9 +95,6 @@ describe('Marketplace publishing workflows', () => {
     }
   }
 
-  async function wait(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
-  }
   describe('Story Publishing workflow', () => {
     it('Should publish from the dashboard page after agreeing terms', async () => {
       await gotoDashboardAndPublishStory();

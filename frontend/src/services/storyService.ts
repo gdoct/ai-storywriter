@@ -1,3 +1,4 @@
+import { Scenario } from '../types/ScenarioTypes';
 import { getToken } from './security';
 
 const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5000';
@@ -16,19 +17,22 @@ export interface StoryPreview {
   created_at: string;
 }
 
-export const saveStory = async (scenarioId: string, content: string): Promise<Story> => {
+export const saveStory = async (scenario: Scenario, content: string): Promise<Story> => {
   const token = getToken();
   if (!token) {
     throw new Error('Authentication required');
   }
 
-  const response = await fetch(`${API_BASE}/api/story/${scenarioId}`, {
+  const response = await fetch(`${API_BASE}/api/story/${scenario.id}`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`
     },
-    body: JSON.stringify({ content })
+    body: JSON.stringify({ 
+      content,
+      scenario: scenario
+    })
   });
 
   if (!response.ok) {

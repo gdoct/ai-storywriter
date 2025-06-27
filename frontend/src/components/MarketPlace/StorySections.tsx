@@ -18,9 +18,10 @@ interface StorySectionsProps {
   hasRole: (role: string) => boolean;
   handleModerationAction: (storyId: number, action: string) => void;
   loadSections: () => void;
+  onViewMore?: (sectionKey: string) => void;
 }
 
-const StorySections: React.FC<StorySectionsProps> = ({ sections, hasRole, handleModerationAction, loadSections }) => {
+const StorySections: React.FC<StorySectionsProps> = ({ sections, hasRole, handleModerationAction, loadSections, onViewMore }) => {
   const [showReadingModal, setShowReadingModal] = useState(false);
   const [selectedStoryId, setSelectedStoryId] = useState<number | null>(null);
   const [selectedStory, setSelectedStory] = useState<MarketStory | null>(null);
@@ -219,7 +220,7 @@ const StorySections: React.FC<StorySectionsProps> = ({ sections, hasRole, handle
             <h2>{sections[sectionKey].title}</h2>
             <button
               className="view-more-button"
-              onClick={() => console.log(`View more for ${sectionKey}`)}
+              onClick={() => onViewMore ? onViewMore(sectionKey) : console.log(`View more for ${sectionKey}`)}
             >
               View More
             </button>

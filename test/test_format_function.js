@@ -20,26 +20,13 @@ export const formatRelativeTime = (dateString) => {
     return 'Invalid date';
   }
   
-  console.log('=== formatRelativeTime Debug ===');
-  console.log('Original dateString:', dateString);
-  console.log('UTC dateString:', utcDateString);
-  console.log('Parsed date:', date);
-  console.log('Date ISO:', date.toISOString());
-  
   const now = new Date();
-  console.log('Current time (now):', now);
-  console.log('Current time ISO:', now.toISOString());
   
   const diffInMs = now.getTime() - date.getTime();
   const diffInSeconds = Math.floor(diffInMs / 1000);
   const diffInMinutes = Math.floor(diffInSeconds / 60);
   const diffInHours = Math.floor(diffInMinutes / 60);
   const diffInDays = Math.floor(diffInHours / 24);
-  
-  console.log('Diff in ms:', diffInMs);
-  console.log('Diff in seconds:', diffInSeconds);
-  console.log('Diff in minutes:', diffInMinutes);
-  console.log('Diff in hours:', diffInHours);
   
   if (diffInSeconds < 60) {
     return 'Just now';

@@ -54,6 +54,7 @@ def upload_scenario_image(scenario_id):
         response_data = {
             'imageId': result['imageId'],
             'imageUrl': result['imageUrl'],
+            'scenario': result['scenario'],
             'message': 'Image uploaded successfully'
         }
         

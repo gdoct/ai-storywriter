@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef } from 'react';
-import { FaBook, FaEye, FaRedo, FaSave, FaStickyNote, FaTrash, FaUser, FaUsers } from 'react-icons/fa';
+import { FaBook, FaDice, FaEye, FaRedo, FaSave, FaStickyNote, FaTrash, FaUser, FaUsers } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import { useModals } from '../../hooks/useModals';
 import { createScenario, deleteScenario, updateScenario } from '../../services/scenario';
@@ -8,8 +8,9 @@ import { getStoriesByScenario, saveStory } from '../../services/storyService';
 import { Scenario } from '../../types/ScenarioTypes';
 import { isInsufficientCreditsError, showUserFriendlyErrorWithModals } from '../../utils/errorHandling';
 import { AlertModal, ConfirmModal } from '../Modal';
-import { Button } from './common/Button';
+import { ActionButtonItem, ActionButtons } from './common/ActionButtons';
 import { ChatAgent } from './common/ChatAgent';
+import { LlmSettingsMenu } from './common/LlmSettingsMenu';
 import { Tabs } from './common/Tabs';
 import { useScenarioEditor } from './context';
 import { StoryModal } from './modals/StoryModal';
@@ -19,7 +20,10 @@ import { CharactersTab } from './tabs/CharactersTab';
 import { GeneralTab } from './tabs/GeneralTab';
 import { NotesTab } from './tabs/NotesTab';
 import { StoryArcTab } from './tabs/StoryArcTab';
+import { TimelineTab } from './tabs/TimelineTab';
+import { WorldBuildingTab } from './tabs/WorldBuildingTab';
 import { SaveOptions, TabConfig, TabId } from './types';
+import { tabHasData } from './utils/tabUtils';
 
 // Tab configuration
 const tabs: TabConfig[] = [
@@ -29,6 +33,7 @@ const tabs: TabConfig[] = [
     icon: FaBook,
     component: GeneralTab,
     className: 'scenario-editor__general-tab',
+    optional: false, // General tab is always required
 
   },
   {
@@ -36,24 +41,42 @@ const tabs: TabConfig[] = [
     label: 'Characters',
     icon: FaUsers,
     component: CharactersTab,
+    optional: true,
   },
   {
     id: 'backstory',
     label: 'Backstory',
     icon: FaUser,
     component: BackstoryTab,
+    optional: true,
   },
   {
     id: 'storyarc',
     label: 'Story Arc',
     icon: FaEye,
     component: StoryArcTab,
+    optional: true,
+  },
+  {
+    id: 'worldbuilding',
+    label: 'World Building',
+    icon: FaDice,
+    component: WorldBuildingTab,
+    optional: true,
+  },
+  {
+    id: 'timeline',
+    label: 'Timeline',
+    icon: FaBook, // Using FaBook as placeholder for timeline icon
+    component: TimelineTab,
+    optional: true,
   },
   {
     id: 'notes',
     label: 'Notes',
     icon: FaStickyNote,
     component: NotesTab,
+    optional: true,
   },
 ];
 
@@ -126,6 +149,39 @@ export const ScenarioEditor: React.FC<ScenarioEditorProps> = ({
   const handleTabChange = useCallback((tabId: TabId) => {
     dispatch({ type: 'SET_ACTIVE_TAB', payload: tabId });
   }, [dispatch]);
+
+  const handleTabAdd = useCallback((tabId: TabId) => {
+    dispatch({ type: 'ADD_TAB', payload: tabId });
+  }, [dispatch]);
+
+  const handleTabRemove = useCallback(async (tabId: TabId) => {
+    // Don't allow removing the general tab
+    if (tabId === 'general') {
+      return;
+    }
+
+    // Check if tab has data and confirm removal
+    if (tabHasData(state.scenario, tabId)) {
+      const tabConfig = tabs.find(t => t.id === tabId);
+      const tabName = tabConfig?.label || tabId;
+      
+      const confirmed = await customConfirm(
+        `The ${tabName} tab contains data. Closing it won't delete the data, but the tab will be hidden. Are you sure?`,
+        {
+          title: `Close ${tabName} Tab`,
+          confirmText: 'Close Tab',
+          cancelText: 'Keep Tab',
+          variant: 'default'
+        }
+      );
+
+      if (!confirmed) {
+        return;
+      }
+    }
+
+    dispatch({ type: 'REMOVE_TAB', payload: tabId });
+  }, [state.scenario, dispatch, customConfirm]);
 
   const handleSave = useCallback(async (options: SaveOptions = {}) => {
     dispatch({ type: 'SET_SAVING', payload: true });
@@ -212,7 +268,7 @@ export const ScenarioEditor: React.FC<ScenarioEditorProps> = ({
       dispatch({ type: 'SET_GENERATING', payload: false });
       cancelGenerationRef.current = null; // Clear the cancel function
     }
-  }, [state.scenario, dispatch]);
+  }, [state.scenario, dispatch, customAlert, customConfirm]);
 
   const handleShowStory = useCallback(async () => {
     dispatch({ type: 'SET_SHOW_STORY_MODAL', payload: true });
@@ -242,7 +298,7 @@ export const ScenarioEditor: React.FC<ScenarioEditorProps> = ({
       variant: 'danger'
     });
     if (!response) return; // User cancelled
-    
+
     dispatch({ type: 'SET_LOADING', payload: true });
     try {
       // Call the delete API
@@ -250,7 +306,7 @@ export const ScenarioEditor: React.FC<ScenarioEditorProps> = ({
         await deleteScenario(state.scenario.id);
       }
       dispatch({ type: 'DELETE_SCENARIO', payload: state.scenario });
-      
+
       // Navigate back to dashboard after successful deletion
       navigate('/dashboard');
     } catch (error) {
@@ -293,7 +349,7 @@ export const ScenarioEditor: React.FC<ScenarioEditorProps> = ({
   const handleSaveStory = useCallback(async () => {
     if (state.generatedStory && state.scenario.id) {
       try {
-        await saveStory(state.scenario.id, state.generatedStory);
+        await saveStory(state.scenario, state.generatedStory);
         // Mark the story as saved
         dispatch({ type: 'SET_STORY_SAVED', payload: true });
         // Close the modal after saving
@@ -306,7 +362,7 @@ export const ScenarioEditor: React.FC<ScenarioEditorProps> = ({
         });
       }
     }
-  }, [state.generatedStory, state.scenario.id, dispatch]);
+  }, [state.generatedStory, state.scenario, dispatch]);
 
   const handleCloseStoryModal = useCallback(() => {
     dispatch({ type: 'SET_SHOW_STORY_MODAL', payload: false });
@@ -323,6 +379,55 @@ export const ScenarioEditor: React.FC<ScenarioEditorProps> = ({
   const activeTabConfig = tabs.find(tab => tab.id === state.activeTab);
   const ActiveTabComponent = activeTabConfig?.component;
 
+  // Configure action button items
+  const actionButtonItems: ActionButtonItem[] = [
+    {
+      id: 'generate-story',
+      label: state.generatedStory ? 'View Story' : 'Generate Story',
+      icon: <FaEye />,
+      onClick: handleShowStory,
+      disabled: state.isLoading || state.scenario.id === '',
+      className: 'scenario-editor__generate-story-button',
+      title: state.isLoading ? 'Scenario is loading' : state.scenario.id === '' ? 'Please save the scenario first' : 'View or generate scenario',
+      'data-testid': 'showStoryButton'
+    },
+    {
+      id: 'reload',
+      label: 'Reload',
+      icon: <FaRedo />,
+      onClick: handleReloadScenario,
+      disabled: state.isSaving || state.isLoading,
+      loading: state.isSaving
+    },
+    {
+      id: 'delete',
+      label: 'Delete',
+      icon: <FaTrash />,
+      onClick: handleDeleteScenario,
+      disabled: state.isSaving || state.isLoading,
+      loading: state.isSaving,
+      variant: 'danger' as const
+    },
+    {
+      id: 'save-as',
+      label: 'Save As',
+      icon: <FaSave />,
+      onClick: handleSaveAs,
+      disabled: state.isSaving || state.isLoading,
+      loading: state.isSaving
+    },
+    {
+      id: 'save',
+      label: 'Save',
+      icon: <FaSave />,
+      onClick: () => handleSave(),
+      disabled: state.isSaving || state.isLoading,
+      loading: state.isSaving,
+      variant: 'primary' as const,
+      className: 'scenario-editor__save-button'
+    }
+  ];
+
   return (
     <div className="scenario-editor">
       <div className="scenario-editor__header">
@@ -333,53 +438,17 @@ export const ScenarioEditor: React.FC<ScenarioEditorProps> = ({
           </p>
         </div>
 
-        <div className="scenario-editor__actions">
-          <Button
-            variant="secondary"
-            data-test-id="showStoryButton"
-            onClick={handleShowStory}
-            icon={<FaEye />}
+        {/* Menu Controls */}
+        <div className="scenario-editor__menu-controls">
+          <ActionButtons
+            items={actionButtonItems}
+            className="scenario-editor__action-buttons"
             disabled={state.isLoading}
-          >
-            View Story
-          </Button>
-          <Button
-            variant="success"
-            onClick={handleReloadScenario}
-            disabled={state.isSaving || state.isLoading}
-            loading={state.isSaving}
-            icon={<FaRedo />}
-          >
-            Reload
-          </Button>
-          <Button
-            variant="danger"
-            onClick={handleDeleteScenario}
-            disabled={state.isSaving || state.isLoading}
-            loading={state.isSaving}
-            icon={<FaTrash />}
-          >
-            Delete
-          </Button>
-          <Button
-            variant="secondary"
-            onClick={handleSaveAs}
-            disabled={state.isSaving || state.isLoading}
-            loading={state.isSaving}
-            icon={<FaSave />}
-          >
-            Save As
-          </Button>
-          <Button
-            variant="primary"
-            onClick={() => handleSave()}
-            disabled={state.isSaving || state.isLoading}
-            loading={state.isSaving}
-            icon={<FaSave />}
-            className='scenario-editor__save-button'
-          >
-            Save
-          </Button>
+          />
+          <LlmSettingsMenu
+            className="scenario-editor__llm-settings"
+            disabled={state.isLoading}
+          />
         </div>
       </div>
 
@@ -388,6 +457,9 @@ export const ScenarioEditor: React.FC<ScenarioEditorProps> = ({
           tabs={tabs}
           activeTab={state.activeTab}
           onTabChange={handleTabChange}
+          visibleTabs={state.visibleTabs}
+          onTabAdd={handleTabAdd}
+          onTabRemove={handleTabRemove}
           className="scenario-editor__tabs"
         />
 

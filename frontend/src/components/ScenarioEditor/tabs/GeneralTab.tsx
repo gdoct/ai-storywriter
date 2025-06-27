@@ -2,7 +2,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { FaDice, FaDownload, FaRandom } from 'react-icons/fa';
 import { generateScenarioSynopsis, generateStoryTitle } from '../../../services/storyGenerator';
 import { StyleSettings } from '../../../types/ScenarioTypes';
-import { GENRE_OPTIONS, LANGUAGE_OPTIONS, STYLE_OPTIONS, THEME_OPTIONS, TONE_OPTIONS } from '../../../types/styleoptions';
+import { GENRE_OPTIONS, STYLE_OPTIONS, THEME_OPTIONS, TONE_OPTIONS, WRITING_STYLE_VARIATIONS } from '../../../types/styleoptions';
 import ImportModal from '../../common/ImportModal';
 import { Button } from '../common/Button';
 import { Input } from '../common/Input';
@@ -51,7 +51,7 @@ export const GeneralTab: React.FC<TabProps> = ({
     ).catch((error) => {
       console.error('Error generating title:', error);
     });
-  }, [handleBasicFieldChange]);
+  }, [handleDynamicFieldChange, scenario]);
 
   const randomizeSynopsis = useCallback(() => {
     generateScenarioSynopsis(scenario).then((synopsis) => {
@@ -59,14 +59,14 @@ export const GeneralTab: React.FC<TabProps> = ({
     }).catch((error) => {
       console.error('Error generating synopsis:', error);
     });
-  }, [scenario, handleBasicFieldChange]);
+  }, [scenario, handleDynamicFieldChange]);
 
   const randomizeAllStyle = useCallback(() => {
     const randomStyle: StyleSettings = {
       style: STYLE_OPTIONS[Math.floor(Math.random() * STYLE_OPTIONS.length)],
       genre: GENRE_OPTIONS[Math.floor(Math.random() * GENRE_OPTIONS.length)],
       tone: TONE_OPTIONS[Math.floor(Math.random() * TONE_OPTIONS.length)],
-      language: LANGUAGE_OPTIONS[Math.floor(Math.random() * LANGUAGE_OPTIONS.length)],
+      communicationStyle: WRITING_STYLE_VARIATIONS[Math.floor(Math.random() * WRITING_STYLE_VARIATIONS.length)],
       theme: THEME_OPTIONS[Math.floor(Math.random() * THEME_OPTIONS.length)],
       other: '',
     };
@@ -75,15 +75,16 @@ export const GeneralTab: React.FC<TabProps> = ({
 
   const handleImport = useCallback((importedStyle: StyleSettings) => {
     const normalizedStyle: StyleSettings = {
-      style: importedStyle.style || '',
-      genre: importedStyle.genre || '',
-      tone: importedStyle.tone || '',
-      language: importedStyle.language || '',
-      theme: importedStyle.theme || '',
-      other: importedStyle.other || '',
+      style: importedStyle.style || scenario.writingStyle?.style || '',
+      genre: importedStyle.genre || scenario.writingStyle?.genre || '',
+      tone: importedStyle.tone || scenario.writingStyle?.tone || '',
+      communicationStyle: importedStyle.communicationStyle || scenario.writingStyle?.communicationStyle || '',
+      theme: importedStyle.theme || scenario.writingStyle?.theme || '',
+      other: importedStyle.other || scenario.writingStyle?.other || '',
+      language: importedStyle.language || scenario.writingStyle?.language || '',
     };
     onScenarioChange({ writingStyle: normalizedStyle });
-  }, [onScenarioChange]);
+  }, [onScenarioChange, scenario.writingStyle?.style, scenario.writingStyle?.genre, scenario.writingStyle?.tone, scenario.writingStyle?.communicationStyle, scenario.writingStyle?.theme, scenario.writingStyle?.other, scenario.writingStyle?.language]);
 
   return (
     <div className="general-tab">
@@ -95,48 +96,32 @@ export const GeneralTab: React.FC<TabProps> = ({
               scenario={scenario}
               onScenarioChange={onScenarioChange}
               className="general-tab__scenario-image"
+              genre={scenario.writingStyle?.genre}
             />
           </div>
           <div className="general-tab__fields-section">
-            <div className="general-tab__field-with-button">
-              <Input
-                label="Scenario Title"
-                data-test-id="story-title-input"
-                value={scenario.title || ''}
-                onChange={(value) => handleBasicFieldChange('title', value)}
-                placeholder="Enter your scenario title..."
-              />
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => randomizeTitle()}
-                icon={<FaDice />}
-                className="general-tab__randomize-title-btn"
-              >
-                Random
-              </Button>
-            </div>
-            <div className="general-tab__field-with-button">
-              <Input
-                label="Synopsis"
-                data-test-id="story-synopsis-input"
-                value={scenario.synopsis || ''}
-                onChange={(value) => handleBasicFieldChange('synopsis', value)}
-                placeholder="Brief description of your scenario..."
-                className='general-tab__synopsis-input'
-                multiline
-                rows={4}
-              />
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => randomizeSynopsis()}
-                icon={<FaDice />}
-                className="general-tab__randomize-synopsis-btn"
-              >
-                Random
-              </Button>
-            </div>
+            <Input
+              label="Scenario Title"
+              data-testid="story-title-input"
+              className='general-tab__title-input'
+              value={scenario.title || ''}
+              onChange={(value) => handleBasicFieldChange('title', value)}
+              placeholder="Enter your scenario title..."
+              icon={<FaDice />}
+              onIconClick={() => randomizeTitle()}
+            />
+            <Input
+              label="Synopsis"
+              data-testid="story-synopsis-input"
+              value={scenario.synopsis || ''}
+              onChange={(value) => handleBasicFieldChange('synopsis', value)}
+              placeholder="Brief description of your scenario..."
+              className='general-tab__synopsis-input'
+              multiline
+              rows={4}
+              icon={<FaDice />}
+              onIconClick={() => randomizeSynopsis()}
+            />
           </div>
         </div>
       </div>
@@ -189,9 +174,10 @@ export const GeneralTab: React.FC<TabProps> = ({
             style: '',
             genre: '',
             tone: '',
-            language: '',
+            communicationStyle: '',
             theme: '',
             other: '',
+            language: '',
           };
 
           // Check if style data is stored in the style field
@@ -205,9 +191,10 @@ export const GeneralTab: React.FC<TabProps> = ({
                     style: parsedStyle.style || '',
                     genre: parsedStyle.genre || '',
                     tone: parsedStyle.tone || '',
-                    language: parsedStyle.language || '',
+                    communicationStyle: parsedStyle.communicationStyle || '',
                     theme: parsedStyle.theme || '',
                     other: parsedStyle.other || '',
+                    language: parsedStyle.language || '',
                   };
                 } else {
                   result.style = scenario.style;
@@ -223,13 +210,6 @@ export const GeneralTab: React.FC<TabProps> = ({
           }
 
           // Check for direct properties on scenario
-          if (scenario.genre && typeof scenario.genre === 'string') result.genre = scenario.genre;
-          if (scenario.tone && typeof scenario.tone === 'string') result.tone = scenario.tone;
-          if (scenario.language && typeof scenario.language === 'string') result.language = scenario.language;
-          if (scenario.theme && typeof scenario.theme === 'string') result.theme = scenario.theme;
-          if (scenario.other && typeof scenario.other === 'string') result.other = scenario.other;
-
-          console.log('Extracted style result:', result);
           return result;
         }}
       />

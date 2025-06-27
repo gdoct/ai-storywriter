@@ -234,3 +234,31 @@
 .modal-content .story-reader-content {
   background-color: transparent;
 }
+
+/* Text-to-Speech Player Integration */
+.story-reader-tts {
+  margin: 0 16px 16px 16px;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border: 1px solid #dee2e6;
+  transition: all 0.3s ease;
+}
+
+.story-reader-tts:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transform: translateY(-1px);
+}
+
+/* Adjust TTS player styling when in reading mode */
+.story-reader .story-reader-tts .tts-player {
+  background: transparent;
+  border: none;
+  padding: 12px;
+  margin: 0;
+}
+
+/* Responsive adjustments for TTS player */
+@media (max-width: 768px) {
+  .story-reader-tts {
+    margin: 0 8px 12px 8px;
+  }
+}

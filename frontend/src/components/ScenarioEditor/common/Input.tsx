@@ -14,6 +14,7 @@ export interface InputProps {
   rows?: number; // For textarea
   multiline?: boolean;
   icon?: React.ReactNode;
+  onIconClick?: () => void;
 }
 
 export const Input: React.FC<InputProps> = ({
@@ -29,7 +30,15 @@ export const Input: React.FC<InputProps> = ({
   rows = 3,
   multiline = false,
   icon,
+  onIconClick,
 }) => {
+  const handleIconClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onIconClick) {
+      onIconClick();
+    }
+  };
+
   const baseClasses = 'input-field';
   const errorClass = error ? 'input-field--error' : '';
   const disabledClass = disabled ? 'input-field--disabled' : '';
@@ -76,8 +85,17 @@ export const Input: React.FC<InputProps> = ({
         </label>
       )}
       <div className="input-field__wrapper">
-        {icon && <span className="input-field__icon">{icon}</span>}
         {inputElement}
+        {icon && (
+          <button
+            type="button"
+            onClick={handleIconClick}
+            className="input-field__icon"
+            disabled={disabled}
+          >
+            {icon}
+          </button>
+        )}
       </div>
       {error && <span className="input-field__error-text">{error}</span>}
     </div>

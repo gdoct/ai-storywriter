@@ -5,16 +5,21 @@ import CreditsBadge from '../TopBar/CreditsBadge';
 interface HeaderSectionProps {
   searchQuery: string;
   setSearchQuery: (query: string) => void;
-  creditRefreshTrigger: number; // Changed type to match CreditsBadge
+  onSearch?: (e: React.FormEvent) => void;
 }
 
-const HeaderSection: React.FC<HeaderSectionProps> = ({ searchQuery, setSearchQuery, creditRefreshTrigger }) => {
+const HeaderSection: React.FC<HeaderSectionProps> = ({ searchQuery, setSearchQuery, onSearch }) => {
   const navigate = useNavigate();
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    if (searchQuery.trim()) {
-      navigate(`/marketplace/search?q=${encodeURIComponent(searchQuery.trim())}`);
+    if (onSearch) {
+      onSearch(e);
+    } else {
+      // Fallback behavior
+      if (searchQuery.trim()) {
+        navigate(`/marketplace/search?q=${encodeURIComponent(searchQuery.trim())}`);
+      }
     }
   };
 
@@ -25,7 +30,7 @@ const HeaderSection: React.FC<HeaderSectionProps> = ({ searchQuery, setSearchQue
         <p>Discover amazing stories from our community of writers</p>
       </div>
       <div className="header-actions">
-        <CreditsBadge className="header-badge" refreshTrigger={creditRefreshTrigger} />
+        <CreditsBadge className="header-badge" />
         <form onSubmit={handleSearch} className="search-form">
           <div className="search-container">
             <input

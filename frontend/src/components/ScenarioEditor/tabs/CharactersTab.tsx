@@ -1,8 +1,8 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { FaDownload, FaPlus, FaRandom, FaTrash, FaUser } from 'react-icons/fa';
+import { FaDownload, FaPlus, FaTrash, FaUser } from 'react-icons/fa';
 import { v4 as uuidv4 } from 'uuid';
 import { AI_STATUS, useAIStatus } from '../../../contexts/AIStatusContext';
-import { useAuthenticatedUser } from '../../../contexts/AuthenticatedUserContext';
+import { useAuth } from '../../../contexts/AuthContext';
 import { generateCharacterField } from '../../../services/characterFieldGenerator';
 import { Character } from '../../../types/ScenarioTypes';
 import { showUserFriendlyError } from '../../../utils/errorHandling';
@@ -13,7 +13,6 @@ import { TabProps } from '../types';
 import { CharacterPhoto } from './CharacterPhoto';
 import './CharactersTab.css';
 import { PhotoUploadModal } from './PhotoUploadModal';
-import { RandomCharacterModal } from './RandomCharacterModal';
 
 export const CharactersTab: React.FC<TabProps> = ({
   scenario,
@@ -26,12 +25,11 @@ export const CharactersTab: React.FC<TabProps> = ({
   const [expandedCharacter, setExpandedCharacter] = useState<string | null>(null);
   const [showImportModal, setShowImportModal] = useState(false);
   const [showPhotoUploadModal, setShowPhotoUploadModal] = useState(false);
-  const [showRandomCharacterModal, setShowRandomCharacterModal] = useState(false);
   const [fieldGenerationInProgress, setFieldGenerationInProgress] = useState<{ characterId: string; fieldName: string } | null>(null);
   const [fieldStreamedText, setFieldStreamedText] = useState('');
   const [fieldCancelGeneration, setFieldCancelGeneration] = useState<(() => void) | null>(null);
   const { setAiStatus, setShowAIBusyModal } = useAIStatus();
-  const { refreshCredits } = useAuthenticatedUser();
+  const { refreshCredits } = useAuth();
 
   const handleAddCharacter = useCallback(() => {
     const newCharacter: Character = {
@@ -112,17 +110,6 @@ export const CharactersTab: React.FC<TabProps> = ({
       refreshCredits();
     }, 1000);
   }, [characters, onScenarioChange, refreshCredits]);
-
-  const handleGenerateRandomCharacter = useCallback(() => {
-    setShowRandomCharacterModal(true);
-  }, []);
-
-  const handleRandomCharacterCreated = useCallback((newCharacter: Character) => {
-    // Add the new character from random generation
-    const updatedCharacters = [...characters, newCharacter];
-    onScenarioChange({ characters: updatedCharacters });
-    setExpandedCharacter(newCharacter.id);
-  }, [characters, onScenarioChange]);
 
   const handleGenerateField = useCallback(async (characterId: string, fieldName: string, fieldDisplayName: string) => {
     const character = characters.find(c => c.id === characterId);
@@ -302,30 +289,20 @@ export const CharactersTab: React.FC<TabProps> = ({
           <Button
             variant="primary"
             size="sm"
+            onClick={() => setShowPhotoUploadModal(true)}
+            icon={<FaUser />}
+            disabled={isLoading}
+            className='characters-tab__add-photo-btn'
+          >
+            Generate Character...
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={handleAddCharacter}
             icon={<FaPlus />}
           >
             Add Character
-          </Button>
-          <Button
-            variant="secondary"
-            size="sm"
-            data-testid="generate-random-character-button"
-            className='generate-random-character-btn'
-            onClick={handleGenerateRandomCharacter}
-            icon={<FaRandom />}
-            disabled={isLoading}
-          >
-            Generate Character
-          </Button>
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => setShowPhotoUploadModal(true)}
-            icon={<FaUser />}
-            disabled={isLoading}
-          >
-            Create from photo...
           </Button>
           <Button
             variant="ghost"
@@ -362,6 +339,8 @@ export const CharactersTab: React.FC<TabProps> = ({
                         onPhotoUpdate={handleCharacterPhotoUpdate}
                         size="small"
                         editable={false}
+                        scenario={scenario}
+                        showRandomizeButton={false}
                       />
                     </div>
                     <div className="character-card__info">
@@ -395,6 +374,8 @@ export const CharactersTab: React.FC<TabProps> = ({
                         onPhotoUpdate={handleCharacterPhotoUpdate}
                         size="medium"
                         editable={!isLoading && !fieldGenerationInProgress}
+                        scenario={scenario}
+                        showRandomizeButton={true}
                       />
                     </div>
                     <div className="character-card__grid">
@@ -580,15 +561,6 @@ export const CharactersTab: React.FC<TabProps> = ({
           isOpen={showPhotoUploadModal}
           onClose={() => setShowPhotoUploadModal(false)}
           onCharacterCreated={handleCharacterFromPhoto}
-          scenario={scenario}
-        />
-      )}
-      
-      {showRandomCharacterModal && (
-        <RandomCharacterModal
-          isOpen={showRandomCharacterModal}
-          onClose={() => setShowRandomCharacterModal(false)}
-          onCharacterCreated={handleRandomCharacterCreated}
           scenario={scenario}
         />
       )}

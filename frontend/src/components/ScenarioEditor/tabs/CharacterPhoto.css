@@ -130,18 +130,37 @@
   font-size: 0.75em;
   text-align: center;
   font-weight: 500;
+  margin-bottom: 8px;
 }
 
 .character-photo--small .character-photo__upload-text {
   font-size: 0.6em;
+  margin-bottom: 4px;
+}
+
+/* Randomize button in pictogram view */
+.character-photo__pictogram .character-photo__randomize-btn {
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+}
+
+.character-photo--small .character-photo__pictogram .character-photo__randomize-btn {
+  bottom: 2px;
+  right: 2px;
 }
 
 /* Remove button */
-.character-photo__remove-btn {
+.character-photo__buttons {
   position: absolute;
   top: 4px;
   right: 4px;
-  background: rgba(220, 53, 69, 0.9);
+  display: flex;
+  gap: 4px;
+}
+
+.character-photo__action-btn {
+  background: rgba(0, 0, 0, 0.7);
   border: none;
   border-radius: 50%;
   width: 24px;
@@ -155,16 +174,32 @@
   transition: background 0.2s ease;
 }
 
+.character-photo__remove-btn {
+  background: rgba(220, 53, 69, 0.9);
+}
+
 .character-photo__remove-btn:hover {
   background: rgba(220, 53, 69, 1);
 }
 
-.character-photo--small .character-photo__remove-btn {
+.character-photo__randomize-btn {
+  background: rgba(40, 167, 69, 0.9);
+}
+
+.character-photo__randomize-btn:hover {
+  background: rgba(40, 167, 69, 1);
+}
+
+.character-photo--small .character-photo__action-btn {
   width: 18px;
   height: 18px;
   font-size: 0.7em;
+}
+
+.character-photo--small .character-photo__buttons {
   top: 2px;
   right: 2px;
+  gap: 2px;
 }
 
 /* Loading states */

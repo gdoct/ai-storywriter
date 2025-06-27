@@ -5,7 +5,9 @@ from datetime import timedelta
 from controllers.auth_controller import auth_bp
 from controllers.character_appearance_controller import character_appearance_bp
 from controllers.character_photo_controller import character_photo_bp
+from controllers.chat_controller import chat_bp
 from controllers.dashboard_controller import dashboard_bp
+from controllers.image_controller import image_bp
 from controllers.marketplace_controller import marketplace_bp
 from controllers.moderation_controller import moderation_bp
 from controllers.payment_controller import payment_bp
@@ -46,7 +48,9 @@ CORS(app, resources={r"/api/*": {"origins": "*"}})  # Configure CORS for API end
 app.register_blueprint(auth_bp)
 app.register_blueprint(character_appearance_bp)
 app.register_blueprint(character_photo_bp)
+app.register_blueprint(chat_bp, url_prefix='/api/chat')
 app.register_blueprint(dashboard_bp)
+app.register_blueprint(image_bp)
 app.register_blueprint(marketplace_bp)
 app.register_blueprint(moderation_bp)
 app.register_blueprint(payment_bp)

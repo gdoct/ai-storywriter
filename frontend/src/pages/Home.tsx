@@ -1,4 +1,4 @@
-import React, { Dispatch, SetStateAction, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { ScenarioEditorWrapper } from '../components/ScenarioEditor/ScenarioEditorWrapper';
@@ -7,11 +7,10 @@ import { Scenario } from '../types/ScenarioTypes';
 import './Home.css';
 
 interface HomeProps {
-  setIsLoading: Dispatch<SetStateAction<boolean>>;
-  seed?: number | null;
+  // No props needed anymore
 }
 
-const Home: React.FC<HomeProps> = ({ setIsLoading, seed }) => {
+const Home: React.FC<HomeProps> = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [initialScenario, setInitialScenario] = useState<Scenario | undefined>(undefined);
@@ -26,7 +25,6 @@ const Home: React.FC<HomeProps> = ({ setIsLoading, seed }) => {
       if (scenarioIdFromUrl) {
         try {
           setLoading(true);
-          setIsLoading(true);
           const scenario = await fetchScenarioById(scenarioIdFromUrl);
           setInitialScenario(scenario);
         } catch (error) {
@@ -34,13 +32,12 @@ const Home: React.FC<HomeProps> = ({ setIsLoading, seed }) => {
           // Continue with no initial scenario
         } finally {
           setLoading(false);
-          setIsLoading(false);
         }
       }
     };
 
     loadInitialScenario();
-  }, [scenarioIdFromUrl, setIsLoading]);
+  }, [scenarioIdFromUrl]);
 
   const handleScenarioSave = (scenario: Scenario) => {
     // Update URL with scenario ID after save

@@ -10,8 +10,6 @@ export interface TestUser {
     jwt?: string;
 };
 
-
-
 export function expectingToTakeSeconds(normalseconds: number): number {
     return normalseconds * TIMEOUT_MULTIPLIER * 1000; // Convert to milliseconds
 }
@@ -133,6 +131,101 @@ export async function deleteUser(userData: TestUser): Promise<void> {
     }
 
     console.log('User deleted successfully');
+}
+
+// Helper functions for the new individual action buttons
+export async function clickSaveButton(page: Page, timeout: number = 10000): Promise<void> {
+    await clickButtonBySelector(page, '[data-action-id="save"]', timeout);
+}
+
+// Helper function to wait for scenarios to load on the scenarios page
+export async function waitForScenariosToLoad(page: Page, timeout: number = 15000): Promise<void> {
+    console.log('Waiting for scenarios to load...');
+    try {
+        // Wait for either scenarios to appear or a "no scenarios" message
+        await page.waitForSelector('button.scenarios__btn-edit-scenario, .scenarios__empty-state, .scenarios__no-scenarios', { 
+            visible: true, 
+            timeout 
+        });
+        
+        // Add a small additional wait to ensure the page is fully rendered
+        await new Promise(resolve => setTimeout(resolve, 500));
+        console.log('Scenarios page loaded successfully');
+    } catch (error) {
+        console.error('Timeout waiting for scenarios to load');
+        await page.screenshot({ path: 'scenarios-load-timeout.png' });
+        throw error;
+    }
+}
+
+// Helper function to wait for the scenario editor to be ready
+export async function waitForScenarioEditorToLoad(page: Page, timeout: number = 10000): Promise<void> {
+    console.log('Waiting for scenario editor to load...');
+    try {
+        // Wait for the scenario editor tabs to be visible
+        await page.waitForSelector('button[data-testid="general-tab"]', { 
+            visible: true, 
+            timeout 
+        });
+        
+        // Wait for the action buttons to be ready
+        await page.waitForSelector('[data-action-id="save"]', { 
+            visible: true, 
+            timeout: 5000 
+        });
+        
+        console.log('Scenario editor loaded successfully');
+    } catch (error) {
+        console.error('Timeout waiting for scenario editor to load');
+        await page.screenshot({ path: 'scenario-editor-load-timeout.png' });
+        throw error;
+    }
+}
+
+export async function clickSaveAsButton(page: Page, timeout: number = 10000): Promise<void> {
+    await clickButtonBySelector(page, '[data-action-id="save-as"]', timeout);
+}
+
+export async function clickDeleteButton(page: Page, timeout: number = 10000): Promise<void> {
+    await clickButtonBySelector(page, '[data-action-id="delete"]', timeout);
+}
+
+export async function clickReloadButton(page: Page, timeout: number = 10000): Promise<void> {
+    await clickButtonBySelector(page, '[data-action-id="reload"]', timeout);
+}
+
+export async function clickGenerateStoryButton(page: Page, timeout: number = 10000): Promise<void> {
+    await clickButtonBySelector(page, '[data-action-id="generate-story"]', timeout);
+}
+
+export async function clickButtonBySelector(page: Page, selector: string, timeout: number = 10000): Promise<void> {
+    console.log(`Clicking button with class: ${selector}`);
+    try {
+        const button = await page.waitForSelector(selector, { visible: true, timeout });
+        if (!button) {
+            throw new Error(`button with classname ${selector} not found`);
+        }
+        await button.click();
+    } catch (e) {
+        await page.screenshot();
+        throw e;
+    }
+    console.log(`Button with class ${selector} clicked successfully`);
+}
+
+export async function setDropdownValue(page: Page, selector: string, value: string): Promise<void> {
+    const dropdown = await page.waitForSelector(selector, { visible: true });
+    if (!dropdown) {
+        throw new Error(`Dropdown with selector ${selector} not found`);
+    }
+    // set value of the dropdown (it is free-type dropdown)
+    await dropdown.click();
+    await page.keyboard.down('Control');
+    await page.keyboard.press('A');
+    await page.keyboard.up('Control');
+    await page.keyboard.press('Backspace');
+    await page.keyboard.type(value);
+    // wait for the dropdown to update
 }
 
 export async function deleteExistingTestUser(): Promise<void> {

@@ -1,6 +1,6 @@
 import React, { useCallback, useState } from 'react';
 import { FaDownload, FaProjectDiagram, FaTimes } from 'react-icons/fa';
-import { useAuthenticatedUser } from '../../../contexts/AuthenticatedUserContext';
+import { useAuth } from '../../../contexts/AuthContext';
 import { generateStoryArc, rewriteStoryArc } from '../../../services/storyGenerator';
 import ImportModal from '../../common/ImportModal';
 import { Button } from '../common/Button';
@@ -17,7 +17,7 @@ export const StoryArcTab: React.FC<TabProps> = ({
   const [isGenerating, setIsGenerating] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
   const [cancelGeneration, setCancelGeneration] = useState<(() => void) | null>(null);
-  const { refreshCredits } = useAuthenticatedUser();
+  const { refreshCredits } = useAuth();
 
   const handleStoryArcChange = useCallback((value: string) => {
     onScenarioChange({ storyarc: value });
@@ -62,7 +62,7 @@ export const StoryArcTab: React.FC<TabProps> = ({
       setIsGenerating(false);
       setCancelGeneration(null);
     }
-  }, [scenario, onScenarioChange]);
+  }, [scenario, onScenarioChange, refreshCredits]);
 
   const handleRewriteStoryArc = useCallback(async () => {
     if (!scenario.storyarc || scenario.storyarc.trim() === '') {
@@ -107,7 +107,7 @@ export const StoryArcTab: React.FC<TabProps> = ({
       setIsGenerating(false);
       setCancelGeneration(null);
     }
-  }, [scenario, onScenarioChange]);
+  }, [scenario, onScenarioChange, refreshCredits]);
 
   const handleCancelGeneration = useCallback(() => {
     if (cancelGeneration) {

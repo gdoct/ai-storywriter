@@ -3,7 +3,7 @@ echo "Building frontend .."
 # Navigate to the frontend directory
 cd frontend
 # Install dependencies
-npm install
+npm install --peer-legacy-deps
 # Build the frontend
 npm run build
 echo "Frontend build complete."

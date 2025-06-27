@@ -68,7 +68,7 @@ def publish_story(original_story_id):
         
         # Check if the original story exists and belongs to the user
         c.execute('''
-            SELECT s.id, s.text, s.created_at, sc.title as scenario_title
+            SELECT s.id, s.text, s.created_at, s.scenario_json, sc.title as scenario_title, sc.jsondata
             FROM stories s
             JOIN scenarios sc ON s.scenario_id = sc.id
             WHERE s.id = ? AND sc.user_id = ? AND sc.is_deleted = 0
@@ -84,15 +84,26 @@ def publish_story(original_story_id):
         if existing:
             return jsonify({'error': 'Story is already published to marketplace'}), 409
         
+        # Extract image URI from scenario's JSON data
+        image_uri = None
+        if story['jsondata']:
+            try:
+                import json
+                scenario_data = json.loads(story['jsondata'])
+                image_uri = scenario_data.get('imageUrl')
+            except:
+                # If JSON parsing fails, continue without image
+                pass
+        
         # Create marketplace story entry
         c.execute('''
             INSERT INTO market_stories (
                 original_story_id, user_id, title, content, 
-                created_at_original, published_at
-            ) VALUES (?, ?, ?, ?, ?, ?)
+                created_at_original, published_at, image_uri, scenario_json
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         ''', (
             original_story_id, user_id, title, story['text'],
-            story['created_at'], datetime.utcnow().isoformat()
+            story['created_at'], datetime.utcnow().isoformat(), image_uri, story['scenario_json']
         ))
         
         market_story_id = c.lastrowid
@@ -184,7 +195,7 @@ def get_market_stories():
                 ms.id, ms.title, u.username as author, ms.ai_summary,
                 ms.ai_genres, ms.average_rating, ms.rating_count,
                 ms.total_downloads, ms.total_donated_credits, ms.published_at,
-                ms.is_staff_pick
+                ms.is_staff_pick, ms.image_uri
             FROM market_stories ms
             JOIN users u ON ms.user_id = u.id
             {where_clause}
@@ -233,7 +244,7 @@ def get_market_story(market_story_id):
                 ms.id, ms.title, u.username as author, ms.content,
                 ms.ai_summary, ms.ai_genres, ms.average_rating, ms.rating_count,
                 ms.total_downloads, ms.total_donated_credits, ms.published_at,
-                ms.is_staff_pick, u.id as author_id
+                ms.is_staff_pick, u.id as author_id, ms.image_uri, ms.scenario_json
             FROM market_stories ms
             JOIN users u ON ms.user_id = u.id
             WHERE ms.id = ?
@@ -449,7 +460,7 @@ def get_top_rated():
             SELECT 
                 ms.id, ms.title, u.username as author, ms.ai_summary,
                 ms.ai_genres, ms.average_rating, ms.rating_count,
-                ms.total_downloads, ms.is_staff_pick
+                ms.total_downloads, ms.is_staff_pick, ms.image_uri
             FROM market_stories ms
             JOIN users u ON ms.user_id = u.id
             WHERE ms.rating_count >= 3
@@ -488,7 +499,7 @@ def get_most_popular():
             SELECT 
                 ms.id, ms.title, u.username as author, ms.ai_summary,
                 ms.ai_genres, ms.average_rating, ms.rating_count,
-                ms.total_downloads, ms.is_staff_pick
+                ms.total_downloads, ms.is_staff_pick, ms.image_uri
             FROM market_stories ms
             JOIN users u ON ms.user_id = u.id
             ORDER BY ms.total_downloads DESC
@@ -526,7 +537,7 @@ def get_latest():
             SELECT 
                 ms.id, ms.title, u.username as author, ms.ai_summary,
                 ms.ai_genres, ms.average_rating, ms.rating_count,
-                ms.total_downloads, ms.is_staff_pick
+                ms.total_downloads, ms.is_staff_pick, ms.image_uri
             FROM market_stories ms
             JOIN users u ON ms.user_id = u.id
             ORDER BY ms.published_at DESC
@@ -564,7 +575,7 @@ def get_staff_picks():
             SELECT 
                 ms.id, ms.title, u.username as author, ms.ai_summary,
                 ms.ai_genres, ms.average_rating, ms.rating_count,
-                ms.total_downloads, ms.is_staff_pick
+                ms.total_downloads, ms.is_staff_pick, ms.image_uri
             FROM market_stories ms
             JOIN users u ON ms.user_id = u.id
             WHERE ms.is_staff_pick = 1
@@ -603,7 +614,7 @@ def get_by_genre(genre_name):
             SELECT 
                 ms.id, ms.title, u.username as author, ms.ai_summary,
                 ms.ai_genres, ms.average_rating, ms.rating_count,
-                ms.total_downloads, ms.is_staff_pick
+                ms.total_downloads, ms.is_staff_pick, ms.image_uri
             FROM market_stories ms
             JOIN users u ON ms.user_id = u.id
             WHERE ms.ai_genres LIKE ?

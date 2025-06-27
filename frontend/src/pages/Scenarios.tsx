@@ -210,7 +210,7 @@ const Scenarios: React.FC = () => {
                     
                     <div className="scenario-actions">
                       <button 
-                        className="btn btn-primary btn-small"
+                        className="btn btn-primary btn-small scenarios__btn-edit-scenario"
                         onClick={() => handleEditScenario(scenario.id)}
                       >
                         <span className="btn-icon">✏️</span>

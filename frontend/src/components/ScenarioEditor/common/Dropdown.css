@@ -27,6 +27,17 @@
   outline: none;
   background-color: white;
   cursor: text;
+  display: flex;
+  align-items: center;
+  min-height: 1.5rem;
+}
+
+.dropdown-field__input--readonly {
+  cursor: pointer;
+}
+
+.dropdown-field__placeholder {
+  color: #9ca3af;
 }
 
 .dropdown-field__input:focus {
@@ -34,32 +45,14 @@
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
-.dropdown-field__input::placeholder {
-  color: #9ca3af;
-}
-
-.dropdown-field__options {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
-  background: white;
-  border: 1px solid #d1d5db;
-  border-radius: 0.5rem;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-  z-index: 10;
-  max-height: 200px;
-  overflow-y: auto;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
 .dropdown-field__option {
   padding: 0.75rem;
   cursor: pointer;
   transition: background-color 0.15s ease-in-out;
   border-bottom: 1px solid #f3f4f6;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .dropdown-field__option:hover {
@@ -92,4 +85,65 @@
 
 .dropdown-field--disabled .dropdown-field__label {
   color: #6b7280;
+}
+
+/* Icon styles */
+.dropdown-field--with-icon .dropdown-field__input {
+  padding-right: 2.5rem;
+}
+
+.dropdown-field__icon {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #6b7280;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+  padding: 0.25rem;
+  border-radius: 0.25rem;
+  transition: all 0.2s ease-in-out;
+}
+
+.dropdown-field__icon:hover {
+  color: #3b82f6;
+  background-color: rgba(59, 130, 246, 0.1);
+}
+
+.dropdown-field__icon:disabled {
+  color: #9ca3af;
+  cursor: not-allowed;
+  background-color: transparent;
+}
+
+.dropdown-field__icon:disabled:hover {
+  color: #9ca3af;
+  background-color: transparent;
+}
+
+.dropdown-field__options {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  z-index: 1001;
+  max-height: 200px;
+  overflow-y: auto;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dropdown-field__options--upward {
+  top: auto;
+  bottom: 100%;
 }
