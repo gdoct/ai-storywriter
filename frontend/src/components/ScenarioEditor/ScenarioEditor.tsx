@@ -16,10 +16,14 @@ import { useScenarioEditor } from './context';
 import { StoryModal } from './modals/StoryModal';
 import './ScenarioEditor.css';
 import { BackstoryTab } from './tabs/BackstoryTab';
+import { CharacterRelationshipsTab } from './tabs/CharacterRelationshipsTab';
 import { CharactersTab } from './tabs/CharactersTab';
 import { GeneralTab } from './tabs/GeneralTab';
+import MultipleChaptersTab from './tabs/MultipleChaptersTab/MultipleChaptersTab';
 import { NotesTab } from './tabs/NotesTab';
+import { ObjectsActionsTab } from './tabs/ObjectsActionsTab';
 import { StoryArcTab } from './tabs/StoryArcTab';
+import { ThemesSymbolsTab } from './tabs/ThemesSymbolsTab';
 import { TimelineTab } from './tabs/TimelineTab';
 import { WorldBuildingTab } from './tabs/WorldBuildingTab';
 import { SaveOptions, TabConfig, TabId } from './types';
@@ -41,6 +45,13 @@ const tabs: TabConfig[] = [
     label: 'Characters',
     icon: FaUsers,
     component: CharactersTab,
+    optional: true,
+  },
+  {
+    id: 'characterrelationships',
+    label: 'Character Relationships',
+    icon: FaUsers,
+    component: CharacterRelationshipsTab,
     optional: true,
   },
   {
@@ -78,6 +89,28 @@ const tabs: TabConfig[] = [
     component: NotesTab,
     optional: true,
   },
+  {
+    id: 'objectsactions',
+    label: 'Objects & Actions',
+    icon: FaDice,
+    component: ObjectsActionsTab,
+    optional: true,
+  },
+  {
+    id: 'themessymbols',
+    label: 'Themes & Symbols',
+    icon: FaEye,
+    component: ThemesSymbolsTab,
+    optional: true,
+  },
+  {
+    id: 'multiplechapters',
+    label: 'Multiple Chapters',
+    icon: FaBook, // Or a more suitable icon
+    component: MultipleChaptersTab,
+    optional: true,
+  },
+
 ];
 
 interface ScenarioEditorProps {

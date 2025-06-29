@@ -23,6 +23,23 @@ export function getTabsWithData(scenario: Scenario): TabId[] {
     }
   }
 
+  // Check if character relationships tab has data
+  if (scenario.characterRelationships) {
+    const cr = scenario.characterRelationships;
+    const hasCharacterRelationshipsData = (
+      (cr.relationships && cr.relationships.length > 0) ||
+      (cr.relationshipTypes && cr.relationshipTypes.length > 0) ||
+      (cr.dynamics && cr.dynamics.length > 0) ||
+      (cr.conflicts && cr.conflicts.length > 0) ||
+      (cr.histories && cr.histories.length > 0) ||
+      (cr.groups && cr.groups.length > 0) ||
+      (cr.generalNotes && cr.generalNotes.trim().length > 0)
+    );
+    if (hasCharacterRelationshipsData) {
+      tabsWithData.push('characterrelationships');
+    }
+  }
+
   // Check if backstory tab has data
   if (scenario.backstory?.trim()) {
     tabsWithData.push('backstory');
@@ -69,6 +86,54 @@ export function getTabsWithData(scenario: Scenario): TabId[] {
     }
   }
 
+  // Check if objects & actions tab has data
+  if (scenario.objectsAndActions) {
+    const oa = scenario.objectsAndActions;
+    const hasObjectsActionsData = (
+      (oa.objects && oa.objects.length > 0) ||
+      (oa.actions && oa.actions.length > 0) ||
+      (oa.interactions && oa.interactions.length > 0) ||
+      (oa.sequences && oa.sequences.length > 0) ||
+      (oa.generalNotes && oa.generalNotes.trim().length > 0)
+    );
+    if (hasObjectsActionsData) {
+      tabsWithData.push('objectsactions');
+    }
+  }
+
+  // Check if themes & symbols tab has data
+  if (scenario.themesAndSymbols) {
+    const ts = scenario.themesAndSymbols;
+    const hasThemesSymbolsData = (
+      (ts.themes && ts.themes.length > 0) ||
+      (ts.symbols && ts.symbols.length > 0) ||
+      (ts.motifs && ts.motifs.length > 0) ||
+      (ts.metaphors && ts.metaphors.length > 0) ||
+      (ts.archetypes && ts.archetypes.length > 0) ||
+      (ts.literaryDevices && ts.literaryDevices.length > 0) ||
+      (ts.generalNotes && ts.generalNotes.trim().length > 0)
+    );
+    if (hasThemesSymbolsData) {
+      tabsWithData.push('themessymbols');
+    }
+  }
+
+  // Check if multiple chapters tab has data
+  if (scenario.multipleChapters) {
+    const mc = scenario.multipleChapters;
+    const hasMultipleChaptersData = (
+      (mc.chapters && mc.chapters.length > 0) ||
+      (mc.globalSettings && (
+        mc.globalSettings.namingConvention !== 'Chapter %' ||
+        mc.globalSettings.defaultWordCount !== 1500
+      )) ||
+      (mc.crossReferences && mc.crossReferences.length > 0)
+    );
+    if (hasMultipleChaptersData) {
+      tabsWithData.push('multiplechapters');
+    }
+  }
+
   return tabsWithData;
 }
 
@@ -109,6 +174,19 @@ export function tabHasData(scenario: Scenario, tabId: TabId): boolean {
           char.extraInfo?.trim()
         );
     
+    case 'characterrelationships':
+      if (!scenario.characterRelationships) return false;
+      const cr = scenario.characterRelationships;
+      return (
+        (cr.relationships && cr.relationships.length > 0) ||
+        (cr.relationshipTypes && cr.relationshipTypes.length > 0) ||
+        (cr.dynamics && cr.dynamics.length > 0) ||
+        (cr.conflicts && cr.conflicts.length > 0) ||
+        (cr.histories && cr.histories.length > 0) ||
+        (cr.groups && cr.groups.length > 0) ||
+        (cr.generalNotes && cr.generalNotes.trim().length > 0)
+      );
+    
     case 'backstory':
       return !!scenario.backstory?.trim();
     
@@ -139,6 +217,42 @@ export function tabHasData(scenario: Scenario, tabId: TabId): boolean {
         (tl.eras && tl.eras.length > 0) ||
         (tl.calendars && tl.calendars.length > 0) ||
         (tl.generalNotes && tl.generalNotes.trim().length > 0)
+      );
+    
+    case 'objectsactions':
+      if (!scenario.objectsAndActions) return false;
+      const oa = scenario.objectsAndActions;
+      return (
+        (oa.objects && oa.objects.length > 0) ||
+        (oa.actions && oa.actions.length > 0) ||
+        (oa.interactions && oa.interactions.length > 0) ||
+        (oa.sequences && oa.sequences.length > 0) ||
+        (oa.generalNotes && oa.generalNotes.trim().length > 0)
+      );
+    
+    case 'themessymbols':
+      if (!scenario.themesAndSymbols) return false;
+      const ts = scenario.themesAndSymbols;
+      return (
+        (ts.themes && ts.themes.length > 0) ||
+        (ts.symbols && ts.symbols.length > 0) ||
+        (ts.motifs && ts.motifs.length > 0) ||
+        (ts.metaphors && ts.metaphors.length > 0) ||
+        (ts.archetypes && ts.archetypes.length > 0) ||
+        (ts.literaryDevices && ts.literaryDevices.length > 0) ||
+        (ts.generalNotes && ts.generalNotes.trim().length > 0)
+      );
+    
+    case 'multiplechapters':
+      if (!scenario.multipleChapters) return false;
+      const mc = scenario.multipleChapters;
+      return (
+        (mc.chapters && mc.chapters.length > 0) ||
+        (mc.globalSettings && (
+          mc.globalSettings.namingConvention !== 'Chapter %' ||
+          mc.globalSettings.defaultWordCount !== 1500
+        )) ||
+        (mc.crossReferences && mc.crossReferences.length > 0)
       );
     
     default:

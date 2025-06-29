@@ -1,3 +1,9 @@
+// Import types for other tabs
+import { CharacterRelationships } from '../components/ScenarioEditor/tabs/CharacterRelationshipsTab/types/relationships';
+import { ObjectsAndActions } from '../components/ScenarioEditor/tabs/ObjectsActionsTab/types/objectsActions';
+import { ThemesAndSymbols } from '../components/ScenarioEditor/tabs/ThemesSymbolsTab/types/themesSymbols';
+import { MultipleChapters } from './chapters';
+
 // Style settings interface based on StoryStyleTab
 export interface StyleSettings {
     style?: string;
@@ -66,6 +72,10 @@ export type Scenario = {
     backstory?: string;
     worldBuilding?: WorldBuilding;
     timeline?: Timeline;
+    objectsAndActions?: ObjectsAndActions;
+    themesAndSymbols?: ThemesAndSymbols;
+    characterRelationships?: CharacterRelationships;
+    multipleChapters?: MultipleChapters;
     
     // Image fields
     imageId?: string; // ID of the associated image from scenario_images table

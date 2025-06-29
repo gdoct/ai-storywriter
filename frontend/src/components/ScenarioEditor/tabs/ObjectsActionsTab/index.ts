@@ -1,0 +1,1 @@
+export { ObjectsActionsTab } from './ObjectsActionsTab';

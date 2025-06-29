@@ -1,0 +1,1 @@
+export { ThemesSymbolsTab } from './ThemesSymbolsTab';
