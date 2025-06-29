@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { AlertModal } from '../components/Modal';
+import { useAuth } from '../contexts/AuthContext';
 import { useModals } from '../hooks/useModals';
 import { donateCredits, downloadStory, getMarketStory, rateStory } from '../services/marketPlaceApi';
 import { MarketStory } from '../types/marketplace';
@@ -10,6 +11,7 @@ const StoryDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { alertState, hideAlert, customAlert } = useModals();
+  const { refreshCredits } = useAuth();
   const [story, setStory] = useState<MarketStory | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -97,6 +99,9 @@ const StoryDetail: React.FC = () => {
         ...prev,
         total_donated_credits: prev.total_donated_credits + donationAmount
       } : null);
+      
+      // Refresh credits to update badges
+      await refreshCredits();
     } catch (error) {
       customAlert(error instanceof Error ? error.message : 'Failed to donate credits', 'Error');
     } finally {

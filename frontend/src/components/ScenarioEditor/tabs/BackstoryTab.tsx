@@ -1,7 +1,7 @@
 import React, { useCallback, useState } from 'react';
 import { FaBook, FaDownload, FaTimes } from 'react-icons/fa';
 import { useAIStatus } from '../../../contexts/AIStatusContext';
-import { useAuthenticatedUser } from '../../../contexts/AuthenticatedUserContext';
+import { useAuth } from '../../../contexts/AuthContext';
 import { generateBackstory, rewriteBackstory } from '../../../services/storyGenerator';
 import { showUserFriendlyError } from '../../../utils/errorHandling';
 import ImportModal from '../../common/ImportModal';
@@ -20,7 +20,7 @@ export const BackstoryTab: React.FC<TabProps> = ({
   const [showImportModal, setShowImportModal] = useState(false);
   const [cancelGeneration, setCancelGeneration] = useState<(() => void) | null>(null);
   const { setAiStatus, setShowAIBusyModal } = useAIStatus();
-  const { refreshCredits } = useAuthenticatedUser();
+  const { refreshCredits } = useAuth();
 
   const handleBackstoryChange = useCallback((value: string) => {
     onScenarioChange({ backstory: value });
@@ -71,7 +71,7 @@ export const BackstoryTab: React.FC<TabProps> = ({
       setIsGenerating(false);
       setCancelGeneration(null);
     }
-  }, [scenario, onScenarioChange, setAiStatus, setShowAIBusyModal]);
+  }, [scenario, onScenarioChange, setAiStatus, setShowAIBusyModal, refreshCredits]);
 
   const handleRewriteBackstory = useCallback(async () => {
     if (!scenario.backstory || scenario.backstory.trim() === '') {
@@ -118,7 +118,7 @@ export const BackstoryTab: React.FC<TabProps> = ({
       setIsGenerating(false);
       setCancelGeneration(null);
     }
-  }, [scenario, onScenarioChange, setAiStatus, setShowAIBusyModal]);
+  }, [scenario, onScenarioChange, setAiStatus, setShowAIBusyModal, refreshCredits]);
 
   const handleCancelGeneration = useCallback(() => {
     if (cancelGeneration) {

@@ -453,10 +453,10 @@ class GeneratedTextRepository:
         return story
 
     @staticmethod
-    def create_story(scenario_id, text):
+    def create_story(scenario_id, text, scenario_json=None):
         conn = get_db_connection()
         now = datetime.now(timezone.utc).isoformat()
-        conn.execute('INSERT INTO stories (scenario_id, text, created_at) VALUES (?, ?, ?)', (scenario_id, text, now))
+        conn.execute('INSERT INTO stories (scenario_id, text, scenario_json, created_at) VALUES (?, ?, ?, ?)', (scenario_id, text, scenario_json, now))
         conn.commit()
         story = conn.execute('SELECT * FROM stories WHERE scenario_id = ? ORDER BY created_at DESC LIMIT 1', (scenario_id,)).fetchone()
         conn.close()
@@ -466,6 +466,14 @@ class GeneratedTextRepository:
     def delete_story(story_id):
         conn = get_db_connection()
         conn.execute('DELETE FROM stories WHERE id = ?', (story_id,))
+        conn.commit()
+        conn.close()
+    
+    @staticmethod
+    def delete_stories_by_scenario(scenario_id):
+        """Delete all stories associated with a scenario"""
+        conn = get_db_connection()
+        conn.execute('DELETE FROM stories WHERE scenario_id = ?', (scenario_id,))
         conn.commit()
         conn.close()
 

@@ -21,7 +21,7 @@ export const TONE_OPTIONS = [
     'Eerie', 'Joyful', 'Sombre'
 ];
 
-export const LANGUAGE_OPTIONS = [
+export const WRITING_STYLE_VARIATIONS = [
     'Simple', 'Elaborate', 'Technical', 'Pirate', 'Conversational', 'Formal',
     'Archaic', 'Slang-heavy', 'Minimal', 'Descriptive', 'Colloquial', 'Poetic',
     'Jargon-heavy', 'Academic', 'Narrative', 'Journalistic', 'Lyrical',
@@ -38,3 +38,33 @@ export const THEME_OPTIONS = [
     'Courage and bravery', 'Greed and ambition', 'Tradition vs. change',
     'Hope and despair', 'Truth and deception'
 ];
+
+ export const LANGUAGE_OPTIONS = ['English', 'French', 'German', 'Spanish', 'Italian', 'Dutch', 'Portuguese','Greek','Swedish','Danish','Finnish','Estonian','Latvian','Lithuanian','Polish','Czech','Slovak','Hungarian','Romanian','Bulgarian','Croatian','Slovenian','Irish','Maltese'];
+
+// Language to flag emoji mapping
+export const LANGUAGE_FLAGS: Record<string, string> = {
+  'English': '🇬🇧',
+  'French': '🇫🇷', 
+  'German': '🇩🇪',
+  'Spanish': '🇪🇸',
+  'Italian': '🇮🇹',
+  'Dutch': '🇳🇱',
+  'Portuguese': '🇵🇹',
+  'Greek': '🇬🇷',
+  'Swedish': '🇸🇪',
+  'Danish': '🇩🇰',
+  'Finnish': '🇫🇮',
+  'Estonian': '🇪🇪',
+  'Latvian': '🇱🇻',
+  'Lithuanian': '🇱🇹',
+  'Polish': '🇵🇱',
+  'Czech': '🇨🇿',
+  'Slovak': '🇸🇰',
+  'Hungarian': '🇭🇺',
+  'Romanian': '🇷🇴',
+  'Bulgarian': '🇧🇬',
+  'Croatian': '🇭🇷',
+  'Slovenian': '🇸🇮',
+  'Irish': '🇮🇪',
+  'Maltese': '🇲🇹'
+};

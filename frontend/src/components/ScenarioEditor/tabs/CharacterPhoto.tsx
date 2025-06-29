@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react';
-import { FaPlus, FaTimes, FaUser } from 'react-icons/fa';
-import { uploadCharacterPhoto } from '../../../services/characterPhotoService';
-import { Character } from '../../../types/ScenarioTypes';
+import { FaPlus, FaRandom, FaTimes, FaUser } from 'react-icons/fa';
+import { getRandomCharacterPhoto, uploadCharacterPhoto } from '../../../services/characterPhotoService';
+import { Character, Scenario } from '../../../types/ScenarioTypes';
 import { showUserFriendlyError } from '../../../utils/errorHandling';
 import './CharacterPhoto.css';
 
@@ -10,6 +10,8 @@ interface CharacterPhotoProps {
   onPhotoUpdate?: (character: Character) => void;
   size?: 'small' | 'medium' | 'large';
   editable?: boolean;
+  scenario?: Scenario; // Add scenario to get genre for random photos
+  showRandomizeButton?: boolean; // Control whether to show randomize button
 }
 
 export const CharacterPhoto: React.FC<CharacterPhotoProps> = ({
@@ -17,9 +19,12 @@ export const CharacterPhoto: React.FC<CharacterPhotoProps> = ({
   onPhotoUpdate,
   size = 'medium',
   editable = false,
+  scenario,
+  showRandomizeButton = false,
 }) => {
   const [isUploading, setIsUploading] = useState(false);
   const [imageError, setImageError] = useState(false);
+  const [isRandomizing, setIsRandomizing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -88,6 +93,66 @@ export const CharacterPhoto: React.FC<CharacterPhotoProps> = ({
     }
   };
 
+  const handleRandomizePhoto = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    if (!scenario || !onPhotoUpdate) return;
+
+    setIsRandomizing(true);
+    try {
+      // Get the genre from scenario, default to 'general' if not available
+      const genre = scenario.writingStyle?.genre || 'general';
+      
+      // Normalize character gender to match backend expectations
+      const normalizeGender = (gender?: string): string | undefined => {
+        if (!gender) return undefined;
+        
+        const lowerGender = gender.toLowerCase().trim();
+        
+        // Map various gender inputs to our three categories
+        if (lowerGender.includes('male') && !lowerGender.includes('female')) {
+          return 'male';
+        } else if (lowerGender.includes('female')) {
+          return 'female';
+        } else if (lowerGender.includes('non-binary') || 
+                   lowerGender.includes('nonbinary') || 
+                   lowerGender.includes('other') || 
+                   lowerGender.includes('genderless') ||
+                   lowerGender.includes('neutral')) {
+          return 'other';
+        }
+        
+        return undefined; // Let backend choose randomly
+      };
+      
+      const normalizedGender = normalizeGender(character.gender);
+      
+      // Fetch a random character photo URL with gender preference
+      const { url } = await getRandomCharacterPhoto(genre, normalizedGender);
+      
+      // Update character with the random photo URL
+      const updatedCharacter = {
+        ...character,
+        photoId: undefined, // Clear photoId since this is an external URL
+        photoUrl: url,
+      };
+      
+      onPhotoUpdate(updatedCharacter);
+      
+      // Reset image error state
+      setImageError(false);
+
+    } catch (error) {
+      console.error('Failed to get random photo:', error);
+      showUserFriendlyError(
+        error instanceof Error ? error : new Error('Failed to get random photo'),
+        'Random Photo'
+      );
+    } finally {
+      setIsRandomizing(false);
+    }
+  };
+
   const handleImageError = () => {
     setImageError(true);
   };
@@ -111,7 +176,7 @@ export const CharacterPhoto: React.FC<CharacterPhotoProps> = ({
     let classes = 'character-photo';
     classes += ` character-photo--${size}`;
     if (editable) classes += ' character-photo--editable';
-    if (isUploading) classes += ' character-photo--uploading';
+    if (isUploading || isRandomizing) classes += ' character-photo--uploading';
     return classes;
   };
 
@@ -120,10 +185,10 @@ export const CharacterPhoto: React.FC<CharacterPhotoProps> = ({
   return (
     <div className={getContainerClass()}>
       <div className="character-photo__container" onClick={handlePhotoClick}>
-        {isUploading ? (
+        {isUploading || isRandomizing ? (
           <div className="character-photo__uploading">
             <div className="spinner"></div>
-            <span>Uploading...</span>
+            <span>{isUploading ? 'Uploading...' : 'Getting random photo...'}</span>
           </div>
         ) : hasPhoto ? (
           <div className="character-photo__image">
@@ -135,13 +200,24 @@ export const CharacterPhoto: React.FC<CharacterPhotoProps> = ({
             {editable && (
               <div className="character-photo__overlay">
                 <FaPlus className="character-photo__camera-icon" />
-                <button
-                  className="character-photo__remove-btn"
-                  onClick={handleRemovePhoto}
-                  title="Remove photo"
-                >
-                  <FaTimes />
-                </button>
+                <div className="character-photo__buttons">
+                  {showRandomizeButton && (
+                    <button
+                      className="character-photo__action-btn character-photo__randomize-btn"
+                      onClick={handleRandomizePhoto}
+                      title="Get random photo"
+                    >
+                      <FaRandom />
+                    </button>
+                  )}
+                  <button
+                    className="character-photo__action-btn character-photo__remove-btn"
+                    onClick={handleRemovePhoto}
+                    title="Remove photo"
+                  >
+                    <FaTimes />
+                  </button>
+                </div>
               </div>
             )}
           </div>
@@ -152,6 +228,15 @@ export const CharacterPhoto: React.FC<CharacterPhotoProps> = ({
               <div className="character-photo__overlay">
                 <FaPlus className="character-photo__camera-icon" />
                 <span className="character-photo__upload-text">Add Photo</span>
+                {showRandomizeButton && (
+                  <button
+                    className="character-photo__action-btn character-photo__randomize-btn"
+                    onClick={handleRandomizePhoto}
+                    title="Get random photo"
+                  >
+                    <FaRandom />
+                  </button>
+                )}
               </div>
             )}
           </div>

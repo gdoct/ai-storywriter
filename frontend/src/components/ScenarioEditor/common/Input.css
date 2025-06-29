@@ -53,17 +53,47 @@
 }
 
 .input-field--with-icon .input-field__control {
-  padding-left: 2.5rem;
+  padding-right: 2.5rem;
 }
 
 .input-field__icon {
   position: absolute;
-  left: 0.75rem;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
   color: #6b7280;
+  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1;
+  z-index: 2;
+  padding: 0.25rem;
+  border-radius: 0.25rem;
+  transition: all 0.2s ease-in-out;
+}
+
+.input-field__icon:hover {
+  color: #3b82f6;
+  background-color: rgba(59, 130, 246, 0.1);
+}
+
+.input-field__icon:disabled {
+  color: #9ca3af;
+  cursor: not-allowed;
+  background-color: transparent;
+}
+
+.input-field__icon:disabled:hover {
+  color: #9ca3af;
+  background-color: transparent;
+}
+
+/* Special positioning for textarea icons */
+.input-field--with-icon .input-field__textarea + .input-field__icon {
+  top: 1rem;
+  transform: none;
 }
 
 .input-field--error .input-field__control {

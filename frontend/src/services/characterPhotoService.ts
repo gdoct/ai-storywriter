@@ -115,3 +115,23 @@ export const generateAppearanceFromPhoto = async (
 
   return { appearance: response.data.appearance };
 };
+
+/**
+ * Get a random character photo URL for a specific genre and gender
+ */
+export const getRandomCharacterPhoto = async (genre: string, gender?: string): Promise<{ url: string }> => {
+  const params: { genre: string; type: string; gender?: string } = {
+    genre: genre || 'general',
+    type: 'character'
+  };
+  
+  if (gender) {
+    params.gender = gender;
+  }
+  
+  const response = await axios.get<{ url: string }>('/api/images/random', {
+    params
+  });
+
+  return response.data;
+};

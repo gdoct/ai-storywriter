@@ -1,6 +1,7 @@
 import dotenv from 'dotenv';
 import puppeteer, { Browser, Page } from 'puppeteer';
-import { expectingToTakeSeconds, loginToSite, readTestUserFromFile, TEST_DELAY, TestUser } from './testutils';
+import { TEST_DELAY } from './testsettings';
+import { expectingToTakeSeconds, loginToSite, readTestUserFromFile, TestUser } from './testutils';
 
 dotenv.config();
 
@@ -94,9 +95,6 @@ describe('Marketplace publishing workflows', () => {
     }
   }
 
-  async function wait(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
-  }
   describe('Story Publishing workflow', () => {
     it('Should publish from the dashboard page after agreeing terms', async () => {
       await gotoDashboardAndPublishStory();

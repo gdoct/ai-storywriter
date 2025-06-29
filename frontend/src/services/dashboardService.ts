@@ -131,18 +131,6 @@ export const formatRelativeTime = (dateString: string | null): string => {
   const now = new Date();
   const diffInMs = now.getTime() - date.getTime();
   
-  // Add debug logging temporarily
-  if (process.env.NODE_ENV === 'development') {
-    console.debug('formatRelativeTime debug:', {
-      input: dateString,
-      parsed: utcDateString,
-      dateUTC: date.toISOString(),
-      nowUTC: now.toISOString(),
-      diffInMs,
-      diffInHours: Math.floor(diffInMs / (1000 * 60 * 60))
-    });
-  }
-  
   const diffInSeconds = Math.floor(diffInMs / 1000);
   const diffInMinutes = Math.floor(diffInSeconds / 60);
   const diffInHours = Math.floor(diffInMinutes / 60);

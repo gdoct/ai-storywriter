@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import MarkdownViewer from '../ReadingPane/MarkDownViewer';
+import TTSPlayer from '../TTS/TTSPlayer';
 import './StoryReader.css';
 
 interface StoryReaderProps {
@@ -117,6 +118,14 @@ const StoryReader: React.FC<StoryReaderProps> = ({
             <strong>Word Count:</strong> {metadata.wordCount} words
           </div>
         </div>
+      )}
+
+      {/* Text-to-Speech Player */}
+      {content && (
+        <TTSPlayer 
+          text={content}
+          className="story-reader-tts"
+        />
       )}
 
       {/* Story Content */}

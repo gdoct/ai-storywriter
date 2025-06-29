@@ -28,7 +28,7 @@ export interface UserProfile {
   roles: UserRole[];
   permissions: Permission[];
   created_at?: string;
-  credits?: number;
+  credits: number; // Made required - always track credits
   apiKeyConfigured?: boolean;
 }
 
@@ -59,6 +59,7 @@ export interface AuthContextType {
   login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
   refreshProfile: () => Promise<void>;
+  refreshCredits: () => Promise<void>; // Added credit refresh function
   
   // Utility functions
   hasRole: (role: UserRole) => boolean;

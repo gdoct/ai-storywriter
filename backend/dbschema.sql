@@ -51,6 +51,8 @@ CREATE TABLE market_stories (
             created_at_original TEXT,
             updated_at_original TEXT,
             is_staff_pick INTEGER DEFAULT 0,
+            image_uri TEXT,
+            scenario_json TEXT,
             FOREIGN KEY(original_story_id) REFERENCES stories(id),
             FOREIGN KEY(user_id) REFERENCES users(id)
         );
@@ -107,6 +109,7 @@ CREATE TABLE stories (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             scenario_id TEXT,
             text TEXT,
+            scenario_json TEXT,
             created_at TEXT DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY(scenario_id) REFERENCES scenarios(id)
         );
@@ -153,3 +156,4 @@ CREATE INDEX idx_character_photos_character_id ON character_photos (character_id
 CREATE INDEX idx_user_roles_user_id ON user_roles(user_id);
 CREATE INDEX idx_user_roles_role ON user_roles(role);
 CREATE INDEX idx_user_roles_active ON user_roles(user_id, role) WHERE revoked_at IS NULL;
+CREATE INDEX idx_market_stories_scenario_json ON market_stories(scenario_json) WHERE scenario_json IS NOT NULL;

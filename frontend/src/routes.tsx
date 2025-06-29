@@ -1,4 +1,4 @@
-import React, { Dispatch, SetStateAction } from 'react';
+import React from 'react';
 import { RouteObject } from 'react-router-dom';
 import { AdminPanel } from './components/admin/AdminPanel';
 import { ModerationDashboard } from './components/moderation/ModerationDashboard';
@@ -16,39 +16,33 @@ import MarketingHome from './pages/MarketingHome';
 import Marketplace from './pages/Marketplace';
 import PricingPage from './pages/PricingPage';
 import Scenarios from './pages/Scenarios';
-import Settings from './pages/Settings';
 import Signup from './pages/Signup';
 import Stories from './pages/Stories';
 import StoryDetail from './pages/StoryDetail';
 import Templates from './pages/Templates';
 
-interface RoutesProps {
-  setIsLoading: Dispatch<SetStateAction<boolean>>;
-  seed?: number | null;
-}
-
 // Component to handle the root route logic
-const MarketingHomeOrDashboard: React.FC<RoutesProps> = ({ setIsLoading, seed }) => {
+const MarketingHomeOrDashboard: React.FC = () => {
   const { authenticated } = useAuth();
   
   if (authenticated) {
-    return <Dashboard setIsLoading={setIsLoading} seed={seed} />;
+    return <Dashboard />;
   }
   
   return <MarketingHome />;
 };
 
-const getRoutes = ({ setIsLoading, seed }: RoutesProps): RouteObject[] => {
+const getRoutes = (): RouteObject[] => {
   return [
     { 
       path: '/', 
-      element: <MarketingHomeOrDashboard setIsLoading={setIsLoading} seed={seed} />
+      element: <MarketingHomeOrDashboard />
     },
     { 
       path: '/dashboard', 
       element: (
         <ProtectedRoute>
-          <Dashboard setIsLoading={setIsLoading} seed={seed} />
+          <Dashboard />
         </ProtectedRoute>
       )
     },
@@ -56,15 +50,7 @@ const getRoutes = ({ setIsLoading, seed }: RoutesProps): RouteObject[] => {
       path: '/app', 
       element: (
         <ProtectedRoute>
-          <Home setIsLoading={setIsLoading} seed={seed} />
-        </ProtectedRoute>
-      )
-    },
-    { 
-      path: '/settings', 
-      element: (
-        <ProtectedRoute>
-          <Settings />
+          <Home />
         </ProtectedRoute>
       )
     },

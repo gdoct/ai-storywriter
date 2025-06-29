@@ -15,6 +15,7 @@ export interface MarketStory {
   published_at: string;
   is_staff_pick: boolean;
   user_rating?: number; // User's own rating if authenticated
+  image_uri?: string; // Add image URI for background
 }
 
 export interface MarketStoryCard {
@@ -28,6 +29,7 @@ export interface MarketStoryCard {
   rating_count: number;
   total_downloads: number;
   is_staff_pick: boolean;
+  image_uri?: string; // Add image URI for background
 }
 
 export interface MarketStoriesResponse {

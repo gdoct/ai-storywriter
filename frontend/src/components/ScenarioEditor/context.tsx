@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useReducer } from 'react';
 import { ScenarioEditorAction, ScenarioEditorState } from './types';
+import { getDefaultVisibleTabs } from './utils/tabUtils';
 
 // Initial state
 const initialState: ScenarioEditorState = {
@@ -16,6 +17,7 @@ const initialState: ScenarioEditorState = {
     notes: '',
   },
   activeTab: 'general',
+  visibleTabs: ['general'], // Start with only the general tab visible
   isDirty: false,
   isLoading: false,
   isSaving: false,
@@ -33,9 +35,14 @@ function scenarioEditorReducer(
 ): ScenarioEditorState {
   switch (action.type) {
     case 'SET_SCENARIO':
+      // When setting a scenario, initialize visible tabs based on existing data
+      const visibleTabs = getDefaultVisibleTabs(action.payload);
+      
       return {
         ...state,
         scenario: action.payload,
+        visibleTabs,
+        activeTab: visibleTabs.includes(state.activeTab) ? state.activeTab : visibleTabs[0],
         isDirty: false,
         errors: {},
       };
@@ -43,13 +50,20 @@ function scenarioEditorReducer(
     case 'UPDATE_SCENARIO':
       return {
         ...state,
-        scenario: { ...state.scenario, ...action.payload },
+        scenario: { 
+          ...state.scenario, 
+          ...action.payload,
+          // Always persist current visible tabs with scenario data
+          visibleTabs: state.visibleTabs
+        },
         isDirty: true,
       };
     case 'DELETE_SCENARIO':
       return {
         ...state,
         scenario: initialState.scenario, // Reset to initial state
+        visibleTabs: ['general'], // Reset to default
+        activeTab: 'general',
         isDirty: false,
         errors: {},
       };
@@ -57,6 +71,36 @@ function scenarioEditorReducer(
       return {
         ...state,
         activeTab: action.payload,
+      };
+
+    case 'SET_VISIBLE_TABS':
+      return {
+        ...state,
+        visibleTabs: action.payload,
+        // Ensure active tab is visible
+        activeTab: action.payload.includes(state.activeTab) ? state.activeTab : action.payload[0],
+      };
+
+    case 'ADD_TAB':
+      if (state.visibleTabs.includes(action.payload)) {
+        return state; // Tab already visible
+      }
+      return {
+        ...state,
+        visibleTabs: [...state.visibleTabs, action.payload],
+        activeTab: action.payload, // Make the newly added tab active
+      };
+
+    case 'REMOVE_TAB':
+      if (action.payload === 'general') {
+        return state; // Cannot remove general tab
+      }
+      const newVisibleTabs = state.visibleTabs.filter(tabId => tabId !== action.payload);
+      return {
+        ...state,
+        visibleTabs: newVisibleTabs,
+        // If we're removing the active tab, switch to the first visible tab
+        activeTab: state.activeTab === action.payload ? newVisibleTabs[0] : state.activeTab,
       };
 
     case 'SET_DIRTY':

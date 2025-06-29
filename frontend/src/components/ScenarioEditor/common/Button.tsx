@@ -12,6 +12,7 @@ export interface ButtonProps {
   fullWidth?: boolean;
   type?: 'button' | 'submit' | 'reset';
   className?: string;
+  title?: string; // Optional title for the button  
 }
 
 export const Button: React.FC<ButtonProps> = ({
@@ -25,6 +26,7 @@ export const Button: React.FC<ButtonProps> = ({
   fullWidth = false,
   type = 'button',
   className = '',
+  title = '',
 }) => {
   const baseClasses = 'btn';
   const variantClass = `btn--${variant}`;
@@ -51,6 +53,7 @@ export const Button: React.FC<ButtonProps> = ({
       className={classes}
       onClick={disabled || loading ? undefined : onClick}
       disabled={disabled || loading}
+      title={title}
     >
       {loading && <div className="btn__spinner" />}
       {!loading && icon && <span className="btn__icon">{icon}</span>}

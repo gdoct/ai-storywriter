@@ -1,0 +1,479 @@
+/* LLM Settings Menu Styles */
+.llm-settings-menu {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+/* Toggle Button */
+.llm-settings-menu__toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  padding: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: #667eea;
+  font-size: 1.2rem;
+  width: 40px;
+  height: 40px;
+}
+
+.llm-settings-menu__toggle:hover:not(.llm-settings-menu__toggle--disabled) {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
+}
+
+.llm-settings-menu__toggle:active:not(.llm-settings-menu__toggle--disabled) {
+  transform: translateY(0);
+}
+
+.llm-settings-menu__toggle--disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Dropdown */
+.llm-settings-menu__dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 0.5rem;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  min-width: 300px;
+  z-index: 1000;
+  overflow: hidden;
+  animation: slideDown 0.2s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Header */
+.llm-settings-menu__header {
+  padding: 1rem 1rem 0.5rem 1rem;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.llm-settings-menu__header h3 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+/* Sections */
+.llm-settings-menu__section {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.llm-settings-menu__section:last-child {
+  border-bottom: none;
+}
+
+/* Model Selection */
+.llm-settings-menu__item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem;
+  background: none;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  font-size: 0.9rem;
+}
+
+.llm-settings-menu__item:hover {
+  background-color: #f8fafc;
+}
+
+.llm-settings-menu__item--expandable {
+  border: 1px solid #e2e8f0;
+}
+
+.llm-settings-menu__item-label {
+  font-weight: 500;
+  color: #374151;
+}
+
+.llm-settings-menu__item-value {
+  color: #6b7280;
+  font-size: 0.85rem;
+}
+
+.llm-settings-menu__expand-icon {
+  color: #9ca3af;
+  font-size: 0.75rem;
+  transition: transform 0.2s ease;
+}
+
+.llm-settings-menu__expand-icon.expanded {
+  transform: rotate(180deg);
+}
+
+/* Model Submenu */
+.llm-settings-menu__submenu {
+  margin-top: 0.5rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #fafbfc;
+}
+
+.llm-settings-menu__submenu-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.6rem 0.75rem;
+  background: none;
+  border: none;
+  border-bottom: 1px solid #e2e8f0;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  font-size: 0.85rem;
+}
+
+.llm-settings-menu__submenu-item:last-child {
+  border-bottom: none;
+}
+
+.llm-settings-menu__submenu-item:hover {
+  background-color: #f1f5f9;
+}
+
+.llm-settings-menu__submenu-item.selected {
+  background-color: #e0f2fe;
+  color: #0369a1;
+}
+
+.llm-settings-menu__submenu-item .model-name {
+  font-weight: 500;
+}
+
+.llm-settings-menu__submenu-item .model-provider {
+  font-size: 0.75rem;
+  color: #6b7280;
+  margin-left: 0.5rem;
+}
+
+.llm-settings-menu__submenu-item .checkmark {
+  color: #059669;
+  font-weight: bold;
+  font-size: 1rem;
+}
+
+/* Slider Group */
+.llm-settings-menu__slider-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.llm-settings-menu__label {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 0.25rem;
+}
+
+.llm-settings-menu__slider {
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: #e2e8f0;
+  outline: none;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.llm-settings-menu__slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #3b82f6;
+  cursor: pointer;
+  border: 2px solid white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.llm-settings-menu__slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #3b82f6;
+  cursor: pointer;
+  border: 2px solid white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.llm-settings-menu__slider-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: #6b7280;
+  margin-top: 0.25rem;
+}
+
+/* Seed Group */
+.llm-settings-menu__seed-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.llm-settings-menu__seed-controls {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.llm-settings-menu__seed-input {
+  flex: 1;
+  padding: 0.5rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  background: white;
+  transition: border-color 0.2s ease;
+}
+
+.llm-settings-menu__seed-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.llm-settings-menu__seed-button {
+  padding: 0.5rem;
+  background: #f3f4f6;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 1rem;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.llm-settings-menu__seed-button:hover {
+  background: #e5e7eb;
+  transform: translateY(-1px);
+}
+
+.llm-settings-menu__seed-hint {
+  font-size: 0.75rem;
+  color: #6b7280;
+  font-style: italic;
+}
+
+/* Footer-style controls for LLM Settings Menu */
+
+/* Model Selector (Footer style) */
+.llm-settings-menu .model-selector {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 14px;
+  color: #333;
+  width: 100%;
+}
+
+.llm-settings-menu .model-selector label {
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.llm-settings-menu__select {
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  background-color: white;
+  width: 100%;
+  min-height: 36px;
+  box-sizing: border-box;
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+}
+
+.llm-settings-menu__select:disabled {
+  background-color: #f9fafb;
+  color: #6b7280;
+  cursor: not-allowed;
+}
+
+.llm-settings-menu__select:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Temperature Control (Footer style) */
+.llm-settings-menu .temperature-control {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 14px;
+  color: #333;
+  width: 100%;
+}
+
+.llm-settings-menu .temperature-control label {
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.llm-settings-menu .temperature-control input[type="range"] {
+  width: 100%;
+  height: 20px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  border-radius: 3px;
+  outline: none;
+  cursor: pointer;
+}
+
+.llm-settings-menu .temperature-control input[type="range"]::-webkit-slider-track {
+  height: 6px;
+  background: #e2e8f0;
+  border-radius: 3px;
+}
+
+.llm-settings-menu .temperature-control input[type="range"]::-moz-range-track {
+  height: 6px;
+  background: #e2e8f0;
+  border-radius: 3px;
+  border: none;
+}
+
+.llm-settings-menu .temperature-control input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #3b82f6;
+  cursor: pointer;
+  transition: background 0.2s;
+  border: none;
+  margin-top: -5px;
+}
+
+.llm-settings-menu .temperature-control input[type="range"]::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #3b82f6;
+  cursor: pointer;
+  transition: background 0.2s;
+  border: none;
+  margin-top: -5px;
+}
+
+.llm-settings-menu .temperature-control input[type="range"]::-webkit-slider-thumb:hover {
+  background: #2563eb;
+}
+
+.llm-settings-menu .temperature-control input[type="range"]::-moz-range-thumb:hover {
+  background: #2563eb;
+}
+
+/* Seed Control (Footer style) */
+.llm-settings-menu .seed-control {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 14px;
+  color: #333;
+  width: 100%;
+}
+
+.llm-settings-menu .seed-control > label {
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.llm-settings-menu .seed-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.llm-settings-menu .seed-checkbox input[type="checkbox"] {
+  cursor: pointer;
+  width: 16px;
+  height: 16px;
+}
+
+.llm-settings-menu .seed-checkbox label {
+  cursor: pointer;
+  font-weight: normal;
+  font-size: 14px;
+}
+
+.llm-settings-menu .seed-control input[type="number"] {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  min-height: 36px;
+  box-sizing: border-box;
+  transition: border-color 0.2s ease;
+}
+
+.llm-settings-menu .seed-control input[type="number"]:disabled {
+  background-color: #f9fafb;
+  color: #6b7280;
+  cursor: not-allowed;
+}
+
+.llm-settings-menu .seed-control input[type="number"]:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .llm-settings-menu__dropdown {
+    min-width: 280px;
+    right: -1rem;
+  }
+  
+  .llm-settings-menu__seed-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .llm-settings-menu__seed-button {
+    width: 100%;
+  }
+}

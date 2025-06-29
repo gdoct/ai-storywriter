@@ -3,8 +3,9 @@
  * Provides role-based access control and user management
  */
 
-import React, { createContext, ReactNode, useContext, useEffect, useState } from 'react';
+import React, { createContext, ReactNode, useCallback, useContext, useEffect, useState } from 'react';
 import http from '../services/http';
+import { getUserCredits } from '../services/marketPlaceApi';
 import { AuthContextType, LoginResponse, Permission, UserProfile, UserRole, UserTier } from '../types/auth';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -26,6 +27,78 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
+  const logout = useCallback(() => {
+    // Clear localStorage
+    localStorage.removeItem('token');
+    localStorage.removeItem('username');
+    localStorage.removeItem('email');
+    localStorage.removeItem('tier');
+    localStorage.removeItem('user_id');
+    
+    // Reset state
+    setAuthenticated(false);
+    setUserProfile(null);
+    
+    // Redirect to login
+    window.location.href = '/login';
+  }, []);
+
+  const refreshProfile = useCallback(async (): Promise<void> => {
+    try {
+      const response = await http.get<UserProfile>('/api/me/profile');
+      const profile = response.data;
+      
+      // If credits aren't included in profile, fetch them separately
+      let credits = profile.credits || 0;
+      if (!profile.credits) {
+        try {
+          const creditsResponse = await getUserCredits();
+          credits = creditsResponse.credits;
+        } catch (creditsError) {
+          console.warn('Failed to fetch credits, defaulting to 0:', creditsError);
+          credits = 0;
+        }
+      }
+      
+      const updatedProfile: UserProfile = {
+        ...profile,
+        credits
+      };
+      
+      setUserProfile(updatedProfile);
+      setAuthenticated(true);
+      
+      // Update localStorage with latest info
+      localStorage.setItem('user_id', profile.user_id);
+      localStorage.setItem('username', profile.username);
+      localStorage.setItem('email', profile.email || '');
+      localStorage.setItem('tier', profile.tier);
+      
+    } catch (error) {
+      console.error('Failed to refresh profile:', error);
+      // If profile refresh fails, the token might be invalid
+      logout();
+      throw error;
+    }
+  }, [logout]);
+
+  const refreshCredits = useCallback(async (): Promise<void> => {
+    if (!authenticated || !userProfile) {
+      return;
+    }
+    
+    try {
+      const creditsResponse = await getUserCredits();
+      setUserProfile(prev => prev ? {
+        ...prev,
+        credits: creditsResponse.credits
+      } : prev);
+    } catch (error) {
+      console.error('Failed to refresh credits:', error);
+      // Don't throw here - credits refresh should be non-blocking
+    }
+  }, [authenticated, userProfile]);
+
   // Initialize auth state from localStorage
   useEffect(() => {
     const initializeAuth = async () => {
@@ -43,7 +116,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     };
 
     initializeAuth();
-  }, []);
+  }, [refreshProfile, logout]);
 
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
@@ -66,7 +139,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           email: userEmail,
           tier,
           roles,
-          permissions
+          permissions,
+          credits: 0 // Will be updated by refreshProfile
         };
         
         setUserProfile(profile);
@@ -83,44 +157,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       return false;
     } finally {
       setLoading(false);
-    }
-  };
-
-  const logout = () => {
-    // Clear localStorage
-    localStorage.removeItem('token');
-    localStorage.removeItem('username');
-    localStorage.removeItem('email');
-    localStorage.removeItem('tier');
-    localStorage.removeItem('user_id');
-    
-    // Reset state
-    setAuthenticated(false);
-    setUserProfile(null);
-    
-    // Redirect to login
-    window.location.href = '/login';
-  };
-
-  const refreshProfile = async (): Promise<void> => {
-    try {
-      const response = await http.get<UserProfile>('/api/me/profile');
-      const profile = response.data;
-      
-      setUserProfile(profile);
-      setAuthenticated(true);
-      
-      // Update localStorage with latest info
-      localStorage.setItem('user_id', profile.user_id);
-      localStorage.setItem('username', profile.username);
-      localStorage.setItem('email', profile.email || '');
-      localStorage.setItem('tier', profile.tier);
-      
-    } catch (error) {
-      console.error('Failed to refresh profile:', error);
-      // If profile refresh fails, the token might be invalid
-      logout();
-      throw error;
     }
   };
 
@@ -159,6 +195,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     login,
     logout,
     refreshProfile,
+    refreshCredits,
     
     // Utility functions
     hasRole,

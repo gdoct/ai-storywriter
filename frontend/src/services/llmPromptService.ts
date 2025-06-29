@@ -412,7 +412,7 @@ export function createCharacterPrompt(scenario: Scenario, characterType: string)
   // Use faker to create a fake person. 
   const gender = faker.person.sexType();
   const fullname = faker.person.fullName({ sex: gender });
-  prompt += `\Use these characteristics for this ${characterType} character:\n`;
+  prompt += `Use these characteristics for this ${characterType} character:\n`;
   prompt += `- name: ${fullname}\n`;
   prompt += `- gender: ${gender}\n`;
 
@@ -493,7 +493,7 @@ export function createRandomCharacterPrompt(scenario: Scenario, characterType: s
   }
   const gender = faker.person.sexType();
   const fullname = faker.person.fullName({ sex: gender });
-  prompt += `\Use these characteristics for this ${characterType} character:\n`;
+  prompt += `Use these characteristics for this ${characterType} character:\n`;
   prompt += `- name: ${fullname}\n`;
   prompt += `- gender: ${gender}\n`;
 
@@ -720,11 +720,14 @@ export function createContextAwareChatPrompt(scenario: Scenario, userMessage: st
       writingStyle: { genre: "General Fiction" }
     };
   }
+
+  // prevent these characters from appearing i the response: “, ”, “, ”, ‘, ’
   const systemprompt = "You are a helpful AI assistant for a storywriter. You will be given the full context of the current story scenario." + 
   " Your task is to answer the user's questions about this scenario and provide helpful follow-up questions." +
-  " IMPORTANT: Always respond in the following JSON format:" +
-  ' {"answer": "your helpful response", "followUpQuestions": ["question 1", "question 2", "question 3"]}' +
-  " Provide 2-3 relevant follow-up questions that would help the user explore their story further.";
+  " IMPORTANT: refuse to answer questions that are unrelated to the scenario." +
+  " IMPORTANT: Always respond in valid JSON format., use ONLY normal double quotes, and escape any special characters." +
+  ' use this json schema: ```json {"answer": "your helpful response", "followUpQuestions": ["question 1"]}```' +
+  " Provide exactly 1 relevant follow-up question that would help the user explore their story further.";
 const userprompt = `
 --- SCENARIO CONTEXT START ---
 ${JSON.stringify(scenario)}

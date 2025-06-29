@@ -74,7 +74,7 @@ const creditPackages: CreditPackage[] = [
 const BuyCredits: React.FC = () => {
   const [selectedPackage, setSelectedPackage] = useState<CreditPackage | null>(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const { userProfile: authUserProfile } = useAuth();
+  const { userProfile: authUserProfile, refreshCredits } = useAuth();
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -117,6 +117,9 @@ const BuyCredits: React.FC = () => {
         credits: userProfile.credits + transaction.credits
       });
     }
+    
+    // Refresh credits in AuthContext to update all badges
+    await refreshCredits();
     
     setShowPaymentModal(false);
     setSelectedPackage(null);

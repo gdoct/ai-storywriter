@@ -1,3 +1,4 @@
+import axios from 'axios';
 import { Scenario } from '../types/ScenarioTypes';
 import { getToken } from './security';
 
@@ -103,4 +104,20 @@ export const uploadImageWithScenarioData = async (scenario: Scenario, imageFile:
   }
 
   return response.json();
+};
+
+/**
+ * Get a random scenario background image URL for a specific genre
+ */
+export const getRandomScenarioImage = async (genre: string): Promise<{ url: string }> => {
+  const params = {
+    genre: genre || 'general',
+    type: 'cover' // Updated to 'cover' as per backend requirements
+  };
+
+  const response = await axios.get<{ url: string }>('/api/images/random', {
+    params
+  });
+
+  return response.data;
 };

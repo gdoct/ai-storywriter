@@ -1,6 +1,6 @@
-import React, { useCallback, useRef, useState } from 'react';
-import { FaPlus, FaTrash, FaUser } from 'react-icons/fa';
-import { deleteScenarioImage, uploadScenarioImage } from '../../../services/scenarioImageService';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { FaDice, FaPlus, FaTrash, FaUser } from 'react-icons/fa';
+import { deleteScenarioImage, getRandomScenarioImage, uploadScenarioImage } from '../../../services/scenarioImageService';
 import { Scenario } from '../../../types/ScenarioTypes';
 import { showUserFriendlyError } from '../../../utils/errorHandling';
 import { Button } from '../common/Button';
@@ -10,16 +10,85 @@ interface ScenarioImageProps {
   scenario: Scenario;
   onScenarioChange: (updates: Partial<Scenario>) => void;
   className?: string;
+  genre?: string;
 }
 
 export const ScenarioImage: React.FC<ScenarioImageProps> = ({
   scenario,
   onScenarioChange,
-  className = ''
+  className = '',
+  genre
 }) => {
   const [isUploading, setIsUploading] = useState(false);
   const [imageError, setImageError] = useState(false);
+  const [isFetchingRandom, setIsFetchingRandom] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleRandomImage = useCallback(async () => {
+    if (!genre) return;
+    
+    setIsFetchingRandom(true);
+    try {
+      const result = await getRandomScenarioImage(genre);
+      onScenarioChange({
+        imageUrl: result.url,
+        imageId: undefined // This is a random image, not an uploaded one
+      });
+      setImageError(false);
+    } catch (error) {
+      console.error('Failed to get random image:', error);
+      showUserFriendlyError(
+        error instanceof Error ? error : new Error('Failed to get random image'),
+        'Random Image Error'
+      );
+    } finally {
+      setIsFetchingRandom(false);
+    }
+  }, [genre, onScenarioChange]);
+
+  // Auto-fetch random image when genre changes and no image is set
+  useEffect(() => {
+    if (genre && !scenario.imageUrl && !scenario.imageId) {
+      handleRandomImage();
+    }
+  }, [genre, scenario.imageUrl, scenario.imageId, handleRandomImage]);
+
+  const handleImageUpload = useCallback(async (file: File) => {
+    setIsUploading(true);
+    
+    try {
+      let result;
+      
+      if (scenario.id && scenario.id.trim() !== '') {
+        // If scenario has an ID, use the existing endpoint
+        result = await uploadScenarioImage(scenario.id, file);
+        
+        // Use the full scenario returned from backend if available, otherwise just update image info
+        if (result.scenario) {
+          onScenarioChange(result.scenario);
+        } else {
+          onScenarioChange({
+            imageId: result.imageId,
+            imageUrl: result.imageUrl
+          });
+        }
+      } else {
+        throw new Error('An active, saved scenario is required to upload an image');
+      }
+
+      // Reset image error state
+      setImageError(false);
+
+    } catch (error) {
+      console.error('Failed to upload image:', error);
+      showUserFriendlyError(
+        error instanceof Error ? error : new Error('Failed to upload image'),
+        'Upload Error'
+      );
+    } finally {
+      setIsUploading(false);
+    }
+  }, [scenario, onScenarioChange]);
 
   const handleImageSelect = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -39,43 +108,7 @@ export const ScenarioImage: React.FC<ScenarioImageProps> = ({
     }
 
     handleImageUpload(file);
-  }, []);
-
-  const handleImageUpload = useCallback(async (file: File) => {
-    setIsUploading(true);
-    try {
-      let result;
-      
-      if (scenario.id) {
-        // If scenario has an ID, use the existing endpoint
-        result = await uploadScenarioImage(scenario.id, file);
-        
-        // Update scenario with image information
-        onScenarioChange({
-          imageId: result.imageId,
-          imageUrl: result.imageUrl
-        });
-      } else {
-        // If scenario doesn't have an ID, upload with scenario data
-        result = await uploadScenarioImage(scenario.id, file);
-        
-        // Update the entire scenario with the saved version including image info
-        onScenarioChange(result.scenario);
-      }
-
-      // Reset image error state
-      setImageError(false);
-
-    } catch (error) {
-      console.error('Failed to upload image:', error);
-      showUserFriendlyError(
-        error instanceof Error ? error : new Error('Failed to upload image'),
-        'Upload Error'
-      );
-    } finally {
-      setIsUploading(false);
-    }
-  }, [scenario, onScenarioChange]);
+  }, [handleImageUpload]);
 
   const handleImageDelete = useCallback(async () => {
     if (!scenario.imageId) return;
@@ -142,17 +175,29 @@ export const ScenarioImage: React.FC<ScenarioImageProps> = ({
                   variant="ghost"
                   size="sm"
                   onClick={() => fileInputRef.current?.click()}
-                  disabled={isUploading}
+                  disabled={isUploading || isFetchingRandom}
                   icon={<FaPlus />}
                   className="scenario-image__action-btn"
                 >
                   Replace
                 </Button>
+                {genre && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleRandomImage}
+                    disabled={isUploading || isFetchingRandom}
+                    icon={<FaDice />}
+                    className="scenario-image__action-btn"
+                  >
+                    Random
+                  </Button>
+                )}
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={handleImageDelete}
-                  disabled={isUploading}
+                  disabled={isUploading || isFetchingRandom}
                   icon={<FaTrash />}
                   className="scenario-image__action-btn scenario-image__action-btn--danger"
                 >
@@ -163,25 +208,55 @@ export const ScenarioImage: React.FC<ScenarioImageProps> = ({
           </div>
         ) : (
           <div
-            className={`scenario-image__placeholder ${isUploading ? 'scenario-image__placeholder--uploading' : ''}`}
+            className={`scenario-image__placeholder ${(isUploading || isFetchingRandom) ? 'scenario-image__placeholder--uploading' : ''}`}
             onDragOver={handleDragOver}
             onDrop={handleDrop}
-            onClick={() => fileInputRef.current?.click()}
           >
             {isUploading ? (
               <>
                 <FaPlus className="scenario-image__placeholder-icon scenario-image__placeholder-icon--uploading" />
                 <span className="scenario-image__placeholder-text">Uploading...</span>
               </>
+            ) : isFetchingRandom ? (
+              <>
+                <FaDice className="scenario-image__placeholder-icon scenario-image__placeholder-icon--uploading" />
+                <span className="scenario-image__placeholder-text">Getting random image...</span>
+              </>
             ) : (
               <>
                 <FaUser className="scenario-image__placeholder-icon" />
-                <span className="scenario-image__placeholder-text">
-                  Click or drag image here
-                </span>
-                <span className="scenario-image__placeholder-hint">
-                  Add a cover image for your scenario
-                </span>
+                <div className="scenario-image__placeholder-content">
+                  <span className="scenario-image__placeholder-text">
+                    Click or drag image here{genre ? ', or get a random image' : ', or select a genre'}
+                  </span>
+                  <span className="scenario-image__placeholder-hint">
+                    Add a cover image for your scenario
+                  </span>
+                  <div className="scenario-image__placeholder-actions">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={isUploading || isFetchingRandom}
+                      icon={<FaPlus />}
+                      className="scenario-image__placeholder-btn"
+                    >
+                      Upload Image
+                    </Button>
+                    {genre && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleRandomImage}
+                        disabled={isUploading || isFetchingRandom}
+                        icon={<FaDice />}
+                        className="scenario-image__placeholder-btn"
+                      >
+                        Random Image
+                      </Button>
+                    )}
+                  </div>
+                </div>
               </>
             )}
           </div>

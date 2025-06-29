@@ -1,7 +1,7 @@
 import React from 'react';
 import { FaDice } from 'react-icons/fa';
 import { StyleSettings } from '../../../types/ScenarioTypes';
-import { Button } from '../common/Button';
+import { GENRE_OPTIONS, LANGUAGE_FLAGS, LANGUAGE_OPTIONS, STYLE_OPTIONS, THEME_OPTIONS, TONE_OPTIONS, WRITING_STYLE_VARIATIONS } from '../../../types/styleoptions';
 import { Dropdown } from '../common/Dropdown';
 import { Input } from '../common/Input';
 
@@ -12,15 +12,35 @@ interface StyleFieldsProps {
 }
 
 const StyleFields: React.FC<StyleFieldsProps> = ({ writingStyle, onStyleChange, randomizeField }) => {
-  const styleOptions = ['Modern', 'Classic', 'Minimalist', 'Gothic', 'Stream of consciousness', 'Epistolary', 'Journalistic', 'Academic', 'Poetic', 'Narrative', 'Descriptive', 'Persuasive', 'Technical', 'Lyrical', 'Dramatic'];
-  const genreOptions = ['Science Fiction', 'Drama', 'Adventure', 'Fantasy', 'Mystery', 'Romance', 'Horror', 'Comedy', 'Thriller', 'Historical Fiction', "autobiography", "Manual", 'Self-help', 'Biography', 'Non-fiction', 'Poetry', 'Satire', 'Dystopian', 'Cyberpunk', 'Magical Realism'];
-  const toneOptions = ['Serious', 'Humorous', 'Whimsical', 'Dark', 'Inspirational', 'Satirical', 'Suspenseful', 'Melancholic', 'Romantic', 'Philosophical', 'Optimistic', 'Pessimistic', 'Nostalgic', 'Critical', 'Reflective', 'Urgent', 'Detached', 'Intimate', 'Cynical', 'Hopeful'];
-  const languageOptions = ['Simple', 'Elaborate', 'Technical', 'Pirate', 'Conversational', 'Formal', 'Archaic', 'Slang-heavy',  'Minimal', 'Descriptive', 'Colloquial', 'Poetic', 'Jargon-heavy', 'Academic', 'Narrative', 'Journalistic', 'Lyrical', 'Streamlined', 'Verbose', 'Concise'];
-  const themeOptions = ['Coming of age', 'Redemption', 'Power and corruption', 'Love and sacrifice', 'Man vs. nature', 'Technology and humanity', 'Identity', 'Survival', 'Justice', 'Freedom', 'Isolation', 'Family and relationships', 'War and peace', 'Good vs. evil', 'Fate vs. free will', 'Memory and nostalgia', 'Courage and bravery', 'Greed and ambition', 'Tradition vs. change', 'Hope and despair', 'Truth and deception'];
+  const styleOptions = STYLE_OPTIONS;
+  const genreOptions = GENRE_OPTIONS;
+  const toneOptions = TONE_OPTIONS;
+  const communicationStyleOptions = WRITING_STYLE_VARIATIONS;
+  const themeOptions = THEME_OPTIONS;
+  const languageOptions = LANGUAGE_OPTIONS;
 
-  return (
+  // Render function for language options with flags
+  const renderLanguageOption = (language: string) => (
+    <>
+      <span style={{ fontSize: '1.2em', marginRight: '0.5rem' }}>
+        {LANGUAGE_FLAGS[language] || '🏳️'}
+      </span>
+      {language}
+    </>
+  );
+
+  const renderLanguageValue = (language: string) => (
+    <>
+      <span style={{ fontSize: '1.2em', marginRight: '0.5rem' }}>
+        {LANGUAGE_FLAGS[language] || '🏳️'}
+      </span>
+      {language}
+    </>
+  );
+
+    return (
     <div className="general-tab__style-grid">
-      <div className="general-tab__style-field ">
+      <div className="general-tab__style-field">
         <Dropdown
           label="Writing Style"
           value={writingStyle.style || ''}
@@ -28,16 +48,9 @@ const StyleFields: React.FC<StyleFieldsProps> = ({ writingStyle, onStyleChange, 
           options={styleOptions}
           className='writingstyle__dropdown'
           placeholder="Select or enter writing style..."
-        />
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => randomizeField('style', styleOptions)}
           icon={<FaDice />}
-          className="general-tab__randomize-btn"
-        >
-          Random
-        </Button>
+          onIconClick={() => randomizeField('style', styleOptions)}
+        />
       </div>
 
       <div className="general-tab__style-field">
@@ -48,16 +61,9 @@ const StyleFields: React.FC<StyleFieldsProps> = ({ writingStyle, onStyleChange, 
           options={genreOptions}
           className='genre__dropdown'
           placeholder="Select or enter genre..."
-        />
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => randomizeField('genre', genreOptions)}
           icon={<FaDice />}
-          className="general-tab__randomize-btn"
-        >
-          Random
-        </Button>
+          onIconClick={() => randomizeField('genre', genreOptions)}
+        />
       </div>
 
       <div className="general-tab__style-field">
@@ -68,36 +74,22 @@ const StyleFields: React.FC<StyleFieldsProps> = ({ writingStyle, onStyleChange, 
           options={toneOptions}
           className='tone__dropdown'
           placeholder="Select or enter tone..."
-        />
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => randomizeField('tone', toneOptions)}
           icon={<FaDice />}
-          className="general-tab__randomize-btn"
-        >
-          Random
-        </Button>
+          onIconClick={() => randomizeField('tone', toneOptions)}
+        />
       </div>
 
       <div className="general-tab__style-field">
         <Dropdown
-          label="Language Style"
-          value={writingStyle.language || ''}
-          onChange={(value) => onStyleChange('language', value)}
-          options={languageOptions}
-          className='language__dropdown'
-          placeholder="Select or enter language style..."
-        />
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => randomizeField('language', languageOptions)}
+          label="Type of language"
+          value={writingStyle.communicationStyle || ''}
+          onChange={(value) => onStyleChange('communicationStyle', value)}
+          options={communicationStyleOptions}
+          className='communicationStyle__dropdown'
+          placeholder="Select or enter the type of communication..."
           icon={<FaDice />}
-          className="general-tab__randomize-btn"
-        >
-          Random
-        </Button>
+          onIconClick={() => randomizeField('communicationStyle', communicationStyleOptions)}
+        />
       </div>
 
       <div className="general-tab__style-field">
@@ -108,16 +100,25 @@ const StyleFields: React.FC<StyleFieldsProps> = ({ writingStyle, onStyleChange, 
           options={themeOptions}
           className='theme__dropdown'
           placeholder="Select or enter theme..."
-        />
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => randomizeField('theme', themeOptions)}
           icon={<FaDice />}
-          className="general-tab__randomize-btn"
-        >
-          Random
-        </Button>
+          onIconClick={() => randomizeField('theme', themeOptions)}
+        />
+      </div>
+
+
+      <div className="general-tab__style-field">
+        <Dropdown
+          label="Language"
+          value={writingStyle.language || 'English'}
+          onChange={(value) => onStyleChange('language', value)}
+          options={languageOptions}
+          className="language__dropdown"
+          placeholder="Select language..."
+          readOnly
+          renderOption={renderLanguageOption}
+          renderValue={renderLanguageValue}
+        />
+
       </div>
 
       <div className="general-tab__style-field general-tab__style-field--full">

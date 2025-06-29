@@ -3,9 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import HeaderSection from '../components/MarketPlace/HeaderSection';
 import QuickActions from '../components/MarketPlace/QuickActions';
 import StorySections from '../components/MarketPlace/StorySections';
-import StoryTooltip from '../components/MarketPlace/StoryTooltip';
 import { useAuth } from '../contexts/AuthContext';
-import { useAuthenticatedUser } from '../contexts/AuthenticatedUserContext';
 import { getByGenre, getLatest, getMostPopular, getStaffPicks, getTopRated } from '../services/marketPlaceApi';
 import { MarketStoryCard } from '../types/marketplace';
 import './Marketplace.css';
@@ -20,10 +18,7 @@ interface SectionData {
 const Marketplace: React.FC = () => {
   const navigate = useNavigate();
   const { hasRole } = useAuth();
-  const { creditRefreshTrigger } = useAuthenticatedUser(); // Ensure creditRefreshTrigger is of type number
   const [searchQuery, setSearchQuery] = useState('');
-  const [showTooltip, setShowTooltip] = useState(false);
-  const [selectedStoryId, setSelectedStoryId] = useState<number | null>(null);
   const [sections, setSections] = useState<Record<string, SectionData>>({
     staffPicks: { title: 'Staff Picks', stories: [], loading: true, error: null },
     topRated: { title: 'Top Rated', stories: [], loading: true, error: null },
@@ -75,16 +70,6 @@ const Marketplace: React.FC = () => {
     }
   };
 
-  const handleStoryClick = (storyId: number) => {
-    setSelectedStoryId(storyId);
-    setShowTooltip(true);
-  };
-
-  const handleCloseTooltip = () => {
-    setShowTooltip(false);
-    setSelectedStoryId(null);
-  };
-
   const handleViewMore = (sectionKey: string) => {
     const sectionTitles: Record<string, string> = {
       topRated: 'top-rated',
@@ -113,7 +98,7 @@ const Marketplace: React.FC = () => {
         <HeaderSection
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
-          creditRefreshTrigger={creditRefreshTrigger}
+          onSearch={handleSearch}
         />
 
         <QuickActions />
@@ -123,12 +108,7 @@ const Marketplace: React.FC = () => {
           hasRole={hasRole}
           handleModerationAction={handleModerationAction}
           loadSections={loadSections}
-        />
-
-        <StoryTooltip
-          storyId={selectedStoryId}
-          showTooltip={showTooltip}
-          handleCloseTooltip={handleCloseTooltip}
+          onViewMore={handleViewMore}
         />
       </div>
     </div>

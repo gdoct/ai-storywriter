@@ -227,7 +227,7 @@ const ImportModal: React.FC<ImportModalProps> = ({
                   if (styleContent.style) parts.push(`Style: ${styleContent.style}`);
                   if (styleContent.genre) parts.push(`Genre: ${styleContent.genre}`);
                   if (styleContent.tone) parts.push(`Tone: ${styleContent.tone}`);
-                  if (styleContent.language) parts.push(`Language: ${styleContent.language}`);
+                  if (styleContent.writingStyle) parts.push(`Language: ${styleContent.writingStyle}`);
                   if (styleContent.theme) parts.push(`Theme: ${styleContent.theme}`);
                   return parts.length > 0 ? parts.join(', ') : 'No style settings found';
                 } else {

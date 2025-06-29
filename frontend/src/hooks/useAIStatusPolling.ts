@@ -7,7 +7,6 @@ export function useAIStatusPolling(interval: number = DEFAULT_POLL_INTERVAL) {
   const { setAiStatus } = useAIStatus();
 
   useEffect(() => {
-    let isMounted = true;
     let timeout: NodeJS.Timeout;
 
     const poll = async () => {
@@ -18,7 +17,6 @@ export function useAIStatusPolling(interval: number = DEFAULT_POLL_INTERVAL) {
     };
     poll();
     return () => {
-      isMounted = false;
       if (timeout) clearTimeout(timeout);
     };
   }, [interval, setAiStatus]);

@@ -1,4 +1,4 @@
-import React, { Dispatch, SetStateAction, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   DashboardHeader,
@@ -13,7 +13,6 @@ import { useAuth } from '../contexts/AuthContext';
 import { useModals } from '../hooks/useModals';
 import {
   DashboardStats,
-  deleteScenario,
   fetchDashboardStats,
   fetchRecentScenarios,
   fetchRecentStories,
@@ -23,16 +22,15 @@ import {
 import './Dashboard.css';
 
 interface DashboardProps {
-  setIsLoading: Dispatch<SetStateAction<boolean>>;
-  seed?: number | null;
+  // No props needed anymore
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ setIsLoading }) => {
+const Dashboard: React.FC<DashboardProps> = () => {
   const { userProfile } = useAuth();
   const username = userProfile?.username;
   const email = userProfile?.email;
   const navigate = useNavigate();
-  const { alertState, confirmState, hideAlert, hideConfirm, customAlert, customConfirm } = useModals();
+  const { alertState, confirmState, hideAlert, hideConfirm, customAlert } = useModals();
   
   // State for dashboard data
   const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -50,7 +48,6 @@ const Dashboard: React.FC<DashboardProps> = ({ setIsLoading }) => {
     const loadDashboardData = async () => {
       try {
         setLoading(true);
-        setIsLoading(true);
         
         // Fetch all dashboard data in parallel
         const [statsData, scenariosData, storiesData] = await Promise.all([
@@ -68,50 +65,15 @@ const Dashboard: React.FC<DashboardProps> = ({ setIsLoading }) => {
         setError('Failed to load dashboard data. Please try refreshing the page.');
       } finally {
         setLoading(false);
-        setIsLoading(false);
       }
     };
 
     loadDashboardData();
-  }, [setIsLoading]);
+  }, []);
 
   const handleEditScenario = (scenarioId: string) => {
     // Navigate to the scenario editor with the specific scenario ID
     navigate(`/app?scenario=${scenarioId}`);
-  };
-
-  const handleDeleteScenario = async (scenarioId: string, scenarioTitle: string) => {
-    const confirmed = await customConfirm(
-      `Are you sure you want to delete "${scenarioTitle}"? This action cannot be undone.`,
-      {
-        title: 'Confirm Delete',
-        confirmText: 'Delete',
-        cancelText: 'Cancel',
-        variant: 'danger'
-      }
-    );
-
-    if (!confirmed) {
-      return;
-    }
-    
-    try {
-      await deleteScenario(scenarioId);
-      
-      // Reload dashboard data
-      const [statsData, scenariosData, storiesData] = await Promise.all([
-        fetchDashboardStats(),
-        fetchRecentScenarios(5, 0),
-        fetchRecentStories(4, 0)
-      ]);
-      
-      setStats(statsData);
-      setRecentScenarios(scenariosData.scenarios);
-      setRecentStories(storiesData.stories);
-    } catch (err) {
-      console.error('Error deleting scenario:', err);
-      customAlert('Failed to delete scenario. Please try again.', 'Error');
-    }
   };
 
   const handleReadStory = async (story: RecentStory) => {

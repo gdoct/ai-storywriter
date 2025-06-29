@@ -119,6 +119,11 @@ def delete_scenario(scenario_id):
     user = UserRepository.get_user_by_username(username)
     if not user:
         return jsonify({'error': 'User not found'}), 404
+    
+    # Delete all stories associated with this scenario first
+    GeneratedTextRepository.delete_stories_by_scenario(scenario_id)
+    
+    # Then delete the scenario
     ScenarioRepository.delete_scenario(scenario_id)
     return jsonify({'success': True})
 
@@ -127,22 +132,32 @@ def delete_scenario(scenario_id):
 @scenario_bp.route('/api/story/<string:scenario_id>', methods=['GET'])
 @jwt_required()
 def get_stories(scenario_id):
-    """Get all stories for a scenario with preview text only (first 50 chars) to save bandwidth"""
+    """Get all stories for a scenario with preview text only (first 50 words) to save bandwidth"""
     stories = GeneratedTextRepository.get_stories_by_scenario(scenario_id)
-    result = [
-        {
+    result = []
+    for s in stories:
+        # Extract first 50 words from the story text
+        words = s['text'].split()
+        preview_words = words[:50]
+        preview_text = ' '.join(preview_words)
+        
+        # Add ellipsis if there are more than 50 words
+        if len(words) > 50:
+            preview_text += '...'
+        
+        result.append({
             'id': s['id'],
-            'text': s['text'][:50] + ('...' if len(s['text']) > 50 else ''),  # Only first 50 chars
-            'full_text_available': len(s['text']) > 50,
+            'text': preview_text,
+            'full_text_available': len(words) > 50,
             'created_at': s['created_at']
-        } for s in stories
-    ]
+        })
+    
     return jsonify(result)
 
 @scenario_bp.route('/api/story/single/<int:story_id>', methods=['GET'])
 @jwt_required()
 def get_single_story(story_id):
-    """Get a single story by ID - optimized endpoint for Stories page"""
+    """Get a single story by ID - optimized endpoint for Stories page (excludes scenario data)"""
     try:
         story = GeneratedTextRepository.get_story_by_id(story_id)
         if not story:
@@ -153,6 +168,7 @@ def get_single_story(story_id):
             'text': story['text'],
             'created_at': story['created_at'],
             'scenario_id': story['scenario_id']
+            # Note: deliberately excluding scenario_json to reduce payload size
         })
     except Exception as e:
         current_app.logger.error(f"Error getting single story {story_id}: {e}")
@@ -163,9 +179,17 @@ def get_single_story(story_id):
 def save_story(scenario_id):
     data = request.json
     content = data.get('content')
+    scenario_json = data.get('scenario')  # Get the scenario JSON from the request
+    
     if not content:
         return jsonify({'error': 'Content is required'}), 400
-    story = GeneratedTextRepository.create_story(scenario_id, content)
+    
+    # Convert scenario object to JSON string if it's provided
+    scenario_json_str = None
+    if scenario_json:
+        scenario_json_str = json.dumps(scenario_json)
+    
+    story = GeneratedTextRepository.create_story(scenario_id, content, scenario_json_str)
     return jsonify({
         'id': story['id'],
         'content': story['text'],

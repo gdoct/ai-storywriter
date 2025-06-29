@@ -39,7 +39,7 @@ export const PermissionGate: React.FC<PermissionGateProps> = ({
   children,
   requireAuth = true
 }) => {
-  const { authenticated, userProfile, hasRole, hasPermission, hasTier, hasMinimumTier } = useAuth();
+  const { authenticated, hasRole, hasPermission, hasTier, hasMinimumTier } = useAuth();
 
   // Check authentication requirement
   if (requireAuth && !authenticated) {

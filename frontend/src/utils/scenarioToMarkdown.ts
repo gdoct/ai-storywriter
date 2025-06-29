@@ -2,6 +2,7 @@ import { Scenario } from "../types/ScenarioTypes";
 
 export function scenarioStyleToMarkdown(scenario: Scenario): string {
     let markdown = `## Writing style\n\n`;
+    markdown += `- **Language**: ${scenario.writingStyle?.language || "English"}\n\n`;
     
     if (scenario.writingStyle?.genre) {
         markdown += `   - Genre: ${scenario.writingStyle.genre}\n`;
@@ -15,8 +16,8 @@ export function scenarioStyleToMarkdown(scenario: Scenario): string {
         markdown += `   - Tone: ${scenario.writingStyle.tone}\n`;
     }
 
-    if (scenario.writingStyle?.language) {
-        markdown += `   - Language: ${scenario.writingStyle.language}\n`;
+    if (scenario.writingStyle?.communicationStyle) {
+        markdown += `   - Communication style: ${scenario.writingStyle.communicationStyle}\n`;
     }
 
     if (scenario.writingStyle?.theme) {

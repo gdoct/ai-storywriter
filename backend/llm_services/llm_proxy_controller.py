@@ -159,9 +159,13 @@ def proxy_chat_completions():
                                 yield "data: [DONE]\\n\\n" # Ensure DONE is also properly formatted for SSE
                                 continue
                             
-                            chunk_json = json.loads(content_str)
+                            try:
+                                chunk_json = json.loads(content_str)
+                            except json.JSONDecodeError:
+                                chunk_json = None
+
                             delta_content = None
-                            if chunk_json.get('choices') and len(chunk_json['choices']) > 0:
+                            if isinstance(chunk_json, dict) and chunk_json.get('choices') and len(chunk_json['choices']) > 0:
                                 delta = chunk_json['choices'][0].get('delta')
                                 if delta:
                                     delta_content = delta.get('content')

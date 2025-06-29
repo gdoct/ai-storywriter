@@ -3,7 +3,7 @@
 /* Floating Chat Button */
 .chat-agent-button {
   position: fixed;
-  bottom: 2rem;
+  bottom: 4rem;
   right: 2rem;
   width: 4rem;
   height: 4rem;
@@ -18,7 +18,7 @@
   justify-content: center;
   font-size: 1.5rem;
   transition: all 0.3s ease;
-  z-index: 9999;
+  z-index: 999;
 }
 
 .chat-agent-button:hover {
@@ -183,14 +183,15 @@
 .chat-agent-message {
   margin-bottom: 1rem;
   display: flex;
+  flex-direction: column;
 }
 
 .chat-agent-message--user {
-  justify-content: flex-end;
+  align-items: flex-end;
 }
 
 .chat-agent-message--assistant {
-  justify-content: flex-start;
+  align-items: flex-start;
 }
 
 .chat-agent-message__content {
@@ -271,8 +272,19 @@
   cursor: not-allowed;
 }
 
-.chat-agent-send-btn {
-  align-self: flex-end;
+.chat-agent-input-buttons {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-end;
+}
+
+.chat-agent-refresh-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.5rem;
+  height: 2.5rem;
+  padding: 0.5rem;
 }
 
 /* Responsive Design */
@@ -329,8 +341,16 @@
     flex-direction: column;
   }
 
+  .chat-agent-input-buttons {
+    flex-direction: row;
+  }
+
   .chat-agent-send-btn {
-    align-self: stretch;
+    flex: 1;
+  }
+
+  .chat-agent-refresh-btn {
+    min-width: 3rem;
   }
 }
 
@@ -339,6 +359,11 @@
   margin-top: 1rem;
   padding-top: 0.75rem;
   border-top: 1px solid rgba(229, 231, 235, 0.5);
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  max-width: 80%;
+  width: 100%;
 }
 
 .chat-agent-followup-questions__label {
@@ -355,12 +380,13 @@
   border: 1px solid rgba(59, 130, 246, 0.2);
   color: #3b82f6;
   padding: 0.5rem 0.75rem;
-  margin: 0.25rem 0;
+  margin: 0;
   border-radius: 0.375rem;
   cursor: pointer;
   font-size: 0.875rem;
   text-align: left;
   transition: all 0.2s ease;
+  flex-shrink: 0;
 }
 
 .chat-agent-followup-question:hover:not(:disabled) {
