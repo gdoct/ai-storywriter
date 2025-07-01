@@ -9,12 +9,13 @@ The frontend is developed using React and TypeScript.
 The backend is built with Python and Flask, offering a REST API for handling requests and managing data.
 
 ## Screenshot
-(this gif is in ultra low visual quality to save bandwidth)
-![StoryWriter Screenshot](frontend/img/screen-recording.gif)
+![image](https://github.com/user-attachments/assets/542c2645-696a-47ca-a7b5-c5ddfe8622f6)
+
 
 ## Features
 - **Scenario Creation & Editing:** Build detailed scenarios with a user-friendly interface.
 - **AI Story Generation:** Send your scenarios to an AI model and receive unique stories based on your input.
+- **Chat with AI about your scenario**
 - **AI Scenario Generation:** Generate or refine your scenarios using AI models, allowing for creative and unexpected story prompts.
 - **Doesn't strictly require local AI:** While it can connect to local AI models, you can preview the prompts it generates and try them on other chatbots or AI services.
 - **Story Preview:** View generated stories in a clean, readable format.
