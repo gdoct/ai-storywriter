@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
+import { AiStoryReader } from '@drdata/docomo';
 import MarkdownViewer from '../ReadingPane/MarkDownViewer';
 import TTSPlayer from '../TTS/TTSPlayer';
-import './StoryReader.css';
 
 interface StoryReaderProps {
   content: string;
@@ -46,59 +46,94 @@ const StoryReader: React.FC<StoryReaderProps> = ({
 
   if (isLoading) {
     return (
-      <div className="story-reader">
-        <div className="story-reader-loading">
-          <div className="loading-spinner"></div>
-          <p>Loading story content...</p>
+      <div style={{ 
+        display: 'flex', 
+        flexDirection: 'column', 
+        alignItems: 'center', 
+        justifyContent: 'center',
+        padding: 'var(--spacing-5xl)',
+        color: 'var(--color-text-secondary)'
+      }}>
+        <div style={{ 
+          fontSize: 'var(--font-size-lg)',
+          marginBottom: 'var(--spacing-md)'
+        }}>
+          Loading story content...
         </div>
       </div>
     );
   }
 
   return (
-    <div className="story-reader">
-      {/* Reading Controls */}
-      <div className="story-reader-controls">
-        <div className="font-controls">
-          <div className="control-group">
-            <label htmlFor="font-selector">Font:</label>
-            <select
-              id="font-selector"
-              value={fontFamily}
-              onChange={e => setFontFamily(e.target.value)}
-            >
-              {fontOptions.map(font => (
-                <option key={font} value={font}>{font}</option>
-              ))}
-            </select>
-          </div>
-          <div className="control-group">
-            <label htmlFor="size-selector">Size:</label>
-            <select
-              id="size-selector"
-              value={fontSize}
-              onChange={e => setFontSize(e.target.value)}
-            >
-              {sizeOptions.map(size => (
-                <option key={size} value={size}>{size}</option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        <div className="action-controls">
+    <div style={{ 
+      background: 'var(--color-surface)',
+      borderRadius: 'var(--radius-lg)',
+      padding: 'var(--spacing-lg)'
+    }}>
+      {/* Action Controls */}
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 'var(--spacing-lg)',
+        borderBottom: '1px solid var(--color-border)',
+        paddingBottom: 'var(--spacing-md)'
+      }}>
+        <h2 style={{
+          fontSize: 'var(--font-size-xl)',
+          fontWeight: 'var(--font-weight-bold)',
+          color: 'var(--color-text-primary)',
+          margin: 0
+        }}>
+          {title || 'Story Reader'}
+        </h2>
+        
+        <div style={{ display: 'flex', gap: 'var(--spacing-sm)' }}>
           {onDownload && (
-            <button className="btn btn-secondary" onClick={onDownload}>
+            <button 
+              onClick={onDownload}
+              style={{
+                padding: 'var(--spacing-sm) var(--spacing-md)',
+                background: 'var(--color-secondary)',
+                color: 'var(--color-secondary-contrast)',
+                border: 'none',
+                borderRadius: 'var(--radius-sm)',
+                cursor: 'pointer',
+                fontSize: 'var(--font-size-sm)'
+              }}
+            >
               📥 Download
             </button>
           )}
           {onEditScenario && (
-            <button className="btn btn-primary" onClick={onEditScenario}>
+            <button 
+              onClick={onEditScenario}
+              style={{
+                padding: 'var(--spacing-sm) var(--spacing-md)',
+                background: 'var(--color-primary)',
+                color: 'var(--color-primary-contrast)',
+                border: 'none',
+                borderRadius: 'var(--radius-sm)',
+                cursor: 'pointer',
+                fontSize: 'var(--font-size-sm)'
+              }}
+            >
               ✏️ Edit Scenario
             </button>
           )}
           {onDelete && (
-            <button className="btn btn-danger" onClick={onDelete}>
+            <button 
+              onClick={onDelete}
+              style={{
+                padding: 'var(--spacing-sm) var(--spacing-md)',
+                background: 'var(--color-error)',
+                color: 'var(--color-error-contrast)',
+                border: 'none',
+                borderRadius: 'var(--radius-sm)',
+                cursor: 'pointer',
+                fontSize: 'var(--font-size-sm)'
+              }}
+            >
               🗑️ Delete Story
             </button>
           )}
@@ -107,14 +142,23 @@ const StoryReader: React.FC<StoryReaderProps> = ({
 
       {/* Story Metadata */}
       {metadata && (
-        <div className="story-reader-metadata">
-          <div className="metadata-item">
+        <div style={{
+          display: 'flex',
+          gap: 'var(--spacing-lg)',
+          marginBottom: 'var(--spacing-lg)',
+          padding: 'var(--spacing-md)',
+          background: 'var(--color-background)',
+          borderRadius: 'var(--radius-sm)',
+          fontSize: 'var(--font-size-sm)',
+          color: 'var(--color-text-secondary)'
+        }}>
+          <div>
             <strong>Scenario:</strong> {metadata.scenario}
           </div>
-          <div className="metadata-item">
+          <div>
             <strong>Created:</strong> {metadata.created}
           </div>
-          <div className="metadata-item">
+          <div>
             <strong>Word Count:</strong> {metadata.wordCount} words
           </div>
         </div>
@@ -122,31 +166,33 @@ const StoryReader: React.FC<StoryReaderProps> = ({
 
       {/* Text-to-Speech Player */}
       {content && (
-        <TTSPlayer 
-          text={content}
-          className="story-reader-tts"
-        />
+        <div style={{ marginBottom: 'var(--spacing-lg)' }}>
+          <TTSPlayer 
+            text={content}
+          />
+        </div>
       )}
 
-      {/* Story Content */}
-      <div 
-        className="story-reader-content"
-        style={{
-          fontSize: fontSize,
-          fontFamily: fontFamily,
-        }}
-      >
-        {content ? (
-          <>
-            <div className="saved-story-badge">Saved Story</div>
-            <MarkdownViewer content={content} isGenerating={false} />
-          </>
-        ) : (
-          <div className="story-reader-empty">
-            <p>No story content available.</p>
-          </div>
-        )}
-      </div>
+      {/* AI Story Reader */}
+      {content ? (
+        <AiStoryReader
+          text={content}
+          font={fontFamily}
+          fontSize={fontSize}
+          onFontChange={setFontFamily}
+          onFontSizeChange={setFontSize}
+          availableFonts={fontOptions}
+          availableFontSizes={sizeOptions}
+        />
+      ) : (
+        <div style={{ 
+          textAlign: 'center',
+          padding: 'var(--spacing-4xl)',
+          color: 'var(--color-text-secondary)'
+        }}>
+          <p>No story content available.</p>
+        </div>
+      )}
     </div>
   );
 };

@@ -1,5 +1,5 @@
-import React, { useEffect, useRef, useState } from 'react';
-import './Dropdown.css';
+import { AiDropdown, Label } from '@drdata/docomo';
+import React from 'react';
 
 export interface DropdownProps {
   label?: string;
@@ -11,7 +11,6 @@ export interface DropdownProps {
   readOnly?: boolean;
   error?: string;
   className?: string;
-  icon?: React.ReactNode;
   onIconClick?: () => void;
   renderOption?: (option: string) => React.ReactNode;
   renderValue?: (value: string) => React.ReactNode;
@@ -27,114 +26,52 @@ export const Dropdown: React.FC<DropdownProps> = ({
   readOnly = false,
   error,
   className = '',
-  icon,
   onIconClick,
   renderOption,
   renderValue,
 }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [openUpward, setOpenUpward] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (isOpen && dropdownRef.current) {
-      const rect = dropdownRef.current.getBoundingClientRect();
-      const windowHeight = window.innerHeight;
-      const footerHeight = 60; // Footer height
-      const dropdownHeight = 200; // Max height of dropdown options
-      
-      // Check if there's enough space below, accounting for footer
-      const spaceBelow = windowHeight - footerHeight - rect.bottom;
-      setOpenUpward(spaceBelow < dropdownHeight);
-    }
-  }, [isOpen]);
-
-  const handleInputClick = () => {
-    if (!disabled) {
-      setIsOpen(true);
-    }
-  };
-
-  const handleOptionClick = (option: string) => {
-    onChange(option);
-    setIsOpen(false);
-  };
-
-  const handleIconClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleAiGenerate = () => {
     if (onIconClick) {
       onIconClick();
     }
   };
 
-  const baseClasses = 'dropdown-field';
-  const errorClass = error ? 'dropdown-field--error' : '';
-  const disabledClass = disabled ? 'dropdown-field--disabled' : '';
-  const iconClass = icon ? 'dropdown-field--with-icon' : '';
+  // Convert string options to DropdownOption format for AiDropdown
+  const dropdownOptions: Array<{value: string; label: string; disabled?: boolean}> = options.map(option => ({
+    value: option,
+    label: option,
+    disabled: false,
+  }));
 
-  const containerClasses = [
-    baseClasses,
-    errorClass,
-    disabledClass,
-    iconClass,
-    className,
-  ]
-    .filter(Boolean)
-    .join(' ');
+  // Create render functions that work with DropdownOption objects
+  const handleRenderOption = renderOption ? (option: {value: string; label: string; disabled?: boolean}) => renderOption(option.value) : undefined;
+  const handleRenderValue = renderValue;
 
   return (
-    <div className={containerClasses} ref={dropdownRef}>
+    <div style={{ marginBottom: error ? 'var(--spacing-sm)' : 'var(--spacing-md)' }}>
       {label && (
-        <label className="dropdown-field__label">{label}</label>
+        <Label 
+          style={{ 
+            marginBottom: 'var(--spacing-xs)',
+            display: 'block'
+          }}
+        >
+          {label}
+        </Label>
       )}
-      <div className="dropdown-field__wrapper">
-        {icon && (
-          <button
-            type="button"
-            onClick={handleIconClick}
-            className="dropdown-field__icon"
-            disabled={disabled}
-          >
-            {icon}
-          </button>
-        )}
-        {(readOnly && renderValue) ? (
-          <div
-            onClick={handleInputClick}
-            onBlur={() => setTimeout(() => setIsOpen(false), 200)}
-            className="dropdown-field__input dropdown-field__input--readonly"
-            tabIndex={disabled ? -1 : 0}
-          >
-            {value ? renderValue(value) : <span className="dropdown-field__placeholder">{placeholder}</span>}
-          </div>
-        ) : (
-          <input
-            type="text"
-            value={value}
-            onChange={(e) => !readOnly && onChange(e.target.value)}
-            onClick={handleInputClick}
-            onBlur={() => setTimeout(() => setIsOpen(false), 200)}
-            placeholder={placeholder}
-            disabled={disabled}
-            readOnly={readOnly}
-            className="dropdown-field__input"
-          />
-        )}
-        {isOpen && !disabled && (
-          <ul className={`dropdown-field__options ${openUpward ? 'dropdown-field__options--upward' : ''}`}>
-            {options.map((option, index) => (
-              <li
-                key={index}
-                onClick={() => handleOptionClick(option)}
-                className="dropdown-field__option"
-              >
-                {renderOption ? renderOption(option) : option}
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
-      {error && <span className="dropdown-field__error">{error}</span>}
+      
+      <AiDropdown
+        value={value}
+        onChange={onChange}
+        options={dropdownOptions}
+        placeholder={placeholder}
+        disabled={disabled || readOnly}
+        errorMessage={error}
+        className={className}
+        onAiClick={onIconClick ? handleAiGenerate : undefined}
+        renderOption={handleRenderOption}
+        renderValue={handleRenderValue}
+       />
     </div>
   );
 };

@@ -1,5 +1,5 @@
+import { Button as DocomoButton } from '@drdata/docomo';
 import React from 'react';
-import './Button.css';
 
 export interface ButtonProps {
   children: React.ReactNode;
@@ -12,7 +12,10 @@ export interface ButtonProps {
   fullWidth?: boolean;
   type?: 'button' | 'submit' | 'reset';
   className?: string;
-  title?: string; // Optional title for the button  
+  title?: string;
+  as?: React.ElementType;
+  to?: string;
+  href?: string;
 }
 
 export const Button: React.FC<ButtonProps> = ({
@@ -27,37 +30,56 @@ export const Button: React.FC<ButtonProps> = ({
   type = 'button',
   className = '',
   title = '',
+  as,
+  to,
+  href,
+  ...otherProps
 }) => {
-  const baseClasses = 'btn';
-  const variantClass = `btn--${variant}`;
-  const sizeClass = `btn--${size}`;
-  const fullWidthClass = fullWidth ? 'btn--full-width' : '';
-  const disabledClass = (disabled || loading) ? 'btn--disabled' : '';
-  const loadingClass = loading ? 'btn--loading' : '';
+  // Map custom variants to docomo variants
+  const mapVariant = (v: string) => {
+    switch (v) {
+      case 'ghost': return 'secondary';
+      case 'success': return 'primary'; // Map success to primary for now
+      default: return v as 'primary' | 'secondary' | 'danger';
+    }
+  };
 
-  const classes = [
-    baseClasses,
-    variantClass,
-    sizeClass,
-    fullWidthClass,
-    disabledClass,
-    loadingClass,
-    className,
-  ]
-    .filter(Boolean)
-    .join(' ');
+  // Map custom sizes to docomo sizes
+  const mapSize = (s: string) => {
+    switch (s) {
+      case 'sm': return 'sm';
+      case 'md': return 'm';
+      case 'lg': return 'l';
+      default: return 'm' as 'sm' | 'm' | 'l' | 'xl';
+    }
+  };
 
   return (
-    <button
+    <DocomoButton
+      as={as}
+      to={to}
+      href={href}
+      variant={mapVariant(variant)}
+      size={mapSize(size)}
+      disabled={disabled}
+      loading={loading}
+      icon={icon}
+      fullWidth={fullWidth}
       type={type}
-      className={classes}
-      onClick={disabled || loading ? undefined : onClick}
-      disabled={disabled || loading}
+      className={className}
       title={title}
+      onClick={onClick}
+      style={variant === 'success' ? { 
+        background: 'var(--color-success)', 
+        borderColor: 'var(--color-success)' 
+      } : variant === 'ghost' ? {
+        background: 'transparent',
+        border: '1px solid var(--color-border)',
+        color: 'var(--color-text-secondary)'
+      } : undefined}
+      {...otherProps}
     >
-      {loading && <div className="btn__spinner" />}
-      {!loading && icon && <span className="btn__icon">{icon}</span>}
-      <span className="btn__text">{children}</span>
-    </button>
+      {children}
+    </DocomoButton>
   );
 };

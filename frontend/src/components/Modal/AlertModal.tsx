@@ -1,5 +1,5 @@
 import React from 'react';
-import Modal from './Modal';
+import { ErrorDialog } from '@drdata/docomo';
 
 interface AlertModalProps {
   isOpen: boolean;
@@ -10,19 +10,12 @@ interface AlertModalProps {
 
 const AlertModal: React.FC<AlertModalProps> = ({ isOpen, onClose, message, title = 'Alert' }) => {
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={title} className="alert-modal">
-      <div className="alert-message">{message}</div>
-      <div className="alert-actions">
-        <button
-          className="btn btn-primary"
-          onClick={onClose}
-          data-testid="confirm-button"
-          autoFocus
-        >
-          OK
-        </button>
-      </div>
-    </Modal>
+    <ErrorDialog
+      open={isOpen}
+      onConfirm={onClose}
+      title={title}
+      message={message}
+    />
   );
 };
 

@@ -1,37 +1,63 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import './HeroSection.css';
+import { Hero, Button } from '@drdata/docomo';
 
 const HeroSection: React.FC = () => {
   return (
-    <section className="hero-section">
-      <div className="hero-container">
-        <div className="hero-content">
-          <h1 className="hero-title">
-            Transform Your Ideas into Compelling Stories
-          </h1>
-          <p className="hero-subtitle">
-            AI-powered narrative generation for writers. Create engaging stories 
-            from simple prompts with multiple AI backends.
-          </p>
-          <div className="hero-cta">
-            <Link to="/signup" className="btn btn-primary btn-large">
+    <div style={{
+      padding: 'var(--spacing-5xl) var(--spacing-xl)',
+      textAlign: 'center',
+      background: 'linear-gradient(135deg, var(--color-primary-50) 0%, var(--color-primary-100) 100%)'
+    }}>
+      <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+        <h1 style={{
+          fontSize: 'var(--font-size-4xl)',
+          fontWeight: 'var(--font-weight-bold)',
+          color: 'var(--color-text-primary)',
+          marginBottom: 'var(--spacing-lg)',
+          lineHeight: '1.2'
+        }}>
+          Transform Your Ideas into Compelling Stories
+        </h1>
+        <p style={{
+          fontSize: 'var(--font-size-lg)',
+          color: 'var(--color-text-secondary)',
+          marginBottom: 'var(--spacing-2xl)',
+          maxWidth: '600px',
+          margin: '0 auto var(--spacing-2xl) auto'
+        }}>
+          AI-powered narrative generation for writers. Create engaging stories from simple prompts with multiple AI backends.
+        </p>
+        <div style={{ display: 'flex', gap: 'var(--spacing-md)', flexWrap: 'wrap', justifyContent: 'center', marginBottom: 'var(--spacing-2xl)' }}>
+          <Link to="/signup">
+            <Button>
               Get Started Free
-            </Link>
-            <Link to="/features" className="btn btn-secondary btn-large">
+            </Button>
+          </Link>
+          <Link to="/features">
+            <Button>
               See Demo
-            </Link>
-          </div>
+            </Button>
+          </Link>
         </div>
-        <div className="hero-visual">
-          <div className="story-preview">
-            <div className="typing-effect">
-              <span>🤖 Writing your story...</span>
-            </div>
+        <div style={{ 
+          background: 'var(--color-surface)', 
+          padding: 'var(--spacing-lg)', 
+          borderRadius: 'var(--radius-lg)',
+          boxShadow: 'var(--shadow-md)',
+          maxWidth: '400px',
+          margin: '0 auto'
+        }}>
+          <div style={{ 
+            color: 'var(--color-text-secondary)',
+            fontFamily: 'monospace',
+            fontSize: 'var(--font-size-sm)'
+          }}>
+            🤖 Writing your story...
           </div>
         </div>
       </div>
-    </section>
+    </div>
   );
 };
 

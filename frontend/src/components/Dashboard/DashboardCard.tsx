@@ -1,5 +1,5 @@
 import React from 'react';
-import './DashboardCard.css';
+import { Card, Button } from '@drdata/docomo';
 
 interface DashboardCardProps {
   title: string;
@@ -19,31 +19,77 @@ export const DashboardCard: React.FC<DashboardCardProps> = ({
   metadata,
   actions
 }) => {
+  // Map variants to docomo Button variants
+  const mapVariant = (variant?: string) => {
+    switch (variant) {
+      case 'text': return 'secondary';
+      case 'warning': return 'danger';
+      default: return variant as 'primary' | 'secondary' | 'danger';
+    }
+  };
+
   return (
-    <div className="dashboard-card">
-      <div className="dashboard-card-content">
-        <h4 className="dashboard-card-title">{title}</h4>
-        <div className="dashboard-card-metadata">
-          {metadata.map((item, index) => (
-            <span key={index} className="metadata-badge">
-              <span className="metadata-icon">{item.icon}</span>
-              {item.text}
-            </span>
+    <Card>
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'flex-start',
+        gap: 'var(--spacing-md)'
+      }}>
+        <div style={{ flex: 1 }}>
+          <h4 style={{
+            fontSize: 'var(--font-size-md)',
+            fontWeight: 'var(--font-weight-semibold)',
+            color: 'var(--color-text-primary)',
+            marginBottom: 'var(--spacing-sm)',
+            margin: 0
+          }}>
+            {title}
+          </h4>
+          <div style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: 'var(--spacing-sm)',
+            marginTop: 'var(--spacing-sm)'
+          }}>
+            {metadata.map((item, index) => (
+              <span 
+                key={index} 
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 'var(--spacing-xs)',
+                  padding: 'var(--spacing-xs) var(--spacing-sm)',
+                  background: 'var(--color-background)',
+                  borderRadius: 'var(--radius-sm)',
+                  fontSize: 'var(--font-size-sm)',
+                  color: 'var(--color-text-secondary)'
+                }}
+              >
+                <span>{item.icon}</span>
+                {item.text}
+              </span>
+            ))}
+          </div>
+        </div>
+        <div style={{
+          display: 'flex',
+          gap: 'var(--spacing-xs)',
+          flexShrink: 0
+        }}>
+          {actions.map((action, index) => (
+            <Button
+              key={index}
+              variant={mapVariant(action.variant)}
+              size="sm"
+              onClick={action.onClick}
+            >
+              {action.label}
+            </Button>
           ))}
         </div>
       </div>
-      <div className="dashboard-card-actions">
-        {actions.map((action, index) => (
-          <button
-            key={index}
-            className={`btn ${action.variant ? `btn-${action.variant}` : 'btn-text'}`}
-            onClick={action.onClick}
-          >
-            {action.label}
-          </button>
-        ))}
-      </div>
-    </div>
+    </Card>
   );
 };
 

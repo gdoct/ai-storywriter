@@ -4,7 +4,6 @@ import { useAuth } from '../../contexts/AuthContext';
 import { logout } from '../../services/security';
 import { AdminOnly, ModeratorOnly } from '../PermissionGate';
 import CreditsBadge from '../TopBar/CreditsBadge';
-import './Navigation.css';
 
 interface AuthenticatedNavProps {
   username: string | null;

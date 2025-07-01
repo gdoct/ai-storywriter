@@ -1,32 +1,64 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import './CTASection.css';
+import { Card, Button } from '@drdata/docomo';
 
 const CTASection: React.FC = () => {
   return (
-    <section className="cta-section">
-      <div className="cta-container">
-        <div className="cta-content">
-          <h2 className="cta-title">
+    <section style={{ 
+      padding: 'var(--spacing-5xl) var(--spacing-xl)',
+      background: 'var(--color-primary-50)'
+    }}>
+      <div style={{ 
+        maxWidth: '800px', 
+        margin: '0 auto'
+      }}>
+        <Card style={{ 
+          textAlign: 'center',
+          background: 'var(--color-surface)',
+          padding: 'var(--spacing-4xl)'
+        }}>
+          <h2 style={{ 
+            fontSize: 'var(--font-size-3xl)', 
+            fontWeight: 'var(--font-weight-bold)',
+            color: 'var(--color-text-primary)',
+            marginBottom: 'var(--spacing-lg)'
+          }}>
             Start Writing Today - It's Free!
           </h2>
-          <p className="cta-subtitle">
+          <p style={{ 
+            fontSize: 'var(--font-size-lg)', 
+            color: 'var(--color-text-secondary)',
+            marginBottom: 'var(--spacing-2xl)',
+            lineHeight: '1.6'
+          }}>
             Join thousands of writers using AI to enhance their creativity. 
             No credit card required to get started.
           </p>
-          <div className="cta-buttons">
-            <Link to="/signup" className="btn btn-primary btn-large">
-              Create Free Account
+          <div style={{ 
+            display: 'flex', 
+            gap: 'var(--spacing-md)', 
+            justifyContent: 'center',
+            flexWrap: 'wrap',
+            marginBottom: 'var(--spacing-xl)'
+          }}>
+            <Link to="/signup">
+              <Button>
+                Create Free Account
+              </Button>
             </Link>
-            <Link to="/features" className="btn btn-secondary btn-large">
-              Learn More
+            <Link to="/features">
+              <Button>
+                Learn More
+              </Button>
             </Link>
           </div>
-          <p className="cta-note">
+          <p style={{ 
+            fontSize: 'var(--font-size-sm)', 
+            color: 'var(--color-text-secondary)'
+          }}>
             🔒 Free forever • No hidden fees • Cancel anytime
           </p>
-        </div>
-        
+        </Card>
       </div>
     </section>
   );

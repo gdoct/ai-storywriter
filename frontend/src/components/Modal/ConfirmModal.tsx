@@ -1,5 +1,5 @@
+import { ConfirmDialog } from '@drdata/docomo';
 import React from 'react';
-import Modal from './Modal';
 
 interface ConfirmModalProps {
   isOpen: boolean;
@@ -28,22 +28,16 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={title} className="confirm-modal">
-      <div className="confirm-message">{message}</div>
-      <div className="confirm-actions">
-        <button className="btn btn-secondary" onClick={onClose}>
-          {cancelText}
-        </button>
-        <button 
-          className={`btn ${variant === 'danger' ? 'btn-danger' : 'btn-primary'}`}
-          onClick={handleConfirm}
-          data-testid="confirm-button"
-          autoFocus
-        >
-          {confirmText}
-        </button>
-      </div>
-    </Modal>
+    <ConfirmDialog
+      open={isOpen}
+      onCancel={onClose}
+      onConfirm={handleConfirm}
+      title={title}
+      message={message}
+      confirmText={confirmText}
+      cancelText={cancelText}
+      variant={variant === 'danger' ? 'danger' : 'default'}
+    />
   );
 };
 

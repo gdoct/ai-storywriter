@@ -2,7 +2,6 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { PermissionGate } from '../PermissionGate';
-import './Navigation.css';
 
 interface NavigationProps {
   className?: string;
@@ -21,87 +20,176 @@ export const Navigation: React.FC<NavigationProps> = ({ className }) => {
   }
 
   return (
-    <nav className={`navigation ${className || ''}`}>
-      <div className="nav-brand">
-        <Link to="/dashboard">StoryWriter</Link>
+    <nav style={{
+      display: 'flex',
+      alignItems: 'center',
+      gap: 'var(--spacing-lg)',
+      padding: 'var(--spacing-md)',
+      background: 'var(--color-surface)',
+      borderBottom: '1px solid var(--color-border)'
+    }}>
+      <div style={{
+        fontWeight: 'var(--font-weight-bold)',
+        fontSize: 'var(--font-size-lg)'
+      }}>
+        <Link 
+          to="/dashboard" 
+          style={{
+            textDecoration: 'none',
+            color: 'var(--color-text-primary)'
+          }}
+        >
+          StoryWriter
+        </Link>
       </div>
       
-      <div className="nav-menu">
-        <Link to="/dashboard" className={isActive('/dashboard')}>
+      <div style={{
+        display: 'flex',
+        gap: 'var(--spacing-md)',
+        alignItems: 'center'
+      }}>
+        <Link 
+          to="/dashboard" 
+          style={{
+            textDecoration: 'none',
+            color: location.pathname === '/dashboard' ? 'var(--color-primary)' : 'var(--color-text-secondary)',
+            fontWeight: location.pathname === '/dashboard' ? 'var(--font-weight-semibold)' : 'var(--font-weight-normal)',
+            padding: 'var(--spacing-sm) var(--spacing-md)',
+            borderRadius: 'var(--radius-sm)',
+            transition: 'color 0.2s ease'
+          }}
+        >
           Dashboard
         </Link>
         
-        <Link to="/scenarios" className={isActive('/scenarios')}>
+        <Link 
+          to="/scenarios" 
+          style={{
+            textDecoration: 'none',
+            color: location.pathname === '/scenarios' ? 'var(--color-primary)' : 'var(--color-text-secondary)',
+            fontWeight: location.pathname === '/scenarios' ? 'var(--font-weight-semibold)' : 'var(--font-weight-normal)',
+            padding: 'var(--spacing-sm) var(--spacing-md)',
+            borderRadius: 'var(--radius-sm)',
+            transition: 'color 0.2s ease'
+          }}
+        >
           Scenarios
         </Link>
         
-        <Link to="/marketplace" className={isActive('/marketplace')}>
+        <Link 
+          to="/marketplace" 
+          style={{
+            textDecoration: 'none',
+            color: location.pathname === '/marketplace' ? 'var(--color-primary)' : 'var(--color-text-secondary)',
+            fontWeight: location.pathname === '/marketplace' ? 'var(--font-weight-semibold)' : 'var(--font-weight-normal)',
+            padding: 'var(--spacing-sm) var(--spacing-md)',
+            borderRadius: 'var(--radius-sm)',
+            transition: 'color 0.2s ease'
+          }}
+        >
           Marketplace
         </Link>
         
-        <Link to="/settings" className={isActive('/settings')}>
+        <Link 
+          to="/settings" 
+          style={{
+            textDecoration: 'none',
+            color: location.pathname === '/settings' ? 'var(--color-primary)' : 'var(--color-text-secondary)',
+            fontWeight: location.pathname === '/settings' ? 'var(--font-weight-semibold)' : 'var(--font-weight-normal)',
+            padding: 'var(--spacing-sm) var(--spacing-md)',
+            borderRadius: 'var(--radius-sm)',
+            transition: 'color 0.2s ease'
+          }}
+        >
           Settings
         </Link>
         
         {/* Moderation menu for moderators and admins */}
         <PermissionGate requiredRoles={['moderator', 'admin']}>
-          <div className="nav-dropdown">
-            <span className="nav-dropdown-trigger">
+          <div style={{ position: 'relative', display: 'inline-block' }}>
+            <span style={{
+              padding: 'var(--spacing-sm) var(--spacing-md)',
+              cursor: 'pointer',
+              color: 'var(--color-text-secondary)',
+              fontWeight: 'var(--font-weight-normal)',
+              borderRadius: 'var(--radius-sm)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 'var(--spacing-xs)'
+            }}>
               Moderation
-              <span className="dropdown-arrow">▼</span>
+              <span>▼</span>
             </span>
-            <div className="nav-dropdown-menu">
-              <Link to="/moderation/dashboard" className={isActive('/moderation/dashboard')}>
-                Moderation Dashboard
-              </Link>
-              <Link to="/moderation/stories" className={isActive('/moderation/stories')}>
-                Review Stories
-              </Link>
-              <Link to="/moderation/reports" className={isActive('/moderation/reports')}>
-                User Reports
-              </Link>
-            </div>
           </div>
         </PermissionGate>
         
         {/* Admin menu for admins only */}
         <PermissionGate requiredRoles={['admin']}>
-          <div className="nav-dropdown">
-            <span className="nav-dropdown-trigger">
+          <div style={{ position: 'relative', display: 'inline-block' }}>
+            <span style={{
+              padding: 'var(--spacing-sm) var(--spacing-md)',
+              cursor: 'pointer',
+              color: 'var(--color-text-secondary)',
+              fontWeight: 'var(--font-weight-normal)',
+              borderRadius: 'var(--radius-sm)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 'var(--spacing-xs)'
+            }}>
               Admin
-              <span className="dropdown-arrow">▼</span>
+              <span>▼</span>
             </span>
-            <div className="nav-dropdown-menu">
-              <Link to="/admin/dashboard" className={isActive('/admin/dashboard')}>
-                Admin Dashboard
-              </Link>
-              <Link to="/admin/users" className={isActive('/admin/users')}>
-                User Management
-              </Link>
-              <Link to="/admin/roles" className={isActive('/admin/roles')}>
-                Role Management
-              </Link>
-              <Link to="/admin/settings" className={isActive('/admin/settings')}>
-                System Settings
-              </Link>
-              <Link to="/admin/analytics" className={isActive('/admin/analytics')}>
-                Analytics
-              </Link>
-            </div>
           </div>
         </PermissionGate>
       </div>
       
-      <div className="nav-user">
-        <div className="user-info">
-          <span className="username">{userProfile.username}</span>
-          <span className={`tier tier-${userProfile.tier}`}>
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 'var(--spacing-md)',
+        marginLeft: 'auto'
+      }}>
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'flex-end',
+          gap: 'var(--spacing-xs)'
+        }}>
+          <span style={{
+            fontSize: 'var(--font-size-sm)',
+            fontWeight: 'var(--font-weight-semibold)',
+            color: 'var(--color-text-primary)'
+          }}>
+            {userProfile.username}
+          </span>
+          <span style={{
+            fontSize: 'var(--font-size-xs)',
+            padding: 'var(--spacing-xs) var(--spacing-sm)',
+            background: 'var(--color-primary)',
+            color: 'var(--color-primary-contrast)',
+            borderRadius: 'var(--radius-sm)',
+            fontWeight: 'var(--font-weight-medium)'
+          }}>
             {userProfile.tier.toUpperCase()}
           </span>
           {userProfile.roles.length > 0 && (
-            <div className="user-roles">
+            <div style={{
+              display: 'flex',
+              gap: 'var(--spacing-xs)',
+              flexWrap: 'wrap'
+            }}>
               {userProfile.roles.map(role => (
-                <span key={role} className={`role role-${role}`}>
+                <span 
+                  key={role} 
+                  style={{
+                    fontSize: 'var(--font-size-xs)',
+                    padding: 'var(--spacing-xs) var(--spacing-sm)',
+                    background: 'var(--color-secondary)',
+                    color: 'var(--color-secondary-contrast)',
+                    borderRadius: 'var(--radius-sm)',
+                    fontWeight: 'var(--font-weight-medium)'
+                  }}
+                >
                   {role}
                 </span>
               ))}
@@ -109,12 +197,39 @@ export const Navigation: React.FC<NavigationProps> = ({ className }) => {
           )}
         </div>
         
-        <div className="user-menu">
-          <Link to="/profile">Profile</Link>
-          <button onClick={() => {
-            localStorage.clear();
-            window.location.href = '/login';
-          }}>
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 'var(--spacing-xs)'
+        }}>
+          <Link 
+            to="/profile" 
+            style={{
+              textDecoration: 'none',
+              color: 'var(--color-text-secondary)',
+              fontSize: 'var(--font-size-sm)',
+              padding: 'var(--spacing-xs) var(--spacing-sm)',
+              borderRadius: 'var(--radius-sm)'
+            }}
+          >
+            Profile
+          </Link>
+          <button 
+            onClick={() => {
+              localStorage.clear();
+              window.location.href = '/login';
+            }}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: 'var(--color-text-secondary)',
+              fontSize: 'var(--font-size-sm)',
+              cursor: 'pointer',
+              padding: 'var(--spacing-xs) var(--spacing-sm)',
+              borderRadius: 'var(--radius-sm)',
+              textAlign: 'left'
+            }}
+          >
             Logout
           </button>
         </div>

@@ -1,58 +1,104 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import './MarketingFooter.css';
 
 const MarketingFooter: React.FC = () => {
   return (
-    <footer className="marketing-footer">
-        <div style={{ minHeight: '300px' }} ></div>
-      <div className="marketing-footer-container">
-        <div className="footer-content">
-          <div className="footer-brand">
-            <Link to="/" className="footer-logo">
-              <span className="footer-brand-name">StoryWriter</span>
-            </Link>
-            <p className="footer-description">
+    <footer style={{
+      marginTop: 'var(--spacing-5xl)',
+      background: 'var(--color-surface)',
+      padding: 'var(--spacing-4xl) var(--spacing-xl)',
+      borderTop: '1px solid var(--color-border)'
+    }}>
+      <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+          gap: 'var(--spacing-2xl)',
+          marginBottom: 'var(--spacing-3xl)'
+        }}>
+          <div>
+            <h3 style={{
+              fontSize: 'var(--font-size-lg)',
+              fontWeight: 'var(--font-weight-semibold)',
+              color: 'var(--color-text-primary)',
+              marginBottom: 'var(--spacing-md)'
+            }}>
+              StoryWriter
+            </h3>
+            <p style={{
+              color: 'var(--color-text-secondary)',
+              fontSize: 'var(--font-size-sm)',
+              lineHeight: '1.6'
+            }}>
               AI-powered story generation for creative writers
             </p>
           </div>
           
-          <div className="footer-links">
-            <div className="footer-section">
-              <ul>
-                <li><h4>Product</h4></li>
-                <li><Link to="/features">Features</Link></li>
-                <li><Link to="/pricing">Pricing</Link></li>
-                <li><Link to="/templates">Templates</Link></li>
-              </ul>
+          <div>
+            <h4 style={{
+              fontSize: 'var(--font-size-md)',
+              fontWeight: 'var(--font-weight-medium)',
+              color: 'var(--color-text-primary)',
+              marginBottom: 'var(--spacing-md)'
+            }}>
+              Product
+            </h4>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-sm)' }}>
+              <Link to="/features" style={{ color: 'var(--color-text-secondary)', textDecoration: 'none', fontSize: 'var(--font-size-sm)' }}>Features</Link>
+              <Link to="/pricing" style={{ color: 'var(--color-text-secondary)', textDecoration: 'none', fontSize: 'var(--font-size-sm)' }}>Pricing</Link>
+              <Link to="/templates" style={{ color: 'var(--color-text-secondary)', textDecoration: 'none', fontSize: 'var(--font-size-sm)' }}>Templates</Link>
             </div>
-            
-            <div className="footer-section">
-              <ul>
-                <h4>Company</h4>
-                <li><a href="mailto:support@storywriter.app">Support</a></li>
-                <li><a href="mailto:contact@storywriter.app">Contact</a></li>
-              </ul>
+          </div>
+          
+          <div>
+            <h4 style={{
+              fontSize: 'var(--font-size-md)',
+              fontWeight: 'var(--font-weight-medium)',
+              color: 'var(--color-text-primary)',
+              marginBottom: 'var(--spacing-md)'
+            }}>
+              Company
+            </h4>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-sm)' }}>
+              <a href="mailto:support@storywriter.app" style={{ color: 'var(--color-text-secondary)', textDecoration: 'none', fontSize: 'var(--font-size-sm)' }}>Support</a>
+              <a href="mailto:contact@storywriter.app" style={{ color: 'var(--color-text-secondary)', textDecoration: 'none', fontSize: 'var(--font-size-sm)' }}>Contact</a>
             </div>
-            
-            <div className="footer-section">
-              <ul>
-                <h4>Legal</h4>
-                <li><Link to="/privacy">Privacy Policy</Link></li>
-                <li><Link to="/terms">Terms of Service</Link></li>
-              </ul>
+          </div>
+          
+          <div>
+            <h4 style={{
+              fontSize: 'var(--font-size-md)',
+              fontWeight: 'var(--font-weight-medium)',
+              color: 'var(--color-text-primary)',
+              marginBottom: 'var(--spacing-md)'
+            }}>
+              Legal
+            </h4>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-sm)' }}>
+              <Link to="/privacy" style={{ color: 'var(--color-text-secondary)', textDecoration: 'none', fontSize: 'var(--font-size-sm)' }}>Privacy Policy</Link>
+              <Link to="/terms" style={{ color: 'var(--color-text-secondary)', textDecoration: 'none', fontSize: 'var(--font-size-sm)' }}>Terms of Service</Link>
             </div>
           </div>
         </div>
         
-        <div className="footer-bottom">
-          <div className="footer-bottom-content">
-            <p>&copy; 2025 StoryWriter. All rights reserved.</p>
-            <div className="footer-legal-links">
-              <Link to="/privacy">Privacy</Link>
-              <span className="separator">•</span>
-              <Link to="/terms">Terms</Link>
-            </div>
+        <div style={{
+          paddingTop: 'var(--spacing-xl)',
+          borderTop: '1px solid var(--color-border)',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: 'var(--spacing-md)'
+        }}>
+          <p style={{
+            color: 'var(--color-text-secondary)',
+            fontSize: 'var(--font-size-sm)'
+          }}>
+            © 2025 StoryWriter. All rights reserved.
+          </p>
+          <div style={{ display: 'flex', gap: 'var(--spacing-md)' }}>
+            <Link to="/privacy" style={{ color: 'var(--color-text-secondary)', textDecoration: 'none', fontSize: 'var(--font-size-sm)' }}>Privacy</Link>
+            <Link to="/terms" style={{ color: 'var(--color-text-secondary)', textDecoration: 'none', fontSize: 'var(--font-size-sm)' }}>Terms</Link>
           </div>
         </div>
       </div>

@@ -6,6 +6,7 @@ import { SceneHoverProvider } from './context/SceneHoverContext';
 import { AIStatusProvider } from './contexts/AIStatusContext';
 import { AuthProvider } from './contexts/AuthContext';
 import getRoutes from './routes';
+import { ThemeProvider } from '@drdata/docomo';
 
 // AppContent component to use the useRoutes hook (it must be used inside Router context)
 const AppContent = () => {
@@ -30,13 +31,15 @@ const AppContent = () => {
 
 function App() {
   return (
-    <Router>
-      <AIStatusProvider>
-        <SceneHoverProvider>
-          <AppContent />
-        </SceneHoverProvider>
-      </AIStatusProvider>
-    </Router>
+    <ThemeProvider>
+      <Router>
+        <AIStatusProvider>
+          <SceneHoverProvider>
+            <AppContent />
+          </SceneHoverProvider>
+        </AIStatusProvider>
+      </Router>
+    </ThemeProvider>
   );
 }
 

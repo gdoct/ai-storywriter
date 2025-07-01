@@ -1,5 +1,5 @@
 import React from 'react';
-import './Input.css';
+import { AiTextBox, AiTextArea, Label } from '@drdata/docomo';
 
 export interface InputProps {
   label?: string;
@@ -32,72 +32,55 @@ export const Input: React.FC<InputProps> = ({
   icon,
   onIconClick,
 }) => {
-  const handleIconClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleAiGenerate = () => {
     if (onIconClick) {
       onIconClick();
     }
   };
 
-  const baseClasses = 'input-field';
-  const errorClass = error ? 'input-field--error' : '';
-  const disabledClass = disabled ? 'input-field--disabled' : '';
-  const iconClass = icon ? 'input-field--with-icon' : '';
-
-  const containerClasses = [
-    baseClasses,
-    errorClass,
-    disabledClass,
-    iconClass,
+  const commonProps = {
+    value,
+    onChange,
+    placeholder,
+    disabled,
+    error,
     className,
-  ]
-    .filter(Boolean)
-    .join(' ');
-
-  const inputElement = multiline ? (
-    <textarea
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      placeholder={placeholder}
-      disabled={disabled}
-      required={required}
-      rows={rows}
-      className="input-field__control input-field__textarea"
-    />
-  ) : (
-    <input
-      type={type}
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      placeholder={placeholder}
-      disabled={disabled}
-      required={required}
-      className="input-field__control input-field__input"
-    />
-  );
+    showGenerateButton: Boolean(icon && onIconClick),
+    onGenerate: handleAiGenerate,
+  };
 
   return (
-    <div className={containerClasses}>
+    <div style={{ marginBottom: error ? 'var(--spacing-sm)' : 'var(--spacing-md)' }}>
       {label && (
-        <label className="input-field__label">
+        <Label 
+          style={{ 
+            marginBottom: 'var(--spacing-xs)',
+            display: 'block'
+          }}
+        >
           {label}
-          {required && <span className="input-field__required">*</span>}
-        </label>
+          {required && (
+            <span style={{ 
+              color: 'var(--color-error)', 
+              marginLeft: 'var(--spacing-xs)' 
+            }}>
+              *
+            </span>
+          )}
+        </Label>
       )}
-      <div className="input-field__wrapper">
-        {inputElement}
-        {icon && (
-          <button
-            type="button"
-            onClick={handleIconClick}
-            className="input-field__icon"
-            disabled={disabled}
-          >
-            {icon}
-          </button>
-        )}
-      </div>
-      {error && <span className="input-field__error-text">{error}</span>}
+      
+      {multiline ? (
+        <AiTextArea
+          {...commonProps}
+          rows={rows}
+        />
+      ) : (
+        <AiTextBox
+          {...commonProps}
+          type={type}
+        />
+      )}
     </div>
   );
 };

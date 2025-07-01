@@ -1,5 +1,4 @@
 import React from 'react';
-import { FaDice } from 'react-icons/fa';
 import { StyleSettings } from '../../../types/ScenarioTypes';
 import { GENRE_OPTIONS, LANGUAGE_FLAGS, LANGUAGE_OPTIONS, STYLE_OPTIONS, THEME_OPTIONS, TONE_OPTIONS, WRITING_STYLE_VARIATIONS } from '../../../types/styleoptions';
 import { Dropdown } from '../common/Dropdown';
@@ -48,7 +47,6 @@ const StyleFields: React.FC<StyleFieldsProps> = ({ writingStyle, onStyleChange, 
           options={styleOptions}
           className='writingstyle__dropdown'
           placeholder="Select or enter writing style..."
-          icon={<FaDice />}
           onIconClick={() => randomizeField('style', styleOptions)}
         />
       </div>
@@ -61,7 +59,6 @@ const StyleFields: React.FC<StyleFieldsProps> = ({ writingStyle, onStyleChange, 
           options={genreOptions}
           className='genre__dropdown'
           placeholder="Select or enter genre..."
-          icon={<FaDice />}
           onIconClick={() => randomizeField('genre', genreOptions)}
         />
       </div>
@@ -74,7 +71,6 @@ const StyleFields: React.FC<StyleFieldsProps> = ({ writingStyle, onStyleChange, 
           options={toneOptions}
           className='tone__dropdown'
           placeholder="Select or enter tone..."
-          icon={<FaDice />}
           onIconClick={() => randomizeField('tone', toneOptions)}
         />
       </div>
@@ -87,7 +83,6 @@ const StyleFields: React.FC<StyleFieldsProps> = ({ writingStyle, onStyleChange, 
           options={communicationStyleOptions}
           className='communicationStyle__dropdown'
           placeholder="Select or enter the type of communication..."
-          icon={<FaDice />}
           onIconClick={() => randomizeField('communicationStyle', communicationStyleOptions)}
         />
       </div>
@@ -100,7 +95,6 @@ const StyleFields: React.FC<StyleFieldsProps> = ({ writingStyle, onStyleChange, 
           options={themeOptions}
           className='theme__dropdown'
           placeholder="Select or enter theme..."
-          icon={<FaDice />}
           onIconClick={() => randomizeField('theme', themeOptions)}
         />
       </div>

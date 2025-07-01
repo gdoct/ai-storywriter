@@ -19,7 +19,7 @@ import {
   RecentScenario,
   RecentStory
 } from '../services/dashboardService';
-import './Dashboard.css';
+import { Button } from '@drdata/docomo';
 
 interface DashboardProps {
   // No props needed anymore
@@ -100,11 +100,22 @@ const Dashboard: React.FC<DashboardProps> = () => {
   // Show loading state
   if (loading) {
     return (
-      <div className="dashboard">
-        <div className="dashboard-container">
-          <div className="loading-state">
-            <div className="loading-spinner"></div>
-            <p>Loading your dashboard...</p>
+      <div style={{ 
+        minHeight: '100vh',
+        background: 'var(--color-background)',
+        padding: 'var(--spacing-xl)'
+      }}>
+        <div style={{ 
+          maxWidth: '1200px', 
+          margin: '0 auto',
+          textAlign: 'center',
+          marginTop: 'var(--spacing-5xl)'
+        }}>
+          <div style={{ 
+            color: 'var(--color-text-secondary)',
+            fontSize: 'var(--font-size-lg)'
+          }}>
+            Loading your dashboard...
           </div>
         </div>
       </div>
@@ -114,19 +125,39 @@ const Dashboard: React.FC<DashboardProps> = () => {
   // Show error state
   if (error) {
     return (
-      <div className="dashboard">
-        <div className="dashboard-container">
-          <div className="error-state">
-            <div className="error-icon">⚠️</div>
-            <h3>Something went wrong</h3>
-            <p>{error}</p>
-            <button 
-              className="btn btn-primary" 
-              onClick={() => window.location.reload()}
-            >
-              Try Again
-            </button>
-          </div>
+      <div style={{ 
+        minHeight: '100vh',
+        background: 'var(--color-background)',
+        padding: 'var(--spacing-xl)'
+      }}>
+        <div style={{ 
+          maxWidth: '600px', 
+          margin: '0 auto',
+          textAlign: 'center',
+          marginTop: 'var(--spacing-5xl)'
+        }}>
+          <div style={{ fontSize: '3rem', marginBottom: 'var(--spacing-lg)' }}>⚠️</div>
+          <h3 style={{ 
+            fontSize: 'var(--font-size-2xl)', 
+            fontWeight: 'var(--font-weight-bold)',
+            color: 'var(--color-text-primary)',
+            marginBottom: 'var(--spacing-md)'
+          }}>
+            Something went wrong
+          </h3>
+          <p style={{ 
+            color: 'var(--color-text-secondary)',
+            marginBottom: 'var(--spacing-xl)',
+            fontSize: 'var(--font-size-lg)'
+          }}>
+            {error}
+          </p>
+          <Button 
+            variant="primary" 
+            onClick={() => window.location.reload()}
+          >
+            Try Again
+          </Button>
         </div>
       </div>
     );
@@ -138,14 +169,26 @@ const Dashboard: React.FC<DashboardProps> = () => {
   }
 
   return (
-    <div className="dashboard">
-      <div className="dashboard-container">
+    <div style={{ 
+      minHeight: '100vh',
+      background: 'var(--color-background)'
+    }}>
+      <div style={{ 
+        maxWidth: '1200px', 
+        margin: '0 auto',
+        padding: 'var(--spacing-xl)'
+      }}>
         <DashboardHeader username={username} email={email} />
 
-        <div className="dashboard-content">
+        <div style={{ marginTop: 'var(--spacing-2xl)' }}>
           <WritingStats stats={stats} />
 
-          <div className="dashboard-main">
+          <div style={{ 
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(500px, 1fr))',
+            gap: 'var(--spacing-xl)',
+            marginTop: 'var(--spacing-2xl)'
+          }}>
             <RecentScenarios 
               recentScenarios={recentScenarios} 
               handleEditScenario={handleEditScenario} 
@@ -157,7 +200,9 @@ const Dashboard: React.FC<DashboardProps> = () => {
             />
           </div>
         </div>
-        <MarketingFooter />
+        <div style={{ marginTop: 'var(--spacing-5xl)' }}>
+          <MarketingFooter />
+        </div>
 
         {/* Publish Story Modal */}
         {storyToPublish && (
