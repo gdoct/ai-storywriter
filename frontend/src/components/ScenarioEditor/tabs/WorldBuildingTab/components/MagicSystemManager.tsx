@@ -1,9 +1,8 @@
+import { AiTextArea, AiTextBox, Button } from '@drdata/docomo';
 import React, { useCallback, useState } from 'react';
 import { FaDice, FaPlus, FaTrash } from 'react-icons/fa';
 import { v4 as uuidv4 } from 'uuid';
 import { MagicSystem, Scenario } from '../../../../../types/ScenarioTypes';
-import { Button } from '../../../common/Button';
-import { Input } from '../../../common/Input';
 import './WorldBuildingManagers.css';
 
 interface MagicSystemManagerProps {
@@ -121,7 +120,7 @@ export const MagicSystemManager: React.FC<MagicSystemManagerProps> = ({
         {selectedMagicSystem && (
           <div className="magic-system-manager__details">
             <div className="magic-system-manager__form">
-              <Input
+              <AiTextBox
                 label="Name"
                 value={selectedMagicSystem.name}
                 onChange={(value) => handleMagicSystemChange(selectedMagicSystem.id, 'name', value)}
@@ -129,52 +128,47 @@ export const MagicSystemManager: React.FC<MagicSystemManagerProps> = ({
                 disabled={isLoading}
               />
 
-              <Input
+              <AiTextArea
                 label="Description"
                 value={selectedMagicSystem.description}
                 onChange={(value) => handleMagicSystemChange(selectedMagicSystem.id, 'description', value)}
                 placeholder="Describe this magic system..."
-                multiline
                 rows={3}
                 disabled={isLoading}
               />
 
-              <Input
+              <AiTextArea
                 label="Rules"
                 value={selectedMagicSystem.rules}
                 onChange={(value) => handleMagicSystemChange(selectedMagicSystem.id, 'rules', value)}
                 placeholder="How does the magic work? What are the rules?"
-                multiline
                 rows={4}
                 disabled={isLoading}
               />
 
-              <Input
+              <AiTextArea
                 label="Costs"
                 value={selectedMagicSystem.costs}
                 onChange={(value) => handleMagicSystemChange(selectedMagicSystem.id, 'costs', value)}
                 placeholder="What does it cost to use magic?"
-                multiline
                 rows={3}
                 disabled={isLoading}
               />
 
-              <Input
+              <AiTextArea
                 label="Limitations"
                 value={selectedMagicSystem.limitations}
                 onChange={(value) => handleMagicSystemChange(selectedMagicSystem.id, 'limitations', value)}
                 placeholder="What are the limitations and restrictions?"
-                multiline
                 rows={3}
                 disabled={isLoading}
               />
 
-              <Input
+              <AiTextArea
                 label="Source"
                 value={selectedMagicSystem.source}
                 onChange={(value) => handleMagicSystemChange(selectedMagicSystem.id, 'source', value)}
                 placeholder="Where does the magic come from?"
-                multiline
                 rows={2}
                 disabled={isLoading}
               />

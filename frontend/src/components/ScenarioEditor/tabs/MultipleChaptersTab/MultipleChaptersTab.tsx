@@ -1,8 +1,7 @@
+import { AiTextBox, Button } from '@drdata/docomo';
 import React, { useCallback, useMemo, useState } from 'react';
 import { FaBook, FaCog, FaDownload, FaEye, FaPlus, FaUser } from 'react-icons/fa';
 import { MultipleChapters } from '../../../../types/chapters';
-import { Button } from '../../common/Button';
-import { Input } from '../../common/Input';
 import { TabProps } from '../../types';
 import ChapterOverview from './components/ChapterOverview';
 import ChaptersList from './components/ChaptersList';
@@ -87,7 +86,7 @@ const MultipleChaptersTab: React.FC<TabProps> = ({
           <div className="multiple-chapters-tab__generation">
             <h4>Generation Settings</h4>
             <div className="global-settings">
-              <Input
+              <AiTextBox
                 label="Naming Convention"
                 value={multipleChapters.globalSettings.namingConvention}
                 onChange={(value) => updateMultipleChapters({
@@ -99,7 +98,7 @@ const MultipleChaptersTab: React.FC<TabProps> = ({
                 placeholder="Use % for chapter number (e.g., 'Chapter %')"
                 disabled={isLoading}
               />
-              <Input
+              <AiTextBox
                 label="Default Word Count Target"
                 type="number"
                 value={multipleChapters.globalSettings.defaultWordCount.toString()}

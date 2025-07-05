@@ -1,9 +1,8 @@
+import { AiTextArea, AiTextBox, Button } from '@drdata/docomo';
 import React, { useCallback, useState } from 'react';
 import { FaEye, FaPlus, FaTrash } from 'react-icons/fa';
 import { v4 as uuidv4 } from 'uuid';
 import { Location, Scenario } from '../../../../../types/ScenarioTypes';
-import { Button } from '../../../common/Button';
-import { Input } from '../../../common/Input';
 import './LocationManager.css';
 
 interface LocationManagerProps {
@@ -94,7 +93,7 @@ export const LocationManager: React.FC<LocationManagerProps> = ({
       <div className="location-manager__content">
         <div className="location-manager__list">
           <div className="location-manager__filters">
-            <Input
+            <AiTextBox
               value={searchTerm}
               onChange={setSearchTerm}
               placeholder="Search locations..."
@@ -158,7 +157,7 @@ export const LocationManager: React.FC<LocationManagerProps> = ({
         {selectedLocation && (
           <div className="location-manager__details">
             <div className="location-manager__form">
-              <Input
+              <AiTextBox
                 label="Name"
                 value={selectedLocation.name}
                 onChange={(value) => handleLocationChange(selectedLocation.id, 'name', value)}
@@ -183,17 +182,16 @@ export const LocationManager: React.FC<LocationManagerProps> = ({
                 </select>
               </div>
 
-              <Input
+              <AiTextArea
                 label="Description"
                 value={selectedLocation.description}
                 onChange={(value) => handleLocationChange(selectedLocation.id, 'description', value)}
                 placeholder="Describe this location..."
-                multiline
                 rows={3}
                 disabled={isLoading}
               />
 
-              <Input
+              <AiTextBox
                 label="Climate"
                 value={selectedLocation.climate || ''}
                 onChange={(value) => handleLocationChange(selectedLocation.id, 'climate', value)}
@@ -201,7 +199,7 @@ export const LocationManager: React.FC<LocationManagerProps> = ({
                 disabled={isLoading}
               />
 
-              <Input
+              <AiTextBox
                 label="Population"
                 value={selectedLocation.population || ''}
                 onChange={(value) => handleLocationChange(selectedLocation.id, 'population', value)}
@@ -209,7 +207,7 @@ export const LocationManager: React.FC<LocationManagerProps> = ({
                 disabled={isLoading}
               />
 
-              <Input
+              <AiTextBox
                 label="Government"
                 value={selectedLocation.government || ''}
                 onChange={(value) => handleLocationChange(selectedLocation.id, 'government', value)}
@@ -217,52 +215,47 @@ export const LocationManager: React.FC<LocationManagerProps> = ({
                 disabled={isLoading}
               />
 
-              <Input
+              <AiTextArea
                 label="Economy"
                 value={selectedLocation.economy || ''}
                 onChange={(value) => handleLocationChange(selectedLocation.id, 'economy', value)}
                 placeholder="Economic activities and trade..."
-                multiline
                 rows={2}
                 disabled={isLoading}
               />
 
-              <Input
+              <AiTextArea
                 label="Culture"
                 value={selectedLocation.culture || ''}
                 onChange={(value) => handleLocationChange(selectedLocation.id, 'culture', value)}
                 placeholder="Cultural practices and traditions..."
-                multiline
                 rows={2}
                 disabled={isLoading}
               />
 
-              <Input
+              <AiTextArea
                 label="History"
                 value={selectedLocation.history || ''}
                 onChange={(value) => handleLocationChange(selectedLocation.id, 'history', value)}
                 placeholder="Historical events and significance..."
-                multiline
                 rows={3}
                 disabled={isLoading}
               />
 
-              <Input
+              <AiTextArea
                 label="Threats"
                 value={selectedLocation.threats || ''}
                 onChange={(value) => handleLocationChange(selectedLocation.id, 'threats', value)}
                 placeholder="Dangers and threats present..."
-                multiline
                 rows={2}
                 disabled={isLoading}
               />
 
-              <Input
+              <AiTextArea
                 label="Resources"
                 value={selectedLocation.resources || ''}
                 onChange={(value) => handleLocationChange(selectedLocation.id, 'resources', value)}
                 placeholder="Available resources and materials..."
-                multiline
                 rows={2}
                 disabled={isLoading}
               />

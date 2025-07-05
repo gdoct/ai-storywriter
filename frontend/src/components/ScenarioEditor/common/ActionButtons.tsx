@@ -40,6 +40,7 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
     <IconButton
       key={item.id}
       variant={item.variant}
+      icon={item.icon}
       disabled={disabled || item.disabled}
       busy={item.loading}
       title={item.title || item.label}
@@ -55,9 +56,7 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
         border: '1px solid var(--color-border)',
         color: 'var(--color-text-secondary)'
       } : undefined}
-    >
-      {item.icon}
-    </IconButton>
+    />
   ));
 
   return (

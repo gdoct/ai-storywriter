@@ -11,7 +11,7 @@ import { AlertModal, ConfirmModal } from '../Modal';
 import { ActionButtonItem, ActionButtons } from './common/ActionButtons';
 import { ChatAgent } from './common/ChatAgent';
 import { LlmSettingsMenu } from './common/LlmSettingsMenu';
-import { Tabs } from './common/Tabs';
+import { ExpandableTabs, Hero } from '@drdata/docomo';
 import { useScenarioEditor } from './context';
 import { StoryModal } from './modals/StoryModal';
 import './ScenarioEditor.css';
@@ -182,6 +182,10 @@ export const ScenarioEditor: React.FC<ScenarioEditorProps> = ({
   const handleTabChange = useCallback((tabId: TabId) => {
     dispatch({ type: 'SET_ACTIVE_TAB', payload: tabId });
   }, [dispatch]);
+
+  // Get the active tab component
+  const activeTabConfig = tabs.find(tab => tab.id === state.activeTab);
+  const ActiveTabComponent = activeTabConfig?.component;
 
   const handleTabAdd = useCallback((tabId: TabId) => {
     dispatch({ type: 'ADD_TAB', payload: tabId });
@@ -408,9 +412,7 @@ export const ScenarioEditor: React.FC<ScenarioEditorProps> = ({
     }
   }, []);
 
-  // Get the active tab component
-  const activeTabConfig = tabs.find(tab => tab.id === state.activeTab);
-  const ActiveTabComponent = activeTabConfig?.component;
+  // Note: ActiveTabComponent is now handled within ExpandableTabs content
 
   // Configure action button items
   const actionButtonItems: ActionButtonItem[] = [
@@ -464,47 +466,47 @@ export const ScenarioEditor: React.FC<ScenarioEditorProps> = ({
   return (
     <div className="scenario-editor">
       <div className="scenario-editor__header">
-        <div className="header-content">
-          <h1>Scenario Editor</h1>
-          <p>{state.scenario.title || 'Untitled Story'}
-            {state.isDirty && <span className="dirty-indicator">*</span>}
-          </p>
-        </div>
-
-        {/* Menu Controls */}
-        <div className="scenario-editor__menu-controls">
-          <ActionButtons
-            items={actionButtonItems}
-            className="scenario-editor__action-buttons"
-            disabled={state.isLoading}
-          />
-          <LlmSettingsMenu
-            className="scenario-editor__llm-settings"
-            disabled={state.isLoading}
-          />
-        </div>
+        <Hero
+          title="Scenario Editor"
+          subtitle={`${state.scenario.title || 'Untitled Story'}${state.isDirty ? ' *' : ''}`}
+          className="scenario-editor__hero"
+          cta={
+            <div className="scenario-editor__menu-controls">
+              <ActionButtons
+                items={actionButtonItems}
+                className="scenario-editor__action-buttons"
+                disabled={state.isLoading}
+              />
+              <LlmSettingsMenu
+                className="scenario-editor__llm-settings"
+                disabled={state.isLoading}
+              />
+            </div>
+          }
+        />
       </div>
 
       <div className="scenario-editor__content">
-        <Tabs
-          tabs={tabs}
-          activeTab={state.activeTab}
-          onTabChange={handleTabChange}
-          visibleTabs={state.visibleTabs}
-          onTabAdd={handleTabAdd}
-          onTabRemove={handleTabRemove}
-          className="scenario-editor__tabs"
-        />
+        <div className="scenario-editor__tabs-wrapper">
+          <ExpandableTabs
+            tabs={tabs}
+            activeTab={state.activeTab}
+            onTabChange={handleTabChange}
+            visibleTabs={state.visibleTabs}
+            onTabAdd={handleTabAdd}
+            onTabRemove={handleTabRemove}
+          />
 
-        <div className="scenario-editor__tab-content">
-          {ActiveTabComponent && (
-            <ActiveTabComponent
-              scenario={state.scenario}
-              onScenarioChange={handleScenarioChange}
-              isDirty={state.isDirty}
-              isLoading={state.isLoading}
-            />
-          )}
+          <div className="scenario-editor__tab-content">
+            {ActiveTabComponent && (
+              <ActiveTabComponent
+                scenario={state.scenario}
+                onScenarioChange={handleScenarioChange}
+                isDirty={state.isDirty}
+                isLoading={state.isLoading}
+              />
+            )}
+          </div>
         </div>
       </div>
 

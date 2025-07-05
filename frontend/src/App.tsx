@@ -1,3 +1,4 @@
+import { ThemeProvider } from '@drdata/docomo';
 import { BrowserRouter as Router, useRoutes } from 'react-router-dom';
 import './App.css';
 import AIBusyModal from './components/common/AIBusyModal';
@@ -6,7 +7,6 @@ import { SceneHoverProvider } from './context/SceneHoverContext';
 import { AIStatusProvider } from './contexts/AIStatusContext';
 import { AuthProvider } from './contexts/AuthContext';
 import getRoutes from './routes';
-import { ThemeProvider } from '@drdata/docomo';
 
 // AppContent component to use the useRoutes hook (it must be used inside Router context)
 const AppContent = () => {
@@ -20,7 +20,7 @@ const AppContent = () => {
         <TopBar />
         <div className="main-content" style={{ 
           marginBottom: '0',
-          minHeight: 'calc(100vh - 60px)'
+          minHeight: 'calc(100vh - 64px)'
         }}>
           {routeElements}
         </div>
@@ -32,7 +32,12 @@ const AppContent = () => {
 function App() {
   return (
     <ThemeProvider>
-      <Router>
+      <Router
+        future={{
+          v7_startTransition: true,
+          v7_relativeSplatPath: true,
+        }}
+      >
         <AIStatusProvider>
           <SceneHoverProvider>
             <AppContent />

@@ -4,10 +4,7 @@ export { ScenarioEditor } from './ScenarioEditor';
 export { ScenarioEditorWrapper } from './ScenarioEditorWrapper';
 
 // Common component exports
-export { Button } from './common/Button';
 export { ChatAgent } from './common/ChatAgent';
-export { Dropdown } from './common/Dropdown';
-export { Input } from './common/Input';
 export { Tabs } from './common/Tabs';
 
 // Modal exports

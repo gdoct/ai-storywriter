@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Card, Button } from '@drdata/docomo';
+import { Card, Button, ItemList } from '@drdata/docomo';
 import { formatRelativeTime, RecentScenario } from '../../services/dashboardService';
 import DashboardCard from './DashboardCard';
 
@@ -35,51 +35,56 @@ const RecentScenarios: React.FC<RecentScenariosProps> = ({
           View All
         </Button>
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-md)' }}>
-        {recentScenarios.map(scenario => (
-          <DashboardCard
-            key={scenario.id}
-            title={scenario.title}
-            metadata={[
-              { icon: "📅", text: formatRelativeTime(scenario.lastModified) },
-              { icon: "📝", text: `${scenario.generatedStoryCount} generated stories` }
-            ]}
-            actions={[
-              {
-                label: "Edit",
-                onClick: () => handleEditScenario(scenario.id),
-                variant: "text"
-              },
-            ]}
-          />
-        ))}
-        {recentScenarios.length === 0 && (
-          <div style={{ 
-            textAlign: 'center',
-            padding: 'var(--spacing-4xl)',
-            color: 'var(--color-text-secondary)'
+      {recentScenarios.length === 0 ? (
+        <div style={{ 
+          textAlign: 'center',
+          padding: 'var(--spacing-4xl)',
+          color: 'var(--color-text-secondary)'
+        }}>
+          <div style={{ fontSize: '3rem', marginBottom: 'var(--spacing-lg)' }}>📝</div>
+          <h4 style={{ 
+            fontSize: 'var(--font-size-lg)', 
+            fontWeight: 'var(--font-weight-medium)',
+            color: 'var(--color-text-primary)',
+            marginBottom: 'var(--spacing-sm)'
           }}>
-            <div style={{ fontSize: '3rem', marginBottom: 'var(--spacing-lg)' }}>📝</div>
-            <h4 style={{ 
-              fontSize: 'var(--font-size-lg)', 
-              fontWeight: 'var(--font-weight-medium)',
-              color: 'var(--color-text-primary)',
-              marginBottom: 'var(--spacing-sm)'
-            }}>
-              No scenarios yet
-            </h4>
-            <p style={{ 
-              marginBottom: 'var(--spacing-xl)',
-              fontSize: 'var(--font-size-md)'
-            }}>
-              Create your first scenario to get started!
-            </p>
-            <Button as={Link} to="/app" variant="primary">
-              Start Writing
-            </Button>
-          </div>
-        )}
-      </div>
+            No scenarios yet
+          </h4>
+          <p style={{ 
+            marginBottom: 'var(--spacing-xl)',
+            fontSize: 'var(--font-size-md)'
+          }}>
+            Create your first scenario to get started!
+          </p>
+          <Button as={Link} to="/app" variant="primary">
+            Start Writing
+          </Button>
+        </div>
+      ) : (
+        <ItemList 
+          items={recentScenarios.map(scenario => ({
+            key: scenario.id,
+            content: (
+              <DashboardCard
+                title={scenario.title}
+                metadata={[
+                  { icon: "📅", text: formatRelativeTime(scenario.lastModified) },
+                  { icon: "📝", text: `${scenario.generatedStoryCount} generated stories` }
+                ]}
+                actions={[
+                  {
+                    label: "Edit",
+                    onClick: () => handleEditScenario(scenario.id),
+                    variant: "text"
+                  },
+                ]}
+              />
+            )
+          }))}
+          onViewMore={() => {}}
+          viewMoreText="View All Scenarios"
+        />
+      )}
     </Card>
   );
 };

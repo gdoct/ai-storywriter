@@ -16,7 +16,7 @@
 .characters-tab__title {
   font-size: 1.25rem;
   font-weight: 600;
-  color: #1f2937;
+  color: var(--color-text-primary);
   margin: 0;
 }
 
@@ -33,16 +33,16 @@
   justify-content: center;
   padding: 3rem;
   text-align: center;
-  color: #6b7280;
-  background-color: #f9fafb;
-  border: 2px dashed #d1d5db;
+  color: var(--color-text-secondary);
+  background-color: var(--color-surface-variant);
+  border: 2px dashed var(--color-border);
   border-radius: 0.75rem;
 }
 
 .characters-tab__empty-icon {
   font-size: 3rem;
   margin-bottom: 1rem;
-  color: #9ca3af;
+  color: var(--color-text-tertiary);
 }
 
 .characters-tab__list {

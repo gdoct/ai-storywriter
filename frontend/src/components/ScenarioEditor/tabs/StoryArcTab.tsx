@@ -1,10 +1,9 @@
+import { AiTextArea, Button } from '@drdata/docomo';
 import React, { useCallback, useState } from 'react';
 import { FaDownload, FaProjectDiagram, FaTimes } from 'react-icons/fa';
 import { useAuth } from '../../../contexts/AuthContext';
 import { generateStoryArc, rewriteStoryArc } from '../../../services/storyGenerator';
 import ImportModal from '../../common/ImportModal';
-import { Button } from '../common/Button';
-import { Input } from '../common/Input';
 import { TabProps } from '../types';
 import './StoryArcTab.css';
 
@@ -173,12 +172,11 @@ export const StoryArcTab: React.FC<TabProps> = ({
       </p>
 
       <div className="storyarc-tab__content">
-        <Input
+        <AiTextArea
           label="Story Arc"
           value={scenario.storyarc || ''}
           onChange={handleStoryArcChange}
           placeholder="Outline your story's plot structure. Include the opening, inciting incident, rising action, climax, falling action, and resolution. Describe key plot points, character development, conflicts, and how the story progresses..."
-          multiline
           rows={15}
           disabled={isGenerating}
         />

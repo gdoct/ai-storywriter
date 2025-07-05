@@ -1,3 +1,4 @@
+import { AiTextBox, Button } from '@drdata/docomo';
 import { faker } from '@faker-js/faker';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { FaPlus, FaRandom, FaTimes, FaUser } from 'react-icons/fa';
@@ -6,8 +7,6 @@ import { createCharacterFromPhotoPrompt } from '../../../services/llmPromptServi
 import { getToken } from '../../../services/security';
 import { Character, Scenario } from '../../../types/ScenarioTypes';
 import { showUserFriendlyError } from '../../../utils/errorHandling';
-import { Button } from '../common/Button';
-import { Input } from '../common/Input';
 import './PhotoUploadModal.css';
 
 interface PhotoUploadModalProps {
@@ -482,13 +481,13 @@ export const PhotoUploadModal: React.FC<PhotoUploadModalProps> = ({
             
             <div className="input-group">
               <label className="input-label">Character Name</label>
-              <Input
+              <AiTextBox
                 value={characterName}
                 onChange={(value) => setCharacterName(value)}
                 placeholder="e.g., Alice Johnson, John Smith, etc."
                 disabled={isUploading}
-                icon={<FaRandom />}
-                onIconClick={() => {
+                aiIcon={<FaRandom />}
+                onAiClick={() => {
                   const firstName = selectedGender === 'female' 
                     ? faker.name.firstName('female')
                     : selectedGender === 'male'
@@ -501,7 +500,7 @@ export const PhotoUploadModal: React.FC<PhotoUploadModalProps> = ({
               />
             </div>
             
-            <Input
+            <AiTextBox
               label="Character Role"
               value={characterRole}
               onChange={(value) => setCharacterRole(value)}

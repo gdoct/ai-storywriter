@@ -1,3 +1,4 @@
+import { AiTextArea, Button } from '@drdata/docomo';
 import React, { useCallback, useState } from 'react';
 import { FaBook, FaDownload, FaTimes } from 'react-icons/fa';
 import { useAIStatus } from '../../../contexts/AIStatusContext';
@@ -5,8 +6,6 @@ import { useAuth } from '../../../contexts/AuthContext';
 import { generateBackstory, rewriteBackstory } from '../../../services/storyGenerator';
 import { showUserFriendlyError } from '../../../utils/errorHandling';
 import ImportModal from '../../common/ImportModal';
-import { Button } from '../common/Button';
-import { Input } from '../common/Input';
 import { TabProps } from '../types';
 import './BackstoryTab.css';
 
@@ -183,12 +182,11 @@ export const BackstoryTab: React.FC<TabProps> = ({
       </p>
 
       <div className="backstory-tab__content">
-        <Input
+        <AiTextArea
           label="Backstory"
           value={scenario.backstory || ''}
           onChange={handleBackstoryChange}
           placeholder="Enter the backstory for your narrative. Include key events, character backgrounds, world-building details, and any context that influences the main story..."
-          multiline
           rows={15}
           disabled={isGenerating}
         />

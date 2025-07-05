@@ -1,8 +1,7 @@
+import { AiTextArea, AiTextBox, Button } from '@drdata/docomo';
 import React, { useState } from 'react';
 import { FaBook, FaCog, FaEye, FaTrash, FaUser } from 'react-icons/fa';
 import { Chapter } from '../../../../../types/chapters';
-import { Button } from '../../../common/Button';
-import { Input } from '../../../common/Input';
 
 interface ChapterCardProps {
   chapter: Chapter;
@@ -82,7 +81,7 @@ const ChapterCard: React.FC<ChapterCardProps> = ({
             </div>
             <div className="chapter-card__title-section">
               {isEditing ? (
-                <Input
+                <AiTextBox
                   value={editTitle}
                   onChange={setEditTitle}
                   placeholder="Chapter title"
@@ -133,12 +132,11 @@ const ChapterCard: React.FC<ChapterCardProps> = ({
           </div>
           {isEditing && (
             <div className="chapter-card__description-edit">
-              <Input
+              <AiTextArea
                 value={editDescription}
                 onChange={setEditDescription}
                 placeholder="Chapter description"
                 disabled={isLoading}
-                multiline
               />
             </div>
           )}
@@ -160,18 +158,17 @@ const ChapterCard: React.FC<ChapterCardProps> = ({
         <div className="chapter-card__body">
           {isEditing ? (
             <>
-              <Input
+              <AiTextBox
                 value={editTitle}
                 onChange={setEditTitle}
                 placeholder="Chapter title"
                 disabled={isLoading}
               />
-              <Input
+              <AiTextArea
                 value={editDescription}
                 onChange={setEditDescription}
                 placeholder="Chapter description"
                 disabled={isLoading}
-                multiline
               />
             </>
           ) : (

@@ -9,7 +9,6 @@ import http from '../../services/http';
 import { MarketStoryCard } from '../../types/marketplace';
 import { ConfirmModal } from '../Modal';
 import { ModeratorOnly } from '../PermissionGate';
-import './StoryCard.css';
 
 interface EnhancedStoryCardProps {
   story: MarketStoryCard;

@@ -1,8 +1,7 @@
+import { AiTextArea, Button } from '@drdata/docomo';
 import React, { useCallback, useState } from 'react';
 import { FaDownload, FaStickyNote } from 'react-icons/fa';
 import ImportModal from '../../common/ImportModal';
-import { Button } from '../common/Button';
-import { Input } from '../common/Input';
 import { TabProps } from '../types';
 import './NotesTab.css';
 
@@ -49,12 +48,11 @@ export const NotesTab: React.FC<TabProps> = ({
       </p>
 
       <div className="notes-tab__content">
-        <Input
+        <AiTextArea
           label="Notes"
           value={scenario.notes || ''}
           onChange={handleNotesChange}
           placeholder="Add any notes, ideas, reminders, or thoughts about your story here. This could include dialogue snippets, scene ideas, research notes, inspiration, or anything else that helps with your creative process..."
-          multiline
           rows={15}
         />
         

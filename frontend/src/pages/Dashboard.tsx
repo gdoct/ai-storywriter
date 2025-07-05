@@ -107,9 +107,8 @@ const Dashboard: React.FC<DashboardProps> = () => {
       }}>
         <div style={{ 
           maxWidth: '1200px', 
-          margin: '0 auto',
-          textAlign: 'center',
-          marginTop: 'var(--spacing-5xl)'
+          margin: `var(--spacing-5xl) auto 0 auto`,
+          textAlign: 'center'
         }}>
           <div style={{ 
             color: 'var(--color-text-secondary)',
@@ -132,9 +131,8 @@ const Dashboard: React.FC<DashboardProps> = () => {
       }}>
         <div style={{ 
           maxWidth: '600px', 
-          margin: '0 auto',
-          textAlign: 'center',
-          marginTop: 'var(--spacing-5xl)'
+          margin: `var(--spacing-5xl) auto 0 auto`,
+          textAlign: 'center'
         }}>
           <div style={{ fontSize: '3rem', marginBottom: 'var(--spacing-lg)' }}>⚠️</div>
           <h3 style={{ 

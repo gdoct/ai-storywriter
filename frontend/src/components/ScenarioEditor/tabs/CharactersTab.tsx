@@ -7,8 +7,7 @@ import { generateCharacterField } from '../../../services/characterFieldGenerato
 import { Character } from '../../../types/ScenarioTypes';
 import { showUserFriendlyError } from '../../../utils/errorHandling';
 import ImportModal from '../../common/ImportModal';
-import { Button } from '../common/Button';
-import { Input } from '../common/Input';
+import { Button, AiTextBox, AiTextArea } from '@drdata/docomo';
 import { TabProps } from '../types';
 import { CharacterPhoto } from './CharacterPhoto';
 import './CharactersTab.css';
@@ -380,7 +379,7 @@ export const CharactersTab: React.FC<TabProps> = ({
                     </div>
                     <div className="character-card__grid">
                       <div className="input-with-generate">
-                        <Input
+                        <AiTextBox
                           label="Name"
                           value={
                             fieldGenerationInProgress?.characterId === character.id && 
@@ -400,7 +399,7 @@ export const CharactersTab: React.FC<TabProps> = ({
                         />
                       </div>
                       <div className="input-with-generate">
-                        <Input
+                        <AiTextBox
                           label="Alias/Nickname"
                           value={
                             fieldGenerationInProgress?.characterId === character.id && 
@@ -420,7 +419,7 @@ export const CharactersTab: React.FC<TabProps> = ({
                         />
                       </div>
                       <div className="input-with-generate">
-                        <Input
+                        <AiTextBox
                           label="Role"
                           value={
                             fieldGenerationInProgress?.characterId === character.id && 
@@ -440,7 +439,7 @@ export const CharactersTab: React.FC<TabProps> = ({
                         />
                       </div>
                       <div className="input-with-generate">
-                        <Input
+                        <AiTextBox
                           label="Gender"
                           value={
                             fieldGenerationInProgress?.characterId === character.id && 
@@ -462,7 +461,7 @@ export const CharactersTab: React.FC<TabProps> = ({
                     </div>
                     
                     <div className="input-with-generate">
-                      <Input
+                      <AiTextArea
                         label="Appearance"
                         value={
                           fieldGenerationInProgress?.characterId === character.id && 
@@ -472,7 +471,6 @@ export const CharactersTab: React.FC<TabProps> = ({
                         }
                         onChange={(value) => handleCharacterChange(character.id, 'appearance', value)}
                         placeholder="Physical description..."
-                        multiline
                         rows={3}
                         disabled={!!fieldGenerationInProgress}
                       />
@@ -485,7 +483,7 @@ export const CharactersTab: React.FC<TabProps> = ({
                     </div>
                     
                     <div className="input-with-generate">
-                      <Input
+                      <AiTextArea
                         label="Backstory"
                         value={
                           fieldGenerationInProgress?.characterId === character.id && 
@@ -495,7 +493,6 @@ export const CharactersTab: React.FC<TabProps> = ({
                         }
                         onChange={(value) => handleCharacterChange(character.id, 'backstory', value)}
                         placeholder="Character's background and history..."
-                        multiline
                         rows={4}
                         disabled={!!fieldGenerationInProgress}
                       />
@@ -508,7 +505,7 @@ export const CharactersTab: React.FC<TabProps> = ({
                     </div>
                     
                     <div className="input-with-generate">
-                      <Input
+                      <AiTextArea
                         label="Additional Information"
                         value={
                           fieldGenerationInProgress?.characterId === character.id && 
@@ -518,7 +515,6 @@ export const CharactersTab: React.FC<TabProps> = ({
                         }
                         onChange={(value) => handleCharacterChange(character.id, 'extraInfo', value)}
                         placeholder="Personality traits, motivations, goals..."
-                        multiline
                         rows={3}
                         disabled={!!fieldGenerationInProgress}
                       />

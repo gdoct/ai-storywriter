@@ -20,6 +20,7 @@ import Signup from './pages/Signup';
 import Stories from './pages/Stories';
 import StoryDetail from './pages/StoryDetail';
 import Templates from './pages/Templates';
+import Test from './pages/Test';
 
 // Component to handle the root route logic
 const MarketingHomeOrDashboard: React.FC = () => {
@@ -94,6 +95,7 @@ const getRoutes = (): RouteObject[] => {
     { path: '/signup', element: <Signup /> },
     { path: '/privacy', element: <PrivacyPolicy /> },
     { path: '/terms', element: <TermsOfService /> },
+    { path: '/test', element: <Test /> },
     
     // Admin-only routes
     { 

@@ -1,9 +1,8 @@
+import { AiTextArea, AiTextBox, Button } from '@drdata/docomo';
 import React, { useCallback, useState } from 'react';
 import { FaCog, FaPlus, FaTrash } from 'react-icons/fa';
 import { v4 as uuidv4 } from 'uuid';
 import { Scenario, Technology } from '../../../../../types/ScenarioTypes';
-import { Button } from '../../../common/Button';
-import { Input } from '../../../common/Input';
 import './WorldBuildingManagers.css';
 
 interface TechnologyManagerProps {
@@ -119,7 +118,7 @@ export const TechnologyManager: React.FC<TechnologyManagerProps> = ({
         {selectedTechnology && (
           <div className="technology-manager__details">
             <div className="technology-manager__form">
-              <Input
+              <AiTextBox
                 label="Name"
                 value={selectedTechnology.name}
                 onChange={(value) => handleTechnologyChange(selectedTechnology.id, 'name', value)}
@@ -127,37 +126,34 @@ export const TechnologyManager: React.FC<TechnologyManagerProps> = ({
                 disabled={isLoading}
               />
 
-              <Input
+              <AiTextArea
                 label="Description"
                 value={selectedTechnology.description}
                 onChange={(value) => handleTechnologyChange(selectedTechnology.id, 'description', value)}
                 placeholder="Describe this technology..."
-                multiline
                 rows={3}
                 disabled={isLoading}
               />
 
-              <Input
+              <AiTextArea
                 label="Functionality"
                 value={selectedTechnology.functionality}
                 onChange={(value) => handleTechnologyChange(selectedTechnology.id, 'functionality', value)}
                 placeholder="How does this technology work?"
-                multiline
                 rows={3}
                 disabled={isLoading}
               />
 
-              <Input
+              <AiTextArea
                 label="Availability"
                 value={selectedTechnology.availability}
                 onChange={(value) => handleTechnologyChange(selectedTechnology.id, 'availability', value)}
                 placeholder="Who has access to this technology?"
-                multiline
                 rows={2}
                 disabled={isLoading}
               />
 
-              <Input
+              <AiTextBox
                 label="Creators"
                 value={selectedTechnology.creators || ''}
                 onChange={(value) => handleTechnologyChange(selectedTechnology.id, 'creators', value)}
@@ -165,12 +161,11 @@ export const TechnologyManager: React.FC<TechnologyManagerProps> = ({
                 disabled={isLoading}
               />
 
-              <Input
+              <AiTextArea
                 label="Impact"
                 value={selectedTechnology.impact || ''}
                 onChange={(value) => handleTechnologyChange(selectedTechnology.id, 'impact', value)}
                 placeholder="What impact has this technology had on society?"
-                multiline
                 rows={3}
                 disabled={isLoading}
               />

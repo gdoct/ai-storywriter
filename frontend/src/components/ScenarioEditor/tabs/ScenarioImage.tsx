@@ -3,7 +3,7 @@ import { FaDice, FaPlus, FaTrash, FaUser } from 'react-icons/fa';
 import { deleteScenarioImage, getRandomScenarioImage, uploadScenarioImage } from '../../../services/scenarioImageService';
 import { Scenario } from '../../../types/ScenarioTypes';
 import { showUserFriendlyError } from '../../../utils/errorHandling';
-import { Button } from '../common/Button';
+import { Button } from '@drdata/docomo';
 import './ScenarioImage.css';
 
 interface ScenarioImageProps {

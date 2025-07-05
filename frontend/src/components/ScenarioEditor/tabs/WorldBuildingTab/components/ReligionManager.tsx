@@ -1,9 +1,8 @@
+import { AiTextArea, AiTextBox, Button } from '@drdata/docomo';
 import React, { useCallback, useState } from 'react';
 import { FaBook, FaPlus, FaTrash } from 'react-icons/fa';
 import { v4 as uuidv4 } from 'uuid';
 import { Religion, Scenario } from '../../../../../types/ScenarioTypes';
-import { Button } from '../../../common/Button';
-import { Input } from '../../../common/Input';
 import './WorldBuildingManagers.css';
 
 interface ReligionManagerProps {
@@ -119,7 +118,7 @@ export const ReligionManager: React.FC<ReligionManagerProps> = ({
         {selectedReligion && (
           <div className="religion-manager__details">
             <div className="religion-manager__form">
-              <Input
+              <AiTextBox
                 label="Name"
                 value={selectedReligion.name}
                 onChange={(value) => handleReligionChange(selectedReligion.id, 'name', value)}
@@ -127,47 +126,43 @@ export const ReligionManager: React.FC<ReligionManagerProps> = ({
                 disabled={isLoading}
               />
 
-              <Input
+              <AiTextArea
                 label="Description"
                 value={selectedReligion.description}
                 onChange={(value) => handleReligionChange(selectedReligion.id, 'description', value)}
                 placeholder="Describe this religion..."
-                multiline
                 rows={3}
                 disabled={isLoading}
               />
 
-              <Input
+              <AiTextArea
                 label="Beliefs"
                 value={selectedReligion.beliefs}
                 onChange={(value) => handleReligionChange(selectedReligion.id, 'beliefs', value)}
                 placeholder="Core beliefs and teachings..."
-                multiline
                 rows={4}
                 disabled={isLoading}
               />
 
-              <Input
+              <AiTextArea
                 label="Practices"
                 value={selectedReligion.practices}
                 onChange={(value) => handleReligionChange(selectedReligion.id, 'practices', value)}
                 placeholder="Religious practices and rituals..."
-                multiline
                 rows={3}
                 disabled={isLoading}
               />
 
-              <Input
+              <AiTextArea
                 label="Hierarchy"
                 value={selectedReligion.hierarchy || ''}
                 onChange={(value) => handleReligionChange(selectedReligion.id, 'hierarchy', value)}
                 placeholder="Religious hierarchy and leadership..."
-                multiline
                 rows={2}
                 disabled={isLoading}
               />
 
-              <Input
+              <AiTextBox
                 label="Symbols"
                 value={selectedReligion.symbols || ''}
                 onChange={(value) => handleReligionChange(selectedReligion.id, 'symbols', value)}

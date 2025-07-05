@@ -1,9 +1,8 @@
+import { AiTextArea, AiTextBox, Button } from '@drdata/docomo';
 import React, { useCallback, useState } from 'react';
 import { FaPlus, FaTrash, FaUsers } from 'react-icons/fa';
 import { v4 as uuidv4 } from 'uuid';
 import { Culture, Scenario } from '../../../../../types/ScenarioTypes';
-import { Button } from '../../../common/Button';
-import { Input } from '../../../common/Input';
 import './WorldBuildingManagers.css';
 
 interface CultureManagerProps {
@@ -119,7 +118,7 @@ export const CultureManager: React.FC<CultureManagerProps> = ({
         {selectedCulture && (
           <div className="culture-manager__details">
             <div className="culture-manager__form">
-              <Input
+              <AiTextBox
                 label="Name"
                 value={selectedCulture.name}
                 onChange={(value) => handleCultureChange(selectedCulture.id, 'name', value)}
@@ -127,37 +126,34 @@ export const CultureManager: React.FC<CultureManagerProps> = ({
                 disabled={isLoading}
               />
 
-              <Input
+              <AiTextArea
                 label="Description"
                 value={selectedCulture.description}
                 onChange={(value) => handleCultureChange(selectedCulture.id, 'description', value)}
                 placeholder="Describe this culture..."
-                multiline
                 rows={3}
                 disabled={isLoading}
               />
 
-              <Input
+              <AiTextArea
                 label="Values"
                 value={selectedCulture.values}
                 onChange={(value) => handleCultureChange(selectedCulture.id, 'values', value)}
                 placeholder="Core values and beliefs..."
-                multiline
                 rows={3}
                 disabled={isLoading}
               />
 
-              <Input
+              <AiTextArea
                 label="Traditions"
                 value={selectedCulture.traditions}
                 onChange={(value) => handleCultureChange(selectedCulture.id, 'traditions', value)}
                 placeholder="Traditional practices and customs..."
-                multiline
                 rows={3}
                 disabled={isLoading}
               />
 
-              <Input
+              <AiTextBox
                 label="Language"
                 value={selectedCulture.language || ''}
                 onChange={(value) => handleCultureChange(selectedCulture.id, 'language', value)}
@@ -165,12 +161,11 @@ export const CultureManager: React.FC<CultureManagerProps> = ({
                 disabled={isLoading}
               />
 
-              <Input
+              <AiTextArea
                 label="Social Structure"
                 value={selectedCulture.socialStructure || ''}
                 onChange={(value) => handleCultureChange(selectedCulture.id, 'socialStructure', value)}
                 placeholder="Social hierarchy and organization..."
-                multiline
                 rows={3}
                 disabled={isLoading}
               />

@@ -42,22 +42,26 @@ const StoryCard: React.FC<StoryCardProps> = ({ story, onClick, compact = false }
   };
 
   return (
-    <Card
+    <div
       onClick={() => onClick(story.id)}
+      onKeyDown={(e) => e.key === 'Enter' && onClick(story.id)}
+      tabIndex={0}
       style={{
         cursor: 'pointer',
         transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-        position: 'relative',
-        backgroundImage: story.image_uri ? `url(${story.image_uri})` : undefined,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat',
-        minHeight: compact ? '200px' : '300px',
-        border: story.is_staff_pick ? '2px solid var(--color-primary)' : undefined,
       }}
-      onKeyDown={(e) => e.key === 'Enter' && onClick(story.id)}
-      tabIndex={0}
     >
+      <Card
+        style={{
+          position: 'relative',
+          backgroundImage: story.image_uri ? `url(${story.image_uri})` : undefined,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+          minHeight: compact ? '200px' : '300px',
+          border: story.is_staff_pick ? '2px solid var(--color-primary)' : undefined,
+        }}
+      >
       {story.is_staff_pick && (
         <div style={{
           position: 'absolute',
@@ -155,7 +159,8 @@ const StoryCard: React.FC<StoryCardProps> = ({ story, onClick, compact = false }
           </div>
         </div>
       </div>
-    </Card>
+      </Card>
+    </div>
   );
 };
 

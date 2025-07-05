@@ -19,7 +19,7 @@ const RecentGeneratedStories: React.FC<RecentGeneratedStoriesProps> = ({
 
   // Convert stories to ItemList format
   const storyItems = recentStories.map(story => ({
-    key: story.id,
+    key: story.id.toString(),
     content: (
       <DashboardCard
         title={story.scenarioTitle}

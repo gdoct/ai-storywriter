@@ -1,8 +1,7 @@
 import React from 'react';
 import { StyleSettings } from '../../../types/ScenarioTypes';
 import { GENRE_OPTIONS, LANGUAGE_FLAGS, LANGUAGE_OPTIONS, STYLE_OPTIONS, THEME_OPTIONS, TONE_OPTIONS, WRITING_STYLE_VARIATIONS } from '../../../types/styleoptions';
-import { Dropdown } from '../common/Dropdown';
-import { Input } from '../common/Input';
+import { AiDropdown, AiTextArea, Label } from '@drdata/docomo';
 
 interface StyleFieldsProps {
   writingStyle: StyleSettings;
@@ -40,90 +39,103 @@ const StyleFields: React.FC<StyleFieldsProps> = ({ writingStyle, onStyleChange, 
     return (
     <div className="general-tab__style-grid">
       <div className="general-tab__style-field">
-        <Dropdown
-          label="Writing Style"
-          value={writingStyle.style || ''}
-          onChange={(value) => onStyleChange('style', value)}
-          options={styleOptions}
-          className='writingstyle__dropdown'
-          placeholder="Select or enter writing style..."
-          onIconClick={() => randomizeField('style', styleOptions)}
-        />
+        <div>
+          <Label style={{ marginBottom: 'var(--spacing-xs)', display: 'block' }}>Writing Style</Label>
+          <AiDropdown
+            value={writingStyle.style || ''}
+            onChange={(value) => onStyleChange('style', value)}
+            options={styleOptions.map(opt => ({ value: opt, label: opt }))}
+            className='writingstyle__dropdown'
+            placeholder="Select or enter writing style..."
+            onAiClick={() => randomizeField('style', styleOptions)}
+          />
+        </div>
       </div>
 
       <div className="general-tab__style-field">
-        <Dropdown
-          label="Genre"
-          value={writingStyle.genre || ''}
-          onChange={(value) => onStyleChange('genre', value)}
-          options={genreOptions}
-          className='genre__dropdown'
-          placeholder="Select or enter genre..."
-          onIconClick={() => randomizeField('genre', genreOptions)}
-        />
+        <div>
+          <Label style={{ marginBottom: 'var(--spacing-xs)', display: 'block' }}>Genre</Label>
+          <AiDropdown
+            value={writingStyle.genre || ''}
+            onChange={(value) => onStyleChange('genre', value)}
+            options={genreOptions.map(opt => ({ value: opt, label: opt }))}
+            className='genre__dropdown'
+            placeholder="Select or enter genre..."
+            onAiClick={() => randomizeField('genre', genreOptions)}
+          />
+        </div>
       </div>
 
       <div className="general-tab__style-field">
-        <Dropdown
-          label="Tone"
-          value={writingStyle.tone || ''}
-          onChange={(value) => onStyleChange('tone', value)}
-          options={toneOptions}
-          className='tone__dropdown'
-          placeholder="Select or enter tone..."
-          onIconClick={() => randomizeField('tone', toneOptions)}
-        />
+        <div>
+          <Label style={{ marginBottom: 'var(--spacing-xs)', display: 'block' }}>Tone</Label>
+          <AiDropdown
+            value={writingStyle.tone || ''}
+            onChange={(value) => onStyleChange('tone', value)}
+            options={toneOptions.map(opt => ({ value: opt, label: opt }))}
+            className='tone__dropdown'
+            placeholder="Select or enter tone..."
+            onAiClick={() => randomizeField('tone', toneOptions)}
+          />
+        </div>
       </div>
 
       <div className="general-tab__style-field">
-        <Dropdown
-          label="Type of language"
-          value={writingStyle.communicationStyle || ''}
-          onChange={(value) => onStyleChange('communicationStyle', value)}
-          options={communicationStyleOptions}
-          className='communicationStyle__dropdown'
-          placeholder="Select or enter the type of communication..."
-          onIconClick={() => randomizeField('communicationStyle', communicationStyleOptions)}
-        />
+        <div>
+          <Label style={{ marginBottom: 'var(--spacing-xs)', display: 'block' }}>Type of language</Label>
+          <AiDropdown
+            value={writingStyle.communicationStyle || ''}
+            onChange={(value) => onStyleChange('communicationStyle', value)}
+            options={communicationStyleOptions.map(opt => ({ value: opt, label: opt }))}
+            className='communicationStyle__dropdown'
+            placeholder="Select or enter the type of communication..."
+            onAiClick={() => randomizeField('communicationStyle', communicationStyleOptions)}
+          />
+        </div>
       </div>
 
       <div className="general-tab__style-field">
-        <Dropdown
-          label="Theme"
-          value={writingStyle.theme || ''}
-          onChange={(value) => onStyleChange('theme', value)}
-          options={themeOptions}
-          className='theme__dropdown'
-          placeholder="Select or enter theme..."
-          onIconClick={() => randomizeField('theme', themeOptions)}
-        />
+        <div>
+          <Label style={{ marginBottom: 'var(--spacing-xs)', display: 'block' }}>Theme</Label>
+          <AiDropdown
+            value={writingStyle.theme || ''}
+            onChange={(value) => onStyleChange('theme', value)}
+            options={themeOptions.map(opt => ({ value: opt, label: opt }))}
+            className='theme__dropdown'
+            placeholder="Select or enter theme..."
+            onAiClick={() => randomizeField('theme', themeOptions)}
+          />
+        </div>
       </div>
 
 
       <div className="general-tab__style-field">
-        <Dropdown
-          label="Language"
-          value={writingStyle.language || 'English'}
-          onChange={(value) => onStyleChange('language', value)}
-          options={languageOptions}
-          className="language__dropdown"
-          placeholder="Select language..."
-          readOnly
-          renderOption={renderLanguageOption}
-          renderValue={renderLanguageValue}
-        />
+        <div>
+          <Label style={{ marginBottom: 'var(--spacing-xs)', display: 'block' }}>Language</Label>
+          <AiDropdown
+            value={writingStyle.language || 'English'}
+            onChange={(value) => onStyleChange('language', value)}
+            options={languageOptions.map(opt => ({ value: opt, label: opt }))}
+            className="language__dropdown"
+            placeholder="Select language..."
+            disabled
+            renderOption={(option) => renderLanguageOption(option.value)}
+            renderValue={renderLanguageValue}
+          />
+        </div>
 
       </div>
 
       <div className="general-tab__style-field general-tab__style-field--full">
-        <Input
-          label="Other Style Notes"
-          value={writingStyle.other || ''}
-          onChange={(value) => onStyleChange('other', value)}
-          placeholder="Any additional style preferences..."
-          multiline
-          rows={3}
-        />
+        <div>
+          <Label style={{ marginBottom: 'var(--spacing-xs)', display: 'block' }}>Other Style Notes</Label>
+          <AiTextArea
+            value={writingStyle.other || ''}
+            onChange={(value) => onStyleChange('other', value)}
+            placeholder="Any additional style preferences..."
+            rows={3}
+          />
+        </div>
       </div>
     </div>
   );

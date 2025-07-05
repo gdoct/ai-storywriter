@@ -231,8 +231,8 @@
   text-decoration: underline;
 }
 
-/* Footer styling */
-footer {
+/* Footer styling for signup page */
+.signup-container footer {
   position: fixed;
   bottom: 0;
   width: 100%;

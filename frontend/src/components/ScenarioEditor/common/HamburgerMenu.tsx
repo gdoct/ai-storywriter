@@ -1,6 +1,6 @@
+import { Button } from '@drdata/docomo';
 import React, { useCallback, useEffect, useState } from 'react';
 import { FaTimes } from 'react-icons/fa';
-import { Button } from './Button';
 import './HamburgerMenu.css';
 
 export interface HamburgerMenuItem {
@@ -95,7 +95,7 @@ export const HamburgerMenu: React.FC<HamburgerMenuProps> = ({
               onClick={() => handleItemClick(item)}
               icon={item.icon}
               disabled={item.disabled}
-              loading={item.loading}
+              busy={item.loading}
               className={item.className}
               title={item.title}
               data-testid={item['data-testid']}

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { FaCog, FaPlus, FaUser } from 'react-icons/fa';
 import { Chapter } from '../../../../../types/chapters';
 import { Scenario } from '../../../../../types/ScenarioTypes';
-import { Button } from '../../../common/Button';
+import { Button } from '@drdata/docomo';
 import ChapterCard from './ChapterCard';
 
 interface ChaptersListProps {

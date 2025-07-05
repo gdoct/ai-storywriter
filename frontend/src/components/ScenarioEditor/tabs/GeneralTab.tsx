@@ -4,8 +4,7 @@ import { generateScenarioSynopsis, generateStoryTitle } from '../../../services/
 import { StyleSettings } from '../../../types/ScenarioTypes';
 import { GENRE_OPTIONS, STYLE_OPTIONS, THEME_OPTIONS, TONE_OPTIONS, WRITING_STYLE_VARIATIONS } from '../../../types/styleoptions';
 import ImportModal from '../../common/ImportModal';
-import { Button } from '../common/Button';
-import { Input } from '../common/Input';
+import { Button, AiTextBox, AiTextArea } from '@drdata/docomo';
 import { TabProps } from '../types';
 import './GeneralTab.css';
 import { ScenarioImage } from './ScenarioImage';
@@ -100,27 +99,26 @@ export const GeneralTab: React.FC<TabProps> = ({
             />
           </div>
           <div className="general-tab__fields-section">
-            <Input
+            <AiTextBox
               label="Scenario Title"
               data-testid="story-title-input"
               className='general-tab__title-input'
               value={scenario.title || ''}
               onChange={(value) => handleBasicFieldChange('title', value)}
               placeholder="Enter your scenario title..."
-              icon={<FaDice />}
-              onIconClick={() => randomizeTitle()}
+              aiIcon={<FaDice />}
+              onAiClick={() => randomizeTitle()}
             />
-            <Input
+            <AiTextArea
               label="Synopsis"
               data-testid="story-synopsis-input"
               value={scenario.synopsis || ''}
               onChange={(value) => handleBasicFieldChange('synopsis', value)}
               placeholder="Brief description of your scenario..."
               className='general-tab__synopsis-input'
-              multiline
               rows={4}
-              icon={<FaDice />}
-              onIconClick={() => randomizeSynopsis()}
+              aiIcon={<FaDice />}
+              onAiClick={() => randomizeSynopsis()}
             />
           </div>
         </div>

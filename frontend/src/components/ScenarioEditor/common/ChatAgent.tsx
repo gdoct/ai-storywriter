@@ -1,3 +1,4 @@
+import { Button } from '@drdata/docomo';
 import React, { useEffect, useRef, useState } from 'react';
 import { FaComment, FaRedo, FaTimes } from 'react-icons/fa';
 import { useAuth } from '../../../contexts/AuthContext';
@@ -6,7 +7,6 @@ import { createContextAwareChatPrompt } from '../../../services/llmPromptService
 import { getSelectedModel } from '../../../services/modelSelection';
 import { llmCompletionRequestMessage } from '../../../types/LLMTypes';
 import { Scenario } from '../../../types/ScenarioTypes';
-import { Button } from './Button';
 import './ChatAgent.css';
 
 interface Message {
@@ -641,7 +641,7 @@ export const ChatAgent: React.FC<ChatAgentProps> = ({ scenario }) => {
                   variant="primary"
                   onClick={handleSend}
                   disabled={isGenerating || !input.trim() || isChatUnavailable || isChatBusy}
-                  loading={isGenerating}
+                  busy={isGenerating}
                   className="chat-agent-send-btn"
                 >
                   {isGenerating ? 'Generating...' : 'Send'}

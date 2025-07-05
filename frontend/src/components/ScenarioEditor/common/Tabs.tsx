@@ -3,7 +3,6 @@ import { createPortal } from 'react-dom';
 import { FaPlus, FaTimes } from 'react-icons/fa';
 import { TabConfig, TabId } from '../types';
 import { renderIcon } from './IconUtils';
-import './Tabs.css';
 
 export interface TabsProps {
   tabs: TabConfig[];

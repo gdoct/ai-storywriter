@@ -1,9 +1,8 @@
+import { AiTextArea, AiTextBox, Button } from '@drdata/docomo';
 import React, { useCallback, useState } from 'react';
 import { FaPlus, FaTrash } from 'react-icons/fa';
 import { v4 as uuidv4 } from 'uuid';
 import { Organization, Scenario } from '../../../../../types/ScenarioTypes';
-import { Button } from '../../../common/Button';
-import { Input } from '../../../common/Input';
 import './WorldBuildingManagers.css';
 
 interface OrganizationManagerProps {
@@ -132,7 +131,7 @@ export const OrganizationManager: React.FC<OrganizationManagerProps> = ({
         {selectedOrganization && (
           <div className="organization-manager__details">
             <div className="organization-manager__form">
-              <Input
+              <AiTextBox
                 label="Name"
                 value={selectedOrganization.name}
                 onChange={(value) => handleOrganizationChange(selectedOrganization.id, 'name', value)}
@@ -156,52 +155,47 @@ export const OrganizationManager: React.FC<OrganizationManagerProps> = ({
                 </select>
               </div>
 
-              <Input
+              <AiTextArea
                 label="Description"
                 value={selectedOrganization.description}
                 onChange={(value) => handleOrganizationChange(selectedOrganization.id, 'description', value)}
                 placeholder="Describe this organization..."
-                multiline
                 rows={3}
                 disabled={isLoading}
               />
 
-              <Input
+              <AiTextArea
                 label="Purpose"
                 value={selectedOrganization.purpose}
                 onChange={(value) => handleOrganizationChange(selectedOrganization.id, 'purpose', value)}
                 placeholder="What is the organization's purpose and goals?"
-                multiline
                 rows={3}
                 disabled={isLoading}
               />
 
-              <Input
+              <AiTextArea
                 label="Structure"
                 value={selectedOrganization.structure}
                 onChange={(value) => handleOrganizationChange(selectedOrganization.id, 'structure', value)}
                 placeholder="How is the organization structured?"
-                multiline
                 rows={3}
                 disabled={isLoading}
               />
 
-              <Input
+              <AiTextArea
                 label="Membership"
                 value={selectedOrganization.membership || ''}
                 onChange={(value) => handleOrganizationChange(selectedOrganization.id, 'membership', value)}
                 placeholder="Who can join? What are the requirements?"
-                multiline
                 rows={2}
                 disabled={isLoading}
               />
 
-              <Input
+              <AiTextArea
                 label="Resources"
                 value={selectedOrganization.resources || ''}
                 onChange={(value) => handleOrganizationChange(selectedOrganization.id, 'resources', value)}
                 placeholder="What resources does the organization have?"
-                multiline
                 rows={2}
                 disabled={isLoading}
               />

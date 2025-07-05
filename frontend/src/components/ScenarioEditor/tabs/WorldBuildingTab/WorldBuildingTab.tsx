@@ -1,10 +1,9 @@
+import { AiTextArea, Button } from '@drdata/docomo';
 import React, { useCallback, useMemo, useState } from 'react';
 import { FaDownload } from 'react-icons/fa';
 import { v4 as uuidv4 } from 'uuid';
 import { WorldBuilding } from '../../../../types/ScenarioTypes';
 import ImportModal from '../../../common/ImportModal';
-import { Button } from '../../common/Button';
-import { Input } from '../../common/Input';
 import { TabProps } from '../../types';
 import {
     CultureManager,
@@ -167,12 +166,11 @@ export const WorldBuildingTab: React.FC<TabProps> = ({
         </div>
 
         <div className="world-building-tab__general-notes">
-          <Input
+          <AiTextArea
             label="General World Building Notes"
             value={worldBuilding.generalNotes}
             onChange={handleGeneralNotesChange}
             placeholder="Overall notes about your world, connections between elements, important details..."
-            multiline
             rows={4}
             disabled={isLoading}
           />

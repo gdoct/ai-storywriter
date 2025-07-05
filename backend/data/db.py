@@ -5,8 +5,9 @@ import sqlite3
 import uuid
 from datetime import datetime
 
-from .db_config import DB_PATH, get_db_path
 from services.security_utils import hash_password
+
+from .db_config import DB_PATH, get_db_path
 
 
 def get_db_connection():
