@@ -9,8 +9,7 @@ The frontend is developed using React and TypeScript.
 The backend is built with Python and Flask, offering a REST API for handling requests and managing data.
 
 ## Screenshot
-![image](https://github.com/user-attachments/assets/542c2645-696a-47ca-a7b5-c5ddfe8622f6)
-
+![image](https://github.com/user-attachments/assets/02d1847d-d46c-4d94-bace-3f246e1be62d)
 
 ## Features
 - **Scenario Creation & Editing:** Build detailed scenarios with a user-friendly interface.
