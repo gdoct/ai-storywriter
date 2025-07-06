@@ -1,3 +1,4 @@
+import { ExpandableTabs } from '@drdata/docomo';
 import React, { useCallback, useEffect, useRef } from 'react';
 import { FaBook, FaDice, FaEye, FaRedo, FaSave, FaStickyNote, FaTrash, FaUser, FaUsers } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
@@ -10,8 +11,8 @@ import { isInsufficientCreditsError, showUserFriendlyErrorWithModals } from '../
 import { AlertModal, ConfirmModal } from '../Modal';
 import { ActionButtonItem, ActionButtons } from './common/ActionButtons';
 import { ChatAgent } from './common/ChatAgent';
+import { CharacterBadge } from './common/CharacterBadge';
 import { LlmSettingsMenu } from './common/LlmSettingsMenu';
-import { ExpandableTabs, Hero } from '@drdata/docomo';
 import { useScenarioEditor } from './context';
 import { StoryModal } from './modals/StoryModal';
 import './ScenarioEditor.css';
@@ -466,11 +467,40 @@ export const ScenarioEditor: React.FC<ScenarioEditorProps> = ({
   return (
     <div className="scenario-editor">
       <div className="scenario-editor__header">
-        <Hero
-          title="Scenario Editor"
-          subtitle={`${state.scenario.title || 'Untitled Story'}${state.isDirty ? ' *' : ''}`}
-          className="scenario-editor__hero"
-          cta={
+        <div className="scenario-editor__header-content">
+          <div className="scenario-editor__header-left">
+            <div className="scenario-editor__app-title">SCENARIO EDITOR</div>
+            <div className="scenario-editor__content-row">
+              <div className="scenario-editor__image-container">
+                {state.scenario.imageUrl ? (
+                  <img
+                    src={state.scenario.imageUrl}
+                    alt={state.scenario.title || 'Scenario'}
+                    className="scenario-editor__scenario-image"
+                    onError={(e) => {
+                      // Fallback to placeholder if image fails to load
+                      e.currentTarget.style.display = 'none';
+                      const placeholder = e.currentTarget.nextElementSibling as HTMLElement;
+                      if (placeholder) placeholder.style.display = 'flex';
+                    }}
+                  />
+                ) : null}
+                <div 
+                  className="scenario-editor__image-placeholder"
+                  style={{ display: state.scenario.imageUrl ? 'none' : 'flex' }}
+                >
+                  <div className="scenario-editor__placeholder-content">
+                    No Image
+                  </div>
+                </div>
+              </div>
+              <h1 className="scenario-editor__story-title">
+                {state.scenario.title || 'Untitled Story'}
+                {state.isDirty && <span className="scenario-editor__dirty-indicator"> *</span>}
+              </h1>
+            </div>
+          </div>
+          <div className="scenario-editor__header-right">
             <div className="scenario-editor__menu-controls">
               <ActionButtons
                 items={actionButtonItems}
@@ -482,8 +512,11 @@ export const ScenarioEditor: React.FC<ScenarioEditorProps> = ({
                 disabled={state.isLoading}
               />
             </div>
-          }
-        />
+          </div>
+          {state.scenario.characters && state.scenario.characters.length > 0 && (
+            <CharacterBadge characters={state.scenario.characters} />
+          )}
+        </div>
       </div>
 
       <div className="scenario-editor__content">

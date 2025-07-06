@@ -1,5 +1,6 @@
 import React from 'react';
 import { DashboardStats, formatRelativeTime } from '../../services/dashboardService';
+import './Dashboard.css';
 
 interface WritingStatsProps {
   stats: DashboardStats;

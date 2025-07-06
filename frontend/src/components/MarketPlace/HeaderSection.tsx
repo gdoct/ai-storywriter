@@ -1,7 +1,6 @@
+import { Button, Card } from '@drdata/docomo';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card, Button } from '@drdata/docomo';
-import CreditsBadge from '../TopBar/CreditsBadge';
 
 interface HeaderSectionProps {
   searchQuery: string;
@@ -56,7 +55,6 @@ const HeaderSection: React.FC<HeaderSectionProps> = ({ searchQuery, setSearchQue
           alignItems: 'center',
           gap: 'var(--spacing-md)'
         }}>
-          <CreditsBadge />
           <form onSubmit={handleSearch} style={{ display: 'flex', gap: 'var(--spacing-sm)' }}>
             <input
               type="text"
@@ -66,11 +64,19 @@ const HeaderSection: React.FC<HeaderSectionProps> = ({ searchQuery, setSearchQue
               style={{
                 padding: 'var(--spacing-sm) var(--spacing-md)',
                 borderRadius: 'var(--radius-sm)',
-                border: '1px solid var(--color-border)',
+                border: '2px solid var(--color-border-primary)',
                 background: 'var(--color-surface)',
                 color: 'var(--color-text-primary)',
                 fontSize: 'var(--font-size-sm)',
-                minWidth: '250px'
+                minWidth: '250px',
+                transition: 'border-color var(--transition-fast)',
+                outline: 'none'
+              }}
+              onFocus={(e) => {
+                e.target.style.borderColor = 'var(--color-border-focus)';
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = 'var(--color-border-primary)';
               }}
             />
             <Button type="submit" variant="primary" size="sm">

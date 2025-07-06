@@ -3,6 +3,7 @@
  * Provides interface for moderators and admins to manage content and users
  */
 
+import { Hero } from '@drdata/docomo';
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useModals } from '../../hooks/useModals';
@@ -60,8 +61,7 @@ export const ModerationDashboard: React.FC = () => {
   return (
     <ModeratorOnly fallback={<div>Access denied. Moderator permissions required.</div>}>
       <div className="moderation-dashboard">
-        <div className="dashboard-header">
-          <h1>Moderation Dashboard</h1>
+        <Hero title='Moderation Dashboard' className="moderation-hero">
           <div className="user-info">
             <span>Welcome, {userProfile?.username}</span>
             <div className="user-roles">
@@ -72,7 +72,7 @@ export const ModerationDashboard: React.FC = () => {
               ))}
             </div>
           </div>
-        </div>
+        </Hero>
 
         <div className="dashboard-stats">
           <div className="stat-card">

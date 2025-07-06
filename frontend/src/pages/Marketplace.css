@@ -3,7 +3,8 @@
 .marketplace {
   min-height: 100vh;
   padding: 40px 0;
-  background: #f8fafc;
+  background: var(--color-background-primary);
+  color: var(--color-text-primary);
 }
 
 .marketplace-container {
@@ -18,9 +19,9 @@
   align-items: center;
   margin-bottom: 40px;
   padding: 32px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--hero-gradient);
   border-radius: 16px;
-  color: white;
+  color: var(--hero-title-color);
   gap: 2rem;
 }
 
@@ -49,10 +50,10 @@
 
 .search-container {
   display: flex;
-  background: white;
+  background: var(--color-surface-primary);
   border-radius: 8px;
   overflow: hidden;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-sm);
 }
 
 .search-input {
@@ -61,25 +62,26 @@
   border: none;
   font-size: 16px;
   outline: none;
-  color: #333;
+  color: var(--color-text-primary);
+  background: var(--color-input-bg);
 }
 
 .search-input::placeholder {
-  color: #999;
+  color: var(--color-text-placeholder);
 }
 
 .search-button {
-  background: #4f46e5;
-  color: white;
+  background: var(--color-button-primary-bg);
+  color: var(--color-button-primary-text);
   border: none;
   padding: 12px 16px;
   font-size: 16px;
   cursor: pointer;
-  transition: background-color 0.2s ease;
+  transition: background-color var(--transition-normal);
 }
 
 .search-button:hover {
-  background: #4338ca;
+  background: var(--color-button-primary-bg-hover);
 }
 
 .marketplace-content {
@@ -92,7 +94,7 @@
 .quick-actions h2 {
   font-size: 1.5rem;
   font-weight: 600;
-  color: #1e293b;
+  color: var(--color-text-primary);
   margin-bottom: 24px;
 }
 
@@ -104,22 +106,22 @@
 }
 
 .quick-action-card {
-  background: white;
+  background: var(--color-surface-primary);
   padding: 24px;
   border-radius: 12px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-  border: 1px solid #e2e8f0;
+  box-shadow: var(--shadow-xs);
+  border: 1px solid var(--color-border-primary);
   display: flex;
   align-items: center;
   gap: 16px;
-  transition: all 0.2s ease;
+  transition: all var(--transition-normal);
   cursor: pointer;
   text-align: left;
 }
 
 .quick-action-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-md);
 }
 
 .quick-action-icon {
@@ -131,29 +133,29 @@
 .quick-action-content h3 {
   font-size: 1.1rem;
   font-weight: 600;
-  color: #1e293b;
+  color: var(--color-text-primary);
   margin: 0 0 4px 0;
 }
 
 .quick-action-content p {
   font-size: 0.9rem;
-  color: #64748b;
+  color: var(--color-text-secondary);
   margin: 0;
 }
 
 /* Marketplace Sections */
 .marketplace-section {
-  background: white;
+  background: var(--color-surface-primary);
   border-radius: 12px;
   padding: 24px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-  border: 1px solid #e2e8f0;
+  box-shadow: var(--shadow-xs);
+  border: 1px solid var(--color-border-primary);
   margin-bottom: 32px;
 }
 
 .marketplace-section.featured {
-  background: linear-gradient(135deg, #fff9e6 0%, #fff3d3 100%);
-  border: 2px solid #ffd700;
+  background: var(--color-warning-50);
+  border: 2px solid var(--color-warning-400);
 }
 
 .section-header {
@@ -166,24 +168,24 @@
 .section-header h2 {
   font-size: 1.5rem;
   font-weight: 600;
-  color: #1e293b;
+  color: var(--color-text-primary);
   margin: 0;
 }
 
 .view-more-button {
-  background: #4f46e5;
-  color: white;
+  background: var(--color-button-primary-bg);
+  color: var(--color-button-primary-text);
   border: none;
   border-radius: 8px;
   padding: 8px 16px;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all var(--transition-slow);
 }
 
 .view-more-button:hover {
-  background: #4338ca;
+  background: var(--color-button-primary-bg-hover);
   transform: translateY(-1px);
 }
 
@@ -194,15 +196,15 @@
   justify-content: center;
   gap: 12px;
   padding: 40px;
-  color: #666;
+  color: var(--color-text-secondary);
   font-size: 16px;
 }
 
 .loading-spinner {
   width: 20px;
   height: 20px;
-  border: 2px solid #f3f3f3;
-  border-top: 2px solid #007bff;
+  border: 2px solid var(--color-border-primary);
+  border-top: 2px solid var(--color-primary-500);
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
@@ -215,7 +217,7 @@
 .section-error {
   text-align: center;
   padding: 40px;
-  color: #666;
+  color: var(--color-text-secondary);
 }
 
 .section-error p {
@@ -224,24 +226,24 @@
 }
 
 .retry-button {
-  background: #dc3545;
-  color: white;
+  background: var(--color-error-500);
+  color: var(--color-error-100);
   border: none;
   border-radius: 6px;
   padding: 8px 16px;
   font-size: 14px;
   cursor: pointer;
-  transition: background-color 0.2s ease;
+  transition: background-color var(--transition-normal);
 }
 
 .retry-button:hover {
-  background: #c82333;
+  background: var(--color-error-600);
 }
 
 .section-empty {
   text-align: center;
   padding: 40px;
-  color: #999;
+  color: var(--color-text-tertiary);
   font-style: italic;
 }
 

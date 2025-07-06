@@ -1,8 +1,8 @@
+import { Button } from '@drdata/docomo';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card, ItemList, Button } from '@drdata/docomo';
 import { formatRelativeTime, RecentStory } from '../../services/dashboardService';
-import DashboardCard from './DashboardCard';
+import './Dashboard.css';
 
 interface RecentGeneratedStoriesProps {
   recentStories: RecentStory[];
@@ -17,92 +17,73 @@ const RecentGeneratedStories: React.FC<RecentGeneratedStoriesProps> = ({
 }) => {
   const navigate = useNavigate();
 
-  // Convert stories to ItemList format
-  const storyItems = recentStories.map(story => ({
-    key: story.id.toString(),
-    content: (
-      <DashboardCard
-        title={story.scenarioTitle}
-        metadata={[
-          { icon: "📅", text: formatRelativeTime(story.created) },
-          { icon: "📝", text: `${story.wordCount} words` }
-        ]}
-        actions={[
-          ...(story.isPublished ? [] : [{
-            label: "Publish",
-            onClick: () => handlePublishStory(story),
-            variant: "secondary" as const
-          }]),
-          {
-            label: "Read",
-            onClick: () => handleReadStory(story),
-            variant: "primary" as const
-          },
-        ]}
-      />
-    )
-  }));
-
   const handleViewMore = () => {
     navigate('/stories');
   };
 
   return (
-    <Card>
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center',
-        marginBottom: 'var(--spacing-lg)',
-        borderBottom: '1px solid var(--color-border)',
-        paddingBottom: 'var(--spacing-md)'
-      }}>
-        <h3 style={{ 
-          fontSize: 'var(--font-size-lg)', 
-          fontWeight: 'var(--font-weight-semibold)',
-          color: 'var(--color-text-primary)',
-          margin: 0
-        }}>
+    <div className="recent-section">
+      {/* Header row - 20% height */}
+      <div className="recent-section-header">
+        <h3 className="recent-section-title">
+          <span className="recent-section-icon">📚</span>
           Recent Generated Stories
         </h3>
         <Button variant="secondary" size="sm" onClick={handleViewMore}>
           View All
         </Button>
       </div>
-      
-      {recentStories.length === 0 ? (
-        <div style={{ 
-          textAlign: 'center',
-          padding: 'var(--spacing-4xl)',
-          color: 'var(--color-text-secondary)'
-        }}>
-          <div style={{ fontSize: '3rem', marginBottom: 'var(--spacing-lg)' }}>📝</div>
-          <h4 style={{ 
-            fontSize: 'var(--font-size-lg)', 
-            fontWeight: 'var(--font-weight-medium)',
-            color: 'var(--color-text-primary)',
-            marginBottom: 'var(--spacing-sm)'
-          }}>
-            You haven't generated any stories yet
-          </h4>
-          <p style={{ 
-            marginBottom: 'var(--spacing-xl)',
-            fontSize: 'var(--font-size-md)'
-          }}>
-            Create your first scenario to get started!
-          </p>
-          <Button variant="primary" onClick={() => navigate('/app')}>
-            Start Writing
-          </Button>
-        </div>
-      ) : (
-        <ItemList 
-          items={storyItems}
-          onViewMore={handleViewMore}
-          viewMoreText="View All Stories"
-        />
-      )}
-    </Card>
+
+      {/* Content row - 80% height */}
+      <div className="recent-section-content">
+        {recentStories.length === 0 ? (
+          <div className="recent-section-empty">
+            <div className="recent-section-empty-icon">📚</div>
+            <h4 className="recent-section-empty-title">You haven't generated any stories yet</h4>
+            <p className="recent-section-empty-description">
+              Create your first scenario to get started!
+            </p>
+            <Button variant="primary" onClick={() => navigate('/app')}>
+              Start Writing
+            </Button>
+          </div>
+        ) : (
+          <div>
+            {recentStories.map((story) => (
+              <div key={story.id} className="recent-item">
+                <h4 className="recent-item-title">{story.scenarioTitle}</h4>
+                <p className="recent-item-meta">
+                  📅 {formatRelativeTime(story.created)} • 
+                  📝 {story.wordCount} words
+                </p>
+                <div style={{ 
+                  marginTop: 'var(--spacing-sm)',
+                  display: 'flex',
+                  gap: 'var(--spacing-sm)'
+                }}>
+                  {!story.isPublished && (
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => handlePublishStory(story)}
+                    >
+                      Publish
+                    </Button>
+                  )}
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={() => handleReadStory(story)}
+                  >
+                    Read
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
   );
 };
 

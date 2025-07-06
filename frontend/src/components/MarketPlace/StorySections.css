@@ -18,25 +18,25 @@
 .section-header h2 {
   font-size: 1.75rem;
   font-weight: 600;
-  color: #1a202c;
+  color: var(--color-text-primary);
   margin: 0;
 }
 
 .view-more-button {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  background: var(--hero-gradient);
+  color: var(--hero-title-color);
   border: none;
   padding: 8px 16px;
   border-radius: 6px;
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all var(--transition-normal);
 }
 
 .view-more-button:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  box-shadow: var(--hero-shadow);
 }
 
 .stories-carousel {
@@ -52,17 +52,17 @@
 }
 
 .stories-carousel::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: var(--color-background-secondary);
   border-radius: 4px;
 }
 
 .stories-carousel::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
+  background: var(--color-border-secondary);
   border-radius: 4px;
 }
 
 .stories-carousel::-webkit-scrollbar-thumb:hover {
-  background: #a1a1a1;
+  background: var(--color-border-tertiary);
 }
 
 .section-loading,
@@ -74,45 +74,45 @@
   justify-content: center;
   padding: 40px;
   text-align: center;
-  background: #f8fafc;
+  background: var(--color-surface-secondary);
   border-radius: 8px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--color-border-primary);
 }
 
 .section-loading .loading-spinner {
   width: 32px;
   height: 32px;
-  border: 3px solid #f3f3f3;
-  border-top: 3px solid #3498db;
+  border: 3px solid var(--color-border-primary);
+  border-top: 3px solid var(--color-primary-500);
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin-bottom: 16px;
 }
 
 .section-error {
-  background: #fef2f2;
-  border-color: #fecaca;
-  color: #dc2626;
+  background: var(--color-error-50);
+  border-color: var(--color-error-200);
+  color: var(--color-error-700);
 }
 
 .section-empty {
-  color: #6b7280;
+  color: var(--color-text-tertiary);
 }
 
 .retry-button {
-  background: #3b82f6;
-  color: white;
+  background: var(--color-primary-500);
+  color: var(--color-primary-100);
   border: none;
   padding: 8px 16px;
   border-radius: 4px;
   cursor: pointer;
   font-size: 14px;
   margin-top: 8px;
-  transition: background-color 0.2s ease;
+  transition: background-color var(--transition-normal);
 }
 
 .retry-button:hover {
-  background: #2563eb;
+  background: var(--color-primary-600);
 }
 
 /* Loading spinner animation */

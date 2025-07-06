@@ -5,7 +5,7 @@
 
 .ai-generate-label {
   display: block;
-  color: #90caf9;
+  color: var(--color-primary-light, #90caf9);
   font-weight: 600;
   font-size: 1.04rem;
   margin-bottom: 4px;
@@ -22,10 +22,10 @@
   width: 100%;
   padding-right: 60px;
   font-size: 1.08rem;
-  border-radius: 8px;
-  border: 1.5px solid #444;
-  background: #181b20;
-  color: #fff;
+  border-radius: var(--radius-md);
+  border: 1.5px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
   box-sizing: border-box;
   padding: 10px 12px;
   outline: none;
@@ -33,7 +33,7 @@
 }
 
 .ai-generate-input:focus {
-  border: 1.5px solid #4f46e5;
+  border: 1.5px solid var(--color-primary);
 }
 
 .ai-generate-btn {

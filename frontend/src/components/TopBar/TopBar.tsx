@@ -4,6 +4,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { logout } from '../../services/security';
 import AnonymousNav from '../navigation/AnonymousNav';
+import CreditsBadge from './CreditsBadge';
 
 const TopBar: React.FC = () => {
   const { authenticated, userProfile, logout: authLogout } = useAuth();
@@ -171,15 +172,25 @@ const TopBar: React.FC = () => {
           gap: 'var(--spacing-lg)',
           height: '100%'
         }}>
-          <div style={{
+            <div style={{
             display: 'flex',
             alignItems: 'center',
+            paddingRight: 'var(--spacing-md)',
             padding: 'var(--spacing-xs) var(--spacing-sm)',
             borderRadius: '8px',
             backgroundColor: 'var(--color-surface-variant)',
-            border: '1px solid var(--color-border)'
-          }}>
+            border: '1px solid var(--color-border)',
+            gap: 'var(--spacing-md)'
+            }}>
             <ThemeToggle size='xs' />
+                    {authenticated ? (
+            <CreditsBadge />
+          ) : (
+              <Link to="/buy-credits" style={{ textDecoration: 'none', color: 'var(--color-text-primary)' }}>
+                <span style={{ fontSize: '0.875rem' }}>Buy Credits</span>
+              </Link>
+            )}
+          
           </div>
           
           {authenticated ? (

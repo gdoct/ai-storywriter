@@ -3,12 +3,12 @@
   align-items: center;
   gap: 6px;
   padding: 6px 12px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--color-primary, linear-gradient(135deg, #667eea 0%, #764ba2 100%));
   color: white;
   border-radius: 20px;
   font-size: 14px;
   font-weight: 500;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-sm);
   transition: all 0.2s ease;
   cursor: pointer;
   user-select: none;
@@ -16,16 +16,16 @@
 
 .credits-badge:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--shadow-md);
 }
 
 .credits-badge.loading {
-  background: linear-gradient(135deg, #e0e0e0 0%, #bdbdbd 100%);
-  color: #666;
+  background: var(--color-surface-variant, linear-gradient(135deg, #e0e0e0 0%, #bdbdbd 100%));
+  color: var(--color-text-secondary);
 }
 
 .credits-badge.error {
-  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+  background: var(--color-error, linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%));
   color: white;
 }
 
