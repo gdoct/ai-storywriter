@@ -1,4 +1,4 @@
-import { AiTextArea, Button } from '@drdata/docomo';
+import { AiTextArea, Button } from '@drdata/ai-styles';
 import React, { useCallback, useMemo, useState } from 'react';
 import { FaDownload } from 'react-icons/fa';
 import { v4 as uuidv4 } from 'uuid';

@@ -1,0 +1,28 @@
+.ai-label {
+  font-size: 1rem;
+  color: var(--ai-label-color, #222);
+  display: inline-block;
+  margin-bottom: 0.25em;
+  font-weight: 500;
+}
+
+.ai-label--sm {
+  font-size: 0.875rem;
+} 
+.ai-label--m {
+  font-size: 1rem;
+}
+.ai-label--l {
+  font-size: 1.125rem;
+}
+.ai-label--xl {
+  font-size: 1.25rem;
+}
+
+[data-theme="light"] .ai-label {
+  color: var(--color-light-label);
+}
+
+[data-theme="dark"] .ai-label {
+  color: var(--color-dark-label);
+}

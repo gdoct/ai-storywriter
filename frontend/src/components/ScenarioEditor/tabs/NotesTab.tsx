@@ -1,4 +1,4 @@
-import { AiTextArea, Button } from '@drdata/docomo';
+import { AiTextArea, Button } from '@drdata/ai-styles';
 import React, { useCallback, useState } from 'react';
 import { FaDownload, FaStickyNote } from 'react-icons/fa';
 import ImportModal from '../../common/ImportModal';

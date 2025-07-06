@@ -1,4 +1,4 @@
-import { Button, Card } from '@drdata/docomo';
+import { Button, Card } from '@drdata/ai-styles';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 

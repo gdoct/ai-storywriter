@@ -1,4 +1,4 @@
-import { AiTextArea, AiTextBox, Button } from '@drdata/docomo';
+import { AiTextArea, AiTextBox, Button } from '@drdata/ai-styles';
 import React, { useState } from 'react';
 import { FaBook, FaCog, FaEye, FaTrash, FaUser } from 'react-icons/fa';
 import { Chapter } from '../../../../../types/chapters';

@@ -1,4 +1,4 @@
-import { ThemeProvider } from '@drdata/docomo';
+import { ThemeProvider } from '@drdata/ai-styles';
 import { BrowserRouter as Router, useRoutes } from 'react-router-dom';
 import './App.css';
 import AIBusyModal from './components/common/AIBusyModal';

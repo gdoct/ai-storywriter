@@ -1,5 +1,5 @@
+import { ErrorDialog } from '@drdata/ai-styles';
 import React from 'react';
-import { ErrorDialog } from '@drdata/docomo';
 
 interface AlertModalProps {
   isOpen: boolean;

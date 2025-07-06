@@ -1,4 +1,4 @@
-import { Button } from '@drdata/docomo';
+import { Button } from '@drdata/ai-styles';
 import React, { useEffect, useRef, useState } from 'react';
 import { FaComment, FaRedo, FaTimes } from 'react-icons/fa';
 import { useAuth } from '../../../contexts/AuthContext';

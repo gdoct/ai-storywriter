@@ -1,3 +1,4 @@
+import { AiTextArea, AiTextBox, Button } from '@drdata/ai-styles';
 import React, { useCallback, useMemo, useState } from 'react';
 import { FaDownload, FaPlus, FaTrash, FaUser } from 'react-icons/fa';
 import { v4 as uuidv4 } from 'uuid';
@@ -7,7 +8,6 @@ import { generateCharacterField } from '../../../services/characterFieldGenerato
 import { Character } from '../../../types/ScenarioTypes';
 import { showUserFriendlyError } from '../../../utils/errorHandling';
 import ImportModal from '../../common/ImportModal';
-import { Button, AiTextBox, AiTextArea } from '@drdata/docomo';
 import { TabProps } from '../types';
 import { CharacterPhoto } from './CharacterPhoto';
 import './CharactersTab.css';

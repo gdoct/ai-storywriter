@@ -1,37 +1,23 @@
-# main solution settings
-# This file is used to configure the behavior of GitHub Copilot in this repository.
-# Copilot will use this file to understand how to assist you with code suggestions.
+this is a react / typescript / python project.
+the goal is to provide ai-assisted scenario writing, and ai-generated stories of those scenarios.
+the app has five main areas
+* "marketing": anonymous / marketing for not logged in users, user registration and login
+* "dashboard": dashboard, credits management, and settings for logged in users
+* "scenario writer": scenario writer and ai story generation for logged in users
+* "marketplace": marketplace to exchange stories and scenarios
+* "admin": admin area for site config, user admin and moderation
 
-the app has two main projects: frontend and backend.
-the frontend (react/typescript) is in the folder "[root]/frontend" and is started by the script "[root]/start-frontend.sh" (in the root of the solution)
-# frontend
-the frontend uses the following technologies:
-- React: a JavaScript library for building user interfaces
-- TypeScript: a typed superset of JavaScript that compiles to plain JavaScript
-
-The user is running both the frontend and the backend with hot reload,so changes are immediately applied to the running application.
-if the frontend or backend need to be started, ask the user to do it.
-
-compile the frontend and check for compile errors with the following command:
-```bash
-cd <root>/frontend
-npm run typecheck  
-```
-# backend
-the backend (python/flask) is in the folder "[root]/backend" and is started by the script "[root]/start-backend.sh"
-
-
-
-# project layout
-/
-frontend/ - contains the frontend project
-  - src/ - contains the source code of the frontend
-  - public/ - contains the public files of the frontend
-  - package.json - contains the dependencies and scripts of the frontend
-  - tsconfig.json - contains the TypeScript configuration of the frontend
-backend/ - contains the backend project
-    - app.py: - contains the main application code of the backend
-    - requirements.txt - contains the dependencies of the backend
-    - storywriter.db: - contains the sqlite database of the backend
-start-frontend.sh - script to start the frontend
-start-backend.sh - script to start the backend
+## frontend
+the frontend project is in folder `/frontend`
+the frontend uses react and typescript.
+the frontend uses vite and npm for package management.
+the frontend uses the components from the style library in folder `/style-library`, which is the design system for storywriter. 
+## backend
+the backend project is in `/backend`
+the backend uses python and flask
+the backend is a REST API that serves data to the frontend.
+## style library
+this library is in the folder `/style-library/lib` and is internally named `@drdata/ai-styles`
+the style library is a collection of react components that are used in the frontend.
+the style library has a storybook in `/style-library/storybook` that can be used to test the components.
+the style library uses css modules for styling.

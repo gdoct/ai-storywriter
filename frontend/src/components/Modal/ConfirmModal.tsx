@@ -1,4 +1,4 @@
-import { ConfirmDialog } from '@drdata/docomo';
+import { ConfirmDialog } from '@drdata/ai-styles';
 import React from 'react';
 
 interface ConfirmModalProps {

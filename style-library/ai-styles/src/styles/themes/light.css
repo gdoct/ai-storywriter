@@ -1,0 +1,141 @@
+/**
+ * Light Theme - Color definitions for light mode
+ */
+
+[data-theme="light"],
+:root {
+  /* ========== PRIMARY COLORS ========== */
+  --color-primary-50: #eff6ff;
+  --color-primary-100: #dbeafe;
+  --color-primary-200: #bfdbfe;
+  --color-primary-300: #93c5fd;
+  --color-primary-400: #60a5fa;
+  --color-primary-500: #3b82f6;
+  --color-primary-600: #2563eb;
+  --color-primary-700: #1d4ed8;
+  --color-primary-800: #1e40af;
+  --color-primary-900: #1e3a8a;
+
+  /* ========== GRAY COLORS ========== */
+  --color-gray-50: #f9fafb;
+  --color-gray-100: #f3f4f6;
+  --color-gray-200: #e5e7eb;
+  --color-gray-300: #d1d5db;
+  --color-gray-400: #9ca3af;
+  --color-gray-500: #6b7280;
+  --color-gray-600: #4b5563;
+  --color-gray-700: #374151;
+  --color-gray-800: #1f2937;
+  --color-gray-900: #111827;
+
+  /* ========== SUCCESS COLORS ========== */
+  --color-success-50: #ecfdf5;
+  --color-success-100: #d1fae5;
+  --color-success-200: #a7f3d0;
+  --color-success-300: #6ee7b7;
+  --color-success-400: #34d399;
+  --color-success-500: #10b981;
+  --color-success-600: #059669;
+  --color-success-700: #047857;
+  --color-success-800: #065f46;
+  --color-success-900: #064e3b;
+
+  /* ========== ERROR COLORS ========== */
+  --color-error-50: #fef2f2;
+  --color-error-100: #fee2e2;
+  --color-error-200: #fecaca;
+  --color-error-300: #fca5a5;
+  --color-error-400: #f87171;
+  --color-error-500: #ef4444;
+  --color-error-600: #dc2626;
+  --color-error-700: #b91c1c;
+  --color-error-800: #991b1b;
+  --color-error-900: #7f1d1d;
+
+  /* ========== WARNING COLORS ========== */
+  --color-warning-50: #fffbeb;
+  --color-warning-100: #fef3c7;
+  --color-warning-200: #fde68a;
+  --color-warning-300: #fcd34d;
+  --color-warning-400: #fbbf24;
+  --color-warning-500: #f59e0b;
+  --color-warning-600: #d97706;
+  --color-warning-700: #b45309;
+  --color-warning-800: #92400e;
+  --color-warning-900: #78350f;
+
+  /* ========== INFO COLORS ========== */
+  --color-info-50: #f0f9ff;
+  --color-info-100: #e0f2fe;
+  --color-info-200: #bae6fd;
+  --color-info-300: #7dd3fc;
+  --color-info-400: #38bdf8;
+  --color-info-500: #0ea5e9;
+  --color-info-600: #0284c7;
+  --color-info-700: #0369a1;
+  --color-info-800: #075985;
+  --color-info-900: #0c4a6e;
+
+  /* ========== SEMANTIC COLORS ========== */
+  /* Background Colors */
+  --color-background-primary: #ffffff;
+  --color-background-secondary: #f9fafb;
+  --color-background-tertiary: #f3f4f6;
+  --color-background-inverse: #111827;
+
+  /* Surface Colors */
+  --color-surface-primary: #ffffff;
+  --color-surface-secondary: #f9fafb;
+  --color-surface-elevated: #ffffff;
+  --color-surface-overlay: rgba(0, 0, 0, 0.5);
+
+  /* Text Colors */
+  --color-text-primary: #111827;
+  --color-text-secondary: #374151;
+  --color-text-tertiary: #6b7280;
+  --color-text-quaternary: #9ca3af;
+  --color-text-inverse: #ffffff;
+  --color-text-disabled: #9ca3af;
+  --color-text-placeholder: #9ca3af;
+
+  /* Border Colors */
+  --color-border-primary: #e5e7eb;
+  --color-border-secondary: #d1d5db;
+  --color-border-tertiary: #9ca3af;
+  --color-border-focus: var(--color-primary-500);
+  --color-border-error: var(--color-error-500);
+  --color-border-success: var(--color-success-500);
+  --color-border-warning: var(--color-warning-500);
+
+  /* Button Colors */
+  --color-button-primary-bg: var(--color-primary-500);
+  --color-button-primary-bg-hover: var(--color-primary-600);
+  --color-button-primary-bg-active: var(--color-primary-700);
+  --color-button-primary-text: #ffffff;
+  --color-button-primary-border: var(--color-primary-600);
+
+  --color-button-secondary-bg: #ffffff;
+  --color-button-secondary-bg-hover: var(--color-gray-50);
+  --color-button-secondary-bg-active: var(--color-gray-100);
+  --color-button-secondary-text: var(--color-gray-700);
+  --color-button-secondary-border: var(--color-gray-300);
+
+  --color-button-disabled-bg: var(--color-gray-100);
+  --color-button-disabled-text: var(--color-gray-400);
+  --color-button-disabled-border: var(--color-gray-200);
+
+  /* Input Colors */
+  --color-input-bg: #ffffff;
+  --color-input-bg-disabled: var(--color-gray-50);
+  --color-input-border: var(--color-gray-300);
+  --color-input-border-hover: var(--color-gray-400);
+  --color-input-border-focus: var(--color-primary-500);
+  --color-input-text: var(--color-gray-900);
+  --color-input-placeholder: var(--color-gray-400);
+
+  /* Focus Ring Colors */
+  --color-focus-ring-primary: rgba(59, 130, 246, 0.2);
+  --color-focus-ring-error: rgba(239, 68, 68, 0.2);
+  --color-focus-ring-success: rgba(16, 185, 129, 0.2);
+  --color-focus-ring-warning: rgba(245, 158, 11, 0.2);
+}

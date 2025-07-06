@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "dependencies": {
-    "@drdata/docomo": "file:../../docomo/lib",
+    "@drdata/ai-styles": "file:../style-library/ai-styles",
     "@faker-js/faker": "^8.0.2",
     "@testing-library/dom": "^10.4.0",
     "@types/react-icons": "^2.2.7",

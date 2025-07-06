@@ -1,8 +1,8 @@
+import { Button } from '@drdata/ai-styles';
 import React, { useState } from 'react';
 import { FaCog, FaPlus, FaUser } from 'react-icons/fa';
 import { Chapter } from '../../../../../types/chapters';
 import { Scenario } from '../../../../../types/ScenarioTypes';
-import { Button } from '@drdata/docomo';
 import ChapterCard from './ChapterCard';
 
 interface ChaptersListProps {

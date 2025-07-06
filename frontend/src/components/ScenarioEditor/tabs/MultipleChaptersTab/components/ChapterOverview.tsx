@@ -1,8 +1,8 @@
+import { Button } from '@drdata/ai-styles';
 import React from 'react';
 import { FaBook, FaCog, FaPlus, FaUser } from 'react-icons/fa';
 import { Chapter, MultipleChapters } from '../../../../../types/chapters';
 import { Scenario } from '../../../../../types/ScenarioTypes';
-import { Button } from '@drdata/docomo';
 
 interface ChapterOverviewProps {
   multipleChapters: MultipleChapters;

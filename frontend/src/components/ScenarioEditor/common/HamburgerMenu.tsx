@@ -1,4 +1,4 @@
-import { Button } from '@drdata/docomo';
+import { Button } from '@drdata/ai-styles';
 import React, { useCallback, useEffect, useState } from 'react';
 import { FaTimes } from 'react-icons/fa';
 import './HamburgerMenu.css';

@@ -1,6 +1,6 @@
+import { Button } from '@drdata/ai-styles';
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Hero, Button } from '@drdata/docomo';
 
 const HeroSection: React.FC = () => {
   return (

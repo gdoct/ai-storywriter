@@ -1,6 +1,6 @@
+import { Button, Card } from '@drdata/ai-styles';
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Card, Button } from '@drdata/docomo';
 
 const TermsOfService: React.FC = () => {
   return (

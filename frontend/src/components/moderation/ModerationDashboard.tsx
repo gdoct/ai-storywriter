@@ -3,7 +3,7 @@
  * Provides interface for moderators and admins to manage content and users
  */
 
-import { Hero } from '@drdata/docomo';
+import { Hero } from '@drdata/ai-styles';
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useModals } from '../../hooks/useModals';

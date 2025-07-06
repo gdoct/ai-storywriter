@@ -1,5 +1,5 @@
+import { Button, Card } from '@drdata/ai-styles';
 import React from 'react';
-import { Card, Button } from '@drdata/docomo';
 
 interface DashboardCardProps {
   title: string;

@@ -1,5 +1,5 @@
-import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import { defineConfig } from 'vite'
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -15,7 +15,7 @@ export default defineConfig({
     },
     watch: {
       // Watch for changes in the docomo library
-      ignored: ['!**/node_modules/@drdata/docomo/**']
+      ignored: ['!**/node_modules/@drdata/ai-styles/**']
     }
   },
   build: {
@@ -23,6 +23,6 @@ export default defineConfig({
   },
   // Enable better HMR for linked packages
   optimizeDeps: {
-    exclude: ['@drdata/docomo']
+    exclude: ['@drdata/ai-styles']
   }
 })

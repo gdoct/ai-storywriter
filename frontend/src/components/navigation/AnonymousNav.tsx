@@ -1,4 +1,4 @@
-import { Button } from '@drdata/docomo';
+import { Button } from '@drdata/ai-styles';
 import React from 'react';
 import { Link } from 'react-router-dom';
 

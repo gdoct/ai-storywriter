@@ -1,5 +1,5 @@
+import { Card } from '@drdata/ai-styles';
 import React from 'react';
-import { Card } from '@drdata/docomo';
 
 const FeaturesSection: React.FC = () => {
   const features = [

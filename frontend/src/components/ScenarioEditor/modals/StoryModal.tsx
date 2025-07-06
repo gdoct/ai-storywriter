@@ -1,4 +1,4 @@
-import { Button } from '@drdata/docomo';
+import { Button } from '@drdata/ai-styles';
 import React, { useEffect, useRef, useState } from 'react';
 import { FaCopy, FaDownload, FaRedo, FaSave, FaTimes } from 'react-icons/fa';
 import './StoryModal.css';

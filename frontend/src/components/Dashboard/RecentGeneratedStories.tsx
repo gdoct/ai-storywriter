@@ -1,4 +1,4 @@
-import { Button } from '@drdata/docomo';
+import { Button } from '@drdata/ai-styles';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { formatRelativeTime, RecentStory } from '../../services/dashboardService';

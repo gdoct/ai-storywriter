@@ -1,0 +1,89 @@
+.ai-item-list {
+  width: 100%;
+  background: var(--color-surface, #fff);
+  border-radius: 0.75rem;
+  box-shadow: var(--shadow-xs, 0 1px 2px rgba(0,0,0,0.03));
+  padding: 1rem 1.25rem 1.25rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.ai-item-list__top {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 0.5rem;
+}
+
+.ai-item-list__view-more {
+  background: none;
+  border: none;
+  color: var(--color-primary, #4f46e5);
+  font-weight: 500;
+  cursor: pointer;
+  font-size: 0.98rem;
+  padding: 0.25em 0.5em;
+  border-radius: 0.5em;
+  transition: background 0.15s;
+}
+
+.ai-item-list__view-more:hover,
+.ai-item-list__view-more:focus-visible {
+  background: var(--color-primary-light, #e0e7ff);
+}
+
+.ai-item-list__items {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.ai-item-list__item {
+  background: var(--color-surface-alt, #f4f4f5);
+  border-radius: 0.5rem;
+  padding: 0.75em 1em;
+  font-size: 1rem;
+  color: var(--color-on-surface, #222);
+  transition: background 0.15s;
+}
+
+[data-theme="light"] .ai-item-list {
+  background: var(--color-light-surface);
+  box-shadow: var(--shadow-light-xs);
+}
+
+[data-theme="dark"] .ai-item-list {
+  background: var(--color-dark-surface);
+  box-shadow: var(--shadow-dark-xs);
+}
+
+[data-theme="light"] .ai-item-list__view-more {
+  color: var(--color-light-primary);
+}
+
+[data-theme="dark"] .ai-item-list__view-more {
+  color: var(--color-dark-primary);
+}
+
+[data-theme="light"] .ai-item-list__view-more:hover,
+[data-theme="light"] .ai-item-list__view-more:focus-visible {
+  background: var(--color-light-primary-light);
+}
+
+[data-theme="dark"] .ai-item-list__view-more:hover,
+[data-theme="dark"] .ai-item-list__view-more:focus-visible {
+  background: var(--color-dark-primary-light);
+}
+
+[data-theme="light"] .ai-item-list__item {
+  background: var(--color-light-surface-alt);
+  color: var(--color-light-on-surface);
+}
+
+[data-theme="dark"] .ai-item-list__item {
+  background: var(--color-dark-surface-alt);
+  color: var(--color-dark-on-surface);
+}

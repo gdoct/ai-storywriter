@@ -1,4 +1,4 @@
-import { AiTextBox, Button } from '@drdata/docomo';
+import { AiTextBox, Button } from '@drdata/ai-styles';
 import React, { useCallback, useMemo, useState } from 'react';
 import { FaBook, FaCog, FaDownload, FaEye, FaPlus, FaUser } from 'react-icons/fa';
 import { MultipleChapters } from '../../../../types/chapters';

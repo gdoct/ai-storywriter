@@ -1,0 +1,84 @@
+.ai-timeline {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  padding: 1rem 0;
+}
+
+.ai-timeline__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  position: relative;
+}
+
+/* Vertical connecting line */
+.ai-timeline__list::before {
+  content: '';
+  position: absolute;
+  left: calc(1rem - 1px); /* Center of the icon area minus half line width */
+  top: calc(1rem + 1rem); /* Start from first icon center + icon height */
+  bottom: calc(1rem + 1rem); /* End at last icon center */
+  width: 2px;
+  background: var(--color-border, #e0e0e0);
+  z-index: 0;
+}
+
+/* Hide the line for single events */
+.ai-timeline__list:has(.ai-timeline__event:only-child)::before {
+  display: none;
+}
+
+.ai-timeline__event {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  position: relative;
+  margin-bottom: 2rem;
+}
+
+.ai-timeline__event:last-child {
+  margin-bottom: 0;
+}
+
+.ai-timeline__icon {
+  position: relative;
+  z-index: 1;
+  margin-right: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2rem;
+  height: 2rem;
+  background: var(--color-surface, #fff);
+  border-radius: 50%;
+}
+
+.ai-timeline__dot {
+  width: 1rem;
+  height: 1rem;
+  background: var(--color-primary, #1976d2);
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.ai-timeline__content {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.ai-timeline__label {
+  font-weight: 600;
+  font-size: 1.05rem;
+}
+
+.ai-timeline__time {
+  font-size: 0.9rem;
+  color: var(--color-on-surface-secondary, #888);
+  margin-bottom: 0.25rem;
+}
+
+.ai-timeline__desc {
+  font-size: 0.98rem;
+  color: var(--color-on-surface, #222);
+}

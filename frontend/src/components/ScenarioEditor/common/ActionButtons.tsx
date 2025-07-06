@@ -1,4 +1,4 @@
-import { IconButton, IconButtonGroup } from '@drdata/docomo';
+import { IconButton, IconButtonGroup } from '@drdata/ai-styles';
 import React from 'react';
 
 export interface ActionButtonItem {

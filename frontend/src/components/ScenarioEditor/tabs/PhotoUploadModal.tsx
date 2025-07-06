@@ -1,4 +1,4 @@
-import { AiTextBox, Button } from '@drdata/docomo';
+import { AiTextBox, Button } from '@drdata/ai-styles';
 import { faker } from '@faker-js/faker';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { FaPlus, FaRandom, FaTimes, FaUser } from 'react-icons/fa';

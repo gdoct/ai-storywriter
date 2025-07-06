@@ -1,4 +1,4 @@
-import { AiTextArea, Button } from '@drdata/docomo';
+import { AiTextArea, Button } from '@drdata/ai-styles';
 import React, { useCallback, useState } from 'react';
 import { FaBook, FaDownload, FaTimes } from 'react-icons/fa';
 import { useAIStatus } from '../../../contexts/AIStatusContext';

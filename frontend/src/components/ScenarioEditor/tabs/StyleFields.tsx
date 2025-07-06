@@ -1,7 +1,7 @@
+import { AiDropdown, AiTextArea, Label } from '@drdata/ai-styles';
 import React from 'react';
 import { StyleSettings } from '../../../types/ScenarioTypes';
 import { GENRE_OPTIONS, LANGUAGE_FLAGS, LANGUAGE_OPTIONS, STYLE_OPTIONS, THEME_OPTIONS, TONE_OPTIONS, WRITING_STYLE_VARIATIONS } from '../../../types/styleoptions';
-import { AiDropdown, AiTextArea, Label } from '@drdata/docomo';
 
 interface StyleFieldsProps {
   writingStyle: StyleSettings;

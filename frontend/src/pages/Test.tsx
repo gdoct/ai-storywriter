@@ -1,5 +1,5 @@
+import { ExpandableTabs } from '@drdata/ai-styles';
 import React, { useState } from 'react';
-import { ExpandableTabs } from '@drdata/docomo';
 import { FaBook, FaUser, FaUsers } from 'react-icons/fa';
 
 // Simple test data for the tabs

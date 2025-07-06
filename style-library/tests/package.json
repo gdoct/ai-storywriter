@@ -1,0 +1,20 @@
+{
+  "name": "@drdata/ai-styles-tests",
+  "version": "0.1.0",
+  "description": "E2E tests for Docomo component library",
+  "type": "module",
+  "scripts": {
+    "test": "playwright test",
+    "test:e2e": "playwright test --grep='e2e'",
+    "test:headed": "playwright test --headed",
+    "test:ui": "playwright test --ui",
+    "test:report": "playwright show-report"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.53.1",
+    "@types/node": "^22.10.8",
+    "playwright": "^1.53.1",
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.4"
+  }
+}

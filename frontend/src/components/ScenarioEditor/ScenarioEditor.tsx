@@ -1,4 +1,4 @@
-import { ExpandableTabs } from '@drdata/docomo';
+import { ExpandableTabs } from '@drdata/ai-styles';
 import React, { useCallback, useEffect, useRef } from 'react';
 import { FaBook, FaDice, FaEye, FaRedo, FaSave, FaStickyNote, FaTrash, FaUser, FaUsers } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
@@ -10,8 +10,8 @@ import { Scenario } from '../../types/ScenarioTypes';
 import { isInsufficientCreditsError, showUserFriendlyErrorWithModals } from '../../utils/errorHandling';
 import { AlertModal, ConfirmModal } from '../Modal';
 import { ActionButtonItem, ActionButtons } from './common/ActionButtons';
-import { ChatAgent } from './common/ChatAgent';
 import { CharacterBadge } from './common/CharacterBadge';
+import { ChatAgent } from './common/ChatAgent';
 import { LlmSettingsMenu } from './common/LlmSettingsMenu';
 import { useScenarioEditor } from './context';
 import { StoryModal } from './modals/StoryModal';

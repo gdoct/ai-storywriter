@@ -1,10 +1,10 @@
+import { AiTextArea, AiTextBox, Button } from '@drdata/ai-styles';
 import React, { useCallback, useMemo, useState } from 'react';
 import { FaDice, FaDownload, FaRandom } from 'react-icons/fa';
 import { generateScenarioSynopsis, generateStoryTitle } from '../../../services/storyGenerator';
 import { StyleSettings } from '../../../types/ScenarioTypes';
 import { GENRE_OPTIONS, STYLE_OPTIONS, THEME_OPTIONS, TONE_OPTIONS, WRITING_STYLE_VARIATIONS } from '../../../types/styleoptions';
 import ImportModal from '../../common/ImportModal';
-import { Button, AiTextBox, AiTextArea } from '@drdata/docomo';
 import { TabProps } from '../types';
 import './GeneralTab.css';
 import { ScenarioImage } from './ScenarioImage';

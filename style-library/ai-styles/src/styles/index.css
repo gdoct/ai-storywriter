@@ -1,0 +1,21 @@
+/**
+ * Main stylesheet - Imports all design system files
+ * Import this file in your main application to get the complete design system
+ */
+
+/* Import design tokens */
+@import './design-tokens.css';
+
+/* Import theme files */
+@import './themes/light.css';
+@import './themes/dark.css';
+
+/* Base styles */
+@import './base/reset.css';
+@import './base/typography.css';
+
+/* Component styles */
+@import '../components/AiTextBox/AiTextBox.css';
+@import '../components/IconButton/IconButton.css';
+@import '../components/ThemeToggle/ThemeToggle.css';
+@import '../components/ExpandableTabs/ExpandableTabs.css';

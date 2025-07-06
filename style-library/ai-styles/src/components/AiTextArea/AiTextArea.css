@@ -1,0 +1,157 @@
+.ai-textarea {
+  display: flex;
+  flex-direction: column;
+}
+
+.ai-textarea__label {
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+.ai-textarea__input-container {
+  position: relative;
+}
+
+.ai-textarea__input {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.ai-textarea__input--error {
+  border-color: red;
+}
+
+.ai-textarea__input--success {
+  border-color: green;
+}
+
+.ai-textarea__buttons {
+  display: flex;
+  gap: 8px;
+  position: absolute;
+  top: 8px;
+  right: 8px;
+}
+
+.ai-textarea__message {
+  margin-top: 8px;
+  font-size: 12px;
+}
+
+.ai-textarea__message--error {
+  color: red;
+}
+
+.ai-textarea__message--success {
+  color: green;
+}
+
+.ai-textarea__message--info {
+  color: blue;
+}
+
+/* Size variants */
+.ai-textarea--sm .ai-textarea__input {
+  padding: 0.5rem 3rem 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  min-height: 4rem;
+}
+
+.ai-textarea--m .ai-textarea__input {
+  padding: 0.75rem 3.5rem 0.75rem 1rem;
+  font-size: 1rem;
+  min-height: 5rem;
+}
+
+.ai-textarea--l .ai-textarea__input {
+  padding: 1rem 4rem 1rem 1.25rem;
+  font-size: 1.125rem;
+  min-height: 6rem;
+}
+
+.ai-textarea--xl .ai-textarea__input {
+  padding: 1.25rem 4.5rem 1.25rem 1.5rem;
+  font-size: 1.25rem;
+  min-height: 7rem;
+}
+
+.ai-textarea--sm .ai-textarea__buttons {
+  right: 0.5rem;
+  top: 0.5rem;
+  gap: 0.25rem;
+}
+
+.ai-textarea--m .ai-textarea__buttons {
+  right: 8px;
+  top: 8px;
+  gap: 8px;
+}
+
+.ai-textarea--l .ai-textarea__buttons {
+  right: 1rem;
+  top: 1rem;
+  gap: 0.5rem;
+}
+
+.ai-textarea--xl .ai-textarea__buttons {
+  right: 1.25rem;
+  top: 1.25rem;
+  gap: 0.5rem;
+}
+
+/* Light theme styles */
+[data-theme="light"] .ai-textarea__input {
+  background-color: #ffffff;
+  color: #000000;
+  border-color: #ccc;
+}
+
+[data-theme="light"] .ai-textarea__input--error {
+  border-color: #ff4d4d;
+}
+
+[data-theme="light"] .ai-textarea__input--success {
+  border-color: #4caf50;
+}
+
+[data-theme="light"] .ai-textarea__message--error {
+  color: #ff4d4d;
+}
+
+[data-theme="light"] .ai-textarea__message--success {
+  color: #4caf50;
+}
+
+[data-theme="light"] .ai-textarea__message--info {
+  color: #2196f3;
+}
+
+/* Dark theme styles */
+[data-theme="dark"] .ai-textarea__input {
+  background-color: #333333;
+  color: #ffffff;
+  border-color: #555555;
+}
+
+[data-theme="dark"] .ai-textarea__input--error {
+  border-color: #ff4d4d;
+}
+
+[data-theme="dark"] .ai-textarea__input--success {
+  border-color: #4caf50;
+}
+
+[data-theme="dark"] .ai-textarea__message--error {
+  color: #ff4d4d;
+}
+
+[data-theme="dark"] .ai-textarea__message--success {
+  color: #4caf50;
+}
+
+[data-theme="dark"] .ai-textarea__message--info {
+  color: #2196f3;
+}

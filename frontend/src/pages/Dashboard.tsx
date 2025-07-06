@@ -1,10 +1,11 @@
+import { Button } from '@drdata/ai-styles';
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  DashboardHeader,
-  RecentGeneratedStories,
-  RecentScenarios,
-  WritingStats
+    DashboardHeader,
+    RecentGeneratedStories,
+    RecentScenarios,
+    WritingStats
 } from '../components/Dashboard';
 import MarketingFooter from '../components/marketing/MarketingFooter';
 import { AlertModal, ConfirmModal } from '../components/Modal';
@@ -12,14 +13,13 @@ import PublishStoryModal from '../components/Story/PublishStoryModal';
 import { useAuth } from '../contexts/AuthContext';
 import { useModals } from '../hooks/useModals';
 import {
-  DashboardStats,
-  fetchDashboardStats,
-  fetchRecentScenarios,
-  fetchRecentStories,
-  RecentScenario,
-  RecentStory
+    DashboardStats,
+    fetchDashboardStats,
+    fetchRecentScenarios,
+    fetchRecentStories,
+    RecentScenario,
+    RecentStory
 } from '../services/dashboardService';
-import { Button } from '@drdata/docomo';
 
 interface DashboardProps {
   // No props needed anymore

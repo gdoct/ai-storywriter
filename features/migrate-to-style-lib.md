@@ -1,7 +1,7 @@
-# Migration Plan: Frontend to @drdata/docomo Style Library
+# Migration Plan: Frontend to @drdata/ai-styles Style Library
 
 ## Overview
-Migrate the entire StoryWriter frontend from custom CSS/components to the @drdata/docomo design system for consistency, maintainability, and enhanced UX.
+Migrate the entire StoryWriter frontend from custom CSS/components to the @drdata/ai-styles design system for consistency, maintainability, and enhanced UX.
 
 ## Available Components
 
@@ -317,7 +317,7 @@ Migrate the entire StoryWriter frontend from custom CSS/components to the @drdat
 - [x] Audit current component usage
 - [x] Create component mapping document
 - [ ] Set up development branch
-- [ ] Install @drdata/docomo types
+- [ ] Install @drdata/ai-styles types
 
 ### Phase 1: Foundation (COMPLETED ✅)
 - [x] Add ThemeProvider to App.tsx
@@ -405,7 +405,7 @@ Migrate the entire StoryWriter frontend from custom CSS/components to the @drdat
 
 #### What Was Done:
 1. **ThemeProvider Integration**
-   - Added `ThemeProvider` from @drdata/docomo to App.tsx
+   - Added `ThemeProvider` from @drdata/ai-styles to App.tsx
    - Wrapped entire application with theme context
    - Enabled automatic light/dark mode switching
    - Configured theme persistence and system detection

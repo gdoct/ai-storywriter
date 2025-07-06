@@ -1,5 +1,5 @@
+import { Card } from '@drdata/ai-styles';
 import React from 'react';
-import { Card } from '@drdata/docomo';
 import { MarketStoryCard } from '../../types/marketplace';
 
 interface StoryCardProps {

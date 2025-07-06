@@ -1,6 +1,5 @@
+import { AiStoryReader } from '@drdata/ai-styles';
 import React, { useState } from 'react';
-import { AiStoryReader } from '@drdata/docomo';
-import MarkdownViewer from '../ReadingPane/MarkDownViewer';
 import TTSPlayer from '../TTS/TTSPlayer';
 
 interface StoryReaderProps {

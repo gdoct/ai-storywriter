@@ -1,0 +1,255 @@
+.icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--color-button-secondary-border);
+  border-radius: var(--radius-lg);
+  background-color: var(--color-button-secondary-bg);
+  color: var(--color-button-secondary-text);
+  cursor: pointer;
+  font-size: var(--font-size-base);
+  line-height: 1;
+  padding: var(--spacing-sm);
+  min-width: var(--component-height-md);
+  min-height: var(--component-height-md);
+  width: var(--component-height-md);
+  height: var(--component-height-md);
+  transition: all var(--transition-normal);
+  position: relative;
+  overflow: hidden;
+  font-family: var(--font-family-sans);
+}
+
+.icon-button:hover:not(.icon-button--disabled):not(.icon-button--active) {
+  background-color: var(--color-button-secondary-bg-hover);
+  border-color: var(--color-border-tertiary);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.icon-button:active:not(.icon-button--disabled):not(.icon-button--active) {
+  transform: translateY(0);
+  box-shadow: var(--shadow-sm);
+  background-color: var(--color-button-secondary-bg-active);
+}
+
+.icon-button:focus-visible {
+  outline: none;
+  border-color: var(--color-border-focus);
+  box-shadow: var(--shadow-focus-primary);
+}
+
+.icon-button--active {
+  background-color: var(--color-button-primary-bg);
+  border-color: var(--color-button-primary-border);
+  color: var(--color-button-primary-text);
+  cursor: wait;
+}
+
+.icon-button--active::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    rgba(255, 255, 255, 0.2) 50%, 
+    transparent 100%);
+  animation: shimmer 1.5s 1;
+}
+
+.icon-button--disabled {
+  background-color: var(--color-button-disabled-bg);
+  border-color: var(--color-button-disabled-border);
+  color: var(--color-button-disabled-text);
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.icon-button__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform var(--transition-normal);
+}
+
+.icon-button__icon--spinning {
+  animation: spin 1s linear infinite;
+}
+
+/* Animations */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .icon-button {
+    border-width: 2px;
+  }
+  
+  .icon-button:focus-visible {
+    border-width: 3px;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .icon-button {
+    transition: background-color var(--transition-fast), border-color var(--transition-fast);
+  }
+  
+  .icon-button:hover:not(.icon-button--disabled):not(.icon-button--active) {
+    transform: none;
+  }
+  
+  .icon-button__icon--spinning {
+    animation: none;
+  }
+  
+  .icon-button--active::before {
+    animation: none;
+  }
+}
+
+/* Dark theme specific adjustments */
+[data-theme="dark"] .icon-button {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] .icon-button:hover:not(.icon-button--disabled):not(.icon-button--active) {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), var(--shadow-md);
+}
+
+[data-theme="dark"] .icon-button--active::before {
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    rgba(255, 255, 255, 0.3) 50%, 
+    transparent 100%);
+  animation: shimmer 1.5s 1;
+}
+
+/* Light theme specific adjustments */
+[data-theme="light"] .icon-button {
+  background-color: var(--color-light-button-bg);
+  color: var(--color-light-button-text);
+  border-color: var(--color-light-button-border);
+}
+
+[data-theme="light"] .icon-button:hover:not(.icon-button--disabled):not(.icon-button--active) {
+  background-color: var(--color-light-button-bg-hover);
+  border-color: var(--color-light-border-hover);
+}
+
+[data-theme="light"] .icon-button:active:not(.icon-button--disabled):not(.icon-button--active) {
+  background-color: var(--color-light-button-bg-active);
+}
+
+[data-theme="light"] .icon-button:focus-visible {
+  border-color: var(--color-light-border-focus);
+  box-shadow: var(--shadow-light-focus);
+}
+
+/* Size variants */
+.icon-button--sm {
+  min-width: 2rem;
+  min-height: 2rem;
+  width: 2rem;
+  height: 2rem;
+  font-size: 0.875rem;
+  padding: 0.25rem;
+}
+
+.icon-button--m {
+  min-width: var(--component-height-md);
+  min-height: var(--component-height-md);
+  width: var(--component-height-md);
+  height: var(--component-height-md);
+  font-size: var(--font-size-base);
+  padding: var(--spacing-sm);
+}
+
+.icon-button--l {
+  min-width: 3rem;
+  min-height: 3rem;
+  width: 3rem;
+  height: 3rem;
+  font-size: 1.125rem;
+  padding: 0.625rem;
+}
+
+.icon-button--xl {
+  min-width: 3.5rem;
+  min-height: 3.5rem;
+  width: 3.5rem;
+  height: 3.5rem;
+  font-size: 1.25rem;
+  padding: 0.75rem;
+}
+
+
+.icon-button--primary {
+  background-color: var(--color-button-primary-bg);
+  border-color: var(--color-button-primary-border);
+  color: var(--color-button-primary-text);
+}
+
+.icon-button--secondary {
+  background-color: var(--color-button-secondary-bg);
+  border-color: var(--color-button-secondary-border);
+  color: var(--color-button-secondary-text);
+}
+
+.icon-button--danger {
+  background-color: var(--color-button-danger-bg);
+  border-color: var(--color-button-danger-border);
+  color: var(--color-button-danger-text);
+}
+
+.icon-button--success {
+  background-color: var(--color-button-success-bg);
+  border-color: var(--color-button-success-border);
+  color: var(--color-button-success-text);
+}
+
+.icon-button--ghost {
+  background-color: var(--color-button-ghost-bg);
+  border-color: var(--color-button-ghost-border);
+  color: var(--color-button-ghost-text);
+}
+
+/* Busy state */
+.icon-button--busy {
+  cursor: wait;
+}
+
+.icon-button--busy::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    rgba(255, 255, 255, 0.2) 50%, 
+    transparent 100%);
+  animation: shimmer 1.5s 1;
+}

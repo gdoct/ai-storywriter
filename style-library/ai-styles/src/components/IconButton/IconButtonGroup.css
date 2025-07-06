@@ -1,0 +1,62 @@
+.icon-button-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  background: var(--color-surface, #f4f4f5);
+  border-radius: 0.5em;
+  padding: 0.25em 0.5em;
+  box-shadow: var(--shadow-xs, 0 1px 2px rgba(0,0,0,0.03));
+}
+
+.icon-button-group > .icon-button {
+  border-radius: 0.5em;
+  background: none;
+  transition: background 0.15s;
+}
+
+.icon-button-group > .icon-button:focus-visible {
+  z-index: 1;
+  box-shadow: 0 0 0 2px var(--color-primary-light, #a5b4fc);
+}
+
+.icon-button-group > .icon-button:not(:last-child) {
+  margin-right: 0.15em;
+}
+
+.icon-button-group > .icon-button--active {
+  background: var(--color-primary-light, #e0e7ff);
+}
+
+[data-theme="light"] .icon-button-group {
+  background: var(--color-light-surface);
+  box-shadow: var(--shadow-light-xs);
+}
+
+[data-theme="dark"] .icon-button-group {
+  background: var(--color-dark-surface);
+  box-shadow: var(--shadow-dark-xs);
+}
+
+[data-theme="light"] .icon-button-group > .icon-button {
+  background: var(--color-light-button-bg);
+}
+
+[data-theme="dark"] .icon-button-group > .icon-button {
+  background: var(--color-dark-button-bg);
+}
+
+[data-theme="light"] .icon-button-group > .icon-button:focus-visible {
+  box-shadow: 0 0 0 2px var(--color-light-primary);
+}
+
+[data-theme="dark"] .icon-button-group > .icon-button:focus-visible {
+  box-shadow: 0 0 0 2px var(--color-dark-primary);
+}
+
+[data-theme="light"] .icon-button-group > .icon-button--active {
+  background: var(--color-light-primary-light);
+}
+
+[data-theme="dark"] .icon-button-group > .icon-button--active {
+  background: var(--color-dark-primary-light);
+}
