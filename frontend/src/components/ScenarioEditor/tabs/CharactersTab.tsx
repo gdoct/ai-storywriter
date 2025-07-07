@@ -5,6 +5,8 @@ import { v4 as uuidv4 } from 'uuid';
 import { AI_STATUS, useAIStatus } from '../../../contexts/AIStatusContext';
 import { useAuth } from '../../../contexts/AuthContext';
 import { generateCharacterField } from '../../../services/characterFieldGenerator';
+import { generateAppearanceFromPhoto } from '../../../services/characterPhotoService';
+import { createPhotoBasedAppearancePrompt } from '../../../services/llmPromptService';
 import { Character } from '../../../types/ScenarioTypes';
 import { showUserFriendlyError } from '../../../utils/errorHandling';
 import ImportModal from '../../common/ImportModal';
@@ -124,15 +126,11 @@ export const CharactersTab: React.FC<TabProps> = ({
         setShowAIBusyModal(true);
         
         try {
-          // Import the services we need
-          const photoServiceModule = await import('../../../services/characterPhotoService');
-          const promptServiceModule = await import('../../../services/llmPromptService');
-          
           // Create a proper prompt for appearance generation
-          const prompt = promptServiceModule.createPhotoBasedAppearancePrompt(character, scenario);
+          const prompt = createPhotoBasedAppearancePrompt(character, scenario);
           
           // Generate appearance based on the photo with the proper prompt
-          const { appearance } = await photoServiceModule.generateAppearanceFromPhoto(
+          const { appearance } = await generateAppearanceFromPhoto(
             character.photoId,
             prompt
           );

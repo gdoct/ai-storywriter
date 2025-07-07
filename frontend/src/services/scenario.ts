@@ -1,4 +1,4 @@
-import { Scenario } from '../types/ScenarioTypes';
+import { Scenario, Randomizer } from '../types/ScenarioTypes';
 import axios from './http';
 
 export const fetchAllScenarios = async (): Promise<{ id: string; title: string; synopsis: string }[]> => {
@@ -156,4 +156,38 @@ export const deleteDBStory = async (storyId: number): Promise<void> => {
     console.error(`Error deleting DB story ${storyId}:`, error);
     throw error;
   }
+};
+
+// Randomizer utility functions
+export const createRandomizer = (name: string, keywords: string[], selectedCount: number = 1): Randomizer => {
+  return {
+    id: crypto.randomUUID(),
+    name,
+    description: '',
+    keywords,
+    selectedCount: keywords.length > 0 ? Math.min(selectedCount, keywords.length) : 1,
+    isActive: true,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  };
+};
+
+export const getRandomizedKeywords = (randomizer: Randomizer): string[] => {
+  if (!randomizer.isActive || randomizer.keywords.length === 0) {
+    return [];
+  }
+  
+  const shuffled = [...randomizer.keywords].sort(() => Math.random() - 0.5);
+  return shuffled.slice(0, randomizer.selectedCount);
+};
+
+export const getRandomizedKeywordsFromAll = (randomizers: Randomizer[]): string[] => {
+  const allKeywords: string[] = [];
+  
+  randomizers.forEach(randomizer => {
+    const keywords = getRandomizedKeywords(randomizer);
+    allKeywords.push(...keywords);
+  });
+  
+  return allKeywords;
 };

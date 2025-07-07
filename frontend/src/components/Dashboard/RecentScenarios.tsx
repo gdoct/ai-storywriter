@@ -42,13 +42,21 @@ const RecentScenarios: React.FC<RecentScenariosProps> = ({
         ) : (
           <div>
             {recentScenarios.map((scenario) => (
-              <div key={scenario.id} className="recent-item">
-                <h4 className="recent-item-title">{scenario.title || 'Untitled'}</h4>
-                <p className="recent-item-meta">
+                <div key={scenario.id} className="recent-item">
+                <div className="recent-item-image">
+                  <img
+                  src={scenario.imageUrl || '/placeholder-image.png'}
+                  alt={scenario.title || 'Scenario Image'}
+                  className="recent-item-thumbnail"
+                  />
+                </div>
+                <div className="recent-item-content">
+                  <h4 className="recent-item-title">{scenario.title || 'Untitled'}</h4>
+                  <p className="recent-item-meta">
                   📅 {formatRelativeTime(scenario.lastModified)} • 
                   📝 {scenario.generatedStoryCount} generated stories
-                </p>
-                <div style={{ marginTop: 'var(--spacing-sm)' }}>
+                  </p>
+                  <div style={{ marginTop: 'var(--spacing-sm)' }}>
                   <Button
                     variant="primary"
                     size="sm"
@@ -56,8 +64,9 @@ const RecentScenarios: React.FC<RecentScenariosProps> = ({
                   >
                     Edit
                   </Button>
+                  </div>
                 </div>
-              </div>
+                </div>
             ))}
           </div>
         )}

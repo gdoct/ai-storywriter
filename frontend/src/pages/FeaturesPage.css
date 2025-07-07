@@ -1,7 +1,25 @@
+[data-theme="light"] {
+  --background: var(--color-background-primary);
+  --text: var(--color-text-primary);
+  --secondary-text: var(--color-text-secondary);
+  --card-background: var(--color-surface-primary);
+  --card-border: var(--color-border-primary);
+  --cta-background: var(--color-button-primary-bg);
+}
+
+[data-theme="dark"] {
+  --background: var(--color-gray-900);
+  --text: var(--color-gray-50);
+  --secondary-text: var(--color-gray-400);
+  --card-background: var(--color-gray-800);
+  --card-border: var(--color-gray-700);
+  --cta-background: linear-gradient(135deg, var(--color-primary-700) 0%, var(--color-primary-800) 100%);
+}
+
 .features-page {
   min-height: 100vh;
   padding: 80px 0;
-  background: #f8fafc;
+  background: var(--background);
 }
 
 .features-page-container {
@@ -18,13 +36,13 @@
 .features-header h1 {
   font-size: 3rem;
   font-weight: 700;
-  color: #1e293b;
+  color: var(--text);
   margin-bottom: 24px;
 }
 
 .features-header p {
   font-size: 1.25rem;
-  color: #64748b;
+  color: var(--secondary-text);
   max-width: 600px;
   margin: 0 auto;
   line-height: 1.6;
@@ -38,11 +56,11 @@
 }
 
 .feature-detailed-card {
-  background: white;
+  background: var(--card-background);
   padding: 40px;
   border-radius: 16px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--card-border);
   transition: all 0.3s ease;
 }
 
@@ -67,12 +85,12 @@
 .feature-detailed-title {
   font-size: 1.5rem;
   font-weight: 600;
-  color: #1e293b;
+  color: var(--text);
   margin-bottom: 12px;
 }
 
 .feature-detailed-description {
-  color: #64748b;
+  color: var(--secondary-text);
   line-height: 1.6;
   margin-bottom: 0;
 }
@@ -102,8 +120,8 @@
 
 .features-cta-section {
   text-align: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  background: var(--cta-background);
+  color: var(--text);
   padding: 80px 40px;
   border-radius: 20px;
 }
@@ -117,7 +135,7 @@
 .features-cta-section p {
   font-size: 1.2rem;
   margin-bottom: 40px;
-  color: #e2e8f0;
+  color: var(--secondary-text);
 }
 
 .features-cta-buttons {
@@ -146,7 +164,7 @@
 }
 
 .btn-primary {
-  background: #4f46e5;
+  background: var(--cta-background);
   color: white;
   box-shadow: 0 4px 14px rgba(79, 70, 229, 0.3);
 }
@@ -159,13 +177,13 @@
 
 .btn-secondary {
   background: transparent;
-  color: white;
-  border: 2px solid white;
+  color: var(--text);
+  border: 2px solid var(--text);
 }
 
 .btn-secondary:hover {
-  background: white;
-  color: #667eea;
+  background: var(--text);
+  color: var(--background);
   transform: translateY(-2px);
 }
 

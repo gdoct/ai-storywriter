@@ -49,17 +49,17 @@ const FeaturesSection: React.FC = () => {
           <h2 style={{ 
             fontSize: 'var(--font-size-3xl)', 
             fontWeight: 'var(--font-weight-bold)',
-            color: 'var(--color-text-primary)',
+            color: 'var(--color-text-primary)', // Corrected to use design token
             marginBottom: 'var(--spacing-md)'
-          }}>
+          }} className="features-header">
             Powerful Features for Creative Writers
           </h2>
           <p style={{ 
             fontSize: 'var(--font-size-lg)', 
-            color: 'var(--color-text-secondary)',
+            color: 'var(--color-text-secondary)', // Corrected to use design token
             maxWidth: '600px',
             margin: '0 auto'
-          }}>
+          }} className="features-description">
             Everything you need to craft compelling stories with AI assistance
           </p>
         </div>
@@ -70,28 +70,7 @@ const FeaturesSection: React.FC = () => {
           textAlign: 'left'
         }}>
           {features.map((feature, index) => (
-            <Card key={index} style={{ height: '100%' }}>
-              <div style={{ 
-                fontSize: '2rem', 
-                marginBottom: 'var(--spacing-md)' 
-              }}>
-                {feature.icon}
-              </div>
-              <h3 style={{ 
-                fontSize: 'var(--font-size-lg)', 
-                fontWeight: 'var(--font-weight-semibold)',
-                color: 'var(--color-text-primary)',
-                marginBottom: 'var(--spacing-sm)'
-              }}>
-                {feature.title}
-              </h3>
-              <p style={{ 
-                color: 'var(--color-text-secondary)',
-                lineHeight: '1.6'
-              }}>
-                {feature.description}
-              </p>
-            </Card>
+            <Card key={index} style={{ height: '100%' }} icon={feature.icon} children={<h2>{feature.title}</h2>} footer={feature.description} />
           ))}
         </div>
       </div>

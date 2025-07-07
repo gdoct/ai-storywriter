@@ -1,6 +1,5 @@
 .pricing-section {
   padding: 100px 0;
-  background: white;
 }
 
 .pricing-container {
@@ -15,15 +14,15 @@
 }
 
 .pricing-header h2 {
-  font-size: 2.5rem;
-  font-weight: 700;
-  color: #1e293b;
-  margin-bottom: 16px;
+  font-size: var(--font-size-3xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+  margin-bottom: var(--spacing-md);
 }
 
 .pricing-header p {
-  font-size: 1.2rem;
-  color: #64748b;
+  font-size: var(--font-size-lg);
+  color: var(--color-text-secondary);
 }
 
 .pricing-grid {
@@ -35,10 +34,10 @@
 }
 
 .pricing-card {
-  background: white;
-  border: 2px solid #e2e8f0;
-  border-radius: 16px;
-  padding: 40px 32px;
+  background: var(--color-surface-primary);
+  border: 2px solid var(--color-border-primary);
+  border-radius: var(--border-radius-lg);
+  padding: var(--spacing-xl);
   position: relative;
   transition: all 0.3s ease;
 }
@@ -49,7 +48,7 @@
 }
 
 .pricing-card.popular {
-  border-color: #667eea;
+  border-color: var(--color-primary-400);
   transform: scale(1.05);
   box-shadow: 0 8px 32px rgba(102, 126, 234, 0.15);
 }
@@ -59,12 +58,12 @@
   top: -12px;
   left: 50%;
   transform: translateX(-50%);
-  background: #667eea;
-  color: white;
-  padding: 8px 24px;
-  border-radius: 20px;
-  font-size: 0.9rem;
-  font-weight: 600;
+  background: var(--color-primary-400);
+  color: var(--color-text-inverse);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--border-radius-full);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
 }
 
 .pricing-header-card {
@@ -73,10 +72,10 @@
 }
 
 .tier-name {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #1e293b;
-  margin-bottom: 16px;
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+  margin-bottom: var(--spacing-md);
 }
 
 .tier-price {
@@ -84,19 +83,19 @@
 }
 
 .price {
-  font-size: 3rem;
-  font-weight: 700;
-  color: #1e293b;
+  font-size: var(--font-size-3xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
 }
 
 .period {
-  font-size: 1rem;
-  color: #64748b;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
 }
 
 .tier-description {
-  color: #64748b;
-  line-height: 1.5;
+  color: var(--color-text-secondary);
+  line-height: var(--line-height-lg);
 }
 
 .features-list {
@@ -109,7 +108,7 @@
   display: flex;
   align-items: center;
   padding: 12px 0;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid var(--color-border-secondary);
 }
 
 .feature-item:last-child {
@@ -117,10 +116,10 @@
 }
 
 .check-icon {
-  color: #10b981;
-  font-weight: bold;
-  margin-right: 12px;
-  font-size: 1.2rem;
+  color: var(--color-success-400);
+  font-weight: var(--font-weight-bold);
+  margin-right: var(--spacing-sm);
+  font-size: var(--font-size-lg);
 }
 
 .pricing-cta {
@@ -130,12 +129,12 @@
 .btn-pricing {
   width: 100%;
   padding: 16px;
-  background: #667eea;
-  color: white;
+  background: var(--color-primary-400);
+  color: var(--color-text-inverse);
   border: none;
-  border-radius: 8px;
-  font-size: 1rem;
-  font-weight: 600;
+  border-radius: var(--border-radius-md);
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
   text-decoration: none;
   display: inline-block;
   text-align: center;
@@ -144,12 +143,12 @@
 }
 
 .btn-pricing:hover:not(:disabled) {
-  background: #5a6fd8;
+  background: var(--color-primary-300);
   transform: translateY(-2px);
 }
 
 .btn-pricing:disabled {
-  background: #9ca3af;
+  background: var(--color-text-disabled);
   cursor: not-allowed;
   transform: none;
 }

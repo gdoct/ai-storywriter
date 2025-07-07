@@ -7,7 +7,9 @@ const MarketingFooter: React.FC = () => {
       marginTop: 'var(--spacing-5xl)',
       background: 'var(--color-surface)',
       padding: 'var(--spacing-4xl) var(--spacing-xl)',
-      borderTop: '1px solid var(--color-border)'
+      borderTop: '1px solid var(--color-border)',
+      color: 'var(--color-text-secondary)',
+      backgroundColor: 'var(--color-background)'
     }}>
       <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
         <div style={{

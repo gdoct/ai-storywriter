@@ -51,32 +51,41 @@ const RecentGeneratedStories: React.FC<RecentGeneratedStoriesProps> = ({
           <div>
             {recentStories.map((story) => (
               <div key={story.id} className="recent-item">
-                <h4 className="recent-item-title">{story.scenarioTitle}</h4>
-                <p className="recent-item-meta">
-                  📅 {formatRelativeTime(story.created)} • 
-                  📝 {story.wordCount} words
-                </p>
-                <div style={{ 
-                  marginTop: 'var(--spacing-sm)',
-                  display: 'flex',
-                  gap: 'var(--spacing-sm)'
-                }}>
-                  {!story.isPublished && (
+                <div className="recent-item-image">
+                  <img
+                    src={story.imageUrl || '/placeholder-image.png'}
+                    alt={story.scenarioTitle || 'Story Image'}
+                    className="recent-item-thumbnail"
+                  />
+                </div>
+                <div className="recent-item-content">
+                  <h4 className="recent-item-title">{story.scenarioTitle}</h4>
+                  <p className="recent-item-meta">
+                    📅 {formatRelativeTime(story.created)} • 
+                    📝 {story.wordCount} words
+                  </p>
+                  <div style={{ 
+                    marginTop: 'var(--spacing-sm)',
+                    display: 'flex',
+                    gap: 'var(--spacing-sm)'
+                  }}>
+                    {!story.isPublished && (
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => handlePublishStory(story)}
+                      >
+                        Publish
+                      </Button>
+                    )}
                     <Button
-                      variant="secondary"
+                      variant="primary"
                       size="sm"
-                      onClick={() => handlePublishStory(story)}
+                      onClick={() => handleReadStory(story)}
                     >
-                      Publish
+                      Read
                     </Button>
-                  )}
-                  <Button
-                    variant="primary"
-                    size="sm"
-                    onClick={() => handleReadStory(story)}
-                  >
-                    Read
-                  </Button>
+                  </div>
                 </div>
               </div>
             ))}

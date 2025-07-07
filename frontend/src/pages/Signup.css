@@ -219,29 +219,6 @@
   border-color: #ef4444;
 }
 
-.legal-link {
-  color: #4f46e5;
-  text-decoration: none;
-  font-weight: 600;
-  transition: color 0.2s ease;
-}
-
-.legal-link:hover {
-  color: #4338ca;
-  text-decoration: underline;
-}
-
-/* Footer styling for signup page */
-.signup-container footer {
-  position: fixed;
-  bottom: 0;
-  width: 100%;
-  background-color: #1e293b;
-  color: white;
-  text-align: center;
-  padding: 10px 0;
-}
-
 /* Responsive design */
 @media (max-width: 480px) {
   .signup-container {

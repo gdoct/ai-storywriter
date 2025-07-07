@@ -497,8 +497,8 @@ export async function generateRandomCharacter(
   const abortController = new AbortController();
   let cancelGeneration = () => { abortController.abort(); };
   const promptObj = options.additionalInstructions 
-    ? llmPromptService.createRandomCharacterPrompt(scenario, characterType, options.additionalInstructions)
-    : llmPromptService.createCharacterPrompt(scenario, characterType);
+    ? await llmPromptService.createRandomCharacterPrompt(scenario, characterType, options.additionalInstructions)
+    : await llmPromptService.createCharacterPrompt(scenario, characterType);
   const resultPromise = new Promise<any>(async (resolve, reject) => {
     try {
       const selectedModel = getSelectedModel();

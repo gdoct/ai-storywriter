@@ -134,6 +134,18 @@ export function getTabsWithData(scenario: Scenario): TabId[] {
     }
   }
 
+  // Check if randomizers tab has data
+  if (scenario.randomizers) {
+    const r = scenario.randomizers;
+    const hasRandomizersData = (
+      (r.randomizers && r.randomizers.length > 0) ||
+      (r.generalNotes && r.generalNotes.trim().length > 0)
+    );
+    if (hasRandomizersData) {
+      tabsWithData.push('randomizers');
+    }
+  }
+
   return tabsWithData;
 }
 
@@ -253,6 +265,14 @@ export function tabHasData(scenario: Scenario, tabId: TabId): boolean {
           mc.globalSettings.defaultWordCount !== 1500
         )) ||
         (mc.crossReferences && mc.crossReferences.length > 0)
+      );
+    
+    case 'randomizers':
+      if (!scenario.randomizers) return false;
+      const r = scenario.randomizers;
+      return (
+        (r.randomizers && r.randomizers.length > 0) ||
+        (r.generalNotes && r.generalNotes.trim().length > 0)
       );
     
     default:

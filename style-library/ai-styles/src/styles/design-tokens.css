@@ -36,6 +36,9 @@
   --font-size-xl: 20px;
   --font-size-2xl: 24px;
   --font-size-3xl: 30px;
+  --font-size-4xl: 36px;
+  --font-size-5xl: 42px;
+  --font-size-6xl: 48px;
 
   /* Font Weights */
   --font-weight-light: 300;

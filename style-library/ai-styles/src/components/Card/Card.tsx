@@ -5,7 +5,7 @@ import './Card.css';
 
 export interface CardProps {
   /** Card content */
-  children: ReactNode;
+  children?: ReactNode;
   /** Optional header content */
   header?: ReactNode;
   /** Optional footer content */
@@ -46,14 +46,14 @@ export const Card: React.FC<CardProps> = ({
     >
       {header && <div className="ai-card__header">{header}</div>}
       <div className="ai-card__main">
-        <div className="ai-card__left">
-          {leftContent !== undefined
-            ? leftContent
-            : icon !== undefined
-            ? icon
-            : <span className="ai-card__icon" />}
+        {(leftContent !== undefined || icon !== undefined) && (
+          <div className="ai-card__left" style={{ fontSize: '2rem' }}>
+            {leftContent !== undefined ? leftContent : icon}
+          </div>
+        )}
+        <div className="ai-card__body" style={{ flex: rightContent ? '1' : '0.8' }}>
+          {children}
         </div>
-        <div className="ai-card__body">{children}</div>
         {rightContent && <div className="ai-card__right">{rightContent}</div>}
       </div>
       {footer && <div className="ai-card__footer">{footer}</div>}

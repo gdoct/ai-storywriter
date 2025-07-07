@@ -76,6 +76,7 @@ export type Scenario = {
     themesAndSymbols?: ThemesAndSymbols;
     characterRelationships?: CharacterRelationships;
     multipleChapters?: MultipleChapters;
+    randomizers?: RandomizerTab;
     
     // Image fields
     imageId?: string; // ID of the associated image from scenario_images table
@@ -290,5 +291,22 @@ export interface Timeline {
   events: TimelineEvent[];
   eras: Era[];
   calendars: Calendar[];
+  generalNotes: string;
+}
+
+// Randomizer interfaces
+export interface Randomizer {
+  id: string;
+  name: string;
+  description?: string;
+  keywords: string[];
+  selectedCount: number; // Number of keywords to select (1 to keywords.length)
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface RandomizerTab {
+  randomizers: Randomizer[];
   generalNotes: string;
 }

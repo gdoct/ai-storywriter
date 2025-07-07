@@ -1,5 +1,4 @@
 import { AiTextBox, Button } from '@drdata/ai-styles';
-import { faker } from '@faker-js/faker';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { FaPlus, FaRandom, FaTimes, FaUser } from 'react-icons/fa';
 import { getRandomCharacterPhoto } from '../../../services/characterPhotoService';
@@ -487,13 +486,14 @@ export const PhotoUploadModal: React.FC<PhotoUploadModalProps> = ({
                 placeholder="e.g., Alice Johnson, John Smith, etc."
                 disabled={isUploading}
                 aiIcon={<FaRandom />}
-                onAiClick={() => {
+                onAiClick={async () => {
+                  const { faker } = await import('@faker-js/faker');
                   const firstName = selectedGender === 'female' 
-                    ? faker.name.firstName('female')
+                    ? faker.person.firstName('female')
                     : selectedGender === 'male'
-                    ? faker.name.firstName('male')
-                    : faker.name.firstName();
-                  const lastName = faker.name.lastName();
+                    ? faker.person.firstName('male')
+                    : faker.person.firstName();
+                  const lastName = faker.person.lastName();
                   const fullName = `${firstName} ${lastName}`;
                   setCharacterName(fullName);
                 }}

@@ -53,13 +53,13 @@ const Signup: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
 
     setIsLoading(true);
-    
+
     // Use the signup function with legal agreement data
     const success = await signup({
       username: formData.username,
@@ -67,9 +67,9 @@ const Signup: React.FC = () => {
       password: formData.password,
       agreeToTerms: formData.agreeToTerms
     });
-    
+
     setIsLoading(false);
-    
+
     if (success) {
       // After successful signup, log the user in
       const loginSuccess = await login(formData.email, formData.password);
@@ -96,124 +96,128 @@ const Signup: React.FC = () => {
   };
 
   return (
-    <div className="signup-container">
-      <div className="signup-form-wrapper">
-        <div className="signup-header">
-          <h2>Create Your Account</h2>
-          <p>Start your creative writing journey with AI assistance</p>
-        </div>
-        
-        <form onSubmit={handleSubmit} className="signup-form">
-          {errors.general && (
-            <div className="error-message general-error">{errors.general}</div>
-          )}
-          
-          <div className="form-group">
-            <label htmlFor="username">Username:</label>
-            <input
-              type="text"
-              id="username"
-              value={formData.username}
-              onChange={(e) => handleInputChange('username', e.target.value)}
-              className={errors.username ? 'error' : ''}
-              disabled={isLoading}
-              placeholder="Choose a unique username"
-            />
-            {errors.username && <span className="error-text">{errors.username}</span>}
+    <div>
+      <div className="signup-container">
+        <div className="signup-form-wrapper">
+          <div className="signup-header">
+            <h2>Create Your Account</h2>
+            <p>Start your creative writing journey with AI assistance</p>
           </div>
 
-          <div className="form-group">
-            <label htmlFor="email">Email:</label>
-            <input
-              type="email"
-              id="email"
-              value={formData.email}
-              onChange={(e) => handleInputChange('email', e.target.value)}
-              className={errors.email ? 'error' : ''}
-              disabled={isLoading}
-              placeholder="your.email@example.com"
-            />
-            {errors.email && <span className="error-text">{errors.email}</span>}
-          </div>
+          <form onSubmit={handleSubmit} className="signup-form">
+            {errors.general && (
+              <div className="error-message general-error">{errors.general}</div>
+            )}
 
-          <div className="form-group">
-            <label htmlFor="password">Password:</label>
-            <input
-              type="password"
-              id="password"
-              value={formData.password}
-              onChange={(e) => handleInputChange('password', e.target.value)}
-              className={errors.password ? 'error' : ''}
-              disabled={isLoading}
-              placeholder="Create a secure password"
-            />
-            {errors.password && <span className="error-text">{errors.password}</span>}
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="confirmPassword">Confirm Password:</label>
-            <input
-              type="password"
-              id="confirmPassword"
-              value={formData.confirmPassword}
-              onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
-              className={errors.confirmPassword ? 'error' : ''}
-              disabled={isLoading}
-              placeholder="Confirm your password"
-            />
-            {errors.confirmPassword && <span className="error-text">{errors.confirmPassword}</span>}
-          </div>
-
-          {/* Legal agreement checkbox */}
-          <div className="form-group legal-agreement">
-            <label className="checkbox-label">
+            <div className="form-group">
+              <label htmlFor="username">Username:</label>
               <input
-                type="checkbox"
-                data-test-id="agreeToTerms"
-                checked={formData.agreeToTerms}
-                onChange={(e) => handleInputChange('agreeToTerms', e.target.checked.toString())}
-                className={errors.agreeToTerms ? 'error' : ''}
+                type="text"
+                id="username"
+                value={formData.username}
+                onChange={(e) => handleInputChange('username', e.target.value)}
+                className={errors.username ? 'error' : ''}
                 disabled={isLoading}
+                placeholder="Choose a unique username"
               />
-              <span className="checkmark"></span>
-              I agree to the{' '}
-              <Link to="/terms" target="_blank" className="legal-link">
-                Terms of Service
-              </Link>
-              {' '}and{' '}
-              <Link to="/privacy" target="_blank" className="legal-link">
-                Privacy Policy
-              </Link>
-            </label>
-            {errors.agreeToTerms && <span className="error-text">{errors.agreeToTerms}</span>}
+              {errors.username && <span className="error-text">{errors.username}</span>}
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="email">Email:</label>
+              <input
+                type="email"
+                id="email"
+                value={formData.email}
+                onChange={(e) => handleInputChange('email', e.target.value)}
+                className={errors.email ? 'error' : ''}
+                disabled={isLoading}
+                placeholder="your.email@example.com"
+              />
+              {errors.email && <span className="error-text">{errors.email}</span>}
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="password">Password:</label>
+              <input
+                type="password"
+                id="password"
+                value={formData.password}
+                onChange={(e) => handleInputChange('password', e.target.value)}
+                className={errors.password ? 'error' : ''}
+                disabled={isLoading}
+                placeholder="Create a secure password"
+              />
+              {errors.password && <span className="error-text">{errors.password}</span>}
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="confirmPassword">Confirm Password:</label>
+              <input
+                type="password"
+                id="confirmPassword"
+                value={formData.confirmPassword}
+                onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
+                className={errors.confirmPassword ? 'error' : ''}
+                disabled={isLoading}
+                placeholder="Confirm your password"
+              />
+              {errors.confirmPassword && <span className="error-text">{errors.confirmPassword}</span>}
+            </div>
+
+            {/* Legal agreement checkbox */}
+            <div className="form-group legal-agreement">
+              <label className="checkbox-label">
+                <input
+                  type="checkbox"
+                  data-test-id="agreeToTerms"
+                  checked={formData.agreeToTerms}
+                  onChange={(e) => handleInputChange('agreeToTerms', e.target.checked.toString())}
+                  className={errors.agreeToTerms ? 'error' : ''}
+                  disabled={isLoading}
+                />
+                <span className="checkmark"></span>
+                I agree to the{' '}
+                <Link to="/terms" target="_blank" className="legal-link">
+                  Terms of Service
+                </Link>
+                {' '}and{' '}
+                <Link to="/privacy" target="_blank" className="legal-link">
+                  Privacy Policy
+                </Link>
+              </label>
+              {errors.agreeToTerms && <span className="error-text">{errors.agreeToTerms}</span>}
+            </div>
+
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="signup-btn"
+              data-test-id="signupButton"
+            >
+              {isLoading ? 'Creating Account...' : 'Create Account'}
+            </button>
+          </form>
+
+          <div className="login-link">
+            Already have an account?{' '}
+            <Link to="/login">Sign in here</Link>
           </div>
 
-          <button 
-            type="submit" 
-            disabled={isLoading}
-            className="signup-btn"
-            data-test-id="signupButton"
-          >
-            {isLoading ? 'Creating Account...' : 'Create Account'}
-          </button>
-        </form>
-
-        <div className="login-link">
-          Already have an account?{' '}
-          <Link to="/login">Sign in here</Link>
-        </div>
-        
-        <div className="signup-benefits">
-          <h3>What you get:</h3>
-          <ul>
-            <li>✓ 5 free stories per month</li>
-            <li>✓ AI-powered story generation</li>
-            <li>✓ Multiple AI model support</li>
-            <li>✓ Story management tools</li>
-          </ul>
+          <div className="signup-benefits">
+            <h3>What you get:</h3>
+            <ul>
+              <li>✓ 5 free stories per month</li>
+              <li>✓ AI-powered story generation</li>
+              <li>✓ Multiple AI model support</li>
+              <li>✓ Story management tools</li>
+            </ul>
+          </div>
         </div>
       </div>
-      <MarketingFooter />
+      <div style={{ marginTop: 'var(--spacing-5xl)' }}>
+        <MarketingFooter />
+      </div>
     </div>
   );
 };

@@ -1,7 +1,7 @@
 from data.db import get_db_connection
 from data.repositories import (GeneratedTextRepository, ScenarioRepository,
                                UserRepository)
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, json, jsonify, request
 from flask_jwt_extended import get_jwt_identity, jwt_required
 
 dashboard_bp = Blueprint('dashboard', __name__)
@@ -105,17 +105,19 @@ def get_recent_scenarios():
         # Format response
         scenarios = []
         total_count = 0
-        
         for row in scenarios_data:
             total_count = row['total_count'] if 'total_count' in row and row['total_count'] else 0
+            jsondata = json.loads(row['jsondata']) if row['jsondata'] else {}
+            ## {"id": "5b8d4731-fb12-4402-b857-382ef8155ff9", "userId": "Selina Fisher", "title": "Woven Resilience", "synopsis": "In the aftermath of a..", "createdAt": "2025-06-25T19:46:27.155Z", "characters": [{"id": "78719e3b-ca67-4d41-a538-4fe1d305ef39", "name": "Lyra", "alias": "The Weaver", "role": "Protagonist", "gender": "Female", "appearance": "", "extraInfo": "", "photoId": "6a1292f7-c36d-42fe-93ae-1e71f85e9aae", "photoUrl": "/api/photos/6a1292f7-c36d-42fe-93ae-1e71f85e9aae"}], "scenes": [], "storyarc": "", "backstory": "", "notes": "", "writingStyle": {"style": "Modern", "genre": "Romance", "tone": "Inspirational", "communicationStyle": "Elaborate", "theme": "Survival", "other": ""}, "imageUrl": "/images/cover/general/book__00015_.png"}
             scenarios.append({
                 'id': row['id'],
                 'title': row['title'] or 'Untitled Scenario',
                 'created': row['created_at'],
                 'generatedStoryCount': row['story_count'],
-                'lastModified': row['updated_at'] or row['created_at']  # Use updated_at if available, fallback to created_at
+                'lastModified': row['updated_at'] or row['created_at'],  # Use updated_at if available, fallback to created_at
+                'imageUrl': jsondata.get('imageUrl') if jsondata else None
             })
-        
+
         # Calculate pagination info
         has_more = (offset + limit) < total_count
         
@@ -159,11 +161,11 @@ def get_recent_stories():
         # Get paginated recent stories with scenario details and total count
         stories_data = conn.execute(
             '''SELECT st.id, st.scenario_id, st.text, st.created_at,
-                      s.title as scenario_title,
                       LENGTH(st.text) as word_count,
                       SUBSTR(st.text, 1, 100) as preview,
                       COUNT(*) OVER() as total_count,
-                      CASE WHEN ms.id IS NOT NULL THEN 1 ELSE 0 END as is_published
+                      CASE WHEN ms.id IS NOT NULL THEN 1 ELSE 0 END as is_published,
+                      st.scenario_json as scenario_json
                FROM stories st
                JOIN scenarios s ON st.scenario_id = s.id
                LEFT JOIN market_stories ms ON st.id = ms.original_story_id
@@ -184,15 +186,17 @@ def get_recent_stories():
             preview = row['preview'].strip() if row['preview'] else ''
             if len(row['text']) > 100:
                 preview += '...'
-            
+            jsondata = json.loads(row['scenario_json']) if row['scenario_json'] else {}
+            scenario_title = jsondata.get('title', 'Untitled Scenario') if jsondata else 'Untitled Scenario'
             stories.append({
                 'id': row['id'],
                 'scenarioId': row['scenario_id'],
-                'scenarioTitle': row['scenario_title'] or 'Untitled Scenario',
+                'scenarioTitle': scenario_title,
                 'created': row['created_at'],
                 'wordCount': row['word_count'] or 0,
                 'preview': preview,
-                'isPublished': bool(row['is_published'])
+                'isPublished': bool(row['is_published']),
+                'imageUrl': jsondata.get('imageUrl') if jsondata else None,
             })
         
         # Calculate pagination info

@@ -1,5 +1,4 @@
 // All prompt generation logic for LLM scenario/storywriting
-import { faker } from '@faker-js/faker';
 import { llmCompletionRequestMessage } from '../types/LLMTypes';
 import { Character, Scenario, StyleSettings } from '../types/ScenarioTypes';
 import { formatScenarioAsMarkdown, formatScenarioAsMarkdownWithoutBackStory, formatScenarioAsMarkdownWithoutStoryArc } from '../utils/scenarioToMarkdown';
@@ -379,7 +378,7 @@ export function createScenesPrompt(scenario: Scenario): llmCompletionRequestMess
  * @param scenario The current scenario for context
  * @param characterType The type of character to generate: "protagonist", "antagonist", or "supporting"
  */
-export function createCharacterPrompt(scenario: Scenario, characterType: string): llmCompletionRequestMessage {
+export async function createCharacterPrompt(scenario: Scenario, characterType: string): Promise<llmCompletionRequestMessage> {
   // Verify scenario is not null or undefined
   if (!scenario) {
     console.error("Error: scenario is null or undefined");
@@ -410,6 +409,7 @@ export function createCharacterPrompt(scenario: Scenario, characterType: string)
     prompt += "The character should have their own goals and personality while complementing the main characters.\n";
   }
   // Use faker to create a fake person. 
+  const { faker } = await import('@faker-js/faker');
   const gender = faker.person.sexType();
   const fullname = faker.person.fullName({ sex: gender });
   prompt += `Use these characteristics for this ${characterType} character:\n`;
@@ -461,7 +461,7 @@ export function createCharacterPrompt(scenario: Scenario, characterType: string)
  * @param characterType The type of character to generate: "protagonist", "antagonist", or "supporting"
  * @param additionalInstructions Optional additional instructions for character generation
  */
-export function createRandomCharacterPrompt(scenario: Scenario, characterType: string, additionalInstructions?: string): llmCompletionRequestMessage {
+export async function createRandomCharacterPrompt(scenario: Scenario, characterType: string, additionalInstructions?: string): Promise<llmCompletionRequestMessage> {
   // Verify scenario is not null or undefined
   if (!scenario) {
     console.error("Error: scenario is null or undefined");
@@ -491,6 +491,7 @@ export function createRandomCharacterPrompt(scenario: Scenario, characterType: s
     prompt += "Create a memorable supporting character who adds depth to the story world.\n";
     prompt += "The character should have their own goals and personality while complementing the main characters.\n";
   }
+  const { faker } = await import('@faker-js/faker');
   const gender = faker.person.sexType();
   const fullname = faker.person.fullName({ sex: gender });
   prompt += `Use these characteristics for this ${characterType} character:\n`;

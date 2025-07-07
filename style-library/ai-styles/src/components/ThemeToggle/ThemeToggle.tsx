@@ -33,10 +33,10 @@ const themeConfig = {
 } as const;
 
 const sizeMap = {
-  xxs: '16px',
-  xs: '20px',
-  sm: '32px',
-  md: '40px',
+  xxs: '8px',
+  xs: '14px',
+  sm: '20px',
+  md: '32px',
   lg: '48px',
 } as const;
 

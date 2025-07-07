@@ -23,6 +23,7 @@ import { GeneralTab } from './tabs/GeneralTab';
 import MultipleChaptersTab from './tabs/MultipleChaptersTab/MultipleChaptersTab';
 import { NotesTab } from './tabs/NotesTab';
 import { ObjectsActionsTab } from './tabs/ObjectsActionsTab';
+import { RandomizerTab } from './tabs/RandomizerTab';
 import { StoryArcTab } from './tabs/StoryArcTab';
 import { ThemesSymbolsTab } from './tabs/ThemesSymbolsTab';
 import { TimelineTab } from './tabs/TimelineTab';
@@ -109,6 +110,13 @@ const tabs: TabConfig[] = [
     label: 'Multiple Chapters',
     icon: FaBook, // Or a more suitable icon
     component: MultipleChaptersTab,
+    optional: true,
+  },
+  {
+    id: 'randomizers',
+    label: 'Randomizers',
+    icon: FaDice,
+    component: RandomizerTab,
     optional: true,
   },
 

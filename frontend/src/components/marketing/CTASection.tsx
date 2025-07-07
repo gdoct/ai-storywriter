@@ -7,7 +7,7 @@ const CTASection: React.FC = () => {
     <section style={{ 
       padding: 'var(--spacing-5xl) var(--spacing-xl)',
       background: 'var(--color-primary-50)'
-    }}>
+    }} className="cta-section">
       <div style={{ 
         maxWidth: '800px', 
         margin: '0 auto'

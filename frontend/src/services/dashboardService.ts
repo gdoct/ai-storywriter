@@ -16,6 +16,7 @@ export interface RecentScenario {
   created: string;
   generatedStoryCount: number;
   lastModified: string;
+  imageUrl?: string; // Optional image URL for the scenario
 }
 
 export interface RecentStory {
@@ -26,6 +27,7 @@ export interface RecentStory {
   wordCount: number;
   preview: string;
   isPublished: boolean;
+  imageUrl?: string; // Optional image URL for the scenario
 }
 
 export interface PaginationInfo {

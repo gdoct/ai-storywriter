@@ -1,0 +1,4 @@
+/* Adding --font-size-6xl to the style library */
+:root {
+  --font-size-6xl: 3.75rem; /* Example size, adjust as needed */
+}
