@@ -1,6 +1,23 @@
 import { AiStoryReader } from '@drdata/ai-styles';
 import React, { useState } from 'react';
+import StarRating from '../Rating/StarRating';
 import TTSPlayer from '../TTS/TTSPlayer';
+import './StoryReader.css';
+
+interface Character {
+  name: string;
+  description: string;
+  imageUrl?: string;
+}
+
+interface ScenarioData {
+  title?: string;
+  description?: string;
+  imageUrl?: string;
+  characters?: Character[];
+  setting?: string;
+  genre?: string;
+}
 
 interface StoryReaderProps {
   content: string;
@@ -14,6 +31,15 @@ interface StoryReaderProps {
   onDownload?: () => void;
   onEditScenario?: () => void;
   onDelete?: () => void;
+  // Rating props for marketplace stories
+  storyId?: number;
+  averageRating?: number;
+  ratingCount?: number;
+  userRating?: number;
+  onRatingChange?: (rating: number) => void;
+  // Marketplace story props
+  imageUri?: string;
+  scenarioJson?: string;
 }
 
 const StoryReader: React.FC<StoryReaderProps> = ({
@@ -23,7 +49,14 @@ const StoryReader: React.FC<StoryReaderProps> = ({
   metadata,
   onDownload,
   onEditScenario,
-  onDelete
+  onDelete,
+  storyId,
+  averageRating = 0,
+  ratingCount = 0,
+  userRating,
+  onRatingChange,
+  imageUri,
+  scenarioJson
 }) => {
   const [fontFamily, setFontFamily] = useState<string>('Georgia');
   const [fontSize, setFontSize] = useState<string>('24px');
@@ -64,125 +97,82 @@ const StoryReader: React.FC<StoryReaderProps> = ({
   }
 
   return (
-    <div style={{ 
-      background: 'var(--color-surface)',
+    <div className="story-reader-wrapper" style={{ 
+      background: 'var(--color-surface-primary)',
       borderRadius: 'var(--radius-lg)',
       padding: 'var(--spacing-lg)'
     }}>
       {/* Action Controls */}
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: 'var(--spacing-lg)',
-        borderBottom: '1px solid var(--color-border)',
-        paddingBottom: 'var(--spacing-md)'
-      }}>
-        <h2 style={{
-          fontSize: 'var(--font-size-xl)',
-          fontWeight: 'var(--font-weight-bold)',
-          color: 'var(--color-text-primary)',
-          margin: 0
-        }}>
+      <div className="story-reader-header">
+        <h2 className="story-reader-title">
           {title || 'Story Reader'}
         </h2>
         
-        <div style={{ display: 'flex', gap: 'var(--spacing-sm)' }}>
-          {onDownload && (
-            <button 
-              onClick={onDownload}
-              style={{
-                padding: 'var(--spacing-sm) var(--spacing-md)',
-                background: 'var(--color-secondary)',
-                color: 'var(--color-secondary-contrast)',
-                border: 'none',
-                borderRadius: 'var(--radius-sm)',
-                cursor: 'pointer',
-                fontSize: 'var(--font-size-sm)'
-              }}
-            >
-              📥 Download
-            </button>
+        <div className="story-reader-actions">
+          {/* Text-to-Speech Player - moved to header and made compact */}
+          {content && (
+            <div className="tts-player-compact">
+              <TTSPlayer 
+                text={content}
+              />
+            </div>
           )}
           {onEditScenario && (
-            <button 
-              onClick={onEditScenario}
-              style={{
-                padding: 'var(--spacing-sm) var(--spacing-md)',
-                background: 'var(--color-primary)',
-                color: 'var(--color-primary-contrast)',
-                border: 'none',
-                borderRadius: 'var(--radius-sm)',
-                cursor: 'pointer',
-                fontSize: 'var(--font-size-sm)'
-              }}
-            >
+            <button className="story-reader-button secondary" onClick={onEditScenario}>
               ✏️ Edit Scenario
             </button>
           )}
           {onDelete && (
-            <button 
-              onClick={onDelete}
-              style={{
-                padding: 'var(--spacing-sm) var(--spacing-md)',
-                background: 'var(--color-error)',
-                color: 'var(--color-error-contrast)',
-                border: 'none',
-                borderRadius: 'var(--radius-sm)',
-                cursor: 'pointer',
-                fontSize: 'var(--font-size-sm)'
-              }}
-            >
+            <button className="story-reader-button secondary" onClick={onDelete}>
               🗑️ Delete Story
             </button>
           )}
         </div>
       </div>
 
-      {/* Story Metadata */}
-      {metadata && (
-        <div style={{
-          display: 'flex',
-          gap: 'var(--spacing-lg)',
-          marginBottom: 'var(--spacing-lg)',
-          padding: 'var(--spacing-md)',
-          background: 'var(--color-background)',
-          borderRadius: 'var(--radius-sm)',
-          fontSize: 'var(--font-size-sm)',
-          color: 'var(--color-text-secondary)'
-        }}>
-          <div>
-            <strong>Scenario:</strong> {metadata.scenario}
+      {/* Story Metadata with inline Rating */}
+      <div className="story-metadata">
+        {metadata && (
+          <>
+            <div>
+              <strong>Scenario:</strong> {metadata.scenario}
+            </div>
+            <div>
+              <strong>Created:</strong> {metadata.created}
+            </div>
+            <div>
+              <strong>Word Count:</strong> {metadata.wordCount} words
+            </div>
+          </>
+        )}
+        {/* Inline Rating Section for Marketplace Stories */}
+        {storyId && (
+          <div className="inline-rating">
+            <StarRating
+              storyId={storyId}
+              currentRating={userRating}
+              averageRating={averageRating}
+              ratingCount={ratingCount}
+              onRatingChange={onRatingChange}
+              compact={true}
+            />
           </div>
-          <div>
-            <strong>Created:</strong> {metadata.created}
-          </div>
-          <div>
-            <strong>Word Count:</strong> {metadata.wordCount} words
-          </div>
-        </div>
-      )}
-
-      {/* Text-to-Speech Player */}
-      {content && (
-        <div style={{ marginBottom: 'var(--spacing-lg)' }}>
-          <TTSPlayer 
-            text={content}
-          />
-        </div>
-      )}
+        )}
+      </div>
 
       {/* AI Story Reader */}
       {content ? (
-        <AiStoryReader
-          text={content}
-          font={fontFamily}
-          fontSize={fontSize}
-          onFontChange={setFontFamily}
-          onFontSizeChange={setFontSize}
-          availableFonts={fontOptions}
-          availableFontSizes={sizeOptions}
-        />
+        <div className="story-reader-main">
+          <AiStoryReader
+            text={content}
+            font={fontFamily}
+            fontSize={fontSize}
+            onFontChange={setFontFamily}
+            onFontSizeChange={setFontSize}
+            availableFonts={fontOptions}
+            availableFontSizes={sizeOptions}
+          />
+        </div>
       ) : (
         <div style={{ 
           textAlign: 'center',

@@ -16,6 +16,7 @@ export interface MarketStory {
   is_staff_pick: boolean;
   user_rating?: number; // User's own rating if authenticated
   image_uri?: string; // Add image URI for background
+  scenario_json?: string; // Scenario data with characters and settings
 }
 
 export interface MarketStoryCard {

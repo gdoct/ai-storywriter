@@ -197,22 +197,27 @@ class UserRepository:
     def get_user_by_email_with_roles(email):
         """Get user by email with their roles included"""
         conn = get_db_connection()
-        user = conn.execute('SELECT * FROM users WHERE email = ? AND is_deleted = 0', (email,)).fetchone()
-        if user:
-            user_id = user['id'] if 'id' in user.keys() else user[0]
-            # Get user roles
-            roles_cursor = conn.execute('''
-                SELECT role FROM user_roles 
-                WHERE user_id = ? AND revoked_at IS NULL
-            ''', (user_id,))
-            roles = [row['role'] for row in roles_cursor.fetchall()]
-            user_dict = dict(user)
-            user_dict['user_id'] = user_id  # Map id to user_id for API
-            user_dict['roles'] = roles
+        try:
+            user = conn.execute('SELECT * FROM users WHERE email = ? AND is_deleted = 0', (email,)).fetchone()
+            if user:
+                # Convert Row object to dict for easier access
+                user_dict = dict(user)
+                user_id = user_dict.get('id')
+                if not user_id:
+                    return None
+                
+                # Get user roles
+                roles_cursor = conn.execute('''
+                    SELECT role FROM user_roles 
+                    WHERE user_id = ? AND revoked_at IS NULL
+                ''', (user_id,))
+                roles = [row['role'] for row in roles_cursor.fetchall()]
+                user_dict['user_id'] = user_id  # Map id to user_id for API
+                user_dict['roles'] = roles
+                return user_dict
+            return None
+        finally:
             conn.close()
-            return user_dict
-        conn.close()
-        return None
 
     @staticmethod
     def list_all_users(limit=100, offset=0, include_deleted=False):

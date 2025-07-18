@@ -1,6 +1,7 @@
 import { Button, Card } from '@drdata/ai-styles';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { getAvailableGenres } from '../../services/marketPlaceApi';
 
 interface HeaderSectionProps {
   searchQuery: string;
@@ -10,6 +11,25 @@ interface HeaderSectionProps {
 
 const HeaderSection: React.FC<HeaderSectionProps> = ({ searchQuery, setSearchQuery, onSearch }) => {
   const navigate = useNavigate();
+  const [genres, setGenres] = useState<Array<{name: string, count: number}>>([]);
+  const [selectedGenre, setSelectedGenre] = useState<string>('');
+  const [loadingGenres, setLoadingGenres] = useState(false);
+
+  useEffect(() => {
+    loadGenres();
+  }, []);
+
+  const loadGenres = async () => {
+    try {
+      setLoadingGenres(true);
+      const availableGenres = await getAvailableGenres();
+      setGenres(availableGenres);
+    } catch (error) {
+      console.error('Failed to load genres:', error);
+    } finally {
+      setLoadingGenres(false);
+    }
+  };
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -20,6 +40,12 @@ const HeaderSection: React.FC<HeaderSectionProps> = ({ searchQuery, setSearchQue
       if (searchQuery.trim()) {
         navigate(`/marketplace/search?q=${encodeURIComponent(searchQuery.trim())}`);
       }
+    }
+  };
+
+  const handleGenreExplore = () => {
+    if (selectedGenre) {
+      navigate(`/marketplace/browse?section=genre/${encodeURIComponent(selectedGenre)}`);
     }
   };
 
@@ -53,8 +79,9 @@ const HeaderSection: React.FC<HeaderSectionProps> = ({ searchQuery, setSearchQue
         <div style={{
           display: 'flex',
           alignItems: 'center',
-          gap: 'var(--spacing-md)'
+          gap: 'var(--spacing-lg)'
         }}>
+          {/* Search Form */}
           <form onSubmit={handleSearch} style={{ display: 'flex', gap: 'var(--spacing-sm)' }}>
             <input
               type="text"
@@ -83,6 +110,50 @@ const HeaderSection: React.FC<HeaderSectionProps> = ({ searchQuery, setSearchQue
               🔍
             </Button>
           </form>
+
+          {/* Genre Explorer */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
+            <label style={{
+              fontSize: 'var(--font-size-sm)',
+              fontWeight: 'var(--font-weight-medium)',
+              color: 'var(--color-text-primary)',
+              whiteSpace: 'nowrap'
+            }}>
+              Explore Genres:
+            </label>
+            <select
+              value={selectedGenre}
+              onChange={(e) => setSelectedGenre(e.target.value)}
+              disabled={loadingGenres}
+              style={{
+                padding: 'var(--spacing-sm) var(--spacing-md)',
+                borderRadius: 'var(--radius-sm)',
+                border: '2px solid var(--color-border-primary)',
+                background: 'var(--color-surface)',
+                color: 'var(--color-text-primary)',
+                fontSize: 'var(--font-size-sm)',
+                minWidth: '180px',
+                cursor: loadingGenres ? 'wait' : 'pointer'
+              }}
+            >
+              <option value="">
+                {loadingGenres ? 'Loading...' : 'Select a genre'}
+              </option>
+              {genres.map((genre) => (
+                <option key={genre.name} value={genre.name}>
+                  {genre.name} ({genre.count})
+                </option>
+              ))}
+            </select>
+            <Button 
+              onClick={handleGenreExplore}
+              variant="secondary" 
+              size="sm"
+              disabled={!selectedGenre || loadingGenres}
+            >
+              View
+            </Button>
+          </div>
         </div>
       </div>
     </Card>

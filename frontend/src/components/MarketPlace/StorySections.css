@@ -5,14 +5,14 @@
 }
 
 .marketplace-section {
-  margin-bottom: 40px;
+  margin-bottom: 48px;
 }
 
 .section-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
 }
 
 .section-header h2 {
@@ -41,10 +41,11 @@
 
 .stories-carousel {
   display: flex;
-  gap: 16px;
+  gap: 20px;
   overflow-x: auto;
-  padding-bottom: 8px;
+  padding: 8px 0 16px 0;
   scroll-behavior: smooth;
+  align-items: flex-start;
 }
 
 .stories-carousel::-webkit-scrollbar {
@@ -77,6 +78,7 @@
   background: var(--color-surface-secondary);
   border-radius: 8px;
   border: 1px solid var(--color-border-primary);
+  color: var(--color-text-primary);
 }
 
 .section-loading .loading-spinner {
@@ -100,8 +102,8 @@
 }
 
 .retry-button {
-  background: var(--color-primary-500);
-  color: var(--color-primary-100);
+  background: var(--color-button-primary-bg);
+  color: var(--color-button-primary-text);
   border: none;
   padding: 8px 16px;
   border-radius: 4px;
@@ -112,7 +114,7 @@
 }
 
 .retry-button:hover {
-  background: var(--color-primary-600);
+  background: var(--color-button-primary-bg-hover);
 }
 
 /* Loading spinner animation */

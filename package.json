@@ -12,6 +12,7 @@
     "typecheck": "cd frontend && tsc --noEmit"
   },
   "devDependencies": {
+    "@playwright/test": "^1.53.2",
     "@types/node": "^24.0.10",
     "concurrently": "^8.2.2",
     "rollup-plugin-visualizer": "^6.0.3"

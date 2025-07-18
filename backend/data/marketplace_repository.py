@@ -49,6 +49,23 @@ class MarketplaceRepository:
             return False
     
     @staticmethod
+    def update_staff_pick_status(story_id: int, is_staff_pick: bool) -> bool:
+        """Update the staff pick status of a story"""
+        try:
+            conn = get_db_connection()
+            cursor = conn.execute(
+                'UPDATE market_stories SET is_staff_pick = ? WHERE id = ?',
+                (1 if is_staff_pick else 0, story_id)
+            )
+            success = cursor.rowcount > 0
+            conn.commit()
+            conn.close()
+            return success
+        except Exception as e:
+            logger.error(f"Error updating staff pick status for story {story_id}: {e}")
+            return False
+    
+    @staticmethod
     def get_recent_stories(limit: int = 10) -> List[Dict[str, Any]]:
         """Get recently published stories"""
         try:

@@ -218,16 +218,22 @@ def update_user_tier(user_id):
 def find_user(email):
     """Find a user by email"""
     try:
+        logger.info(f"Searching for user with email: {email}")
         user = UserRepository.get_user_by_email_with_roles(email)
         if not user:
+            logger.warning(f"User not found with email: {email}")
             return jsonify({'error': 'User not found : ' + email}), 404
+        
+        logger.info(f"Found user: {user.get('username', 'unknown')} with ID: {user.get('user_id', 'unknown')}")
+        
         # Safely access keys with fallback
         return jsonify({
-            'user_id': user['user_id'] if 'user_id' in user else None,
-            'username': user['username'] if 'username' in user else None,
-            'email': user['email'] if 'email' in user else email,
-            'tier': user['tier'] if 'tier' in user else None,
-            'roles': user['roles'] if 'roles' in user else []
+            'id': user.get('user_id'),  # Add 'id' field for compatibility
+            'user_id': user.get('user_id'),
+            'username': user.get('username'),
+            'email': user.get('email', email),
+            'tier': user.get('tier'),
+            'roles': user.get('roles', [])
         })
     except Exception as e:
         logger.error(f"Error finding user: {e}", exc_info=True)

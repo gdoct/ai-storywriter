@@ -120,6 +120,40 @@ def suspend_user(user_id):
         logger.error(f"Error suspending user {user_id}: {e}")
         return jsonify({'error': 'Internal server error'}), 500
 
+@moderation_bp.route('/api/moderate/stories/<int:story_id>/staff-pick', methods=['POST'])
+@require_role(['moderator', 'admin'])
+def toggle_staff_pick(story_id):
+    """Toggle staff pick status for a story"""
+    try:
+        # Check if story exists
+        story = MarketplaceRepository.get_story_by_id(story_id)
+        if not story:
+            return jsonify({'error': 'Story not found'}), 404
+        
+        current_user = get_current_user()
+        data = request.get_json() if request.json else {}
+        is_staff_pick = data.get('is_staff_pick', not story.get('is_staff_pick', False))
+        
+        # Update staff pick status
+        success = MarketplaceRepository.update_staff_pick_status(story_id, is_staff_pick)
+        
+        if success:
+            action = 'added to' if is_staff_pick else 'removed from'
+            logger.info(f"Story {story_id} {action} staff picks by {current_user['username']}")
+            
+            return jsonify({
+                'message': f'Story {action} staff picks successfully',
+                'story_id': story_id,
+                'is_staff_pick': is_staff_pick,
+                'moderated_by': current_user['username']
+            })
+        else:
+            return jsonify({'error': 'Failed to update staff pick status'}), 500
+            
+    except Exception as e:
+        logger.error(f"Error toggling staff pick for story {story_id}: {e}")
+        return jsonify({'error': 'Internal server error'}), 500
+
 @moderation_bp.route('/api/moderate/dashboard', methods=['GET'])
 @require_role(['moderator', 'admin'])
 def get_moderation_dashboard():

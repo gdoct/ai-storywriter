@@ -1,0 +1,332 @@
+/* Enhanced Story Card Styles */
+.story-card.enhanced {
+  position: relative;
+  width: 220px;
+  height: 280px;
+  border-radius: 12px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  background: var(--color-surface-primary);
+  border: 1px solid var(--color-border-primary);
+}
+
+/* Default gradient background for cards without images */
+.story-card.enhanced:not(.has-image) {
+  background: linear-gradient(135deg, var(--color-primary-100) 0%, var(--color-primary-200) 100%);
+}
+
+.story-card.enhanced:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  border-color: var(--color-border-secondary);
+}
+
+.story-card.enhanced.compact {
+  width: 220px;
+  height: 280px;
+}
+
+.story-card.enhanced.staff-pick {
+  border: 2px solid var(--color-primary-500);
+  box-shadow: 0 4px 12px var(--color-focus-ring-primary);
+}
+
+.story-card.enhanced.staff-pick:hover {
+  box-shadow: 0 8px 24px var(--color-focus-ring-primary);
+}
+
+/* Staff Pick Badge */
+.staff-pick-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: var(--color-primary-500);
+  color: var(--color-button-primary-text);
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  z-index: 4;
+}
+
+/* Moderation Controls */
+.moderation-controls {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 4;
+}
+
+.moderation-menu-toggle {
+  background: rgba(0, 0, 0, 0.6);
+  border: none;
+  color: white;
+  padding: 6px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  transition: background 0.2s ease;
+}
+
+.moderation-menu-toggle:hover {
+  background: rgba(0, 0, 0, 0.8);
+}
+
+.moderation-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background: var(--color-surface-primary);
+  border: 1px solid var(--color-border-primary);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  min-width: 140px;
+  overflow: hidden;
+}
+
+.moderation-action {
+  display: block;
+  width: 100%;
+  padding: 8px 12px;
+  border: none;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  font-size: 0.875rem;
+  transition: background 0.2s ease;
+  color: var(--color-text-primary);
+}
+
+.moderation-action:hover {
+  background: var(--color-surface-secondary);
+}
+
+.moderation-action.flag:hover {
+  background: var(--color-warning-100);
+  color: var(--color-warning-800);
+}
+
+.moderation-action.remove:hover {
+  background: var(--color-error-100);
+  color: var(--color-error-800);
+}
+
+.moderation-action.suspend:hover {
+  background: var(--color-error-100);
+  color: var(--color-error-800);
+}
+
+.moderation-action.staff-pick:hover {
+  background: var(--color-warning-100);
+  color: var(--color-warning-800);
+}
+
+/* Story Card Content */
+.story-card-content {
+  padding: 16px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+}
+
+/* Overlay styling when card has background image */
+.story-card.enhanced.has-image::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.3);
+  z-index: 1;
+}
+
+.story-card.enhanced.has-image .story-card-content {
+  background: linear-gradient(to top, rgba(0,0,0,0.9), rgba(0,0,0,0.6), rgba(0,0,0,0.2));
+  color: white;
+  position: relative;
+  z-index: 2;
+}
+
+.story-card.enhanced.has-image .story-title {
+  color: white;
+}
+
+.story-card.enhanced.has-image .story-author {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.story-card.enhanced.has-image .story-summary p {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.story-card.enhanced.has-image .rating-text,
+.story-card.enhanced.has-image .additional-stats {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.story-card.enhanced.has-image .genre-tag {
+  background: rgba(255, 255, 255, 0.25);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.story-header {
+  margin-bottom: 12px;
+}
+
+.story-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin: 0 0 4px 0;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.story-author {
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+  margin: 0;
+  font-weight: 500;
+}
+
+/* Genre Tags */
+.story-genres {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+
+.genre-tag {
+  background: var(--color-primary-500);
+  color: var(--color-button-primary-text);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+/* Story Summary */
+.story-summary {
+  margin-bottom: 12px;
+  flex: 1;
+}
+
+.story-summary p {
+  color: var(--color-text-tertiary);
+  font-size: 0.875rem;
+  line-height: 1.4;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Story Stats */
+.story-stats {
+  margin-top: auto;
+}
+
+.rating {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.stars {
+  display: flex;
+  gap: 1px;
+}
+
+.star {
+  font-size: 0.875rem;
+  color: #fbbf24;
+}
+
+.star.empty {
+  color: var(--color-gray-300);
+}
+
+.rating-text {
+  font-size: 0.75rem;
+  color: var(--color-text-tertiary);
+  font-weight: 500;
+}
+
+.additional-stats {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.75rem;
+  color: var(--color-text-tertiary);
+}
+
+.downloads {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .story-card.enhanced {
+    width: 200px;
+    height: 260px;
+  }
+  
+  .story-card.enhanced.compact {
+    width: 200px;
+    height: 260px;
+  }
+  
+  .story-card-content {
+    padding: 14px;
+  }
+  
+  .story-title {
+    font-size: 1rem;
+  }
+  
+  .story-author {
+    font-size: 0.8rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .story-card.enhanced {
+    width: 180px;
+    height: 240px;
+  }
+  
+  .story-card.enhanced.compact {
+    width: 180px;
+    height: 240px;
+  }
+  
+  .story-card-content {
+    padding: 12px;
+  }
+  
+  .story-title {
+    font-size: 0.95rem;
+  }
+  
+  .genre-tag {
+    font-size: 0.7rem;
+  }
+  
+  .story-summary p {
+    font-size: 0.8rem;
+  }
+}

@@ -6,7 +6,7 @@ export const STYLE_OPTIONS = [
 ];
 
 export const GENRE_OPTIONS = [
-    'Science Fiction', 'Drama', 'Adventure', 'Fantasy', 'Mystery', 'Romance',
+    'Science Fiction', 'Fantasy', 'Romance','Drama', 'Adventure', 'Mystery', 
     'Adult', 'Horror', 'Comedy', 'Thriller', 'Historical Fiction',
     'Autobiography', 'Humor', 'Self-help', 'Biography', 'Non-fiction', 'Poetry',
     'Satire', 'Dystopian', 'Cyberpunk', 'Magical Realism'

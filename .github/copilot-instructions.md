@@ -21,3 +21,8 @@ this library is in the folder `/style-library/lib` and is internally named `@drd
 the style library is a collection of react components that are used in the frontend.
 the style library has a storybook in `/style-library/storybook` that can be used to test the components.
 the style library uses css modules for styling.
+
+assume the user is running the dev server for both the frontend and the backend. the user will notice errors and provide feedback.
+
+do not hesitate to make changes to the style library, it is developed hand in hand with the frontend
+but ask the user to restart the frontend dev server after building the style library.

@@ -4,7 +4,7 @@ import { MarketStory, MarketStoryCard } from '../../types/marketplace';
 import EnhancedStoryCard from '../Story/EnhancedStoryCard';
 import StoryCard from '../Story/StoryCard';
 import ReadingModal from '../StoryReader/ReadingModal';
-import StoryReader from '../StoryReader/StoryReader';
+import EnhancedStoryReader from '../StoryReader/EnhancedStoryReader';
 import './StorySections.css';
 import StoryTooltip from './StoryTooltip';
 
@@ -27,6 +27,7 @@ const StorySections: React.FC<StorySectionsProps> = ({ sections, hasRole, handle
   const [selectedStory, setSelectedStory] = useState<MarketStory | null>(null);
   const [storyLoading, setStoryLoading] = useState(false);
   const [storyError, setStoryError] = useState<string | null>(null);
+  const [userRating, setUserRating] = useState<number | undefined>(undefined);
   const [tooltipData, setTooltipData] = useState<{
     storyId: number | null;
     visible: boolean;
@@ -49,6 +50,15 @@ const StorySections: React.FC<StorySectionsProps> = ({ sections, hasRole, handle
     try {
       const story = await getMarketStory(storyId);
       setSelectedStory(story);
+      setUserRating(story.user_rating);
+      
+      // Track reading as a download
+      try {
+        await downloadStory(storyId);
+      } catch (downloadError) {
+        console.log('Failed to track story read as download:', downloadError);
+        // Don't show error to user, this is just tracking
+      }
     } catch (error) {
       setStoryError(error instanceof Error ? error.message : 'Failed to load story');
     } finally {
@@ -61,6 +71,24 @@ const StorySections: React.FC<StorySectionsProps> = ({ sections, hasRole, handle
     setSelectedStoryId(null);
     setSelectedStory(null);
     setStoryError(null);
+    setUserRating(undefined);
+  };
+
+  const handleRatingChange = async (newRating: number) => {
+    setUserRating(newRating);
+    
+    // Update the selected story's rating data
+    if (selectedStory) {
+      try {
+        const updatedStory = await getMarketStory(selectedStory.id);
+        setSelectedStory(updatedStory);
+      } catch (error) {
+        console.error('Failed to refresh story rating data:', error);
+      }
+    }
+    
+    // Optionally refresh sections to update the displayed average rating
+    loadSections();
   };
 
   const handleMouseEnter = (event: React.MouseEvent, storyId: number) => {
@@ -254,15 +282,20 @@ const StorySections: React.FC<StorySectionsProps> = ({ sections, hasRole, handle
         )}
 
         {selectedStory && !storyLoading && !storyError && (
-          <StoryReader
+          <EnhancedStoryReader
             content={selectedStory.content || 'No content available for this story.'}
             isLoading={false}
             title={selectedStory.title}
-            metadata={{
-              scenario: `Published by ${selectedStory.author}`,
-              created: formatDate(selectedStory.published_at),
-              wordCount: getWordCount(selectedStory.content || '')
-            }}
+            author={selectedStory.author}
+            publishedAt={selectedStory.published_at}
+            wordCount={getWordCount(selectedStory.content || '')}
+            imageUri={selectedStory.image_uri}
+            scenarioJson={selectedStory.scenario_json}
+            storyId={selectedStory.id}
+            averageRating={selectedStory.average_rating}
+            ratingCount={selectedStory.rating_count}
+            userRating={userRating}
+            onRatingChange={handleRatingChange}
             onDownload={handleDownloadStory}
           />
         )}

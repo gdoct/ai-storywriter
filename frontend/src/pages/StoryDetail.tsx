@@ -34,6 +34,14 @@ const StoryDetail: React.FC = () => {
       const storyData = await getMarketStory(storyId);
       setStory(storyData);
       setUserRating(storyData?.user_rating || 0);
+      
+      // Track reading as a download
+      try {
+        await downloadStory(storyId);
+      } catch (downloadError) {
+        console.log('Failed to track story read as download:', downloadError);
+        // Don't show error to user, this is just tracking
+      }
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Failed to load story');
     } finally {

@@ -463,7 +463,7 @@ def get_top_rated():
                 ms.total_downloads, ms.is_staff_pick, ms.image_uri
             FROM market_stories ms
             JOIN users u ON ms.user_id = u.id
-            WHERE ms.rating_count >= 3
+            WHERE ms.rating_count >= 1
             ORDER BY ms.average_rating DESC, ms.rating_count DESC
             LIMIT ?
         ''', (limit,))
@@ -640,6 +640,46 @@ def get_by_genre(genre_name):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@marketplace_bp.route('/api/marketplace/genres', methods=['GET'])
+def get_available_genres():
+    """Get all distinct genres from marketplace stories with story counts"""
+    try:
+        conn = get_db_connection()
+        c = conn.cursor()
+        
+        # Get all stories with genres
+        c.execute('''
+            SELECT ai_genres 
+            FROM market_stories 
+            WHERE ai_genres IS NOT NULL AND ai_genres != ''
+        ''')
+        
+        genre_counts = {}
+        
+        for row in c.fetchall():
+            if row['ai_genres']:
+                try:
+                    genres = json.loads(row['ai_genres'])
+                    for genre in genres:
+                        if genre and isinstance(genre, str):
+                            genre = genre.strip()
+                            if genre:
+                                genre_counts[genre] = genre_counts.get(genre, 0) + 1
+                except:
+                    continue
+        
+        # Sort genres by count (most popular first)
+        sorted_genres = sorted(genre_counts.items(), key=lambda x: x[1], reverse=True)
+        
+        # Return list of genres with their counts
+        genres = [{'name': genre, 'count': count} for genre, count in sorted_genres]
+        
+        conn.close()
+        return jsonify({'genres': genres})
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 @marketplace_bp.route('/api/marketplace/user/credits', methods=['GET'])
 @jwt_required()
 def get_user_credits():
@@ -691,3 +731,4 @@ def clear_user_credits_cache():
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+

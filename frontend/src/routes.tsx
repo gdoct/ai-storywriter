@@ -14,6 +14,7 @@ import TermsOfService from './pages/legal/TermsOfService';
 import Login from './pages/Login';
 import MarketingHome from './pages/MarketingHome';
 import Marketplace from './pages/Marketplace';
+import MarketplaceBrowse from './pages/MarketplaceBrowse';
 import PricingPage from './pages/PricingPage';
 import Scenarios from './pages/Scenarios';
 import Signup from './pages/Signup';
@@ -88,6 +89,7 @@ const getRoutes = (): RouteObject[] => {
       )
     },
     { path: '/marketplace', element: <Marketplace /> },
+    { path: '/marketplace/browse', element: <MarketplaceBrowse /> },
     { path: '/marketplace/story/:id', element: <StoryDetail /> },
     { path: '/features', element: <FeaturesPage /> },
     { path: '/pricing', element: <PricingPage /> },

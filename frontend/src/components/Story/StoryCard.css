@@ -1,0 +1,44 @@
+/* Story Card Styles */
+
+/* Add fallback gradient when no image is available */
+.story-card-container {
+  position: relative;
+}
+
+.story-card-container .ai-card:not([style*="background-image"]) {
+  background: linear-gradient(135deg, var(--color-primary-100) 0%, var(--color-primary-200) 100%) !important;
+}
+
+/* Rating stars styling */
+.rating {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.stars {
+  display: flex;
+  gap: 1px;
+}
+
+.star {
+  font-size: 0.875rem;
+}
+
+.star.full {
+  color: #fbbf24;
+}
+
+.star.half {
+  color: #fbbf24;
+}
+
+.star.empty {
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.rating-text {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: 500;
+}

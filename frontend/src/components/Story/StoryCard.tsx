@@ -1,6 +1,7 @@
 import { Card } from '@drdata/ai-styles';
 import React from 'react';
 import { MarketStoryCard } from '../../types/marketplace';
+import './StoryCard.css';
 
 interface StoryCardProps {
   story: MarketStoryCard;
@@ -9,6 +10,7 @@ interface StoryCardProps {
 }
 
 const StoryCard: React.FC<StoryCardProps> = ({ story, onClick, compact = false }) => {
+  const [imageError, setImageError] = React.useState(false);
   const renderStars = (rating: number, count: number) => {
     const stars = [];
     const fullStars = Math.floor(rating);
@@ -41,8 +43,11 @@ const StoryCard: React.FC<StoryCardProps> = ({ story, onClick, compact = false }
     return summary.substring(0, length) + '...';
   };
 
+  const hasValidImage = story.image_uri && !imageError;
+
   return (
     <div
+      className="story-card-container"
       onClick={() => onClick(story.id)}
       onKeyDown={(e) => e.key === 'Enter' && onClick(story.id)}
       tabIndex={0}
@@ -54,14 +59,26 @@ const StoryCard: React.FC<StoryCardProps> = ({ story, onClick, compact = false }
       <Card
         style={{
           position: 'relative',
-          backgroundImage: story.image_uri ? `url(${story.image_uri})` : undefined,
+          backgroundImage: hasValidImage ? `url(${story.image_uri})` : undefined,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat',
-          minHeight: compact ? '200px' : '300px',
+          minHeight: compact ? '280px' : '320px',
+          maxHeight: compact ? '280px' : '320px',
+          width: compact ? '220px' : '280px',
           border: story.is_staff_pick ? '2px solid var(--color-primary)' : undefined,
         }}
       >
+      {/* Hidden image for error detection */}
+      {story.image_uri && (
+        <img 
+          src={story.image_uri} 
+          alt=""
+          style={{ display: 'none' }}
+          onError={() => setImageError(true)}
+          onLoad={() => setImageError(false)}
+        />
+      )}
       {story.is_staff_pick && (
         <div style={{
           position: 'absolute',
@@ -73,10 +90,23 @@ const StoryCard: React.FC<StoryCardProps> = ({ story, onClick, compact = false }
           borderRadius: 'var(--radius-sm)',
           fontSize: 'var(--font-size-xs)',
           fontWeight: 'var(--font-weight-semibold)',
-          zIndex: 2
+          zIndex: 3
         }}>
           ✨ Staff Pick
         </div>
+      )}
+
+      {/* Dark overlay for better text readability */}
+      {hasValidImage && (
+        <div style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0, 0, 0, 0.3)',
+          zIndex: 1
+        }} />
       )}
 
       <div style={{
@@ -84,9 +114,10 @@ const StoryCard: React.FC<StoryCardProps> = ({ story, onClick, compact = false }
         bottom: 0,
         left: 0,
         right: 0,
-        background: 'linear-gradient(to top, rgba(0,0,0,0.8), rgba(0,0,0,0.4), transparent)',
+        background: 'linear-gradient(to top, rgba(0,0,0,0.9), rgba(0,0,0,0.6), rgba(0,0,0,0.2))',
         padding: 'var(--spacing-lg)',
-        color: 'white'
+        color: 'white',
+        zIndex: 2
       }}>
         <div style={{ marginBottom: 'var(--spacing-md)' }}>
           <h3 style={{
@@ -117,11 +148,13 @@ const StoryCard: React.FC<StoryCardProps> = ({ story, onClick, compact = false }
             <span 
               key={index} 
               style={{
-                background: 'rgba(255,255,255,0.2)',
+                background: 'rgba(255,255,255,0.25)',
+                backdropFilter: 'blur(8px)',
                 padding: 'var(--spacing-xs) var(--spacing-sm)',
                 borderRadius: 'var(--radius-sm)',
                 fontSize: 'var(--font-size-xs)',
-                color: 'white'
+                color: 'white',
+                border: '1px solid rgba(255,255,255,0.1)'
               }}
             >
               {genre}

@@ -9,6 +9,7 @@ import http from '../../services/http';
 import { MarketStoryCard } from '../../types/marketplace';
 import { ConfirmModal } from '../Modal';
 import { ModeratorOnly } from '../PermissionGate';
+import './EnhancedStoryCard.css';
 
 interface EnhancedStoryCardProps {
   story: MarketStoryCard;
@@ -27,6 +28,7 @@ export const EnhancedStoryCard: React.FC<EnhancedStoryCardProps> = ({
   const { confirmState, hideConfirm, customConfirm } = useModals();
   const [showModerationMenu, setShowModerationMenu] = useState(false);
   const [moderationLoading, setModerationLoading] = useState(false);
+  const [imageError, setImageError] = useState(false);
 
   const renderStars = (rating: number, count: number) => {
     const stars = [];
@@ -91,17 +93,24 @@ export const EnhancedStoryCard: React.FC<EnhancedStoryCardProps> = ({
         case 'suspend_author':
           endpoint = `/api/moderate/users/${story.author_id}/suspend`;
           break;
+        case 'toggle_staff_pick':
+          endpoint = `/api/moderate/stories/${story.id}/staff-pick`;
+          break;
         default:
           throw new Error('Unknown moderation action');
       }
 
+      const requestData = action === 'toggle_staff_pick' 
+        ? { is_staff_pick: !story.is_staff_pick }
+        : {
+            reason: `Moderated by ${userProfile?.username}`,
+            moderator_notes: `Action: ${action}`
+          };
+
       const response = await http.request({
         method,
         url: endpoint,
-        data: {
-          reason: `Moderated by ${userProfile?.username}`,
-          moderator_notes: `Action: ${action}`
-        }
+        data: requestData
       });
 
       if (response.status === 200) {
@@ -134,16 +143,34 @@ export const EnhancedStoryCard: React.FC<EnhancedStoryCardProps> = ({
     return synopsis;
   };
 
+  const hasValidImage = story.image_uri && !imageError;
+
   return (
     <div 
-      className={`story-card enhanced ${compact ? 'compact' : ''} ${story.is_staff_pick ? 'staff-pick' : ''}`}
+      className={`story-card enhanced ${compact ? 'compact' : ''} ${story.is_staff_pick ? 'staff-pick' : ''} ${hasValidImage ? 'has-image' : ''}`}
       onClick={handleCardClick}
       role="button"
       tabIndex={0}
       onKeyPress={(e) => e.key === 'Enter' && !showModerationMenu && onClick(story.id)}
       title={getTooltipText()}
       data-tooltip={getTooltipText()}
+      style={{
+        backgroundImage: hasValidImage ? `url(${story.image_uri})` : undefined,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat'
+      }}
     >
+      {/* Hidden image for error detection */}
+      {story.image_uri && (
+        <img 
+          src={story.image_uri} 
+          alt=""
+          style={{ display: 'none' }}
+          onError={() => setImageError(true)}
+          onLoad={() => setImageError(false)}
+        />
+      )}
       {story.is_staff_pick && (
         <div className="staff-pick-badge">
           <span>✨ Staff Pick</span>
@@ -201,6 +228,17 @@ export const EnhancedStoryCard: React.FC<EnhancedStoryCardProps> = ({
                   🔒 Suspend Author
                 </button>
               )}
+              
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleModerationAction('toggle_staff_pick');
+                }}
+                className="moderation-action staff-pick"
+                disabled={moderationLoading}
+              >
+                {story.is_staff_pick ? '⭐ Remove Staff Pick' : '✨ Make Staff Pick'}
+              </button>
             </div>
           )}
         </div>

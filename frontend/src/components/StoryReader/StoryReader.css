@@ -1,264 +1,264 @@
-/* StoryReader Component Styles */
-.story-reader {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  max-height: 80vh;
-  background-color: #f9f7f1;
-  border-radius: 8px;
+/* Story Reader Styling Overrides */
+.story-reader-wrapper {
+  background: var(--color-surface-primary);
+  color: var(--color-text-primary);
+  border-radius: var(--radius-lg);
   overflow: hidden;
-}
-
-.story-reader-loading {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 3rem;
-  color: #666;
+  height: 90vh;
+  max-height: 90vh;
 }
 
-.story-reader-loading .loading-spinner {
-  width: 24px;
-  height: 24px;
-  border: 2px solid #e0e0e0;
-  border-top: 2px solid #4caf50;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin-bottom: 1rem;
+/* Override AI Story Reader component styles to match app theme */
+.story-reader-wrapper .ai-story-reader,
+.story-reader-wrapper .ai-story-reader * {
+  background: var(--color-surface-primary) !important;
+  color: var(--color-text-primary) !important;
 }
 
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+/* Force AI Story Reader to use full height */
+.story-reader-wrapper .ai-story-reader {
+  min-height: 70vh !important;
+  height: 100% !important;
+  max-height: none !important;
 }
 
-/* Reading Controls */
-.story-reader-controls {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 16px;
-  background-color: #f1efeb;
-  border-bottom: 1px solid #e0e0e0;
-  flex-wrap: wrap;
-  gap: 12px;
+.story-reader-wrapper .ai-story-reader .content-area {
+  background: var(--color-surface-primary) !important;
+  color: var(--color-text-primary) !important;
+  border: 1px solid var(--color-border-primary) !important;
+  min-height: 60vh !important;
+  height: 100% !important;
+  max-height: none !important;
 }
 
-.font-controls {
-  display: flex;
-  align-items: center;
-  gap: 16px;
+.story-reader-wrapper .ai-story-reader .toolbar {
+  background: var(--color-surface-secondary) !important;
+  border-bottom: 1px solid var(--color-border-primary) !important;
 }
 
-.control-group {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+.story-reader-wrapper .ai-story-reader .toolbar button,
+.story-reader-wrapper .ai-story-reader .toolbar select {
+  background: var(--color-surface-primary) !important;
+  color: var(--color-text-primary) !important;
+  border: 1px solid var(--color-border-primary) !important;
 }
 
-.control-group label {
-  font-size: 14px;
-  font-weight: 500;
-  color: #555;
-  white-space: nowrap;
+.story-reader-wrapper .ai-story-reader .toolbar button:hover,
+.story-reader-wrapper .ai-story-reader .toolbar select:hover {
+  background: var(--color-surface-secondary) !important;
 }
 
-.control-group select {
-  padding: 4px 8px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  background-color: white;
-  font-size: 14px;
-  min-width: 120px;
-}
-
-.action-controls {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.btn {
-  padding: 6px 12px;
-  border: none;
-  border-radius: 4px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.btn:hover {
-  transform: translateY(-1px);
-}
-
-.btn-secondary {
-  background-color: #6c757d;
-  color: white;
-}
-
-.btn-secondary:hover {
-  background-color: #5a6268;
-}
-
-.btn-primary {
-  background-color: #4f46e5;
-  color: white;
-}
-
-.btn-primary:hover {
-  background-color: #4338ca;
-}
-
-.btn-danger {
-  background-color: #dc3545;
-  color: white;
-}
-
-.btn-danger:hover {
-  background-color: #c82333;
-}
-
-/* Story Metadata */
-.story-reader-metadata {
-  padding: 16px 24px;
-  background-color: #f8f9fa;
-  border-bottom: 1px solid #e0e0e0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 24px;
-}
-
-.metadata-item {
-  font-size: 14px;
-  color: #495057;
-}
-
-.metadata-item strong {
-  color: #212529;
-  margin-right: 4px;
-}
-
-/* Story Content */
-.story-reader-content {
-  flex: 1;
-  padding: 24px;
+/* Reading area styling */
+.story-reader-wrapper .ai-story-reader .reading-area {
+  background: var(--color-surface-primary) !important;
+  color: var(--color-text-primary) !important;
   line-height: 1.6;
-  color: #333;
-  overflow-y: auto;
-  background-color: #ffffff;
+  padding: 2rem !important;
+  min-height: 55vh !important;
+  height: 100% !important;
+  max-height: none !important;
 }
 
-.story-reader-content .saved-story-badge {
-  background-color: #4caf50;
-  color: white;
-  padding: 4px 10px;
-  border-radius: 12px;
-  font-size: 0.8rem;
-  margin-bottom: 16px;
-  display: inline-block;
-}
-
-.story-reader-empty {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 200px;
-  color: #666;
-  font-style: italic;
-}
-
-/* Custom scrollbar for story content */
-.story-reader-content::-webkit-scrollbar {
+/* Scrollbar styling */
+.story-reader-wrapper .ai-story-reader ::-webkit-scrollbar {
   width: 8px;
 }
 
-.story-reader-content::-webkit-scrollbar-track {
-  background: #f1f1f1;
+.story-reader-wrapper .ai-story-reader ::-webkit-scrollbar-track {
+  background: var(--color-surface-secondary);
+}
+
+.story-reader-wrapper .ai-story-reader ::-webkit-scrollbar-thumb {
+  background: var(--color-border-secondary);
   border-radius: 4px;
 }
 
-.story-reader-content::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
-  border-radius: 4px;
+.story-reader-wrapper .ai-story-reader ::-webkit-scrollbar-thumb:hover {
+  background: var(--color-border-tertiary);
 }
 
-.story-reader-content::-webkit-scrollbar-thumb:hover {
-  background: #a8a8a8;
+/* Header styling - compact */
+.story-reader-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-sm);
+  padding-bottom: var(--spacing-sm);
+  border-bottom: 1px solid var(--color-border-primary);
+  flex-shrink: 0;
 }
 
-/* Responsive design */
-@media (max-width: 768px) {
-  .story-reader-controls {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  
-  .font-controls {
-    justify-content: space-between;
-  }
-  
-  .action-controls {
-    justify-content: center;
-    margin-top: 8px;
-  }
-  
-  .story-reader-metadata {
-    flex-direction: column;
-    gap: 8px;
-  }
-  
-  .story-reader-content {
-    padding: 16px;
-  }
-}
-
-/* Ensure proper markdown rendering in story content */
-.story-reader-content .markdown-scroll-container {
-  background-color: transparent;
-  border: none;
-  padding: 0;
-  max-height: none;
-  overflow: visible;
-}
-
-/* Override modal content styling when StoryReader is used in modal */
-.modal-content .story-reader {
-  background-color: transparent;
-}
-
-.modal-content .story-reader-content {
-  background-color: transparent;
-}
-
-/* Text-to-Speech Player Integration */
-.story-reader-tts {
-  margin: 0 16px 16px 16px;
-  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-  border: 1px solid #dee2e6;
-  transition: all 0.3s ease;
-}
-
-.story-reader-tts:hover {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  transform: translateY(-1px);
-}
-
-/* Adjust TTS player styling when in reading mode */
-.story-reader .story-reader-tts .tts-player {
-  background: transparent;
-  border: none;
-  padding: 12px;
+.story-reader-title {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
   margin: 0;
 }
 
-/* Responsive adjustments for TTS player */
+.story-reader-actions {
+  display: flex;
+  gap: var(--spacing-sm);
+  align-items: center;
+}
+
+/* Compact TTS Player in header */
+.tts-player-compact {
+  transform: scale(0.8);
+  transform-origin: center;
+}
+
+.tts-player-compact .tts-player {
+  margin: 0;
+  min-width: auto;
+}
+
+.story-reader-button {
+  background: var(--color-button-primary-bg);
+  color: var(--color-button-primary-text);
+  border: none;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  transition: background-color 0.2s ease;
+}
+
+.story-reader-button:hover {
+  background: var(--color-button-primary-bg-hover);
+}
+
+.story-reader-button.secondary {
+  background: var(--color-button-secondary-bg);
+  color: var(--color-button-secondary-text);
+  border: 1px solid var(--color-button-secondary-border);
+}
+
+.story-reader-button.secondary:hover {
+  background: var(--color-button-secondary-bg-hover);
+}
+
+/* Metadata section styling - compact */
+.story-metadata {
+  display: flex;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-sm);
+  padding: var(--spacing-sm);
+  background: var(--color-surface-secondary);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  flex-shrink: 0;
+}
+
+.story-metadata strong {
+  color: var(--color-text-primary);
+}
+
+/* Inline rating within metadata - float to right */
+.inline-rating {
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+}
+
+/* TTS Player section - compact */
+.tts-player-section {
+  margin-bottom: var(--spacing-sm);
+  flex-shrink: 0;
+}
+
+/* Rating section styling - compact */
+.rating-section {
+  margin-bottom: var(--spacing-sm);
+  flex-shrink: 0;
+}
+
+/* Main reading area - dramatically larger to match intended layout */
+.story-reader-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0; /* Important for flex child to shrink */
+}
+
+.story-reader-main .ai-story-reader {
+  height: 100% !important;
+  flex: 1 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+}
+
+.story-reader-main .ai-story-reader .content-area,
+.story-reader-main .ai-story-reader .reading-area {
+  flex: 1 !important;
+  height: auto !important;
+  overflow-y: auto !important;
+  max-height: none !important;
+}
+
+/* Target the actual AI Story Reader class */
+.story-reader-main .ds-story-reader {
+  height: 100% !important;
+  min-height: 70vh !important;
+  max-height: none !important;
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 !important;
+}
+
+/* Toolbar should stay compact and horizontal */
+.story-reader-main .ds-story-reader .ds-toolbar,
+.story-reader-main .ds-story-reader [class*="toolbar"],
+.story-reader-main .ds-story-reader [class*="controls"] {
+  flex: none !important;
+  display: flex !important;
+  flex-direction: row !important;
+  height: auto !important;
+  min-height: auto !important;
+  align-items: center !important;
+  gap: 1rem !important;
+}
+
+.story-reader-main .ds-story-reader > div:not([class*="toolbar"]):not([class*="controls"]) {
+  flex: 1 !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.story-reader-main .ds-story-reader .ds-text-area,
+.story-reader-main .ds-story-reader .ds-content,
+.story-reader-main .ds-story-reader textarea,
+.story-reader-main .ds-story-reader [class*="text"],
+.story-reader-main .ds-story-reader [class*="content"] {
+  flex: 1 !important;
+  height: 100% !important;
+  min-height: 60vh !important;
+  max-height: none !important;
+}
+
+/* Mobile responsive */
 @media (max-width: 768px) {
-  .story-reader-tts {
-    margin: 0 8px 12px 8px;
+  .story-reader-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--spacing-md);
+  }
+  
+  .story-reader-actions {
+    justify-content: center;
+  }
+  
+  .story-metadata {
+    flex-direction: column;
+    gap: var(--spacing-sm);
+  }
+  
+  .story-reader-wrapper .ai-story-reader .reading-area {
+    padding: 1rem !important;
   }
 }

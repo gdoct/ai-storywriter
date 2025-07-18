@@ -137,6 +137,16 @@ export async function getByGenre(genre: string, count: number): Promise<Array<Ma
     }
 }
 
+export async function getAvailableGenres(): Promise<Array<{name: string, count: number}>> {
+    try {
+        const response = await axios.get('/api/marketplace/genres');
+        return response.data.genres;
+    } catch (error) {
+        console.error('Error fetching available genres:', error);
+        throw error;
+    }
+}
+
 export async function publishStory(storyId: number, {
         title,
         allow_ai,

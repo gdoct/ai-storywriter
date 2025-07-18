@@ -87,7 +87,7 @@ const Marketplace: React.FC = () => {
     }
   };
 
-  const handleModerationAction = (storyId: number, action: string) => {
+  const handleModerationAction = (_storyId: number, _action: string) => {
     // Refresh the sections after moderation action
     loadSections();
   };

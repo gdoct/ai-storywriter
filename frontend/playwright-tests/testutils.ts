@@ -116,11 +116,28 @@ export async function deleteUser(userData: TestUser): Promise<void> {
     if (!authToken) {
         throw new Error('ADMIN_TOKEN is not set in environment variables');
     }
-    if (!userData || !userData.userId) {
-        throw new Error(`User with email ${userData.email} not found`);
+    if (!userData || !userData.email) {
+        throw new Error(`User email not set`);
     }
+//    // /api/admin/users/find/<email>
+
+    const findUserResponse = await getResponse(
+        `${TEST_BASE_URL}/api/admin/users/find/${encodeURIComponent(userData.email)}`,
+        'GET',
+        authToken
+    );
+    if (!findUserResponse.ok) {
+        const errorText = await findUserResponse.text();
+        throw new Error(`Failed to find user: ${findUserResponse.status} ${errorText}`);
+    }
+
+    const user = await findUserResponse.json();
+    if (!user || !user.id) {
+        throw new Error(`User not found`);
+    }
+
     const deleteResponse = await getResponse(
-        `${TEST_BASE_URL}/api/admin/users/${userData.userId}`,
+        `${TEST_BASE_URL}/api/admin/users/${user.id}`,
         'DELETE',
         authToken
     );
@@ -164,6 +181,7 @@ export async function isUserLoggedIn(page: Page): Promise<boolean> {
 export async function loginToSite(page: Page, testUser: TestUser): Promise<void> {
     if (await isUserLoggedIn(page)) {
         console.log('User is already logged in, skipping login');
+        await page.goto(`${TEST_BASE_URL}/dashboard`, { waitUntil: 'networkidle' });
         return;
     }
     console.log('Logging in with test user:', testUser.email);
@@ -174,7 +192,53 @@ export async function loginToSite(page: Page, testUser: TestUser): Promise<void>
     // Click the login button
     await page.locator('button[type="submit"]').click();
     console.log('Login button clicked, waiting for navigation...');
-    // Wait for navigation to the dashboard
-    await page.waitForURL('**/dashboard', { waitUntil: 'networkidle' });
-    console.log('Logged in successfully, waiting for dashboard to load...');
+    // wait for .dashboard-header
+    await page.waitForSelector('.dashboard-header', { state: 'visible' });
+    console.log('Login successful, user is now logged in.');
+}
+
+export async function logoutFromSite(page: Page): Promise<void> {
+    console.log('Logging out...');
+    await page.goto(TEST_BASE_URL + '/', { waitUntil: 'networkidle' });
+    await page.getByRole('button', { name: 'User menu' }).click();
+    await page.getByRole('button', { name: 'Logout' }).click(); 
+    console.log('Logout button clicked, waiting for navigation...');
+    // Wait for navigation to the home page
+    await page.waitForURL('**/', { waitUntil: 'networkidle' });
+    console.log('Logged out successfully');
+}
+
+export async function waitForTextInputToSettle(page: Page, selector: string, timeout: number = 2000): Promise<boolean> {
+  const delay = 300;
+  const input = page.locator(selector);
+  if (!input) return false;
+  const el = await input.evaluateHandle(el => el as HTMLInputElement);
+  if (!el) return false;
+
+  return new Promise<boolean>(async (resolve) => {
+    let currentLength = await el.evaluate(el => el.value.length);
+    if (await el.evaluate(el => el.value) === 'Untitled Story') { currentLength = 0; }
+    let stableCount = 0;
+    let lastLength = currentLength;
+    const maxTries = Math.floor(timeout / delay);
+    
+    for (let tries = 0; tries < maxTries; tries++) {
+      currentLength = await el.evaluate(el => el.value.length);
+      
+      if (currentLength > 0 && currentLength === lastLength) {
+        stableCount++;
+        if (stableCount >= 2) {
+          resolve(true);
+          return;
+        }
+      } else {
+        stableCount = 0;
+      }
+      
+      lastLength = currentLength;
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
+    
+    resolve(false);
+  });
 }
