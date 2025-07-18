@@ -137,3 +137,258 @@
     padding-right: var(--spacing-sm);
   }
 }
+
+/* Enhanced Story Reader Styles inside Modal */
+.reading-modal-body .enhanced-story-reader {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+  height: 100%;
+  overflow-y: auto;
+  padding: var(--spacing-md);
+}
+
+/* Hero Section */
+.reading-modal-body .story-hero {
+  position: relative;
+  height: 200px;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.reading-modal-body .story-hero-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.3) 0%,
+    rgba(0, 0, 0, 0.6) 70%,
+    rgba(0, 0, 0, 0.8) 100%
+  );
+  display: flex;
+  align-items: flex-end;
+  padding: var(--spacing-xl);
+}
+
+.reading-modal-body .story-hero-content {
+  color: white;
+}
+
+.reading-modal-body .story-hero-title {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  margin: 0 0 var(--spacing-xs) 0;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.reading-modal-body .story-hero-author {
+  font-size: var(--font-size-lg);
+  margin: 0;
+  opacity: 0.9;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* Story Info Panel */
+.reading-modal-body .story-info-panel {
+  flex-shrink: 0;
+}
+
+.reading-modal-body .story-info-layout {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--spacing-lg);
+}
+
+.reading-modal-body .story-info-left {
+  flex: 1;
+}
+
+.reading-modal-body .story-info-right {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  flex-shrink: 0;
+}
+
+.reading-modal-body .story-metadata {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-lg);
+  margin-top: var(--spacing-md);
+}
+
+.reading-modal-body .metadata-item {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.reading-modal-body .metadata-item strong {
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-medium);
+}
+
+/* Compact Controls */
+.reading-modal-body .tts-player-compact {
+  transform: scale(0.85);
+  transform-origin: center;
+}
+
+.reading-modal-body .rating-compact {
+  display: flex;
+  align-items: center;
+}
+
+/* Characters Section */
+.reading-modal-body .characters-section {
+  flex-shrink: 0;
+}
+
+.reading-modal-body .characters-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: var(--spacing-md);
+}
+
+.reading-modal-body .character-card {
+  display: flex;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
+  background: var(--color-surface-secondary);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border-primary);
+}
+
+.reading-modal-body .character-image {
+  width: 60px;
+  height: 60px;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.reading-modal-body .character-info {
+  flex: 1;
+}
+
+.reading-modal-body .character-name {
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  margin: 0 0 var(--spacing-xs) 0;
+}
+
+.reading-modal-body .character-description {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* Story Content Section */
+.reading-modal-body .story-content-section {
+  flex: 1;
+  min-height: 500px;
+  display: flex;
+  flex-direction: column;
+}
+
+.reading-modal-body .story-content-section .ds-story-reader {
+  height: 100% !important;
+  flex: 1 !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.reading-modal-body .story-content-section .ds-story-reader .ds-text-area,
+.reading-modal-body .story-content-section .ds-story-reader .ds-content,
+.reading-modal-body .story-content-section .ds-story-reader textarea,
+.reading-modal-body .story-content-section .ds-story-reader [class*="text"],
+.reading-modal-body .story-content-section .ds-story-reader [class*="content"] {
+  flex: 1 !important;
+  height: 100% !important;
+  min-height: 400px !important;
+  max-height: none !important;
+}
+
+/* Responsive Design for Enhanced Story Reader */
+@media (max-width: 768px) {
+  .reading-modal-body .enhanced-story-reader {
+    padding: var(--spacing-sm);
+    gap: var(--spacing-md);
+  }
+
+  .reading-modal-body .story-info-layout {
+    flex-direction: column;
+    gap: var(--spacing-md);
+  }
+
+  .reading-modal-body .story-info-right {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+  }
+
+  .reading-modal-body .story-hero {
+    height: 160px;
+  }
+
+  .reading-modal-body .story-hero-overlay {
+    padding: var(--spacing-lg);
+  }
+
+  .reading-modal-body .story-hero-title {
+    font-size: var(--font-size-xl);
+  }
+
+  .reading-modal-body .story-hero-author {
+    font-size: var(--font-size-md);
+  }
+
+  .reading-modal-body .characters-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .reading-modal-body .character-card {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .reading-modal-body .character-image {
+    align-self: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .reading-modal-body .enhanced-story-reader {
+    padding: var(--spacing-xs);
+    gap: var(--spacing-sm);
+  }
+
+  .reading-modal-body .story-metadata {
+    flex-direction: column;
+    gap: var(--spacing-sm);
+  }
+
+  .reading-modal-body .story-hero {
+    height: 120px;
+  }
+
+  .reading-modal-body .story-hero-overlay {
+    padding: var(--spacing-md);
+  }
+
+  .reading-modal-body .story-hero-title {
+    font-size: var(--font-size-lg);
+  }
+
+  .reading-modal-body .story-hero-author {
+    font-size: var(--font-size-sm);
+  }
+}

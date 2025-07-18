@@ -1,10 +1,10 @@
 import { AiTextArea, AiTextBox, Button } from '@drdata/ai-styles';
 import React, { useCallback, useMemo, useState } from 'react';
 import { FaDownload, FaDice, FaPlus, FaTrash, FaUser, FaTimes } from 'react-icons/fa';
-import { createRandomizer, getRandomizedKeywords, getRandomizedKeywordsFromAll } from '../../../services/scenario';
-import { Randomizer } from '../../../types/ScenarioTypes';
-import ImportModal from '../../common/ImportModal';
-import { TabProps } from '../types';
+import { createRandomizer, getRandomizedKeywords, getRandomizedKeywordsFromAll } from '../../../../services/scenario';
+import { Randomizer } from '../../../../types/ScenarioTypes';
+import ImportModal from '../../../common/ImportModal';
+import { TabProps } from '../../types';
 import './RandomizerTab.css';
 
 export const RandomizerTab: React.FC<TabProps> = ({

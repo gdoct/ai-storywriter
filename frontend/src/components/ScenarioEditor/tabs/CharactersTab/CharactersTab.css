@@ -160,9 +160,13 @@
 .character-card__details {
   padding: 1.5rem;
   background-color: white;
-  display: flex;
-  flex-direction: column;
+  display: flex !important;
+  flex-direction: column !important;
   gap: 1.5rem;
+  width: 100%;
+  /* Override any potential grid layouts */
+  grid-template-columns: none !important;
+  grid-template-rows: none !important;
 }
 
 .character-card__photo {
@@ -174,59 +178,13 @@
   margin-bottom: 0.5rem;
 }
 
-.character-card__grid {
-  display: grid;
+.character-card__fields {
+  display: flex !important;
+  flex-direction: column !important;
   gap: 1rem;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  width: 100%;
 }
 
-/* Input with Generate Button Styles */
-.input-with-generate {
-  position: relative;
-}
-
-.field-generate-btn {
-  position: absolute;
-  top: 28px; /* Adjust based on label height */
-  right: 8px;
-  background: transparent;
-  border: 1px solid rgba(66, 133, 244, 0.3);
-  border-radius: 4px;
-  color: #4285f4;
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  font-size: 14px;
-  transition: all 0.2s ease-in-out;
-  z-index: 10;
-}
-
-.field-generate-btn:hover:not(:disabled) {
-  background: rgba(66, 133, 244, 0.1);
-  border-color: rgba(66, 133, 244, 0.5);
-}
-
-.field-generate-btn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-  border-color: rgba(68, 68, 68, 0.3);
-  color: #666;
-}
-
-.field-generate-btn.cancel {
-  background: rgba(255, 107, 107, 0.15);
-  border-color: #ff6b6b;
-  color: #ff6b6b;
-  font-weight: bold;
-  font-size: 16px;
-}
-
-.field-generate-btn.cancel:hover {
-  background: rgba(255, 107, 107, 0.25);
-}
 
 /* Responsive design */
 @media (max-width: 768px) {
@@ -247,7 +205,7 @@
     padding: 1rem;
   }
   
-  .character-card__grid {
-    grid-template-columns: 1fr;
+  .character-card__fields {
+    gap: 0.75rem;
   }
 }

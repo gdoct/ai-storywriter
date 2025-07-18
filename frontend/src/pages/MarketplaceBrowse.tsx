@@ -415,7 +415,7 @@ const MarketplaceBrowse: React.FC = () => {
                   onClick={handleLoadMore} 
                   disabled={loading}
                   variant="primary"
-                  size="lg"
+                  size="l"
                 >
                   {loading ? 'Loading...' : 'Load More Stories'}
                 </Button>
@@ -430,6 +430,7 @@ const MarketplaceBrowse: React.FC = () => {
         show={showReadingModal}
         onClose={handleCloseReadingModal}
         title={selectedStory?.title || 'Story Details'}
+        content={selectedStory?.content || ''}
       >
         {storyLoading && (
           <div className="section-loading">

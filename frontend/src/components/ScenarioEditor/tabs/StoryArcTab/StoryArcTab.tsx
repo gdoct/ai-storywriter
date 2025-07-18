@@ -1,10 +1,10 @@
 import { AiTextArea, Button } from '@drdata/ai-styles';
 import React, { useCallback, useState } from 'react';
 import { FaDownload, FaProjectDiagram, FaTimes } from 'react-icons/fa';
-import { useAuth } from '../../../contexts/AuthContext';
-import { generateStoryArc, rewriteStoryArc } from '../../../services/storyGenerator';
-import ImportModal from '../../common/ImportModal';
-import { TabProps } from '../types';
+import { useAuth } from '../../../../contexts/AuthContext';
+import { generateStoryArc, rewriteStoryArc } from '../../../../services/storyGenerator';
+import ImportModal from '../../../common/ImportModal';
+import { TabProps } from '../../types';
 import './StoryArcTab.css';
 
 export const StoryArcTab: React.FC<TabProps> = ({

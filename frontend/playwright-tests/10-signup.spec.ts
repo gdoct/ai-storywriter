@@ -1,6 +1,7 @@
-import { faker } from '@faker-js/faker';
 import { expect, test } from '@playwright/test';
 import dotenv from 'dotenv';
+import { generateCharacterName } from '../src/services/characterNameGenerator';
+import { generateEmailFromName } from '../src/services/emailGenerator';
 import { TEST_BASE_URL } from '../__tests__/testsettings';
 import { deleteExistingTestUser, loginToSite, navigateToPage, readTestUserFromFile, saveTestUserToFile, TestUser } from './testutils';
 
@@ -9,17 +10,27 @@ dotenv.config();
 test.describe('Register, Login and Logout workflows', () => {
   let testUser: TestUser;
 
-  function initializeTestUser() {
-    // Initialize test user data
-    const firstName = faker.person.firstName();
-    const lastName = faker.person.lastName();
+  async function initializeTestUser() {
+    // Generate character name using our service
+    // Example output: { firstName: "Alex", lastName: "Martinez", fullName: "Alex Martinez" }
+    const nameData = await generateCharacterName({ includeLastName: true });
+    const firstName = nameData.firstName;
+    const lastName = nameData.lastName!;
+    
+    // Generate creative email using our service
+    // Example output: { localPart: "alex.martinez", domain: "brightkoala.dev", fullEmail: "alex.martinez@brightkoala.dev" }
+    const emailData = await generateEmailFromName(firstName, lastName, { 
+      useCreativeDomain: true, 
+      domainStyle: 'mixed' 
+    });
+    
     // Generate a 16 character random string (UUID-like, no dashes)
-    const randomId = faker.string.alphanumeric(16);
+    const randomId = Math.random().toString(36).substring(2, 18);
 
     testUser = {
-      id: randomId,
+      userId: randomId,
       username: `${firstName} ${lastName}`,
-      email: `${firstName}.${lastName}@${faker.internet.domainName()}`.toLowerCase(),
+      email: emailData.fullEmail,
       password: randomId,
       jwt: undefined
     };
@@ -28,7 +39,7 @@ test.describe('Register, Login and Logout workflows', () => {
   test.beforeAll(async () => {
     console.log('\nTEST: User Registration workflow - Register and logout');
     deleteExistingTestUser();
-    initializeTestUser();
+    await initializeTestUser();
   });
 
   // Helper function: Perform user signup

@@ -2,18 +2,18 @@ import { AiTextArea, AiTextBox, Button } from '@drdata/ai-styles';
 import React, { useCallback, useMemo, useState } from 'react';
 import { FaDownload, FaPlus, FaTrash, FaUser } from 'react-icons/fa';
 import { v4 as uuidv4 } from 'uuid';
-import { AI_STATUS, useAIStatus } from '../../../contexts/AIStatusContext';
-import { useAuth } from '../../../contexts/AuthContext';
-import { generateCharacterField } from '../../../services/characterFieldGenerator';
-import { generateAppearanceFromPhoto } from '../../../services/characterPhotoService';
-import { createPhotoBasedAppearancePrompt } from '../../../services/llmPromptService';
-import { Character } from '../../../types/ScenarioTypes';
-import { showUserFriendlyError } from '../../../utils/errorHandling';
-import ImportModal from '../../common/ImportModal';
-import { TabProps } from '../types';
-import { CharacterPhoto } from './CharacterPhoto';
+import { AI_STATUS, useAIStatus } from '../../../../contexts/AIStatusContext';
+import { useAuth } from '../../../../contexts/AuthContext';
+import { generateCharacterField } from '../../../../services/characterFieldGenerator';
+import { generateAppearanceFromPhoto } from '../../../../services/characterPhotoService';
+import { createPhotoBasedAppearancePrompt } from '../../../../services/llmPromptService';
+import { Character } from '../../../../types/ScenarioTypes';
+import { showUserFriendlyError } from '../../../../utils/errorHandling';
+import ImportModal from '../../../common/ImportModal';
+import { TabProps } from '../../types';
+import { CharacterPhoto } from '../CharacterPhoto';
 import './CharactersTab.css';
-import { PhotoUploadModal } from './PhotoUploadModal';
+import { PhotoUploadModal } from '../PhotoUploadModal';
 
 export const CharactersTab: React.FC<TabProps> = ({
   scenario,
@@ -113,6 +113,17 @@ export const CharactersTab: React.FC<TabProps> = ({
   }, [characters, onScenarioChange, refreshCredits]);
 
   const handleGenerateField = useCallback(async (characterId: string, fieldName: string, fieldDisplayName: string) => {
+    // If already generating this field, cancel it
+    if (fieldGenerationInProgress?.characterId === characterId && fieldGenerationInProgress?.fieldName === fieldName) {
+      if (fieldCancelGeneration) {
+        fieldCancelGeneration();
+      }
+      setFieldCancelGeneration(null);
+      setFieldGenerationInProgress(null);
+      setFieldStreamedText('');
+      return;
+    }
+
     const character = characters.find(c => c.id === characterId);
     if (!character) return;
 
@@ -120,6 +131,50 @@ export const CharactersTab: React.FC<TabProps> = ({
     setFieldStreamedText('');
     
     try {
+      // Special handling for name field - use Faker.js instead of AI
+      if (fieldName === 'name') {
+        setAiStatus(AI_STATUS.BUSY);
+        setShowAIBusyModal(true);
+        
+        try {
+          // Use the character name generation service
+          const { generateFullName } = await import('../../../../services/characterNameGenerator');
+          const generatedName = await generateFullName(character.gender as any);
+          
+          // Update the character with the generated name
+          const updatedCharacters = characters.map(char =>
+            char.id === characterId
+              ? { ...char, name: generatedName }
+              : char
+          );
+          onScenarioChange({ characters: updatedCharacters });
+          
+          // Reset states
+          setFieldStreamedText('');
+          setFieldGenerationInProgress(null);
+          setFieldCancelGeneration(null);
+          setAiStatus(AI_STATUS.IDLE);
+          setShowAIBusyModal(false);
+          
+          return;
+        } catch (error) {
+          console.error('Name generation failed:', error);
+          
+          // Reset states
+          setFieldStreamedText('');
+          setFieldGenerationInProgress(null);
+          setAiStatus(AI_STATUS.IDLE);
+          setShowAIBusyModal(false);
+          
+          // Show error
+          if (error instanceof Error) {
+            showUserFriendlyError(error, 'Name Generation');
+          }
+          
+          return;
+        }
+      }
+      
       // Special handling for appearance field when a photo is available
       if (fieldName === 'appearance' && character.photoId) {
         setAiStatus(AI_STATUS.BUSY);
@@ -225,16 +280,8 @@ export const CharactersTab: React.FC<TabProps> = ({
       setFieldGenerationInProgress(null);
       setFieldCancelGeneration(null);
     }
-  }, [scenario, characters, onScenarioChange, setAiStatus, setShowAIBusyModal, refreshCredits]);
+  }, [scenario, characters, onScenarioChange, setAiStatus, setShowAIBusyModal, refreshCredits, fieldGenerationInProgress, fieldCancelGeneration]);
 
-  const handleCancelFieldGeneration = useCallback(() => {
-    if (fieldCancelGeneration) {
-      fieldCancelGeneration();
-    }
-    setFieldCancelGeneration(null);
-    setFieldGenerationInProgress(null);
-    setFieldStreamedText('');
-  }, [fieldCancelGeneration]);
 
   const handleCharacterPhotoUpdate = useCallback((updatedCharacter: Character) => {
     const updatedCharacters = characters.map(char =>
@@ -243,40 +290,6 @@ export const CharactersTab: React.FC<TabProps> = ({
     onScenarioChange({ characters: updatedCharacters });
   }, [characters, onScenarioChange]);
 
-  // Field Generate Button component
-  const FieldGenerateButton: React.FC<{
-    characterId: string;
-    fieldName: string;
-    fieldDisplayName: string;
-    disabled?: boolean;
-  }> = ({ characterId, fieldName, fieldDisplayName, disabled }) => {
-    const isGenerating = fieldGenerationInProgress?.characterId === characterId && fieldGenerationInProgress?.fieldName === fieldName;
-    
-    if (isGenerating) {
-      return (
-        <button
-          type="button"
-          onClick={handleCancelFieldGeneration}
-          className="field-generate-btn cancel"
-          title="Cancel generation"
-        >
-          ×
-        </button>
-      );
-    }
-
-    return (
-      <button
-        type="button"
-        onClick={() => handleGenerateField(characterId, fieldName, fieldDisplayName)}
-        disabled={disabled || !!fieldGenerationInProgress}
-        title={`Generate ${fieldDisplayName.toLowerCase()}`}
-        className="field-generate-btn"
-      >
-        ✨
-      </button>
-    );
-  };
 
   return (
     <div className="characters-tab">
@@ -375,154 +388,112 @@ export const CharactersTab: React.FC<TabProps> = ({
                         showRandomizeButton={true}
                       />
                     </div>
-                    <div className="character-card__grid">
-                      <div className="input-with-generate">
-                        <AiTextBox
-                          label="Name"
-                          value={
-                            fieldGenerationInProgress?.characterId === character.id && 
-                            fieldGenerationInProgress?.fieldName === 'name' 
-                              ? fieldStreamedText 
-                              : (character.name || '')
-                          }
-                          onChange={(value) => handleCharacterChange(character.id, 'name', value)}
-                          placeholder="Character's full name"
-                          disabled={!!fieldGenerationInProgress}
-                        />
-                        <FieldGenerateButton 
-                          characterId={character.id}
-                          fieldName="name" 
-                          fieldDisplayName="Name" 
-                          disabled={isLoading}
-                        />
-                      </div>
-                      <div className="input-with-generate">
-                        <AiTextBox
-                          label="Alias/Nickname"
-                          value={
-                            fieldGenerationInProgress?.characterId === character.id && 
-                            fieldGenerationInProgress?.fieldName === 'alias' 
-                              ? fieldStreamedText 
-                              : (character.alias || '')
-                          }
-                          onChange={(value) => handleCharacterChange(character.id, 'alias', value)}
-                          placeholder="Nickname or alias"
-                          disabled={!!fieldGenerationInProgress}
-                        />
-                        <FieldGenerateButton 
-                          characterId={character.id}
-                          fieldName="alias" 
-                          fieldDisplayName="Alias" 
-                          disabled={isLoading}
-                        />
-                      </div>
-                      <div className="input-with-generate">
-                        <AiTextBox
-                          label="Role"
-                          value={
-                            fieldGenerationInProgress?.characterId === character.id && 
-                            fieldGenerationInProgress?.fieldName === 'role' 
-                              ? fieldStreamedText 
-                              : (character.role || '')
-                          }
-                          onChange={(value) => handleCharacterChange(character.id, 'role', value)}
-                          placeholder="e.g., Protagonist, Antagonist, Supporting"
-                          disabled={!!fieldGenerationInProgress}
-                        />
-                        <FieldGenerateButton 
-                          characterId={character.id}
-                          fieldName="role" 
-                          fieldDisplayName="Role" 
-                          disabled={isLoading}
-                        />
-                      </div>
-                      <div className="input-with-generate">
-                        <AiTextBox
-                          label="Gender"
-                          value={
-                            fieldGenerationInProgress?.characterId === character.id && 
-                            fieldGenerationInProgress?.fieldName === 'gender' 
-                              ? fieldStreamedText 
-                              : (character.gender || '')
-                          }
-                          onChange={(value) => handleCharacterChange(character.id, 'gender', value)}
-                          placeholder="Character's gender"
-                          disabled={!!fieldGenerationInProgress}
-                        />
-                        <FieldGenerateButton 
-                          characterId={character.id}
-                          fieldName="gender" 
-                          fieldDisplayName="Gender" 
-                          disabled={isLoading}
-                        />
-                      </div>
-                    </div>
-                    
-                    <div className="input-with-generate">
-                      <AiTextArea
-                        label="Appearance"
+                    <div className="character-card__fields">
+                      <AiTextBox
+                        label="Name"
                         value={
                           fieldGenerationInProgress?.characterId === character.id && 
-                          fieldGenerationInProgress?.fieldName === 'appearance' 
+                          fieldGenerationInProgress?.fieldName === 'name' 
                             ? fieldStreamedText 
-                            : (character.appearance || '')
+                            : (character.name || '')
                         }
-                        onChange={(value) => handleCharacterChange(character.id, 'appearance', value)}
-                        placeholder="Physical description..."
-                        rows={3}
+                        onChange={(value) => handleCharacterChange(character.id, 'name', value)}
+                        placeholder="Character's full name"
                         disabled={!!fieldGenerationInProgress}
+                        onAiClick={() => handleGenerateField(character.id, 'name', 'Name')}
+                        aiActive={fieldGenerationInProgress?.characterId === character.id && fieldGenerationInProgress?.fieldName === 'name'}
                       />
-                      <FieldGenerateButton 
-                        characterId={character.id}
-                        fieldName="appearance" 
-                        fieldDisplayName="Appearance" 
-                        disabled={isLoading}
+                      <AiTextBox
+                        label="Alias/Nickname"
+                        value={
+                          fieldGenerationInProgress?.characterId === character.id && 
+                          fieldGenerationInProgress?.fieldName === 'alias' 
+                            ? fieldStreamedText 
+                            : (character.alias || '')
+                        }
+                        onChange={(value) => handleCharacterChange(character.id, 'alias', value)}
+                        placeholder="Nickname or alias"
+                        disabled={!!fieldGenerationInProgress}
+                        onAiClick={() => handleGenerateField(character.id, 'alias', 'Alias')}
+                        aiActive={fieldGenerationInProgress?.characterId === character.id && fieldGenerationInProgress?.fieldName === 'alias'}
+                      />
+                      <AiTextBox
+                        label="Role"
+                        value={
+                          fieldGenerationInProgress?.characterId === character.id && 
+                          fieldGenerationInProgress?.fieldName === 'role' 
+                            ? fieldStreamedText 
+                            : (character.role || '')
+                        }
+                        onChange={(value) => handleCharacterChange(character.id, 'role', value)}
+                        placeholder="e.g., Protagonist, Antagonist, Supporting"
+                        disabled={!!fieldGenerationInProgress}
+                        onAiClick={() => handleGenerateField(character.id, 'role', 'Role')}
+                        aiActive={fieldGenerationInProgress?.characterId === character.id && fieldGenerationInProgress?.fieldName === 'role'}
+                      />
+                      <AiTextBox
+                        label="Gender"
+                        value={
+                          fieldGenerationInProgress?.characterId === character.id && 
+                          fieldGenerationInProgress?.fieldName === 'gender' 
+                            ? fieldStreamedText 
+                            : (character.gender || '')
+                        }
+                        onChange={(value) => handleCharacterChange(character.id, 'gender', value)}
+                        placeholder="Character's gender"
+                        disabled={!!fieldGenerationInProgress}
+                        onAiClick={() => handleGenerateField(character.id, 'gender', 'Gender')}
+                        aiActive={fieldGenerationInProgress?.characterId === character.id && fieldGenerationInProgress?.fieldName === 'gender'}
                       />
                     </div>
                     
-                    <div className="input-with-generate">
-                      <AiTextArea
-                        label="Backstory"
-                        value={
-                          fieldGenerationInProgress?.characterId === character.id && 
-                          fieldGenerationInProgress?.fieldName === 'backstory' 
-                            ? fieldStreamedText 
-                            : (character.backstory || '')
-                        }
-                        onChange={(value) => handleCharacterChange(character.id, 'backstory', value)}
-                        placeholder="Character's background and history..."
-                        rows={4}
-                        disabled={!!fieldGenerationInProgress}
-                      />
-                      <FieldGenerateButton 
-                        characterId={character.id}
-                        fieldName="backstory" 
-                        fieldDisplayName="Backstory" 
-                        disabled={isLoading}
-                      />
-                    </div>
+                    <AiTextArea
+                      label="Appearance"
+                      value={
+                        fieldGenerationInProgress?.characterId === character.id && 
+                        fieldGenerationInProgress?.fieldName === 'appearance' 
+                          ? fieldStreamedText 
+                          : (character.appearance || '')
+                      }
+                      onChange={(value) => handleCharacterChange(character.id, 'appearance', value)}
+                      placeholder="Physical description..."
+                      rows={3}
+                      disabled={!!fieldGenerationInProgress}
+                      onAiClick={() => handleGenerateField(character.id, 'appearance', 'Appearance')}
+                      aiActive={fieldGenerationInProgress?.characterId === character.id && fieldGenerationInProgress?.fieldName === 'appearance'}
+                    />
                     
-                    <div className="input-with-generate">
-                      <AiTextArea
-                        label="Additional Information"
-                        value={
-                          fieldGenerationInProgress?.characterId === character.id && 
-                          fieldGenerationInProgress?.fieldName === 'extraInfo' 
-                            ? fieldStreamedText 
-                            : (character.extraInfo || '')
-                        }
-                        onChange={(value) => handleCharacterChange(character.id, 'extraInfo', value)}
-                        placeholder="Personality traits, motivations, goals..."
-                        rows={3}
-                        disabled={!!fieldGenerationInProgress}
-                      />
-                      <FieldGenerateButton 
-                        characterId={character.id}
-                        fieldName="extraInfo" 
-                        fieldDisplayName="Additional Info" 
-                        disabled={isLoading}
-                      />
-                    </div>
+                    <AiTextArea
+                      label="Backstory"
+                      value={
+                        fieldGenerationInProgress?.characterId === character.id && 
+                        fieldGenerationInProgress?.fieldName === 'backstory' 
+                          ? fieldStreamedText 
+                          : (character.backstory || '')
+                      }
+                      onChange={(value) => handleCharacterChange(character.id, 'backstory', value)}
+                      placeholder="Character's background and history..."
+                      rows={4}
+                      disabled={!!fieldGenerationInProgress}
+                      onAiClick={() => handleGenerateField(character.id, 'backstory', 'Backstory')}
+                      aiActive={fieldGenerationInProgress?.characterId === character.id && fieldGenerationInProgress?.fieldName === 'backstory'}
+                    />
+                    
+                    <AiTextArea
+                      label="Additional Information"
+                      value={
+                        fieldGenerationInProgress?.characterId === character.id && 
+                        fieldGenerationInProgress?.fieldName === 'extraInfo' 
+                          ? fieldStreamedText 
+                          : (character.extraInfo || '')
+                      }
+                      onChange={(value) => handleCharacterChange(character.id, 'extraInfo', value)}
+                      placeholder="Personality traits, motivations, goals..."
+                      rows={3}
+                      disabled={!!fieldGenerationInProgress}
+                      onAiClick={() => handleGenerateField(character.id, 'extraInfo', 'Additional Info')}
+                      aiActive={fieldGenerationInProgress?.characterId === character.id && fieldGenerationInProgress?.fieldName === 'extraInfo'}
+                    />
                   </div>
                 )}
               </div>

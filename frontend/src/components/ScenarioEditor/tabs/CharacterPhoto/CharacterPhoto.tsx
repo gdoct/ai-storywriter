@@ -1,8 +1,8 @@
 import React, { useRef, useState } from 'react';
 import { FaPlus, FaRandom, FaTimes, FaUser } from 'react-icons/fa';
-import { getRandomCharacterPhoto, uploadCharacterPhoto } from '../../../services/characterPhotoService';
-import { Character, Scenario } from '../../../types/ScenarioTypes';
-import { showUserFriendlyError } from '../../../utils/errorHandling';
+import { getRandomCharacterPhoto, uploadCharacterPhoto } from '../../../../services/characterPhotoService';
+import { Character, Scenario } from '../../../../types/ScenarioTypes';
+import { showUserFriendlyError } from '../../../../utils/errorHandling';
 import './CharacterPhoto.css';
 
 interface CharacterPhotoProps {

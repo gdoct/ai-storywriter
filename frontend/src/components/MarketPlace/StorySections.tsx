@@ -261,6 +261,7 @@ const StorySections: React.FC<StorySectionsProps> = ({ sections, hasRole, handle
         show={showReadingModal}
         onClose={handleCloseReadingModal}
         title={selectedStory?.title || 'Story Details'}
+        content={selectedStory?.content || 'No content available for this story.'}
       >
         {storyLoading && (
           <div className="section-loading">

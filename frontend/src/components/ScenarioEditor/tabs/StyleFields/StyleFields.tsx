@@ -1,7 +1,7 @@
 import { AiDropdown, AiTextArea, Label } from '@drdata/ai-styles';
 import React from 'react';
-import { StyleSettings } from '../../../types/ScenarioTypes';
-import { GENRE_OPTIONS, LANGUAGE_FLAGS, LANGUAGE_OPTIONS, STYLE_OPTIONS, THEME_OPTIONS, TONE_OPTIONS, WRITING_STYLE_VARIATIONS } from '../../../types/styleoptions';
+import { StyleSettings } from '../../../../types/ScenarioTypes';
+import { GENRE_OPTIONS, LANGUAGE_FLAGS, LANGUAGE_OPTIONS, STYLE_OPTIONS, THEME_OPTIONS, TONE_OPTIONS, WRITING_STYLE_VARIATIONS } from '../../../../types/styleoptions';
 
 interface StyleFieldsProps {
   writingStyle: StyleSettings;
@@ -118,7 +118,6 @@ const StyleFields: React.FC<StyleFieldsProps> = ({ writingStyle, onStyleChange, 
             options={languageOptions.map(opt => ({ value: opt, label: opt }))}
             className="language__dropdown"
             placeholder="Select language..."
-            disabled
             renderOption={(option) => renderLanguageOption(option.value)}
             renderValue={renderLanguageValue}
           />
@@ -142,3 +141,4 @@ const StyleFields: React.FC<StyleFieldsProps> = ({ writingStyle, onStyleChange, 
 };
 
 export default StyleFields;
+export { StyleFields };

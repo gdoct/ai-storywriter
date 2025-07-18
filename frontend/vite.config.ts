@@ -21,8 +21,7 @@ export default defineConfig({
   },
   build: {
     outDir: 'build',
-    // Set to 3000 to avoid warning for faker-vendor chunk (dynamically loaded)
-    chunkSizeWarningLimit: 3000,
+    chunkSizeWarningLimit: 1000,
     rollupOptions: {
       output: {
         manualChunks(id) {
@@ -38,10 +37,6 @@ export default defineConfig({
             // Markdown rendering libraries
             if (id.includes('react-markdown') || id.includes('remark-gfm')) {
               return 'markdown-vendor';
-            }
-            // Faker.js (large mock data library)
-            if (id.includes('@faker-js/faker')) {
-              return 'faker-vendor';
             }
             // HTTP and small utility libraries
             if (id.includes('axios') || id.includes('uuid') || id.includes('web-vitals')) {

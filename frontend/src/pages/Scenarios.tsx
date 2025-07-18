@@ -156,7 +156,7 @@ const Scenarios: React.FC = () => {
           </Link>
         </header>
         
-        <div className="search-bar-container" style={{ marginBottom: 24, display: 'flex', justifyContent: 'center' }}>
+        <div className="search-bar-container">
           <div className="search-bar-wrapper">
             <input
               ref={searchInputRef}
@@ -164,14 +164,12 @@ const Scenarios: React.FC = () => {
               placeholder="🔍 Search scenarios..."
               value={search}
               onChange={e => setSearch(e.target.value)}
-              className="search-bar professional-search-bar"
-              style={{ width: 360, padding: '12px 44px 12px 40px', fontSize: 18, borderRadius: 32, border: '1.5px solid #cbd5e1', boxShadow: '0 2px 8px rgba(79,70,229,0.07)', outline: 'none', transition: 'border 0.2s' }}
+              className="search-bar"
             />
             {search && (
               <button
                 className="clear-search-btn"
                 onClick={() => setSearch('')}
-                style={{ position: 'absolute', right: 16, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', fontSize: 20, color: '#64748b', cursor: 'pointer' }}
                 aria-label="Clear search"
               >
                 ×

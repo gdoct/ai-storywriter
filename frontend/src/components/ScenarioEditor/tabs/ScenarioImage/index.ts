@@ -1,0 +1,1 @@
+export { ScenarioImage } from './ScenarioImage';

@@ -1,12 +1,12 @@
 import { AiTextArea, Button } from '@drdata/ai-styles';
 import React, { useCallback, useState } from 'react';
 import { FaBook, FaDownload, FaTimes } from 'react-icons/fa';
-import { useAIStatus } from '../../../contexts/AIStatusContext';
-import { useAuth } from '../../../contexts/AuthContext';
-import { generateBackstory, rewriteBackstory } from '../../../services/storyGenerator';
-import { showUserFriendlyError } from '../../../utils/errorHandling';
-import ImportModal from '../../common/ImportModal';
-import { TabProps } from '../types';
+import { useAIStatus } from '../../../../contexts/AIStatusContext';
+import { useAuth } from '../../../../contexts/AuthContext';
+import { generateBackstory, rewriteBackstory } from '../../../../services/storyGenerator';
+import { showUserFriendlyError } from '../../../../utils/errorHandling';
+import ImportModal from '../../../common/ImportModal';
+import { TabProps } from '../../types';
 import './BackstoryTab.css';
 
 export const BackstoryTab: React.FC<TabProps> = ({

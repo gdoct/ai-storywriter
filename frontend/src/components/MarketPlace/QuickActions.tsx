@@ -9,7 +9,7 @@ const QuickActions: React.FC = () => {
       <div className="quick-actions-grid">
         <button
           className="quick-action-card"
-          onClick={() => navigate('/marketplace/browse?sort_by=rating&sort_order=desc')}
+          onClick={() => navigate('/marketplace/browse?section=top-rated')}
         >
           <div className="quick-action-icon">⭐</div>
           <div className="quick-action-content">
@@ -19,7 +19,7 @@ const QuickActions: React.FC = () => {
         </button>
         <button
           className="quick-action-card"
-          onClick={() => navigate('/marketplace/browse?sort_by=downloads&sort_order=desc')}
+          onClick={() => navigate('/marketplace/browse?section=most-popular')}
         >
           <div className="quick-action-icon">🔥</div>
           <div className="quick-action-content">
@@ -29,7 +29,7 @@ const QuickActions: React.FC = () => {
         </button>
         <button
           className="quick-action-card"
-          onClick={() => navigate('/marketplace/browse?sort_by=published_at&sort_order=desc')}
+          onClick={() => navigate('/marketplace/browse?section=latest')}
         >
           <div className="quick-action-icon">🆕</div>
           <div className="quick-action-content">

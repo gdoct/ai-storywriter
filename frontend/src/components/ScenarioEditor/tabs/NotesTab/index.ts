@@ -1,0 +1,1 @@
+export { NotesTab } from './NotesTab';

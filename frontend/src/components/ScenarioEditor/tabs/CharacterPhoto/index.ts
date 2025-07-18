@@ -1,0 +1,1 @@
+export { CharacterPhoto } from './CharacterPhoto';

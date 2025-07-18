@@ -1,11 +1,11 @@
 import { AiTextBox, Button } from '@drdata/ai-styles';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { FaPlus, FaRandom, FaTimes, FaUser } from 'react-icons/fa';
-import { getRandomCharacterPhoto } from '../../../services/characterPhotoService';
-import { createCharacterFromPhotoPrompt } from '../../../services/llmPromptService';
-import { getToken } from '../../../services/security';
-import { Character, Scenario } from '../../../types/ScenarioTypes';
-import { showUserFriendlyError } from '../../../utils/errorHandling';
+import { getRandomCharacterPhoto } from '../../../../services/characterPhotoService';
+import { createCharacterFromPhotoPrompt } from '../../../../services/llmPromptService';
+import { getToken } from '../../../../services/security';
+import { Character, Scenario } from '../../../../types/ScenarioTypes';
+import { showUserFriendlyError } from '../../../../utils/errorHandling';
 import './PhotoUploadModal.css';
 
 interface PhotoUploadModalProps {
@@ -487,14 +487,8 @@ export const PhotoUploadModal: React.FC<PhotoUploadModalProps> = ({
                 disabled={isUploading}
                 aiIcon={<FaRandom />}
                 onAiClick={async () => {
-                  const { faker } = await import('@faker-js/faker');
-                  const firstName = selectedGender === 'female' 
-                    ? faker.person.firstName('female')
-                    : selectedGender === 'male'
-                    ? faker.person.firstName('male')
-                    : faker.person.firstName();
-                  const lastName = faker.person.lastName();
-                  const fullName = `${firstName} ${lastName}`;
+                  const { generateFullName } = await import('../../../../services/characterNameGenerator');
+                  const fullName = await generateFullName(selectedGender as any);
                   setCharacterName(fullName);
                 }}
               />

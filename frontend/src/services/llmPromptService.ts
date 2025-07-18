@@ -4,9 +4,33 @@ import { Character, Scenario, StyleSettings } from '../types/ScenarioTypes';
 import { formatScenarioAsMarkdown, formatScenarioAsMarkdownWithoutBackStory, formatScenarioAsMarkdownWithoutStoryArc } from '../utils/scenarioToMarkdown';
 
 export function createWritingStylePrompt(): llmCompletionRequestMessage {
+  // Add variation to prevent repetitive style combinations
+  const styleCategories = {
+    literary: ['Literary Fiction', 'Magical Realism', 'Experimental', 'Postmodern', 'Minimalist'],
+    popular: ['Contemporary Fiction', 'Historical Fiction', 'Romance', 'Thriller', 'Mystery'],
+    speculative: ['Science Fiction', 'Fantasy', 'Horror', 'Dystopian', 'Urban Fantasy'],
+    genre: ['Western', 'Adventure', 'Crime', 'War', 'Comedy']
+  };
+  
+  const toneVariations = [
+    'Serious', 'Humorous', 'Dark', 'Optimistic', 'Melancholic', 'Satirical', 
+    'Nostalgic', 'Tense', 'Whimsical', 'Gritty', 'Elegant', 'Raw'
+  ];
+  
+  const themeOptions = [
+    'Love and Loss', 'Power and Corruption', 'Identity and Belonging', 'Justice and Morality',
+    'Family Dynamics', 'Social Change', 'Survival and Resilience', 'Freedom vs Security',
+    'Coming of Age', 'Redemption', 'Legacy and Memory', 'Truth and Deception'
+  ];
+  
+  // Randomly select category and specific genre
+  const categories = Object.keys(styleCategories);
+  const selectedCategory = categories[Math.floor(Math.random() * categories.length)];
+  const genreOptions = styleCategories[selectedCategory as keyof typeof styleCategories];
+  
   return {
-    systemMessage: 'You are an expert in literary styles and genres.',
-    userMessage: `Create a random writing style configuration for a story.\n\nProvide a JSON object with the following fields:\n- style: a literary style (e.g., 'Modern')\n- genre: a specific writing genre \n- tone: the emotional tone of the writing in one word\n- language: the type of language used (e.g., 'Elaborate')\n- theme: a central theme of the story\n- other: additional specific instructions for the writing style\n\nFormat your response as a valid JSON object WITHOUT any explanation or additional text.\n\nIMPORTANT: Your response must be in JSON format ONLY with the following structure:\n{\n  "style": "(style)",\n  "genre": "(genre)",\n  "tone": "(tone)",\n  "language": "(language)",\n  "theme": "(theme)",\n  "other": "(other)"\n}`
+    systemMessage: 'You are an expert in literary styles and genres with deep knowledge of diverse writing traditions.',
+    userMessage: `Create a unique writing style configuration for a story. Generate creative combinations that avoid clichés.\n\nSELECTION GUIDELINES:\n• Choose from varied literary traditions and genres\n• Create interesting tone/genre combinations\n• Select themes that resonate with modern readers\n• Avoid overused fantasy/sci-fi tropes\n• Consider diverse cultural perspectives\n\nProvide a JSON object with these fields:\n- style: A specific literary approach or movement\n- genre: A storytelling genre (consider: ${genreOptions.join(', ')})\n- tone: The emotional atmosphere (consider: ${toneVariations.join(', ')})\n- language: The prose style and vocabulary level\n- theme: A meaningful central theme (consider: ${themeOptions.join(', ')})\n- other: Specific stylistic instructions or constraints\n\nFORMAT: JSON only, no explanations:\n{\n  "style": "(literary style)",\n  "genre": "(specific genre)",\n  "tone": "(emotional tone)",\n  "language": "(prose style)",\n  "theme": "(central theme)",\n  "other": "(additional instructions)"\n}`
   };
 }
 
@@ -80,17 +104,51 @@ export function createStoryTitlePrompt(scenario: Scenario): llmCompletionRequest
   if (!scenario) {
     throw new Error("Error: scenario is null or undefined");
   }
-  let prompt = "You are a creative title generator for stories.\n\n";
-  prompt += "Generate a compelling title for the scenario below.\n";
-  prompt += "The title should capture the essence of the story, be engaging, and reflect the genre and tone.\n\n";
-  prompt += "The title should be concise, memorable, and capture the reader's interest.\n";
-  prompt += "Avoid generic or clichéd titles, and ensure it aligns with the story's themes and style.\n\n";
-  prompt += "IMPORTANT: The title should not contain the words 'Echoes', 'Obsidian' or 'Mist'.\n";
-  prompt += "IMPORTANT: return ONLY the title as a single string without any additional text or formatting. Do NOT surround the title with quotes.\n\n";
-  prompt += "Here is the scenario:\n\n";
+
+  const writingStyle = scenario.writingStyle || { genre: "General Fiction" };
+  const genre = writingStyle.genre || "General Fiction";
+  
+  // Add variation techniques to prevent repetitive output
+  const titleStyles = [
+    "a metaphorical title that symbolizes the main theme",
+    "a direct title that names the central conflict or character",
+    "an atmospheric title that evokes the setting or mood",
+    "a cryptic title that hints at mystery or revelation",
+    "an action-oriented title that suggests movement or change",
+    "a character-focused title using names or relationships",
+    "a location-based title highlighting the story's setting",
+    "a thematic title that captures the emotional core"
+  ];
+  
+  const selectedStyle = titleStyles[Math.floor(Math.random() * titleStyles.length)];
+  
+  const avoidWords = ['Echoes', 'Obsidian', 'Mist', 'Shadow', 'Darkness', 'Light', 'Heart', 'Soul', 'Blood', 'Fire', 'Storm', 'Dawn', 'Whisper', 'Secret', 'Hidden', 'Lost', 'Forgotten', 'Last', 'Final', 'Velvet'];
+  
+  let prompt = `You are an expert title creator specializing in ${genre} fiction. Your task is to create ${selectedStyle}.\n\n`;
+  
+  prompt += "TITLE CREATION STRATEGY:\n";
+  prompt += `• Create ${selectedStyle}\n`;
+  prompt += `• Draw inspiration from ${genre} genre conventions\n`;
+  prompt += "• Make it distinctive and memorable\n";
+  prompt += "• Ensure it feels fresh, not formulaic\n";
+  prompt += "• Consider the story's unique elements and hook\n\n";
+  
+  if (writingStyle.tone) {
+    prompt += `• Match the ${writingStyle.tone} tone of the story\n`;
+  }
+  if (writingStyle.theme) {
+    prompt += `• Reflect the theme of ${writingStyle.theme}\n`;
+  }
+  
+  prompt += `\nAVOID these overused words: ${avoidWords.join(', ')}\n\n`;
+  
+  prompt += "SCENARIO DETAILS:\n";
   prompt += formatScenarioAsMarkdown(scenario) + "\n\n";
+  
+  prompt += "OUTPUT: Provide ONLY the title as a single string - no quotes, explanations, or additional text.";
+  
   return {
-    systemMessage: 'You are a creative title generator for stories.',
+    systemMessage: `You are an expert title creator specializing in ${genre} fiction with a talent for original, evocative titles.`,
     userMessage: prompt
   };
 }
@@ -378,7 +436,7 @@ export function createScenesPrompt(scenario: Scenario): llmCompletionRequestMess
  * @param scenario The current scenario for context
  * @param characterType The type of character to generate: "protagonist", "antagonist", or "supporting"
  */
-export async function createCharacterPrompt(scenario: Scenario, characterType: string): Promise<llmCompletionRequestMessage> {
+export function createCharacterPrompt(scenario: Scenario, characterType: string): llmCompletionRequestMessage {
   // Verify scenario is not null or undefined
   if (!scenario) {
     console.error("Error: scenario is null or undefined");
@@ -395,62 +453,100 @@ export async function createCharacterPrompt(scenario: Scenario, characterType: s
   const genre = writingStyle.genre || "General Fiction";
   const existingCharacters = Array.isArray(scenario.characters) ? scenario.characters : [];
   
-  // Create a prompt based on character type
-  let prompt = `You are an expert character creator for ${genre} stories. Create a ${characterType} character with depth and interesting traits.\n\n`;
+  // Character archetypes for variation
+  const characterArchetypes = {
+    protagonist: [
+      "reluctant hero thrust into extraordinary circumstances",
+      "determined individual fighting against injustice",
+      "flawed character seeking redemption",
+      "ordinary person discovering hidden abilities",
+      "mentor figure guiding others",
+      "rebel challenging the status quo"
+    ],
+    antagonist: [
+      "misguided idealist with good intentions",
+      "corrupt authority figure abusing power",
+      "rival with legitimate grievances",
+      "manipulative schemer working behind scenes",
+      "tragic figure consumed by past trauma",
+      "zealot convinced of their righteous cause"
+    ],
+    supporting: [
+      "loyal companion with hidden depths",
+      "wise mentor with mysterious past",
+      "comic relief with surprising skills",
+      "double agent with divided loyalties",
+      "outsider bringing fresh perspective",
+      "specialist with unique expertise"
+    ]
+  };
   
+  const archetypes = characterArchetypes[characterType as keyof typeof characterArchetypes] || ["complex individual with unique traits"];
+  const selectedArchetype = archetypes[Math.floor(Math.random() * archetypes.length)];
+  
+  let prompt = `You are an expert character creator for ${genre} stories. Create a compelling ${characterType} character who is a ${selectedArchetype}.\n\n`;
+  
+  // Add genre-specific character traits
+  prompt += "CHARACTER CREATION GUIDELINES:\n";
   if (characterType === "protagonist") {
-    prompt += "Create a compelling protagonist who will engage readers and drive the story forward.\n";
-    prompt += "The character should have clear motivations, flaws, strengths, and a strong narrative voice.\n";
+    prompt += "• Give them a clear motivation and personal stakes\n";
+    prompt += "• Include both strengths and meaningful flaws\n";
+    prompt += "• Make them active, not just reactive to events\n";
   } else if (characterType === "antagonist") {
-    prompt += "Create a nuanced antagonist who provides meaningful opposition to the protagonist.\n";
-    prompt += "The character should have understandable motivations, complexity, and not be purely evil without reason.\n";
+    prompt += "• Provide understandable, even sympathetic motivations\n";
+    prompt += "• Avoid making them purely evil - give them complexity\n";
+    prompt += "• Create meaningful opposition to the protagonist's goals\n";
   } else if (characterType === "supporting") {
-    prompt += "Create a memorable supporting character who adds depth to the story world.\n";
-    prompt += "The character should have their own goals and personality while complementing the main characters.\n";
+    prompt += "• Give them their own goals beyond helping the main character\n";
+    prompt += "• Make them memorable with distinctive traits or skills\n";
+    prompt += "• Ensure they serve a specific function in the story\n";
   }
-  // Use faker to create a fake person. 
-  const { faker } = await import('@faker-js/faker');
-  const gender = faker.person.sexType();
-  const fullname = faker.person.fullName({ sex: gender });
-  prompt += `Use these characteristics for this ${characterType} character:\n`;
-  prompt += `- name: ${fullname}\n`;
-  prompt += `- gender: ${gender}\n`;
+  
+  prompt += `• Make the character authentic to ${genre} conventions\n`;
+  if (writingStyle.tone) {
+    prompt += `• Match the ${writingStyle.tone} tone of the story\n`;
+  }
+  if (writingStyle.theme) {
+    prompt += `• Relate to the theme of ${writingStyle.theme}\n`;
+  }
 
   // Add context from existing characters, if any
   if (existingCharacters.length > 0) {
-    prompt += "\nConsider these existing characters in the story:\n";
-    existingCharacters.forEach((char, index) => {
-      prompt += `Character ${index + 1}: ${char.name || char.alias || 'Unnamed'} - ${char.role || 'No specified role'}\n`;
+    prompt += "\nEXISTING CHARACTERS:\n";
+    existingCharacters.forEach((char) => {
+      prompt += `• ${char.name || char.alias || 'Unnamed'} - ${char.role || 'No specified role'}\n`;
     });
-    prompt += "\nCreate a character that would interact well with these existing characters.\n";
+    prompt += "\nCreate a character that would create interesting dynamics with these existing characters.\n";
   }
 
-
+  // Avoid overused names
+  const avoidNames = ['Silas', 'Lyra', 'Blackwood', 'Seraphina', 'Raven', 'Phoenix', 'Storm', 'Ash', 'Jade', 'Onyx'];
 
   // Request specific details
-  prompt += "\nProvide the following information in JSON format:\n";
+  prompt += "\nCHARACTER DETAILS TO GENERATE:\n";
+  prompt += "- name: A fitting name (avoid clichéd fantasy names)\n";
   prompt += "- alias: An optional nickname or alias (can be empty string)\n";
+  prompt += "- gender: Choose based on what fits the character concept\n";
   prompt += "- role: Their specific role ('Protagonist', 'Antagonist', or 'Supporting')\n";
-  prompt += "- appearance: A concise description of their physical appearance\n";
-  prompt += "- backstory: A brief but compelling backstory for the character\n";
-  prompt += "- extraInfo: Any additional traits, skills, or information\n\n";
+  prompt += "- appearance: A distinctive physical description (2-3 sentences)\n";
+  prompt += "- backstory: Formative experiences that shaped them (2-3 sentences)\n";
+  prompt += "- extraInfo: Personality traits, skills, or unique quirks\n\n";
   
-  prompt += "Format your response as a valid JSON object WITHOUT any explanation or additional text.\n\n";
-  prompt += "Ensure the JSON is well-formed and includes all required fields.\n";
-  prompt += "Make sure that quotes inside the JSON string are properly escaped:\n";
-  prompt += "IMPORTANT: Your response must be in JSON format ONLY with the following structure:\n";
+  prompt += `AVOID these overused names: ${avoidNames.join(', ')}\n\n`;
+  
+  prompt += "FORMAT: Respond with a valid JSON object ONLY - no explanations or additional text:\n";
   prompt += "{\n";
-  prompt += '  "name": "(name)",\n';
-  prompt += '  "alias": "(alias)",\n';
+  prompt += '  "name": "(unique name)",\n';
+  prompt += '  "alias": "(alias or empty string)",\n';
   prompt += '  "gender": "(gender)",\n';
   prompt += '  "role": "(role)",\n';
-  prompt += '  "appearance": "(appearance)",\n';
-  prompt += '  "backstory": "(backstory)",\n';
-  prompt += '  "extraInfo": "(extraInfo)"\n';
+  prompt += '  "appearance": "(physical description)",\n';
+  prompt += '  "backstory": "(character background)",\n';
+  prompt += '  "extraInfo": "(additional traits)"\n';
   prompt += "}";
   
   return {
-    systemMessage: 'You are an expert character creator.',
+    systemMessage: `You are an expert character creator specializing in ${genre} fiction. You excel at creating original, memorable characters that avoid clichés.`,
     userMessage: prompt
   };
 }
@@ -461,7 +557,7 @@ export async function createCharacterPrompt(scenario: Scenario, characterType: s
  * @param characterType The type of character to generate: "protagonist", "antagonist", or "supporting"
  * @param additionalInstructions Optional additional instructions for character generation
  */
-export async function createRandomCharacterPrompt(scenario: Scenario, characterType: string, additionalInstructions?: string): Promise<llmCompletionRequestMessage> {
+export function createRandomCharacterPrompt(scenario: Scenario, characterType: string, additionalInstructions?: string): llmCompletionRequestMessage {
   // Verify scenario is not null or undefined
   if (!scenario) {
     console.error("Error: scenario is null or undefined");
@@ -478,64 +574,101 @@ export async function createRandomCharacterPrompt(scenario: Scenario, characterT
   const genre = writingStyle.genre || "General Fiction";
   const existingCharacters = Array.isArray(scenario.characters) ? scenario.characters : [];
   
-  // Create a prompt based on character type
-  let prompt = `You are an expert character creator for ${genre} stories. Create a ${characterType} character with depth and interesting traits.\n\n`;
+  // Additional randomization elements
+  const personalityQuirks = [
+    "has an unusual hobby or skill",
+    "speaks with a distinctive verbal tic or accent",
+    "carries a meaningful object everywhere",
+    "has an unexpected fear or phobia",
+    "practices an uncommon profession or craft",
+    "possesses knowledge from a previous life experience",
+    "maintains a secret that affects their behavior",
+    "has a unique relationship with animals or nature"
+  ];
+  
+  const motivationTypes = [
+    "seeking to prove themselves worthy",
+    "protecting someone or something precious",
+    "uncovering a hidden truth",
+    "making amends for past mistakes",
+    "escaping from a restrictive situation",
+    "pursuing a long-held dream",
+    "fulfilling a promise to someone important",
+    "discovering their true identity or heritage"
+  ];
+  
+  const selectedQuirk = personalityQuirks[Math.floor(Math.random() * personalityQuirks.length)];
+  const selectedMotivation = motivationTypes[Math.floor(Math.random() * motivationTypes.length)];
+  
+  let prompt = `You are an expert character creator for ${genre} stories. Create a ${characterType} character who ${selectedQuirk} and is ${selectedMotivation}.\n\n`;
+  
+  prompt += "RANDOMIZATION REQUIREMENTS:\n";
+  prompt += `• Create someone who ${selectedQuirk}\n`;
+  prompt += `• Their core motivation involves ${selectedMotivation}\n`;
+  prompt += "• Give them at least one unexpected trait or contradiction\n";
+  prompt += "• Make their background specific and unusual\n";
+  prompt += "• Ensure they feel fresh and original, not formulaic\n\n";
   
   if (characterType === "protagonist") {
-    prompt += "Create a compelling protagonist who will engage readers and drive the story forward.\n";
-    prompt += "The character should have clear motivations, flaws, strengths, and a strong narrative voice.\n";
+    prompt += "PROTAGONIST FOCUS:\n";
+    prompt += "• Create clear personal stakes that drive the story\n";
+    prompt += "• Include meaningful flaws that create internal conflict\n";
+    prompt += "• Give them agency to affect story outcomes\n\n";
   } else if (characterType === "antagonist") {
-    prompt += "Create a nuanced antagonist who provides meaningful opposition to the protagonist.\n";
-    prompt += "The character should have understandable motivations, complexity, and not be purely evil without reason.\n";
+    prompt += "ANTAGONIST FOCUS:\n";
+    prompt += "• Provide sympathetic or understandable motivations\n";
+    prompt += "• Make them a worthy opponent, not just an obstacle\n";
+    prompt += "• Give them personal connections to the conflict\n\n";
   } else if (characterType === "supporting") {
-    prompt += "Create a memorable supporting character who adds depth to the story world.\n";
-    prompt += "The character should have their own goals and personality while complementing the main characters.\n";
+    prompt += "SUPPORTING CHARACTER FOCUS:\n";
+    prompt += "• Give them personal goals beyond helping others\n";
+    prompt += "• Make them indispensable to the story in some way\n";
+    prompt += "• Create potential for character growth or change\n\n";
   }
-  const { faker } = await import('@faker-js/faker');
-  const gender = faker.person.sexType();
-  const fullname = faker.person.fullName({ sex: gender });
-  prompt += `Use these characteristics for this ${characterType} character:\n`;
-  prompt += `- name: ${fullname}\n`;
-  prompt += `- gender: ${gender}\n`;
 
   // Add additional instructions if provided
   if (additionalInstructions && additionalInstructions.trim()) {
-    prompt += `\nAdditional requirements: ${additionalInstructions.trim()}\n`;
+    prompt += `SPECIAL REQUIREMENTS: ${additionalInstructions.trim()}\n\n`;
   }
 
   // Add context from existing characters, if any
   if (existingCharacters.length > 0) {
-    prompt += "\nConsider these existing characters in the story:\n";
-    existingCharacters.forEach((char, index) => {
-      prompt += `Character ${index + 1}: ${char.name || char.alias || 'Unnamed'} - ${char.role || 'No specified role'}\n`;
+    prompt += "EXISTING CHARACTERS FOR CONTEXT:\n";
+    existingCharacters.forEach((char) => {
+      prompt += `• ${char.name || char.alias || 'Unnamed'} - ${char.role || 'No specified role'}\n`;
     });
-    prompt += "\nCreate a character that would interact well with these existing characters.\n";
+    prompt += "\nCreate dynamics that would generate interesting conflicts or alliances.\n\n";
   }
 
-  // Request specific details
-  prompt += "\nProvide the following information in JSON format:\n";
-  prompt += "- alias: An optional nickname or alias (can be empty string)\n";
-  prompt += "- role: Their specific role ('Protagonist', 'Antagonist', or 'Supporting')\n";
-  prompt += "- appearance: A concise description of their physical appearance\n";
-  prompt += "- backstory: A brief but compelling backstory for the character\n";
-  prompt += "- extraInfo: Any additional traits, skills, or information\n\n";
+  // Avoid overused elements
+  const avoidNames = ['Silas', 'Lyra', 'Blackwood', 'Seraphina', 'Raven', 'Phoenix', 'Storm', 'Ash', 'Jade', 'Onyx'];
+  const avoidTraits = ['mysterious past', 'dark secret', 'chosen one', 'last of their kind', 'amnesia', 'orphan'];
+
+  prompt += "CHARACTER GENERATION:\n";
+  prompt += "- name: Create an original, memorable name\n";
+  prompt += "- alias: Optional nickname reflecting their personality or history\n";
+  prompt += "- gender: Choose what fits the character concept\n";
+  prompt += "- role: Their specific story function\n";
+  prompt += "- appearance: Distinctive physical description with personality hints\n";
+  prompt += "- backstory: Specific formative experiences (avoid generic traumas)\n";
+  prompt += "- extraInfo: Unique skills, habits, or quirks\n\n";
   
-  prompt += "Format your response as a valid JSON object WITHOUT any explanation or additional text.\n\n";
-  prompt += "Ensure the JSON is well-formed and includes all required fields.\n";
-  prompt += "Make sure that quotes inside the JSON string are properly escaped:\n";
-  prompt += "IMPORTANT: Your response must be in JSON format ONLY with the following structure:\n";
+  prompt += `AVOID these overused names: ${avoidNames.join(', ')}\n`;
+  prompt += `AVOID these clichéd traits: ${avoidTraits.join(', ')}\n\n`;
+  
+  prompt += "FORMAT: JSON object only, no explanations:\n";
   prompt += "{\n";
-  prompt += '  "name": "(name)",\n';
-  prompt += '  "alias": "(alias)",\n';
+  prompt += '  "name": "(original name)",\n';
+  prompt += '  "alias": "(nickname or empty string)",\n';
   prompt += '  "gender": "(gender)",\n';
   prompt += '  "role": "(role)",\n';
-  prompt += '  "appearance": "(appearance)",\n';
-  prompt += '  "backstory": "(backstory)",\n';
-  prompt += '  "extraInfo": "(extraInfo)"\n';
+  prompt += '  "appearance": "(distinctive description)",\n';
+  prompt += '  "backstory": "(specific background)",\n';
+  prompt += '  "extraInfo": "(unique traits)"\n';
   prompt += "}";
   
   return {
-    systemMessage: 'You are an expert character creator.',
+    systemMessage: `You are an expert character creator specializing in ${genre} fiction. You excel at creating original, unpredictable characters that subvert expectations.`,
     userMessage: prompt
   };
 }
@@ -604,7 +737,7 @@ export function createCharacterFieldPrompt(
   // Add context from other characters
   if (existingCharacters.length > 0) {
     prompt += `\nOther characters in the story:\n`;
-    existingCharacters.forEach((char, index) => {
+    existingCharacters.forEach((char) => {
       if (char.id !== character.id) { // Don't include the character being edited
         prompt += `- ${char.name || char.alias || 'Unnamed'} (${char.role || 'No role specified'})\n`;
       }

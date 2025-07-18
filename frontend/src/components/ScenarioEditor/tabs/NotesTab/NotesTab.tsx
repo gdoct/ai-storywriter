@@ -1,8 +1,8 @@
 import { AiTextArea, Button } from '@drdata/ai-styles';
 import React, { useCallback, useState } from 'react';
 import { FaDownload, FaStickyNote } from 'react-icons/fa';
-import ImportModal from '../../common/ImportModal';
-import { TabProps } from '../types';
+import ImportModal from '../../../common/ImportModal';
+import { TabProps } from '../../types';
 import './NotesTab.css';
 
 export const NotesTab: React.FC<TabProps> = ({
