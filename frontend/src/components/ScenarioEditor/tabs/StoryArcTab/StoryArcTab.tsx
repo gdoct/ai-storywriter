@@ -179,6 +179,8 @@ export const StoryArcTab: React.FC<TabProps> = ({
           placeholder="Outline your story's plot structure. Include the opening, inciting incident, rising action, climax, falling action, and resolution. Describe key plot points, character development, conflicts, and how the story progresses..."
           rows={15}
           disabled={isGenerating}
+          onAiClick={handleGenerateStoryArc}
+          aiGenerating={isGenerating}
         />
         
         <div className="storyarc-tab__hints">

@@ -1,6 +1,9 @@
 import { AiTextArea, Button } from '@drdata/ai-styles';
 import React, { useCallback, useState } from 'react';
-import { FaDownload, FaStickyNote } from 'react-icons/fa';
+import { FaDownload, FaStickyNote, FaTimes } from 'react-icons/fa';
+import { useAuth } from '../../../../contexts/AuthContext';
+import { generateNotes } from '../../../../services/storyGenerator';
+import { showUserFriendlyError } from '../../../../utils/errorHandling';
 import ImportModal from '../../../common/ImportModal';
 import { TabProps } from '../../types';
 import './NotesTab.css';
@@ -12,10 +15,64 @@ export const NotesTab: React.FC<TabProps> = ({
   isLoading,
 }) => {
   const [showImportModal, setShowImportModal] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [cancelGeneration, setCancelGeneration] = useState<(() => void) | null>(null);
+  const { refreshCredits } = useAuth();
   
   const handleNotesChange = useCallback((value: string) => {
     onScenarioChange({ notes: value });
   }, [onScenarioChange]);
+
+  const handleGenerateNotes = useCallback(async () => {
+    try {
+      setIsGenerating(true);
+      onScenarioChange({ notes: '' }); // Clear existing content
+      
+      let accumulated = '';
+      const generationResult = await generateNotes(
+        scenario,
+        {
+          onProgress: (generatedText) => {
+            accumulated += generatedText;
+            onScenarioChange({ notes: accumulated });
+          }
+        }
+      );
+      
+      setCancelGeneration(() => generationResult.cancelGeneration);
+      
+      try {
+        const generatedNotes = await generationResult.result;
+        onScenarioChange({ notes: generatedNotes });
+        // Refresh credits after successful generation with a small delay
+        setTimeout(() => {
+          refreshCredits();
+        }, 1000);
+      } catch (error) {
+        console.log('Notes generation was interrupted:', error);
+        // Keep the accumulated text
+        // Still refresh credits in case of partial consumption with a small delay
+        setTimeout(() => {
+          refreshCredits();
+        }, 1000);
+      }
+    } catch (error) {
+      console.error('Error generating notes:', error);
+      // Show user-friendly error with credit purchase option if needed
+      if (error instanceof Error) {
+        showUserFriendlyError(error, 'Notes Generation');
+      }
+    } finally {
+      setIsGenerating(false);
+      setCancelGeneration(null);
+    }
+  }, [scenario, onScenarioChange, refreshCredits]);
+
+  const handleCancelGeneration = useCallback(() => {
+    if (cancelGeneration) {
+      cancelGeneration();
+    }
+  }, [cancelGeneration]);
 
   const handleImport = useCallback((importedContent: string) => {
     onScenarioChange({ notes: importedContent });
@@ -32,13 +89,32 @@ export const NotesTab: React.FC<TabProps> = ({
         </div>
         
         <div className="notes-tab__actions">
-          <Button
-            variant="ghost"
-            onClick={() => setShowImportModal(true)}
-            icon={<FaDownload />}
-          >
-            Import
-          </Button>
+          {!isGenerating ? (
+            <>
+              <Button
+                variant="primary"
+                onClick={handleGenerateNotes}
+                disabled={isLoading}
+              >
+                ✨ Generate Ideas
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={() => setShowImportModal(true)}
+                icon={<FaDownload />}
+              >
+                Import
+              </Button>
+            </>
+          ) : (
+            <Button
+              variant="danger"
+              onClick={handleCancelGeneration}
+              icon={<FaTimes />}
+            >
+              Cancel Generation
+            </Button>
+          )}
         </div>
       </div>
 
@@ -54,6 +130,9 @@ export const NotesTab: React.FC<TabProps> = ({
           onChange={handleNotesChange}
           placeholder="Add any notes, ideas, reminders, or thoughts about your story here. This could include dialogue snippets, scene ideas, research notes, inspiration, or anything else that helps with your creative process..."
           rows={15}
+          disabled={isGenerating}
+          onAiClick={handleGenerateNotes}
+          aiGenerating={isGenerating}
         />
         
         <div className="notes-tab__suggestions">

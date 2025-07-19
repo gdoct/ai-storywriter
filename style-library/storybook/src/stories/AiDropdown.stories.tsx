@@ -249,3 +249,129 @@ export const ReadOnly: Story = {
     );
   },
 };
+
+export const WithLabel: Story = {
+  render: () => {
+    const [value, setValue] = useState('');
+    return (
+      <AiDropdown
+        label="Choose Category"
+        options={options}
+        value={value}
+        onChange={setValue}
+        placeholder="Select category..."
+      />
+    );
+  },
+};
+
+export const WithError: Story = {
+  render: () => {
+    const [value, setValue] = useState('');
+    return (
+      <AiDropdown
+        label="Required Field"
+        options={options}
+        value={value}
+        onChange={setValue}
+        errorMessage="This field is required"
+        placeholder="Select option..."
+      />
+    );
+  },
+};
+
+export const WithSuccess: Story = {
+  render: () => {
+    const [value, setValue] = useState('2');
+    return (
+      <AiDropdown
+        label="Valid Selection"
+        options={options}
+        value={value}
+        onChange={setValue}
+        successMessage="Great choice!"
+        placeholder="Select option..."
+      />
+    );
+  },
+};
+
+export const AiGenerating: Story = {
+  render: () => {
+    const [value, setValue] = useState('Generating suggestion...');
+    return (
+      <AiDropdown
+        label="AI Processing"
+        options={options}
+        value={value}
+        onChange={setValue}
+        aiGenerating={true}
+        placeholder="AI is generating suggestions..."
+      />
+    );
+  },
+};
+
+export const AiGenerationDemo: Story = {
+  render: () => {
+    const [value, setValue] = useState('');
+    const [isGenerating, setIsGenerating] = useState(false);
+    const [currentOptions, setCurrentOptions] = useState(options);
+
+    const handleAiClick = () => {
+      // Clear the dropdown and start generation
+      setValue('');
+      setIsGenerating(true);
+      setCurrentOptions([]);
+
+      // Simulate AI generating options and then selecting one
+      const aiSuggestions = [
+        { label: 'AI Suggested: Creative Writing', value: 'creative-writing' },
+        { label: 'AI Suggested: Technical Documentation', value: 'tech-docs' },
+        { label: 'AI Suggested: Marketing Copy', value: 'marketing' },
+        { label: 'AI Suggested: Blog Post', value: 'blog-post' },
+      ];
+
+      // First, show generating message
+      setValue('Analyzing your needs...');
+      
+      // Simulate typing the suggestion letter by letter
+      setTimeout(() => {
+        const finalSuggestion = 'AI Suggested: Creative Writing';
+        let currentIndex = 0;
+
+        const typeNextLetter = () => {
+          if (currentIndex < finalSuggestion.length) {
+            setValue(finalSuggestion.substring(0, currentIndex + 1));
+            currentIndex++;
+            setTimeout(typeNextLetter, 80); // 80ms delay between letters for dropdown
+          } else {
+            // Generation complete - add the AI suggestions to options and select the first one
+            setTimeout(() => {
+              setCurrentOptions([...options, ...aiSuggestions]);
+              setValue('creative-writing');
+              setIsGenerating(false);
+            }, 500);
+          }
+        };
+
+        // Start typing after a short delay
+        setTimeout(typeNextLetter, 800);
+      }, 500);
+    };
+
+    return (
+      <AiDropdown
+        label="AI Content Type Generator"
+        options={currentOptions}
+        value={value}
+        onChange={setValue}
+        onAiClick={handleAiClick}
+        aiGenerating={isGenerating}
+        infoMessage="Press the AI button to get intelligent content type suggestions"
+        placeholder="Choose content type or let AI suggest..."
+      />
+    );
+  },
+};

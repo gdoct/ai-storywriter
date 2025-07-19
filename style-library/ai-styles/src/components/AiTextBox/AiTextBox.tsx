@@ -27,6 +27,8 @@ export interface AiTextBoxProps extends Omit<InputHTMLAttributes<HTMLInputElemen
   onChange?: (value: string) => void;
   /** Whether the AI button is in active/busy state */
   aiActive?: boolean;
+  /** Whether the AI is currently generating (shows spinner) */
+  aiGenerating?: boolean;
   /** Additional CSS class name */
   className?: string;
   /** Current value of the input */
@@ -47,6 +49,7 @@ export const AiTextBox: React.FC<AiTextBoxProps> = ({
   onClear,
   onChange,
   aiActive = false,
+  aiGenerating = false,
   className = '',
   value: controlledValue,
   disabled,
@@ -85,7 +88,7 @@ export const AiTextBox: React.FC<AiTextBoxProps> = ({
   };
 
   const handleAiClick = () => {
-    if (!aiActive && !disabled && onAiClick) {
+    if (!aiActive && !aiGenerating && !disabled && onAiClick) {
       onAiClick(value);
     }
   };
@@ -108,12 +111,16 @@ export const AiTextBox: React.FC<AiTextBoxProps> = ({
   const hasError = Boolean(displayError);
   const hasSuccess = Boolean(successMessage);
 
+  // Dynamic placeholder based on generation state
+  const displayPlaceholder = aiGenerating ? 'Sending your request to the AI...' : placeholder;
+
   const containerClasses = [
     'ai-textbox',
     `ai-textbox--${componentSize}`,
     hasError ? 'ai-textbox--error' : '',
     hasSuccess ? 'ai-textbox--success' : '',
     disabled ? 'ai-textbox--disabled' : '',
+    aiGenerating ? 'ai-textbox--generating' : '',
     className,
   ]
     .filter(Boolean)
@@ -124,6 +131,7 @@ export const AiTextBox: React.FC<AiTextBoxProps> = ({
     `ai-textbox__input--${componentSize}`,
     hasError ? 'ai-textbox__input--error' : '',
     hasSuccess ? 'ai-textbox__input--success' : '',
+    aiGenerating ? 'ai-textbox__input--generating' : '',
   ]
     .filter(Boolean)
     .join(' ');
@@ -144,7 +152,7 @@ export const AiTextBox: React.FC<AiTextBoxProps> = ({
           value={value}
           onChange={handleInputChange}
           disabled={disabled}
-          placeholder={placeholder}
+          placeholder={displayPlaceholder}
         />
         
         <div className="ai-textbox__buttons">
@@ -163,10 +171,11 @@ export const AiTextBox: React.FC<AiTextBoxProps> = ({
             icon={aiIcon}
             onClick={handleAiClick}
             active={aiActive}
+            busy={aiGenerating}
             disabled={disabled}
             className="ai-textbox__ai-button"
             size={componentSize}
-            title="Generate with AI"
+            title={aiGenerating ? "Generating..." : "Generate with AI"}
           />
         </div>
       </div>

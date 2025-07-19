@@ -19,18 +19,43 @@ export const GeneralTab: React.FC<TabProps> = ({
   // Wrap writingStyle in useMemo to stabilize reference for useCallback deps
   const writingStyle: StyleSettings = useMemo(() => scenario.writingStyle || {}, [scenario.writingStyle]);
   const [showImportModal, setShowImportModal] = useState(false);
+  const [isGeneratingTitle, setIsGeneratingTitle] = useState(false);
+  const [isGeneratingSynopsis, setIsGeneratingSynopsis] = useState(false);
 
   const handleBasicFieldChange = useCallback((field: string, value: string) => {
     onScenarioChange({ [field]: value });
   }, [onScenarioChange]);
 
-  const handleDynamicFieldChange = useCallback((field: string, value: Promise<string>) => {
+  const simulateTyping = useCallback((text: string, field: string, setGenerating: (val: boolean) => void) => {
+    // Clear the field and start generation
+    onScenarioChange({ [field]: '' });
+    setGenerating(true);
+
+    let currentIndex = 0;
+    const typeNextLetter = () => {
+      if (currentIndex < text.length) {
+        const partialText = text.substring(0, currentIndex + 1);
+        onScenarioChange({ [field]: partialText });
+        currentIndex++;
+        setTimeout(typeNextLetter, 50); // 50ms delay between letters
+      } else {
+        // Generation complete
+        setGenerating(false);
+      }
+    };
+
+    // Start typing after a short delay
+    setTimeout(typeNextLetter, 500);
+  }, [onScenarioChange]);
+
+  const handleDynamicFieldChange = useCallback((field: string, value: Promise<string>, setGenerating: (val: boolean) => void) => {
     value.then((resolvedValue) => {
-      onScenarioChange({ [field]: resolvedValue });
+      simulateTyping(resolvedValue, field, setGenerating);
     }).catch((error) => {
       console.error(`Error resolving ${field}:`, error);
+      setGenerating(false);
     });
-  }, [onScenarioChange]);
+  }, [simulateTyping]);
 
 
   const handleStyleChange = useCallback((field: keyof StyleSettings, value: string) => {
@@ -44,20 +69,13 @@ export const GeneralTab: React.FC<TabProps> = ({
   }, [handleStyleChange]);
 
   const randomizeTitle = useCallback(() => {
-    generateStoryTitle(scenario).then((title) => {
-      handleDynamicFieldChange('title', title.result);
-    }
-    ).catch((error) => {
-      console.error('Error generating title:', error);
-    });
+    const titlePromise = generateStoryTitle(scenario).then((title) => title.result);
+    handleDynamicFieldChange('title', titlePromise, setIsGeneratingTitle);
   }, [handleDynamicFieldChange, scenario]);
 
   const randomizeSynopsis = useCallback(() => {
-    generateScenarioSynopsis(scenario).then((synopsis) => {
-      handleDynamicFieldChange('synopsis', synopsis.result);
-    }).catch((error) => {
-      console.error('Error generating synopsis:', error);
-    });
+    const synopsisPromise = generateScenarioSynopsis(scenario).then((synopsis) => synopsis.result);
+    handleDynamicFieldChange('synopsis', synopsisPromise, setIsGeneratingSynopsis);
   }, [scenario, handleDynamicFieldChange]);
 
   const randomizeAllStyle = useCallback(() => {
@@ -108,6 +126,7 @@ export const GeneralTab: React.FC<TabProps> = ({
               placeholder="Enter your scenario title..."
               aiIcon={<FaDice />}
               onAiClick={() => randomizeTitle()}
+              aiGenerating={isGeneratingTitle}
             />
             <AiTextArea
               label="Synopsis"
@@ -119,6 +138,7 @@ export const GeneralTab: React.FC<TabProps> = ({
               rows={4}
               aiIcon={<FaDice />}
               onAiClick={() => randomizeSynopsis()}
+              aiGenerating={isGeneratingSynopsis}
             />
           </div>
         </div>

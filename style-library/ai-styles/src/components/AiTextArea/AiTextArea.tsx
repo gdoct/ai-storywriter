@@ -28,6 +28,8 @@ export interface AiTextAreaProps extends Omit<TextareaHTMLAttributes<HTMLTextAre
   onChange?: (value: string) => void;
   /** Whether the AI button is in active/busy state */
   aiActive?: boolean;
+  /** Whether the AI is currently generating (shows spinner) */
+  aiGenerating?: boolean;
   /** Additional CSS class name */
   className?: string;
   /** Current value of the textarea */
@@ -48,6 +50,7 @@ export const AiTextArea: React.FC<AiTextAreaProps> = ({
   onClear,
   onChange,
   aiActive = false,
+  aiGenerating = false,
   className = '',
   value: controlledValue,
   disabled,
@@ -87,7 +90,7 @@ export const AiTextArea: React.FC<AiTextAreaProps> = ({
   };
 
   const handleAiClick = () => {
-    if (!aiActive && !disabled && onAiClick) {
+    if (!aiActive && !aiGenerating && !disabled && onAiClick) {
       onAiClick(value);
     }
   };
@@ -111,12 +114,16 @@ export const AiTextArea: React.FC<AiTextAreaProps> = ({
   const hasError = Boolean(displayError);
   const hasSuccess = Boolean(successMessage);
 
+  // Dynamic placeholder based on generation state
+  const displayPlaceholder = aiGenerating ? 'Sending your request to the AI...' : placeholder;
+
   const containerClasses = [
     'ai-textarea',
     `ai-textarea--${size}`,
     hasError ? 'ai-textarea--error' : '',
     hasSuccess ? 'ai-textarea--success' : '',
     disabled ? 'ai-textarea--disabled' : '',
+    aiGenerating ? 'ai-textarea--generating' : '',
     `ai-textarea--${theme}`,
     className,
   ]
@@ -128,6 +135,7 @@ export const AiTextArea: React.FC<AiTextAreaProps> = ({
     `ai-textarea__input--${size}`,
     hasError ? 'ai-textarea__input--error' : '',
     hasSuccess ? 'ai-textarea__input--success' : '',
+    aiGenerating ? 'ai-textarea__input--generating' : '',
     `ai-textarea__input--${theme}`,
   ]
     .filter(Boolean)
@@ -148,7 +156,7 @@ export const AiTextArea: React.FC<AiTextAreaProps> = ({
           value={value}
           onChange={handleInputChange}
           disabled={disabled}
-          placeholder={placeholder}
+          placeholder={displayPlaceholder}
         />
 
         <div className="ai-textarea__buttons">
@@ -167,10 +175,11 @@ export const AiTextArea: React.FC<AiTextAreaProps> = ({
             icon={aiIcon}
             onClick={handleAiClick}
             active={aiActive}
+            busy={aiGenerating}
             disabled={disabled}
             className="ai-textarea__ai-button"
             size={size}
-            title="Generate with AI"
+            title={aiGenerating ? "Generating..." : "Generate with AI"}
           />
         </div>
       </div>

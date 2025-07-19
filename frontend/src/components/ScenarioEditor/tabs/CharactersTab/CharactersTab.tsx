@@ -401,7 +401,7 @@ export const CharactersTab: React.FC<TabProps> = ({
                         placeholder="Character's full name"
                         disabled={!!fieldGenerationInProgress}
                         onAiClick={() => handleGenerateField(character.id, 'name', 'Name')}
-                        aiActive={fieldGenerationInProgress?.characterId === character.id && fieldGenerationInProgress?.fieldName === 'name'}
+                        aiGenerating={fieldGenerationInProgress?.characterId === character.id && fieldGenerationInProgress?.fieldName === 'name'}
                       />
                       <AiTextBox
                         label="Alias/Nickname"
@@ -415,7 +415,7 @@ export const CharactersTab: React.FC<TabProps> = ({
                         placeholder="Nickname or alias"
                         disabled={!!fieldGenerationInProgress}
                         onAiClick={() => handleGenerateField(character.id, 'alias', 'Alias')}
-                        aiActive={fieldGenerationInProgress?.characterId === character.id && fieldGenerationInProgress?.fieldName === 'alias'}
+                        aiGenerating={fieldGenerationInProgress?.characterId === character.id && fieldGenerationInProgress?.fieldName === 'alias'}
                       />
                       <AiTextBox
                         label="Role"
@@ -429,7 +429,7 @@ export const CharactersTab: React.FC<TabProps> = ({
                         placeholder="e.g., Protagonist, Antagonist, Supporting"
                         disabled={!!fieldGenerationInProgress}
                         onAiClick={() => handleGenerateField(character.id, 'role', 'Role')}
-                        aiActive={fieldGenerationInProgress?.characterId === character.id && fieldGenerationInProgress?.fieldName === 'role'}
+                        aiGenerating={fieldGenerationInProgress?.characterId === character.id && fieldGenerationInProgress?.fieldName === 'role'}
                       />
                       <AiTextBox
                         label="Gender"
@@ -443,7 +443,7 @@ export const CharactersTab: React.FC<TabProps> = ({
                         placeholder="Character's gender"
                         disabled={!!fieldGenerationInProgress}
                         onAiClick={() => handleGenerateField(character.id, 'gender', 'Gender')}
-                        aiActive={fieldGenerationInProgress?.characterId === character.id && fieldGenerationInProgress?.fieldName === 'gender'}
+                        aiGenerating={fieldGenerationInProgress?.characterId === character.id && fieldGenerationInProgress?.fieldName === 'gender'}
                       />
                     </div>
                     
@@ -460,7 +460,7 @@ export const CharactersTab: React.FC<TabProps> = ({
                       rows={3}
                       disabled={!!fieldGenerationInProgress}
                       onAiClick={() => handleGenerateField(character.id, 'appearance', 'Appearance')}
-                      aiActive={fieldGenerationInProgress?.characterId === character.id && fieldGenerationInProgress?.fieldName === 'appearance'}
+                      aiGenerating={fieldGenerationInProgress?.characterId === character.id && fieldGenerationInProgress?.fieldName === 'appearance'}
                     />
                     
                     <AiTextArea
@@ -476,7 +476,7 @@ export const CharactersTab: React.FC<TabProps> = ({
                       rows={4}
                       disabled={!!fieldGenerationInProgress}
                       onAiClick={() => handleGenerateField(character.id, 'backstory', 'Backstory')}
-                      aiActive={fieldGenerationInProgress?.characterId === character.id && fieldGenerationInProgress?.fieldName === 'backstory'}
+                      aiGenerating={fieldGenerationInProgress?.characterId === character.id && fieldGenerationInProgress?.fieldName === 'backstory'}
                     />
                     
                     <AiTextArea
@@ -492,7 +492,7 @@ export const CharactersTab: React.FC<TabProps> = ({
                       rows={3}
                       disabled={!!fieldGenerationInProgress}
                       onAiClick={() => handleGenerateField(character.id, 'extraInfo', 'Additional Info')}
-                      aiActive={fieldGenerationInProgress?.characterId === character.id && fieldGenerationInProgress?.fieldName === 'extraInfo'}
+                      aiGenerating={fieldGenerationInProgress?.characterId === character.id && fieldGenerationInProgress?.fieldName === 'extraInfo'}
                     />
                   </div>
                 )}

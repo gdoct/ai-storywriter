@@ -189,6 +189,8 @@ export const BackstoryTab: React.FC<TabProps> = ({
           placeholder="Enter the backstory for your narrative. Include key events, character backgrounds, world-building details, and any context that influences the main story..."
           rows={15}
           disabled={isGenerating}
+          onAiClick={handleGenerateBackstory}
+          aiGenerating={isGenerating}
         />
         
         <div className="backstory-tab__hints">

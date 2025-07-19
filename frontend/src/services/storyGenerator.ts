@@ -609,3 +609,52 @@ export async function generateStoryArc(
   });
   return { result: resultPromise, cancelGeneration };
 }
+
+
+export async function generateNotes(
+  scenario: Scenario,
+  options: {
+    onProgress?: (text: string) => void,
+    temperature?: number,
+    seed?: number | null
+  } = {}
+): Promise<{ result: Promise<string>; cancelGeneration: () => void }> {
+  const promptObj = llmPromptService.createNotesPrompt(scenario);
+  const abortController = new AbortController();
+  let cancelGeneration = () => { abortController.abort(); };
+  let fullText = '';
+  const resultPromise = new Promise<string>(async (resolve, reject) => {
+    try {
+      const selectedModel = getSelectedModel();
+      await streamChatCompletionWithStatus(
+        promptObj,
+        (text, isDone) => {
+          if (isDone) {
+            fullText = text;
+            if (options.onProgress) options.onProgress(text);
+          } else {
+            // Incremental chunk during streaming
+            fullText += text;
+            if (options.onProgress) options.onProgress(text);
+          }
+        },
+        { 
+          model: selectedModel || undefined,
+          temperature: options.temperature || 0.8, // Slightly higher temperature for creative ideas
+          max_tokens: 1000,
+          signal: abortController.signal
+        },
+        () => {}, // setAiStatus
+        () => {}  // setShowAIBusyModal
+      );
+      resolve(fullText);
+    } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') {
+        reject(new Error('Generation was cancelled'));
+      } else {
+        reject(error);
+      }
+    }
+  });
+  return { result: resultPromise, cancelGeneration };
+}

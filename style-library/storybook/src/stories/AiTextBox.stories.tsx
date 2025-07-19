@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react';
+import React from 'react';
 import { RiMagicLine, RiSparklingLine } from 'react-icons/ri';
 import { AiTextBox, ThemeProvider, ThemeToggle } from '../../../ai-styles/src/index';
 
@@ -138,4 +139,47 @@ export const SizeComparison: Story = {
       <AiTextBox componentSize="xl" label="Extra Large" value="Extra large text input" />
     </div>
   ),
+};
+
+export const AiGenerationDemo: Story = {
+  render: () => {
+    const [value, setValue] = React.useState('');
+    const [isGenerating, setIsGenerating] = React.useState(false);
+
+    const handleAiClick = () => {
+      // Clear the textbox and start generation
+      setValue('');
+      setIsGenerating(true);
+
+      // Simulate typing "hello, world" letter by letter
+      const text = 'hello, world';
+      let currentIndex = 0;
+
+      const typeNextLetter = () => {
+        if (currentIndex < text.length) {
+          setValue(text.substring(0, currentIndex + 1));
+          currentIndex++;
+          setTimeout(typeNextLetter, 100); // 100ms delay between letters
+        } else {
+          // Generation complete
+          setIsGenerating(false);
+        }
+      };
+
+      // Start typing after a short delay
+      setTimeout(typeNextLetter, 500);
+    };
+
+    return (
+      <AiTextBox
+        label="AI Generation Demo"
+        placeholder="Click the AI button to see generation..."
+        value={value}
+        onChange={setValue}
+        onAiClick={handleAiClick}
+        aiGenerating={isGenerating}
+        infoMessage="Press the AI button to see simulated text generation"
+      />
+    );
+  },
 };

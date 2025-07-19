@@ -1,6 +1,6 @@
 import { Button } from '@drdata/ai-styles';
 import React, { useEffect, useRef, useState } from 'react';
-import { FaComment, FaRedo, FaTimes } from 'react-icons/fa';
+import { FaComment, FaCopy, FaRedo, FaTimes } from 'react-icons/fa';
 import { useAuth } from '../../../contexts/AuthContext';
 import { chatService, ChatStreamCallback } from '../../../services/chatService';
 import { createContextAwareChatPrompt } from '../../../services/llmPromptService';
@@ -414,6 +414,22 @@ export const ChatAgent: React.FC<ChatAgentProps> = ({ scenario }) => {
     document.addEventListener('mouseup', handleMouseUp);
   };
 
+  const handleCopyToClipboard = async (content: string) => {
+    try {
+      await navigator.clipboard.writeText(content);
+      // You could add a toast notification here if desired
+    } catch (err) {
+      console.error('Failed to copy to clipboard:', err);
+      // Fallback for older browsers
+      const textArea = document.createElement('textarea');
+      textArea.value = content;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+    }
+  };
+
   const handleRefresh = async () => {
     if (!lastUserMessage || isGenerating || isChatUnavailable || isChatBusy) return;
     
@@ -589,7 +605,18 @@ export const ChatAgent: React.FC<ChatAgentProps> = ({ scenario }) => {
                   
                   return (
                     <div key={idx} className={`chat-agent-message chat-agent-message--${msg.role}`}>
-                      <div className="chat-agent-message__content">{msg.content}</div>
+                      <div className="chat-agent-message__header">
+                        <div className="chat-agent-message__content">{msg.content}</div>
+                        {msg.role === 'assistant' && msg.content && (
+                          <button
+                            className="chat-agent-copy-btn"
+                            onClick={() => handleCopyToClipboard(msg.content)}
+                            title="Copy to clipboard"
+                          >
+                            <FaCopy />
+                          </button>
+                        )}
+                      </div>
                       {isLastAssistantMessage && msg.followUpQuestions && msg.followUpQuestions.length > 0 && (
                         <div className="chat-agent-followup-questions">
                           <div className="chat-agent-followup-questions__label">Follow-up questions:</div>

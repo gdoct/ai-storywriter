@@ -936,3 +936,63 @@ export function createPhotoBasedAppearancePrompt(
   
   return prompt;
 }
+
+
+/**
+ * Create a prompt for generating creative notes and ideas for a story
+ */
+export function createNotesPrompt(scenario: Scenario): llmCompletionRequestMessage {
+  const { title, synopsis, writingStyle, characters, backstory, storyarc } = scenario;
+  
+  let prompt = `You are a creative writing assistant. Generate helpful notes, ideas, and brainstorming content for the following story:
+
+**Story Title:** ${title || 'Untitled Story'}
+
+**Synopsis:** ${synopsis || 'No synopsis provided'}
+
+**Writing Style:**
+- Genre: ${writingStyle?.genre || 'Not specified'}
+- Tone: ${writingStyle?.tone || 'Not specified'}
+- Style: ${writingStyle?.style || 'Not specified'}
+- Theme: ${writingStyle?.theme || 'Not specified'}`;
+
+  if (characters && characters.length > 0) {
+    prompt += `
+
+**Characters:**`;
+    characters.forEach(char => {
+      prompt += `
+- ${char.name || 'Unnamed'}: ${char.role || 'No role specified'}`;
+    });
+  }
+
+  if (backstory) {
+    prompt += `
+
+**Backstory:** ${backstory}`;
+  }
+
+  if (storyarc) {
+    prompt += `
+
+**Story Arc:** ${storyarc}`;
+  }
+
+  prompt += `
+
+Generate creative and useful notes for this story. Include a mix of the following:
+
+1. **Character Development Ideas:** Personality quirks, motivations, hidden secrets, growth arcs
+2. **Scene Ideas:** Vivid descriptions, memorable moments, dialogue snippets
+3. **Plot Enhancements:** Subplots, twists, complications, foreshadowing
+4. **World-building Details:** Setting descriptions, cultural elements, atmosphere
+5. **Themes & Symbols:** Deeper meanings, metaphors, recurring motifs
+6. **Research Notes:** Factual details that could enhance authenticity
+7. **Creative Inspiration:** Mood, imagery, sensory details
+
+Format the notes in a clear, organized way with headers. Be creative and think outside the box. Provide practical ideas that would help a writer develop and enrich their story.`;
+
+  return {
+    userMessage: prompt
+  };
+}

@@ -1,9 +1,9 @@
-import { expect, test } from '@playwright/test';
+import { expect, Page, test } from '@playwright/test';
 import dotenv from 'dotenv';
 import { generateCharacterName } from '../src/services/characterNameGenerator';
 import { generateEmailFromName } from '../src/services/emailGenerator';
 import { TEST_BASE_URL } from '../__tests__/testsettings';
-import { deleteExistingTestUser, loginToSite, navigateToPage, readTestUserFromFile, saveTestUserToFile, TestUser } from './testutils';
+import { deleteExistingTestUser, navigateToPage, saveTestUserToFile, TestUser } from './testutils';
 
 dotenv.config();
 
@@ -43,7 +43,7 @@ test.describe('Register, Login and Logout workflows', () => {
   });
 
   // Helper function: Perform user signup
-  async function signupUser(page: any, user: TestUser): Promise<string> {
+  async function signupUser(page: Page, user: TestUser): Promise<string> {
     console.log('Performing user signup with the following data:', user);
     await page.goto('http://localhost:3000/');
 
@@ -66,16 +66,19 @@ test.describe('Register, Login and Logout workflows', () => {
     // NEW
 
     await page.getByRole('textbox', { name: 'Username:' }).click();
-    await page.getByRole('textbox', { name: 'Username:' }).fill(user.username, { delay: 100 });
+    await page.getByRole('textbox', { name: 'Username:' }).fill(user.username, );
     await page.getByRole('textbox', { name: 'Username:' }).press('Tab');
-    await page.getByRole('textbox', { name: 'Email:' }).fill(user.email, { delay: 100 });
+    await page.getByRole('textbox', { name: 'Email:' }).fill(user.email);
     await page.getByRole('textbox', { name: 'Password:', exact: true }).click();
-    await page.getByRole('textbox', { name: 'Password:', exact: true }).fill(user.password, { delay: 100 });
+    await page.getByRole('textbox', { name: 'Password:', exact: true }).fill(user.password);
     await page.getByRole('textbox', { name: 'Password:', exact: true }).press('Tab');
-    await page.getByRole('textbox', { name: 'Confirm Password:' }).fill(user.password, { delay: 100 });
+    await page.getByRole('textbox', { name: 'Confirm Password:' }).fill(user.password);
 
-    await page.locator('form span').click();
-    await page.locator('[data-test-id="signupButton"]').click();
+    await page.waitForTimeout(100);
+    await page.locator('form span').click({ delay : 500 });
+    await page.waitForTimeout(100);
+    await page.locator('[data-test-id="signupButton"]').click( { delay: 1000 });
+    await page.waitForTimeout(100);
     // Wait for successful signup (user avatar appears)
     await page.waitForURL('**/dashboard', { timeout: 10000 });
 

@@ -40,6 +40,8 @@ export interface AiDropdownProps extends Omit<InputHTMLAttributes<HTMLInputEleme
   onSelect?: (option: DropdownOption) => void;
   /** Whether the AI button is in active/busy state */
   aiActive?: boolean;
+  /** Whether the AI is currently generating (shows spinner) */
+  aiGenerating?: boolean;
   /** Additional CSS class name */
   className?: string;
   /** Current value of the input */
@@ -80,6 +82,7 @@ export const AiDropdown: React.FC<AiDropdownProps> = ({
   onChange,
   onSelect,
   aiActive = false,
+  aiGenerating = false,
   className = '',
   value: controlledValue,
   disabled,
@@ -256,7 +259,7 @@ export const AiDropdown: React.FC<AiDropdownProps> = ({
   };
 
   const handleAiClick = () => {
-    if (!aiActive && !disabled && onAiClick) {
+    if (!aiActive && !aiGenerating && !disabled && onAiClick) {
       onAiClick(value);
     }
   };
@@ -281,6 +284,9 @@ export const AiDropdown: React.FC<AiDropdownProps> = ({
   const displayError = validationError || errorMessage;
   const hasError = Boolean(displayError);
   const hasSuccess = Boolean(successMessage);
+
+  // Dynamic placeholder based on generation state
+  const displayPlaceholder = aiGenerating ? 'Sending your request to the AI...' : placeholder;
 
   // Get display value for input field
   const getDisplayValue = () => {
@@ -311,6 +317,7 @@ export const AiDropdown: React.FC<AiDropdownProps> = ({
     hasError ? 'ai-dropdown--error' : '',
     hasSuccess ? 'ai-dropdown--success' : '',
     disabled ? 'ai-dropdown--disabled' : '',
+    aiGenerating ? 'ai-dropdown--generating' : '',
     isOpen ? 'ai-dropdown--open' : '',
     className,
   ]
@@ -322,6 +329,7 @@ export const AiDropdown: React.FC<AiDropdownProps> = ({
     `ai-dropdown__input--${componentSize}`,
     hasError ? 'ai-dropdown__input--error' : '',
     hasSuccess ? 'ai-dropdown__input--success' : '',
+    aiGenerating ? 'ai-dropdown__input--generating' : '',
   ]
     .filter(Boolean)
     .join(' ');
@@ -345,7 +353,7 @@ export const AiDropdown: React.FC<AiDropdownProps> = ({
           onFocus={handleInputFocus}
           onKeyDown={handleKeyDown}
           disabled={disabled || props.isReadOnly} // Disable input when isReadOnly
-          placeholder={placeholder}
+          placeholder={displayPlaceholder}
           autoComplete="off"
           role="combobox"
           aria-expanded={isOpen}
@@ -378,10 +386,11 @@ export const AiDropdown: React.FC<AiDropdownProps> = ({
             icon={aiIcon}
             onClick={handleAiClick}
             active={aiActive}
+            busy={aiGenerating}
             disabled={disabled}
             className="ai-dropdown__ai-button"
             size={componentSize}
-            title="Generate with AI"
+            title={aiGenerating ? "Generating..." : "Generate with AI"}
           />
         </div>
       </div>

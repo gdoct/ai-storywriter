@@ -242,3 +242,17 @@ export async function waitForTextInputToSettle(page: Page, selector: string, tim
     resolve(false);
   });
 }
+
+export async function waitForAiTextBoxGeneration(page: Page, startTimeout: number = 10000, completionTimeout: number = 600000): Promise<void> {
+  // First wait for the AI generation to start (blue glow to appear)
+  await page.waitForFunction(() => {
+    const input = document.querySelector('.ai-textbox__input--generating');
+    return input !== null;
+  }, {}, { timeout: startTimeout });
+  
+  // Then wait for the AI textbox to finish generating (blue glow animation to disappear)
+  await page.waitForFunction(() => {
+    const input = document.querySelector('.ai-textbox__input--generating');
+    return input === null;
+  }, {}, { timeout: completionTimeout });
+}

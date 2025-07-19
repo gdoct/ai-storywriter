@@ -138,4 +138,9 @@
   --color-focus-ring-error: rgba(239, 68, 68, 0.2);
   --color-focus-ring-success: rgba(16, 185, 129, 0.2);
   --color-focus-ring-warning: rgba(245, 158, 11, 0.2);
+
+  /* AI Generation Colors */
+  --color-ai-generating-bg: var(--color-warning-50);
+  --color-ai-generating-border: var(--color-warning-400);
+  --color-ai-generating-glow: rgba(251, 191, 36, 0.3);
 }

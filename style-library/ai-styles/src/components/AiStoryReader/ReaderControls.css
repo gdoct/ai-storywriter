@@ -1,0 +1,37 @@
+.reader-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding: 1rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.reader-controls__section {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.reader-controls__section label {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.reader-controls__section select {
+  padding: 0.25rem 0.5rem;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background: var(--background-color);
+  color: var(--text-color);
+  font-size: 0.9rem;
+}
+
+.reader-controls__section select:focus {
+  outline: 2px solid var(--text-color);
+  outline-offset: 2px;
+}
+
+.reader-controls__section select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
