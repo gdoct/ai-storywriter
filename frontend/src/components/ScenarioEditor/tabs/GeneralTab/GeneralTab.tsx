@@ -69,11 +69,13 @@ export const GeneralTab: React.FC<TabProps> = ({
   }, [handleStyleChange]);
 
   const randomizeTitle = useCallback(() => {
+    setIsGeneratingTitle(true);
     const titlePromise = generateStoryTitle(scenario).then((title) => title.result);
     handleDynamicFieldChange('title', titlePromise, setIsGeneratingTitle);
   }, [handleDynamicFieldChange, scenario]);
 
   const randomizeSynopsis = useCallback(() => {
+    setIsGeneratingSynopsis(true);
     const synopsisPromise = generateScenarioSynopsis(scenario).then((synopsis) => synopsis.result);
     handleDynamicFieldChange('synopsis', synopsisPromise, setIsGeneratingSynopsis);
   }, [scenario, handleDynamicFieldChange]);

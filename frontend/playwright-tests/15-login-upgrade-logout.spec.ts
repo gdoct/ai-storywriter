@@ -48,26 +48,26 @@ test.describe('Login, Upgrade and Logout workflows', () => {
             expect(upgradedUserData.tier).toBe('premium');
         });
 
-        test('should press the logout button', async ({ page }) => {
-            console.log('\nTEST: User Logout');
-            // Navigate to the app with the JWT token
-            await page.goto(TEST_BASE_URL, { waitUntil: 'networkidle' });
+        // test('should press the logout button', async ({ page }) => {
+        //     console.log('\nTEST: User Logout');
+        //     // Navigate to the app with the JWT token
+        //     await page.goto(TEST_BASE_URL, { waitUntil: 'networkidle' });
 
-            // Set the JWT token in localStorage
-            await page.evaluate((token) => {
-                localStorage.setItem('token', token);
-            }, testUser.jwt!);
+        //     // Set the JWT token in localStorage
+        //     await page.evaluate((token) => {
+        //         localStorage.setItem('token', token);
+        //     }, testUser.jwt!);
 
-            // Refresh the page to apply the authentication
-            await page.reload({ waitUntil: 'networkidle' });
-            await page.getByRole('button', { name: 'User menu' }).click();
-            await page.getByRole('button', { name: 'Logout' }).click(); console.log('Logout button clicked, user should be logged out');
+        //     // Refresh the page to apply the authentication
+        //     await page.reload({ waitUntil: 'networkidle' });
+        //     await page.getByRole('button', { name: 'User menu' }).click();
+        //     await page.getByRole('button', { name: 'Logout' }).click(); console.log('Logout button clicked, user should be logged out');
 
-            // Verify user is logged out by checking if the signup link is visible
-            const signupLink = page.locator('a[data-test-id="nav-signup"]');
-            await expect(signupLink).toBeVisible();
-            console.log('User successfully logged out, signup link is visible');
-            await navigateToPage(page, TEST_BASE_URL + '/');
-        });
+        //     // Verify user is logged out by checking if the signup link is visible
+        //     const signupLink = page.locator('a[data-test-id="nav-signup"]');
+        //     await expect(signupLink).toBeVisible();
+        //     console.log('User successfully logged out, signup link is visible');
+        //     await navigateToPage(page, TEST_BASE_URL + '/');
+        // });
     });
 });

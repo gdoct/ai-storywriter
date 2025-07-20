@@ -33,6 +33,7 @@ test.describe('Publish story workflows', () => {
             await page.getByRole('button', { name: '🏪 Publish' }).first().click( { delay: DELAY });
             await page.locator('label').filter({ hasText: 'I confirm I own the rights to' }).locator('span').click({ delay: DELAY });
             await page.getByTestId('publish-story-button').click({ delay: DELAY });
+            await page.waitForTimeout(500);
             await page.getByRole('button', { name: 'OK' }).click({ delay: DELAY });
             await page.getByRole('link', { name: 'StoryWriter Logo StoryWriter' }).click({ delay: DELAY });
             console.log('Story should be published to the marketplace');

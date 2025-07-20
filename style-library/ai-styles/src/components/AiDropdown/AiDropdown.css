@@ -301,15 +301,68 @@
 /* Dark theme specific adjustments */
 [data-theme="dark"] .ai-dropdown__input {
   box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
+  background-color: #1f2937;
+  border-color: #4b5563;
+  color: #f9fafb;
+}
+
+[data-theme="dark"] .ai-dropdown__input:hover:not(:disabled) {
+  border-color: #6b7280;
+  background-color: #374151;
 }
 
 [data-theme="dark"] .ai-dropdown__input:focus {
   box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1), var(--shadow-focus-primary);
+  background-color: #374151;
+  border-color: #60a5fa;
+}
+
+[data-theme="dark"] .ai-dropdown__input::placeholder {
+  color: #9ca3af;
 }
 
 [data-theme="dark"] .ai-dropdown__dropdown {
-  box-shadow: var(--shadow-xl);
-  border-color: var(--color-border-secondary);
+  box-shadow: 
+    0 20px 25px -5px rgba(0, 0, 0, 0.3), 
+    0 10px 10px -5px rgba(0, 0, 0, 0.1),
+    0 0 0 1px rgba(255, 255, 255, 0.05);
+  border-color: #4b5563;
+  background-color: #1f2937;
+}
+
+[data-theme="dark"] .ai-dropdown__option {
+  color: #f9fafb;
+  border-bottom-color: #374151;
+}
+
+[data-theme="dark"] .ai-dropdown__option:hover:not(.ai-dropdown__option--disabled) {
+  background-color: #374151;
+  color: #ffffff;
+}
+
+[data-theme="dark"] .ai-dropdown__option--focused {
+  background-color: #4b5563;
+  color: #ffffff;
+}
+
+[data-theme="dark"] .ai-dropdown__option--disabled {
+  color: #6b7280;
+}
+
+[data-theme="dark"] .ai-dropdown__label {
+  color: #e5e7eb;
+}
+
+[data-theme="dark"] .ai-dropdown__message--error {
+  color: #f87171;
+}
+
+[data-theme="dark"] .ai-dropdown__message--success {
+  color: #34d399;
+}
+
+[data-theme="dark"] .ai-dropdown__message--info {
+  color: #38bdf8;
 }
 
 /* Focus trap for accessibility */
@@ -334,6 +387,19 @@
 
 .ai-dropdown__dropdown::-webkit-scrollbar-thumb:hover {
   background: var(--color-border-secondary);
+}
+
+/* Dark theme scrollbar */
+[data-theme="dark"] .ai-dropdown__dropdown::-webkit-scrollbar-track {
+  background: #1f2937;
+}
+
+[data-theme="dark"] .ai-dropdown__dropdown::-webkit-scrollbar-thumb {
+  background: #4b5563;
+}
+
+[data-theme="dark"] .ai-dropdown__dropdown::-webkit-scrollbar-thumb:hover {
+  background: #6b7280;
 }
 
 /* Size variants */

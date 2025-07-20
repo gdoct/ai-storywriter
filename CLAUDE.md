@@ -143,8 +143,11 @@ npm run build
 
 ### Running the Full Stack
 1. Install dependencies: `cd frontend && npm install && cd ../backend && pip install -r requirements.txt`
-2. Start backend: `cd backend && python app.py` (runs on port 5000)
-3. Start frontend: `cd frontend && npm start` (runs on port 3000, proxies `/api/*` to backend)
+2. The user runs the backend server in the background and will immediately notice any changes and report them back
+3. The user runs the frontend server in the background and will notice any changes and report them back
+To test a full e2e flow, run the playwright tests with
+ `cd frontend && ./scripts/e2e-flow.sh`
+4. The user can run the Storybook server to view and test components: `cd style-library/storybook && npm run dev`
 
 ### Testing Strategy
 - **Frontend Unit Tests**: Jest with React Testing Library

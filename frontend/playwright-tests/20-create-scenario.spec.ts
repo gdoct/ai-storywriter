@@ -87,10 +87,12 @@ test.describe('Generate and edit scenario workflows', () => {
     await page.locator('div').filter({ hasText: /^Character Name$/ }).getByRole('button').click({ delay: DELAY });
     await page.getByRole('button', { name: 'Create Character' }).click({ delay: DELAY });
 
-    await page.waitForSelector('div[data-testid="photo-upload-modal"]', { state: 'hidden', timeout: 60000 });
+    await page.waitForSelector('div.photo-upload-modal-overlay', { state: 'hidden', timeout: 60000 });
 
     await page.getByRole('button', { name: 'Save', exact: true }).click({ delay: DELAY });
+    await page.waitForTimeout(250);
     await page.getByRole('button', { name: 'Add tab' }).click({ delay: DELAY });
+    await page.waitForTimeout(250);
     await page.getByRole('button', { name: 'Backstory' }).click({ delay: DELAY });
 
     console.log('Generating backstory for the scenario');

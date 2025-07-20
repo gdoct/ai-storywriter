@@ -85,6 +85,7 @@
   /* Surface Colors */
   --color-surface-primary: #1f2937;
   --color-surface-secondary: #374151;
+  --color-surface-tertiary: #4b5563;
   --color-surface-elevated: #374151;
   --color-surface-overlay: rgba(0, 0, 0, 0.8);
 

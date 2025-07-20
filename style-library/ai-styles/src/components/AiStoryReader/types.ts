@@ -20,6 +20,12 @@ export interface ThemeSettings {
   theme: 'light' | 'dark' | 'sepia' | 'high-contrast';
 }
 
+export interface CharacterData {
+  id: string;
+  name: string;
+  image: string;
+}
+
 export interface AiStoryReaderProps {
   // Core content props
   text: string;
@@ -27,6 +33,10 @@ export interface AiStoryReaderProps {
   author?: string;
   readingTime?: number;
   progress?: number;
+
+  // Visual content props
+  coverImage?: string;
+  characters?: CharacterData[];
 
   // Display settings
   displayMode?: DisplayMode;
@@ -38,6 +48,7 @@ export interface AiStoryReaderProps {
   enableBookmark?: boolean;
   enableHighlight?: boolean;
   enableRating?: boolean;
+  enableFullScreen?: boolean;
   
   // Event handlers
   onProgressChange?: (progress: number) => void;
@@ -46,6 +57,8 @@ export interface AiStoryReaderProps {
   onRating?: (rating: number) => void;
   onSettingsChange?: (settings: ThemeSettings) => void;
   onModeChange?: (mode: DisplayMode) => void;
+  onDownload?: () => void;
+  onClose?: () => void;
   
   // Accessibility
   ariaLabel?: string;
