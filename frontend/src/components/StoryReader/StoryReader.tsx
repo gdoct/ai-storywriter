@@ -31,6 +31,7 @@ interface StoryReaderProps {
   onDownload?: () => void;
   onEditScenario?: () => void;
   onDelete?: () => void;
+  onContinue?: () => void;
   // Rating props for marketplace stories
   storyId?: number;
   averageRating?: number;
@@ -50,6 +51,7 @@ const StoryReader: React.FC<StoryReaderProps> = ({
   onDownload,
   onEditScenario,
   onDelete,
+  onContinue,
   storyId,
   averageRating = 0,
   ratingCount = 0,
@@ -116,6 +118,11 @@ const StoryReader: React.FC<StoryReaderProps> = ({
                 text={content}
               />
             </div>
+          )}
+          {onContinue && (
+            <button className="story-reader-button primary" onClick={onContinue}>
+              ➡️ Continue Story
+            </button>
           )}
           {onEditScenario && (
             <button className="story-reader-button secondary" onClick={onEditScenario}>

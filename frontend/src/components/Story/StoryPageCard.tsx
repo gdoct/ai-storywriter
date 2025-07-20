@@ -14,6 +14,7 @@ interface StoryPageCardProps {
   onPublish: () => void;
   onSaveAs: () => void;
   onDelete: () => void;
+  onContinue?: () => void;
 }
 
 export const StoryPageCard: React.FC<StoryPageCardProps> = ({
@@ -21,7 +22,8 @@ export const StoryPageCard: React.FC<StoryPageCardProps> = ({
   onView,
   onPublish,
   onSaveAs,
-  onDelete
+  onDelete,
+  onContinue
 }) => {
   const formatRelativeTime = (dateString: string): string => {
     const date = new Date(dateString);
@@ -76,6 +78,16 @@ export const StoryPageCard: React.FC<StoryPageCardProps> = ({
           >
             <span className="btn-icon">🏪</span>
             Publish
+          </button>
+        )}
+        {onContinue && (
+          <button 
+            className="btn btn-success btn-small"
+            onClick={onContinue}
+            title="Continue this story with a new chapter"
+          >
+            <span className="btn-icon">➡️</span>
+            Continue
           </button>
         )}
         <button 

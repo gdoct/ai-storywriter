@@ -204,3 +204,76 @@ def delete_story(story_id):
         return jsonify({'success': True}), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+@scenario_bp.route('/api/story/continue/<int:story_id>', methods=['POST'])
+@jwt_required()
+def create_continuation_scenario(story_id):
+    """Create a new scenario for continuing a story"""
+    try:
+        username = get_jwt_identity()
+        data = request.json
+        original_scenario_id = data.get('originalScenarioId')
+        
+        if not original_scenario_id:
+            return jsonify({'error': 'Original scenario ID is required'}), 400
+        
+        # Get user from DB
+        from data.repositories import UserRepository
+        user = UserRepository.get_user_by_username(username)
+        if not user:
+            return jsonify({'error': 'User not found'}), 404
+        
+        # Get the original story
+        original_story = GeneratedTextRepository.get_story_by_id(story_id)
+        if not original_story:
+            return jsonify({'error': 'Original story not found'}), 404
+        
+        # Get the original scenario 
+        conn = get_db_connection()
+        original_scenario = conn.execute('SELECT * FROM scenarios WHERE id = ? AND is_deleted = 0', (original_scenario_id,)).fetchone()
+        conn.close()
+        
+        if not original_scenario:
+            return jsonify({'error': 'Original scenario not found'}), 404
+        
+        # Parse the original scenario data
+        original_scenario_data = json.loads(original_scenario['jsondata'])
+        
+        # Create continuation scenario based on original
+        continuation_scenario = original_scenario_data.copy()
+        
+        # Update metadata for continuation
+        import uuid
+        from datetime import datetime
+        continuation_scenario['id'] = str(uuid.uuid4())
+        continuation_scenario['title'] = f"{original_scenario_data.get('title', 'Untitled')} - Chapter 2"
+        continuation_scenario['synopsis'] = f"Continuation of: {original_scenario_data.get('synopsis', '')}"
+        continuation_scenario['createdAt'] = datetime.utcnow().isoformat()
+        continuation_scenario['updatedAt'] = datetime.utcnow().isoformat()
+        
+        # Add the previous story content to the backstory or notes
+        previous_story_text = original_story['text']
+        continuation_backstory = f"""Previous Chapter:
+
+{previous_story_text}
+
+---
+
+Continue the story from where it left off, building on the events and character development from the previous chapter."""
+        
+        continuation_scenario['backstory'] = continuation_backstory
+        
+        # Store the continuation scenario in the database
+        jsondata = json.dumps(continuation_scenario)
+        title = continuation_scenario.get('title', '')
+        
+        new_scenario = ScenarioRepository.create_scenario(user['id'], title, jsondata)
+        
+        # Return the continuation scenario with the correct ID
+        continuation_scenario['id'] = new_scenario['id']
+        
+        return jsonify(continuation_scenario), 201
+        
+    except Exception as e:
+        current_app.logger.error(f"Error creating continuation scenario: {e}")
+        return jsonify({'error': str(e)}), 500

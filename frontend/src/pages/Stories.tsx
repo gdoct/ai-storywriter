@@ -162,6 +162,11 @@ const Stories: React.FC = () => {
     navigate(`/app?scenario=${scenarioId}`);
   };
 
+  const handleContinueStory = async (story: RecentStory) => {
+    // Navigate to scenario editor with continue story mode
+    navigate(`/app?continueStory=${story.id}&scenario=${story.scenarioId}`);
+  };
+
   const handlePublishStory = (story: RecentStory) => {
     setStoryToPublish(story);
     setShowPublishModal(true);
@@ -309,6 +314,7 @@ const Stories: React.FC = () => {
                         onPublish={() => handlePublishStory(story)}
                         onSaveAs={() => handleEditScenario(story.scenarioId)}
                         onDelete={() => handleDeleteStory(story.id, story.scenarioTitle)}
+                        onContinue={() => handleContinueStory(story)}
                       />
                     ))}
                   </div>
@@ -377,6 +383,7 @@ const Stories: React.FC = () => {
           onDownload={selectedStory ? () => handleDownloadStory(selectedStory) : undefined}
           onEditScenario={selectedStory ? () => handleEditScenario(selectedStory.scenarioId) : undefined}
           onDelete={selectedStory ? () => handleDeleteStory(selectedStory.id, selectedStory.scenarioTitle) : undefined}
+          onContinue={selectedStory ? () => handleContinueStory(selectedStory) : undefined}
         />
       </ReadingModal>
 

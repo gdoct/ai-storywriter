@@ -191,3 +191,16 @@ export const getRandomizedKeywordsFromAll = (randomizers: Randomizer[]): string[
   
   return allKeywords;
 };
+
+// Continue story functionality
+export const createContinuationScenario = async (originalStoryId: number, originalScenarioId: string): Promise<Scenario> => {
+  try {
+    const response = await axios.post(`/api/story/continue/${originalStoryId}`, {
+      originalScenarioId
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error creating continuation scenario:', error);
+    throw error;
+  }
+};
