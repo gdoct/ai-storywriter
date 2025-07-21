@@ -1,33 +1,115 @@
 import { Scenario } from "../types/ScenarioTypes";
 
+/** ISSUE: is not rendering all data in the scenario object.
+ * An example scenario json is below. it contains data from 3 custom tabs in the scenario editor:
+ * customTab1, customTab2 and customTab3
+ * this converter should render all data in the scenario object instead.
+ * {
+    "backstory": "backstory",
+    "characters": [
+        {
+            "alias": "alias",
+            "appearance": "appearance",
+            "backstory": "backstory",
+            "extraInfo": "extraInfo",
+            "gender": "gender",
+            "id": "id",
+            "name": "name",
+            "photoId": "photoId",
+            "photoUrl": "photoUrl",
+            "role": "role"
+        },
+        {
+            "alias": "alias",
+            "appearance": "...", 
+            "backstory": "...",
+            "extraInfo": "...",
+            "gender": "...",
+            "id": "...",
+            "name": "...",
+            "photoId": "...",
+            "photoUrl": "...",
+            "role": "..."
+        }
+    ],
+    "createdAt": "createdAt",
+    "id": "id",
+    "imageUrl": "imageUrl",
+    "notes": "notes",
+    "synopsis": "synopsis",
+    "title": "title",
+    "userId": "userId",
+    "visibleTabs": [...],
+    "writingStyle": {
+        "genre": "genre"
+    },
+    "customTab1": {},
+    "customTab2": {},
+    "customTab3": [],
+}
+
+should render to (in this specific order!)
+ * 
+# <title>
+
+## Synopsis
+<synopsis>
+
+## Writing style
+* Genre: <genre>
+* Style: <style>
+* Tone: <tone>
+* Communication style: <communicationStyle>
+* Theme: <theme>
+* Other Notes: <other>
+
+## Notes
+<notes>
+
+## Characters
+.. character details
+
+## Backstory
+<backstory>
+
+## Story Arc
+<storyarc>
+
+## CustomTab1
+...
+## CustomTab2 
+...
+## CustomTab3 
+...
+ */
+
 export function scenarioStyleToMarkdown(scenario: Scenario): string {
-    let markdown = `## Writing style\n\n`;
-    markdown += `- **Language**: ${scenario.writingStyle?.language || "English"}\n\n`;
+    let markdown = `## Writing style\n`;
     
     if (scenario.writingStyle?.genre) {
-        markdown += `   - Genre: ${scenario.writingStyle.genre}\n`;
+        markdown += `* Genre: ${scenario.writingStyle.genre}\n`;
     }
 
     if (scenario.writingStyle?.style) {
-        markdown += `   - Style: ${scenario.writingStyle.style}\n`;
+        markdown += `* Style: ${scenario.writingStyle.style}\n`;
     }
 
     if (scenario.writingStyle?.tone) {
-        markdown += `   - Tone: ${scenario.writingStyle.tone}\n`;
+        markdown += `* Tone: ${scenario.writingStyle.tone}\n`;
     }
 
     if (scenario.writingStyle?.communicationStyle) {
-        markdown += `   - Communication style: ${scenario.writingStyle.communicationStyle}\n`;
+        markdown += `* Communication style: ${scenario.writingStyle.communicationStyle}\n`;
     }
 
     if (scenario.writingStyle?.theme) {
-        markdown += `   - Theme: ${scenario.writingStyle.theme}\n`;
+        markdown += `* Theme: ${scenario.writingStyle.theme}\n`;
     }
 
     if (scenario.writingStyle?.other) {
-        markdown += `   - Other Notes: ${scenario.writingStyle.other}\n`;
+        markdown += `* Other Notes: ${scenario.writingStyle.other}\n`;
     }
-    markdown += `---\n\n`;
+    markdown += `\n`;
     return markdown;
 }
 
@@ -91,7 +173,7 @@ export function scenarioScenesToMarkdown(scenario: Scenario): string {
 
 export function scenarioStoryArcToMarkdown(scenario: Scenario): string {
     if (scenario.storyarc) {
-        return `# Story Arc\n${scenario.storyarc}\n---\n\n`;
+        return `## Story Arc\n${scenario.storyarc}\n\n`;
     } else {
         return '';
     }
@@ -99,7 +181,7 @@ export function scenarioStoryArcToMarkdown(scenario: Scenario): string {
 
 export function scenarioNotesToMarkdown(scenario: Scenario): string {
     if (scenario.notes) {
-        return `# Notes\n${scenario.notes}\n---\n\n`;
+        return `## Notes\n${scenario.notes}\n\n`;
     } else {
         return '';
     }
@@ -107,17 +189,69 @@ export function scenarioNotesToMarkdown(scenario: Scenario): string {
 
 export function scenarioBackstoryToMarkdown(scenario: Scenario): string {
     if (scenario.backstory) {
-        return `# Backstory\n${scenario.backstory}\n---\n\n`;
+        return `## Backstory\n${scenario.backstory}\n\n`;
     } else {
         return '';
     }
 }
 
-export function     formatScenarioAsMarkdown(scenario: Scenario): string {
-    let markdown = `# Title: ${scenario.title || "Random title"}\n`;
+function renderCustomTabsToMarkdown(scenario: any): string {
+    let markdown = '';
+    
+    // Check for custom tabs (customTab1, customTab2, customTab3, etc.)
+    const customTabKeys = Object.keys(scenario).filter(key => key.startsWith('customTab'));
+    
+    for (const tabKey of customTabKeys) {
+        const tabData = scenario[tabKey];
+        if (tabData !== undefined && tabData !== null) {
+            // Extract tab name (e.g., "CustomTab1" from "customTab1")
+            const tabName = tabKey.replace(/^customTab(\d+)$/, 'CustomTab$1');
+            markdown += `## ${tabName}\n`;
+            
+            if (typeof tabData === 'string') {
+                markdown += `${tabData}\n\n`;
+            } else if (Array.isArray(tabData)) {
+                if (tabData.length > 0) {
+                    tabData.forEach((item, index) => {
+                        if (typeof item === 'string') {
+                            markdown += `- ${item}\n`;
+                        } else if (typeof item === 'object') {
+                            markdown += `### Item ${index + 1}\n`;
+                            Object.entries(item).forEach(([key, value]) => {
+                                markdown += `- **${key}**: ${value}\n`;
+                            });
+                            markdown += '\n';
+                        }
+                    });
+                    markdown += '\n';
+                } else {
+                    markdown += 'No data provided.\n\n';
+                }
+            } else if (typeof tabData === 'object') {
+                const entries = Object.entries(tabData);
+                if (entries.length > 0) {
+                    entries.forEach(([key, value]) => {
+                        markdown += `- **${key}**: ${value}\n`;
+                    });
+                    markdown += '\n';
+                } else {
+                    markdown += 'No data provided.\n\n';
+                }
+            } else {
+                markdown += `${String(tabData)}\n\n`;
+            }
+        }
+    }
+    
+    return markdown;
+}
+
+export function formatScenarioAsMarkdown(scenario: Scenario): string {
+    let markdown = `# ${scenario.title || "Random title"}\n\n`;
+    
     if (scenario.synopsis) {
         markdown += `## Synopsis\n${scenario.synopsis}\n\n`;
-    } 
+    }
 
     markdown += scenarioStyleToMarkdown(scenario);
     markdown += scenarioNotesToMarkdown(scenario);
@@ -125,36 +259,41 @@ export function     formatScenarioAsMarkdown(scenario: Scenario): string {
     markdown += scenarioBackstoryToMarkdown(scenario);
     markdown += scenarioStoryArcToMarkdown(scenario);
     markdown += scenarioScenesToMarkdown(scenario);
+    markdown += renderCustomTabsToMarkdown(scenario);
 
-  return markdown;
+    return markdown;
 }
 
 export function formatScenarioAsMarkdownWithoutBackStory(scenario: Scenario): string {
-    let markdown = `# Title: ${scenario.title || "Random title"}\n`;
+    let markdown = `# ${scenario.title || "Random title"}\n\n`;
+    
     if (scenario.synopsis) {
         markdown += `## Synopsis\n${scenario.synopsis}\n\n`;
-    } 
+    }
 
     markdown += scenarioStyleToMarkdown(scenario);
     markdown += scenarioNotesToMarkdown(scenario);
     markdown += scenarioCharactersToMarkdown(scenario);
     markdown += scenarioScenesToMarkdown(scenario);
     markdown += scenarioStoryArcToMarkdown(scenario);
+    markdown += renderCustomTabsToMarkdown(scenario);
 
-  return markdown;
+    return markdown;
 }
 
 export function formatScenarioAsMarkdownWithoutStoryArc(scenario: Scenario): string {
-    let markdown = `# Title: ${scenario.title || "Random title"}\n`;
+    let markdown = `# ${scenario.title || "Random title"}\n\n`;
+    
     if (scenario.synopsis) {
         markdown += `## Synopsis\n${scenario.synopsis}\n\n`;
-    } 
+    }
 
     markdown += scenarioStyleToMarkdown(scenario);
     markdown += scenarioNotesToMarkdown(scenario);
     markdown += scenarioCharactersToMarkdown(scenario);
     markdown += scenarioScenesToMarkdown(scenario);
     markdown += scenarioBackstoryToMarkdown(scenario);
+    markdown += renderCustomTabsToMarkdown(scenario);
 
-  return markdown;
+    return markdown;
 }
