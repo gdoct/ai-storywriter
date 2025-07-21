@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useTheme } from '../../providers/ThemeProvider';
 import { IconButton } from '../IconButton/IconButton';
 import type { AiStoryReaderProps, BookmarkData, TextSelection, ThemeSettings, CharacterData } from './types';
@@ -52,6 +53,10 @@ export const AiStoryReader: React.FC<AiStoryReaderProps> = ({
   const [topPanelVisible, setTopPanelVisible] = useState(false);
   const [bottomPanelVisible, setBottomPanelVisible] = useState(false);
   const [edgeTriggersVisible, setEdgeTriggersVisible] = useState(false);
+  
+  // Tooltip State
+  const [hoveredCharacter, setHoveredCharacter] = useState<CharacterData | null>(null);
+  const [tooltipPosition, setTooltipPosition] = useState<{ x: number; y: number; arrowOffset?: number } | null>(null);
 
   // Auto-hide functionality
   const resetHideTimer = useCallback(() => {
@@ -175,6 +180,43 @@ export const AiStoryReader: React.FC<AiStoryReaderProps> = ({
     onSettingsChange?.(newSettings);
   }, [onSettingsChange]);
 
+  // Handle character tooltip
+  const handleCharacterHover = useCallback((character: CharacterData, event: React.MouseEvent<HTMLDivElement>) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    const tooltipWidth = 320; // max-width of tooltip
+    const windowWidth = window.innerWidth;
+    
+    // Calculate ideal center position
+    const avatarCenterX = rect.left + rect.width / 2;
+    let tooltipX = avatarCenterX;
+    const y = rect.bottom + 8;
+    
+    // Adjust if tooltip would go off screen
+    const tooltipHalfWidth = tooltipWidth / 2;
+    const margin = 16; // margin from screen edge
+    let arrowOffset = 0; // offset for arrow position
+    
+    if (tooltipX - tooltipHalfWidth < margin) {
+      // Too far left, position so left edge is at margin
+      const newTooltipX = tooltipHalfWidth + margin;
+      arrowOffset = avatarCenterX - newTooltipX; // arrow should point to original avatar center
+      tooltipX = newTooltipX;
+    } else if (tooltipX + tooltipHalfWidth > windowWidth - margin) {
+      // Too far right, position so right edge is at margin
+      const newTooltipX = windowWidth - tooltipHalfWidth - margin;
+      arrowOffset = avatarCenterX - newTooltipX; // arrow should point to original avatar center
+      tooltipX = newTooltipX;
+    }
+    
+    setHoveredCharacter(character);
+    setTooltipPosition({ x: tooltipX, y, arrowOffset });
+  }, []);
+
+  const handleCharacterLeave = useCallback(() => {
+    setHoveredCharacter(null);
+    setTooltipPosition(null);
+  }, []);
+
   // Update progress based on scroll position
   useEffect(() => {
     if (displayMode !== 'scroll' || !contentRef.current) return;
@@ -195,57 +237,13 @@ export const AiStoryReader: React.FC<AiStoryReaderProps> = ({
   const renderCharacterAvatars = (characters: CharacterData[]) => (
     <div className="hero-section__characters">
       {characters.map((character) => (
-        <div key={character.id} className="character-avatar" title={character.name}>
+        <div 
+          key={character.id} 
+          className="character-avatar"
+          onMouseEnter={(e) => handleCharacterHover(character, e)}
+          onMouseLeave={handleCharacterLeave}
+        >
           <img src={character.image} alt={character.name} />
-          <div className="character-tooltip">
-            <div className="character-tooltip__content">
-              <div className="character-tooltip__header">
-                <img src={character.image} alt={character.name} />
-                <div>
-                  <h3 className="character-tooltip__name">{character.name}</h3>
-                  {character.alias && (
-                    <p className="character-tooltip__alias">"{character.alias}"</p>
-                  )}
-                </div>
-              </div>
-              
-              {(character.role || character.gender) && (
-                <div className="character-tooltip__basics">
-                  {character.role && (
-                    <span className="character-tooltip__tag role">
-                      {character.role}
-                    </span>
-                  )}
-                  {character.gender && (
-                    <span className="character-tooltip__tag gender">
-                      {character.gender}
-                    </span>
-                  )}
-                </div>
-              )}
-              
-              {character.appearance && (
-                <div className="character-tooltip__section">
-                  <h4>Appearance</h4>
-                  <p>{character.appearance}</p>
-                </div>
-              )}
-              
-              {character.backstory && (
-                <div className="character-tooltip__section">
-                  <h4>Background</h4>
-                  <p>{character.backstory}</p>
-                </div>
-              )}
-              
-              {character.extraInfo && (
-                <div className="character-tooltip__section">
-                  <h4>Additional Info</h4>
-                  <p>{character.extraInfo}</p>
-                </div>
-              )}
-            </div>
-          </div>
         </div>
       ))}
     </div>
@@ -533,6 +531,77 @@ export const AiStoryReader: React.FC<AiStoryReaderProps> = ({
         <div className="ai-story-reader__rating">
           {/* Rating component implementation */}
         </div>
+      )}
+
+      {/* Portal-based character tooltip */}
+      {hoveredCharacter && tooltipPosition && createPortal(
+        <div 
+          className="character-tooltip-portal"
+          style={{
+            position: 'fixed',
+            left: tooltipPosition.x,
+            top: tooltipPosition.y,
+            transform: 'translateX(-50%)',
+            zIndex: 9999,
+            pointerEvents: 'none',
+            width: 'max-content',
+            maxWidth: '320px'
+          }}
+        >
+          <div 
+            className="character-tooltip__content"
+            style={{
+              '--arrow-offset': tooltipPosition.arrowOffset ? `${tooltipPosition.arrowOffset}px` : '0px'
+            } as React.CSSProperties}
+          >
+            <div className="character-tooltip__header">
+              <img src={hoveredCharacter.image} alt={hoveredCharacter.name} />
+              <div>
+                <h3 className="character-tooltip__name">{hoveredCharacter.name}</h3>
+                {hoveredCharacter.alias && (
+                  <p className="character-tooltip__alias">"{hoveredCharacter.alias}"</p>
+                )}
+              </div>
+            </div>
+            
+            {(hoveredCharacter.role || hoveredCharacter.gender) && (
+              <div className="character-tooltip__basics">
+                {hoveredCharacter.role && (
+                  <span className="character-tooltip__tag role">
+                    {hoveredCharacter.role}
+                  </span>
+                )}
+                {hoveredCharacter.gender && (
+                  <span className="character-tooltip__tag gender">
+                    {hoveredCharacter.gender}
+                  </span>
+                )}
+              </div>
+            )}
+            
+            {hoveredCharacter.appearance && (
+              <div className="character-tooltip__section">
+                <h4>Appearance</h4>
+                <p>{hoveredCharacter.appearance}</p>
+              </div>
+            )}
+            
+            {hoveredCharacter.backstory && (
+              <div className="character-tooltip__section">
+                <h4>Background</h4>
+                <p>{hoveredCharacter.backstory}</p>
+              </div>
+            )}
+            
+            {hoveredCharacter.extraInfo && (
+              <div className="character-tooltip__section">
+                <h4>Additional Info</h4>
+                <p>{hoveredCharacter.extraInfo}</p>
+              </div>
+            )}
+          </div>
+        </div>,
+        document.body
       )}
     </div>
   );

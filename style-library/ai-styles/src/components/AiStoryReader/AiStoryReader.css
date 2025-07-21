@@ -150,7 +150,7 @@
   transform: scale(1.1);
   border-color: white;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-  z-index: 1000;
+  z-index: 1002;
 }
 
 .character-avatar > img {
@@ -163,10 +163,10 @@
 /* Character Tooltip */
 .character-tooltip {
   position: absolute;
-  bottom: 60px;
+  top: 60px;
   left: 50%;
   transform: translateX(-50%);
-  z-index: 1001;
+  z-index: 1003;
   opacity: 0;
   visibility: hidden;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -200,13 +200,13 @@
 .character-tooltip__content::before {
   content: '';
   position: absolute;
-  bottom: -8px;
+  top: -8px;
   left: 50%;
   transform: translateX(-50%);
   width: 0;
   height: 0;
   border: 8px solid transparent;
-  border-top-color: rgba(255, 255, 255, 0.98);
+  border-bottom-color: rgba(255, 255, 255, 0.98);
 }
 
 .character-tooltip__header {
@@ -298,7 +298,7 @@
 }
 
 [data-theme="dark"] .character-tooltip__content::before {
-  border-top-color: rgba(31, 41, 55, 0.98);
+  border-bottom-color: rgba(31, 41, 55, 0.98);
 }
 
 [data-theme="dark"] .character-tooltip__name {
@@ -321,7 +321,7 @@
 @media (max-width: 768px) {
   .character-tooltip {
     max-width: 280px;
-    bottom: 50px;
+    top: 50px;
   }
   
   .character-tooltip__content {
@@ -976,6 +976,120 @@
   }
 }
 
+/* ========== PORTAL TOOLTIP ========== */
+.character-tooltip-portal {
+  animation: tooltipFadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.character-tooltip-portal .character-tooltip__content {
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(20px);
+  border-radius: 16px;
+  padding: 1.5rem;
+  border: 2px solid rgba(255, 255, 255, 0.9);
+  box-shadow: 
+    0 20px 35px rgba(0, 0, 0, 0.4),
+    0 8px 20px rgba(0, 0, 0, 0.2),
+    0 0 0 1px rgba(255, 255, 255, 0.8),
+    inset 0 2px 0 rgba(255, 255, 255, 0.9);
+  color: #1f2937;
+  position: relative;
+}
+
+.character-tooltip-portal .character-tooltip__content::before {
+  content: '';
+  position: absolute;
+  top: -8px;
+  left: calc(50% + var(--arrow-offset, 0px));
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border: 8px solid transparent;
+  border-bottom-color: rgba(255, 255, 255, 0.98);
+}
+
+/* Ensure portal tooltip text is properly styled */
+.character-tooltip-portal .character-tooltip__name {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #111827;
+  line-height: 1.2;
+}
+
+.character-tooltip-portal .character-tooltip__alias {
+  margin: 0.25rem 0 0 0;
+  font-size: 0.875rem;
+  font-style: italic;
+  color: #6b7280;
+}
+
+.character-tooltip-portal .character-tooltip__section h4 {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #374151;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.character-tooltip-portal .character-tooltip__section p {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: #4b5563;
+}
+
+.character-tooltip-portal .character-tooltip__header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.character-tooltip-portal .character-tooltip__header img {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 2px solid rgba(59, 130, 246, 0.3);
+  object-fit: cover;
+}
+
+.character-tooltip-portal .character-tooltip__basics {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.character-tooltip-portal .character-tooltip__tag {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  text-transform: capitalize;
+}
+
+.character-tooltip-portal .character-tooltip__tag.role {
+  background: rgba(59, 130, 246, 0.15);
+  color: #2563eb;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.character-tooltip-portal .character-tooltip__tag.gender {
+  background: rgba(16, 185, 129, 0.15);
+  color: #059669;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.character-tooltip-portal .character-tooltip__section {
+  margin-bottom: 1rem;
+}
+
+.character-tooltip-portal .character-tooltip__section:last-child {
+  margin-bottom: 0;
+}
+
 /* ========== ANIMATIONS ========== */
 @keyframes fadeIn {
   from {
@@ -985,6 +1099,17 @@
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@keyframes tooltipFadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
   }
 }
 

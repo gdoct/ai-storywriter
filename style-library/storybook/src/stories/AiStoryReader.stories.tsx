@@ -94,16 +94,34 @@ const sampleCharacters = [
   {
     id: '1',
     name: 'Silas',
+    alias: 'The Keeper of Stories',
+    role: 'Bookshop Owner',
+    gender: 'Male',
+    appearance: 'A quiet man in his forties with weathered hands and kind eyes, usually found surrounded by old maritime books and charts.',
+    backstory: 'Silas inherited the bookshop from his uncle and has spent years preserving the maritime history of Seabrook. He prefers solitude but finds himself drawn to stories of the sea.',
+    extraInfo: 'Has an extensive collection of 17th-century nautical charts and specializes in local maritime folklore.',
     image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face'
   },
   {
     id: '2', 
     name: 'Lyra',
+    alias: 'The Sea Scientist',
+    role: 'Marine Biologist & Artist',
+    gender: 'Female',
+    appearance: 'Tall with fiery red hair in a loose braid and striking blue eyes. Always carries art supplies and scientific instruments.',
+    backstory: 'A passionate marine biologist studying algal blooms, who also captures the beauty of coastal ecosystems through her artwork. She believes in combining scientific data with traditional knowledge.',
+    extraInfo: 'Working on an exhibition that combines environmental data with community stories and artwork.',
     image: 'https://images.unsplash.com/photo-1494790108755-2616b612b043?w=150&h=150&fit=crop&crop=face'
   },
   {
     id: '3',
     name: 'Martha Henley',
+    alias: 'The Memory Keeper',
+    role: 'Local Elder & Fisherman\'s Daughter',
+    gender: 'Female',
+    appearance: 'An elderly woman with silver hair and sharp eyes that have watched the sea change over decades.',
+    backstory: 'Born and raised in Seabrook, Martha comes from four generations of fishermen. She holds invaluable traditional knowledge about the ocean\'s patterns and changes.',
+    extraInfo: 'Can predict weather patterns by reading subtle changes in water color, a skill passed down from her grandfather.',
     image: 'https://images.unsplash.com/photo-1548142813-c348350df52b?w=150&h=150&fit=crop&crop=face'
   }
 ];
