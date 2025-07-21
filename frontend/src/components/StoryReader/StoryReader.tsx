@@ -1,5 +1,5 @@
 import { AiStoryReader } from '@drdata/ai-styles';
-import React, { useState } from 'react';
+import React from 'react';
 import StarRating from '../Rating/StarRating';
 import TTSPlayer from '../TTS/TTSPlayer';
 import './StoryReader.css';
@@ -60,23 +60,6 @@ const StoryReader: React.FC<StoryReaderProps> = ({
   imageUri,
   scenarioJson
 }) => {
-  const [fontFamily, setFontFamily] = useState<string>('Georgia');
-  const [fontSize, setFontSize] = useState<string>('24px');
-
-  const fontOptions = [
-    'Georgia',
-    'Times New Roman',
-    'Garamond',
-    'Arial',
-    'Verdana',
-    'Helvetica',
-    'Courier New'
-  ];
-
-  const sizeOptions = [
-    '12px', '14px', '16px', '18px', '20px', '22px', '24px',
-    '28px', '32px', '36px', '40px', '44px', '48px',
-  ];
 
   if (isLoading) {
     return (
@@ -172,12 +155,13 @@ const StoryReader: React.FC<StoryReaderProps> = ({
         <div className="story-reader-main">
           <AiStoryReader
             text={content}
-            font={fontFamily}
-            fontSize={fontSize}
-            onFontChange={setFontFamily}
-            onFontSizeChange={setFontSize}
-            availableFonts={fontOptions}
-            availableFontSizes={sizeOptions}
+            title={title}
+            enableTTS={true}
+            enableBookmark={true}
+            enableHighlight={true}
+            enableFullScreen={false}
+            displayMode="scroll"
+            onDownload={onDownload}
           />
         </div>
       ) : (

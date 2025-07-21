@@ -144,6 +144,7 @@ export const ChatAgent: React.FC<ChatAgentProps> = ({ scenario }) => {
   const [lastUserMessage, setLastUserMessage] = useState<string>('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
   const { refreshCredits } = useAuth();
 
   useEffect(() => {
@@ -202,6 +203,9 @@ export const ChatAgent: React.FC<ChatAgentProps> = ({ scenario }) => {
         };
 
     try {
+      // Create and store abort controller
+      abortControllerRef.current = new AbortController();
+      
       // Fetch user-selected model
       const model = getSelectedModel();
       let fullResponse = '';
@@ -249,24 +253,36 @@ export const ChatAgent: React.FC<ChatAgentProps> = ({ scenario }) => {
       await chatService.streamChatCompletion(
         promptObj,
         onStream,
-        { model: model || undefined, temperature: 0.8, max_tokens: 1024 }
+        { 
+          model: model || undefined, 
+          temperature: 0.8, 
+          max_tokens: 1024,
+          signal: abortControllerRef.current?.signal
+        }
       );
     } catch (err) {
-      console.error('Chat error:', err);
-      setChatStatus(CHAT_STATUS.ERROR);
-      setMessages(prev => {
-        const updated = [...prev];
-        for (let i = updated.length - 1; i >= 0; i--) {
-          if (updated[i].role === 'assistant') {
-            updated[i] = { ...updated[i], content: 'Sorry, there was an error communicating with the chat service.' };
-            break;
+      // Check if the error is due to cancellation
+      if (err instanceof Error && err.name === 'AbortError') {
+        // Request was cancelled, don't show error message
+        console.log('Chat request cancelled by user');
+      } else {
+        console.error('Chat error:', err);
+        setChatStatus(CHAT_STATUS.ERROR);
+        setMessages(prev => {
+          const updated = [...prev];
+          for (let i = updated.length - 1; i >= 0; i--) {
+            if (updated[i].role === 'assistant') {
+              updated[i] = { ...updated[i], content: 'Sorry, there was an error communicating with the chat service.' };
+              break;
+            }
           }
-        }
-        return updated;
-      });
+          return updated;
+        });
+      }
     } finally {
       setIsGenerating(false);
       setChatStatus(CHAT_STATUS.IDLE);
+      abortControllerRef.current = null;
       // Refresh credits after chat completion with a small delay
       setTimeout(() => {
         refreshCredits();
@@ -306,6 +322,9 @@ export const ChatAgent: React.FC<ChatAgentProps> = ({ scenario }) => {
 
         (async () => {
           try {
+            // Create and store abort controller
+            abortControllerRef.current = new AbortController();
+            
             // Fetch user-selected model
             const model = getSelectedModel();
             let fullResponse = '';
@@ -386,6 +405,24 @@ export const ChatAgent: React.FC<ChatAgentProps> = ({ scenario }) => {
     setLastUserMessage('');
   };
 
+  const handleCancelGeneration = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+    setIsGenerating(false);
+    setChatStatus(CHAT_STATUS.IDLE);
+    
+    // Remove the last empty assistant message if it exists
+    setMessages(prev => {
+      const updated = [...prev];
+      if (updated.length > 0 && updated[updated.length - 1].role === 'assistant' && !updated[updated.length - 1].content) {
+        updated.pop();
+      }
+      return updated;
+    });
+  };
+
   // Resize functionality
   const handleMouseDown = (e: React.MouseEvent) => {
     setIsResizing(true);
@@ -462,6 +499,9 @@ export const ChatAgent: React.FC<ChatAgentProps> = ({ scenario }) => {
         };
 
     try {
+      // Create and store abort controller
+      abortControllerRef.current = new AbortController();
+      
       // Fetch user-selected model
       const model = getSelectedModel();
       let fullResponse = '';
@@ -509,24 +549,36 @@ export const ChatAgent: React.FC<ChatAgentProps> = ({ scenario }) => {
       await chatService.streamChatCompletion(
         promptObj,
         onStream,
-        { model: model || undefined, temperature: 0.8, max_tokens: 1024 }
+        { 
+          model: model || undefined, 
+          temperature: 0.8, 
+          max_tokens: 1024,
+          signal: abortControllerRef.current?.signal
+        }
       );
     } catch (err) {
-      console.error('Chat error:', err);
-      setChatStatus(CHAT_STATUS.ERROR);
-      setMessages(prev => {
-        const updated = [...prev];
-        for (let i = updated.length - 1; i >= 0; i--) {
-          if (updated[i].role === 'assistant') {
-            updated[i] = { ...updated[i], content: 'Sorry, there was an error communicating with the chat service.' };
-            break;
+      // Check if the error is due to cancellation
+      if (err instanceof Error && err.name === 'AbortError') {
+        // Request was cancelled, don't show error message
+        console.log('Chat request cancelled by user');
+      } else {
+        console.error('Chat error:', err);
+        setChatStatus(CHAT_STATUS.ERROR);
+        setMessages(prev => {
+          const updated = [...prev];
+          for (let i = updated.length - 1; i >= 0; i--) {
+            if (updated[i].role === 'assistant') {
+              updated[i] = { ...updated[i], content: 'Sorry, there was an error communicating with the chat service.' };
+              break;
+            }
           }
-        }
-        return updated;
-      });
+          return updated;
+        });
+      }
     } finally {
       setIsGenerating(false);
       setChatStatus(CHAT_STATUS.IDLE);
+      abortControllerRef.current = null;
       // Refresh credits after chat completion with a small delay
       setTimeout(() => {
         refreshCredits();
@@ -664,15 +716,24 @@ export const ChatAgent: React.FC<ChatAgentProps> = ({ scenario }) => {
                 >
                   <FaRedo />
                 </Button>
-                <Button
-                  variant="primary"
-                  onClick={handleSend}
-                  disabled={isGenerating || !input.trim() || isChatUnavailable || isChatBusy}
-                  busy={isGenerating}
-                  className="chat-agent-send-btn"
-                >
-                  {isGenerating ? 'Generating...' : 'Send'}
-                </Button>
+                {isGenerating ? (
+                  <Button
+                    variant="secondary"
+                    onClick={handleCancelGeneration}
+                    className="chat-agent-cancel-btn"
+                  >
+                    <FaTimes /> Cancel
+                  </Button>
+                ) : (
+                  <Button
+                    variant="primary"
+                    onClick={handleSend}
+                    disabled={!input.trim() || isChatUnavailable || isChatBusy}
+                    className="chat-agent-send-btn"
+                  >
+                    Send
+                  </Button>
+                )}
               </div>
             </div>
           </div>

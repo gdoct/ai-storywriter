@@ -1,6 +1,8 @@
-import { Button } from '@drdata/ai-styles';
-import React, { useEffect, useRef, useState } from 'react';
-import { FaCopy, FaDownload, FaRedo, FaSave, FaTimes } from 'react-icons/fa';
+import { Button, AiStoryReader } from '@drdata/ai-styles';
+import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { FaRedo, FaSave, FaTimes } from 'react-icons/fa';
+import { Scenario } from '../../../types/ScenarioTypes';
 import './StoryModal.css';
 
 export interface StoryModalProps {
@@ -13,6 +15,8 @@ export interface StoryModalProps {
   isGenerating: boolean;
   isStorySaved?: boolean;
   title?: string;
+  scenario?: Scenario;
+  coverImage?: string;
 }
 
 export const StoryModal: React.FC<StoryModalProps> = ({
@@ -25,18 +29,24 @@ export const StoryModal: React.FC<StoryModalProps> = ({
   isGenerating,
   isStorySaved = false,
   title = 'Generated Story',
+  scenario,
+  coverImage,
 }) => {
-  const [textSize, setTextSize] = useState<'small' | 'medium' | 'large'>('medium');
-  const [autoScroll, setAutoScroll] = useState(true);
   const [hasStartedGeneration, setHasStartedGeneration] = useState(false);
-  const contentRef = useRef<HTMLDivElement>(null);
+  const [displayStory, setDisplayStory] = useState<string>('');
 
   // Reset state when modal opens
   useEffect(() => {
     if (isOpen) {
       setHasStartedGeneration(!!story); // If there's already a story, consider it generated
+      setDisplayStory(story || '');
     }
   }, [isOpen, story]);
+
+  // Update display story when story changes
+  useEffect(() => {
+    setDisplayStory(story || '');
+  }, [story]);
 
   // Track when generation completes or is cancelled
   useEffect(() => {
@@ -45,56 +55,12 @@ export const StoryModal: React.FC<StoryModalProps> = ({
     }
   }, [isGenerating]);
 
-  // Auto-scroll to bottom when story changes during generation
-  useEffect(() => {
-    if (autoScroll && isGenerating && contentRef.current && story) {
-      requestAnimationFrame(() => {
-        if (contentRef.current && autoScroll) {
-          contentRef.current.scrollTop = contentRef.current.scrollHeight;
-        }
-      });
-    }
-  }, [story, isGenerating, autoScroll]);
-
   // Reset auto-scroll when generation starts
   useEffect(() => {
     if (isGenerating) {
-      setAutoScroll(true);
+      // Auto scroll functionality now handled by AiStoryReader
     }
   }, [isGenerating]);
-
-  // Handle user scroll - disable auto-scroll if user scrolls up, enable if at bottom
-  const handleScroll = () => {
-    // Only manage auto-scroll during generation
-    if (!isGenerating) return;
-    
-    const element = contentRef.current;
-    if (!element) return;
-    
-    const { scrollTop, scrollHeight, clientHeight } = element;
-    const isAtBottom = scrollHeight - scrollTop - clientHeight < 10; // 10px threshold
-    
-    setAutoScroll(isAtBottom);
-  };
-
-  const getTextSizeClass = () => {
-    switch (textSize) {
-      case 'small': return 'story-modal__text--small';
-      case 'large': return 'story-modal__text--large';
-      default: return 'story-modal__text--medium';
-    }
-  };
-  const handleCopyStory = async () => {
-    if (story) {
-      try {
-        await navigator.clipboard.writeText(story);
-        // You could add a toast notification here
-        console.log('Story copied to clipboard');
-      } catch (err) {
-        console.error('Failed to copy story:', err);
-      }
-    }
-  };
 
   const handleDownloadStory = () => {
     if (story) {
@@ -110,161 +76,138 @@ export const StoryModal: React.FC<StoryModalProps> = ({
     }
   };
 
+  // Prepare story content for AiStoryReader
+  const storyDisplayText = isGenerating && !displayStory 
+    ? 'Generating your story...' 
+    : displayStory || (!hasStartedGeneration 
+      ? 'Ready to generate your story. Click "Generate Story" to begin.' 
+      : 'Story generation was cancelled or completed. You can regenerate or close the modal.');
+
   if (!isOpen) return null;
 
-  return (
-    <div className="story-modal-overlay" onClick={onClose}>
-      <div className="story-modal" onClick={(e) => e.stopPropagation()}>
-        <div className="story-modal__header">
-          <h2 className="story-modal__title">{title}</h2>
-          <div className="story-modal__actions">
-            {/* Show Generate button only if no story and not generating */}
-            {!story && !isGenerating && !hasStartedGeneration && (
-              <Button
-                variant="primary"
-                size="sm"
-                onClick={onRegenerate}
-                data-test-id="generateStoryButton"
-                className='scenario-editor__generate-story-button'
-                icon={<FaRedo />}
-              >
-                Generate Story
-              </Button>
-            )}
-            
-            {/* Show Cancel button during generation */}
-            {isGenerating && (
-              <Button
-                variant="secondary"
-                data-test-id="cancelGenerationButton"
-                size="sm"
-                onClick={onCancelGeneration}
-                icon={<FaTimes />}
-              >
-                Cancel Generation
-              </Button>
-            )}
-            
-            {/* Show Regenerate button when story exists and not generating */}
-            {(story || hasStartedGeneration) && !isGenerating && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={onRegenerate}
-                icon={<FaRedo />}
-              >
-                Regenerate
-              </Button>
-            )}
-            
-            {/* Save, Copy, Download buttons - only show when we have content and not generating */}
-            {story && !isGenerating && (
-              <>
-                <Button
-                  variant="primary"
-                  size="sm"
-                  data-test-id="saveStoryButton"
-                  onClick={onSaveStory}
-                  disabled={isStorySaved}
-                  icon={<FaSave />}
-                >
-                  {isStorySaved ? 'Saved' : 'Save story'}
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleCopyStory}
-                  icon={<FaCopy />}
-                >
-                  Copy
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleDownloadStory}
-                  icon={<FaDownload />}
-                >
-                  Download
-                </Button>
-              </>
-            )}
-            
+  return createPortal(
+    <div style={{ 
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      width: '100vw', 
+      height: '100vh',
+      zIndex: 1000,
+      backgroundColor: '#000'
+    }}>
+      {/* Generation Controls Overlay */}
+      <div className="story-modal__generation-overlay">
+        <div className="story-modal__generation-controls">
+          {/* Show Generate button only if no story and not generating */}
+          {!story && !isGenerating && !hasStartedGeneration && (
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={onRegenerate}
+              data-test-id="generateStoryButton"
+              className='scenario-editor__generate-story-button'
+              icon={<FaRedo />}
+            >
+              Generate Story
+            </Button>
+          )}
+          
+          {/* Show Cancel button during generation */}
+          {isGenerating && (
+            <Button
+              variant="secondary"
+              data-test-id="cancelGenerationButton"
+              size="sm"
+              onClick={onCancelGeneration}
+              icon={<FaTimes />}
+            >
+              Cancel Generation
+            </Button>
+          )}
+          
+          {/* Show Regenerate button when story exists and not generating */}
+          {(story || hasStartedGeneration) && !isGenerating && (
             <Button
               variant="ghost"
               size="sm"
-              onClick={onClose}
-              icon={<FaTimes />}
+              onClick={onRegenerate}
+              icon={<FaRedo />}
             >
-              Close
+              Regenerate
             </Button>
-          </div>
-        </div>
-        <div className="story-modal__content">
-          {/* Text Size Controls */}
-          <div className="story-modal__text-controls">
-            <button
-              className={`story-modal__text-size-btn ${textSize === 'small' ? 'story-modal__text-size-btn--active' : ''}`}
-              onClick={() => setTextSize('small')}
-              title="Small text (16px)"
+          )}
+          
+          {/* Save button - only show when we have content and not generating */}
+          {story && !isGenerating && (
+            <Button
+              variant="primary"
+              size="sm"
+              data-test-id="saveStoryButton"
+              onClick={onSaveStory}
+              disabled={isStorySaved}
+              icon={<FaSave />}
             >
-              <span style={{ fontSize: '8px' }}>A</span>
-            </button>
-            <button
-              className={`story-modal__text-size-btn ${textSize === 'medium' ? 'story-modal__text-size-btn--active' : ''}`}
-              onClick={() => setTextSize('medium')}
-              title="Medium text (22px)"
-            >
-              <span style={{ fontSize: '14px' }}>A</span>
-            </button>
-            <button
-              className={`story-modal__text-size-btn ${textSize === 'large' ? 'story-modal__text-size-btn--active' : ''}`}
-              onClick={() => setTextSize('large')}
-              title="Large text (28px)"
-            >
-              <span style={{ fontSize: '20px' }}>A</span>
-            </button>
-          </div>
-
-          <div 
-            className="story-modal__scroll-container"
-            ref={contentRef}
-            onScroll={handleScroll}
-          >
-            {story ? (
-              <div className={`story-modal__text ${getTextSizeClass()}`}>
-                {story.split('\n').map((paragraph, index) => (
-                  <p key={index} className="story-modal__paragraph">
-                    {paragraph}
-                  </p>
-                ))}
-                {isGenerating && (
-                  <div className="story-modal__generating-indicator">
-                    <div className="story-modal__generating-dots">
-                      <span></span>
-                      <span></span>
-                      <span></span>
-                    </div>
-                    <span>Generating...</span>
-                  </div>
-                )}
-              </div>
-            ) : isGenerating ? (
-              <div className="story-modal__loading">
-                <div className="story-modal__spinner" />
-                <p>Generating your story...</p>
-              </div>
-            ) : !hasStartedGeneration ? (
-              <div className="story-modal__empty">
-                <p>Ready to generate your story. Click "Generate Story" to begin.</p>
-              </div>
-            ) : (
-              <div className="story-modal__empty">
-                <p>Story generation was cancelled or completed. You can regenerate or close the modal.</p>
-              </div>
-            )}
-          </div>
+              {isStorySaved ? 'Saved' : 'Save story'}
+            </Button>
+          )}
         </div>
       </div>
-    </div>
+      
+      {/* Status Strip */}
+      <div className="story-modal__status-strip">
+        {isGenerating && (
+          <div className="story-modal__generating-status">
+            <div className="story-modal__generating-dots">
+              <span></span>
+              <span></span>
+              <span></span>
+            </div>
+            <span>Generating story...</span>
+          </div>
+        )}
+        {story && !isGenerating && (
+          <div className="story-modal__completed-status">
+            <span>Story generated successfully • {Math.ceil(story.split(' ').length)} words</span>
+          </div>
+        )}
+      </div>
+
+      {/* AiStoryReader as full viewport component */}
+      <AiStoryReader
+        text={storyDisplayText}
+        title={title}
+        author="AI Generated"
+        readingTime={story ? Math.ceil(story.split(' ').length / 200) : 0}
+        coverImage={
+          coverImage || 
+          scenario?.imageUrl || 
+          'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1200&h=600&fit=crop'
+        }
+        characters={
+          scenario?.characters?.filter(char => char.name).map(char => ({
+            id: char.id,
+            name: char.name!,
+            image: char.photoUrl || 
+                   (char.photo_data ? `data:${char.photo_mime_type || 'image/jpeg'};base64,${char.photo_data}` : '') ||
+                   'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face'
+          })) || []
+        }
+        enableTTS={!!story && !isGenerating}
+        enableBookmark={!!story && !isGenerating}
+        enableHighlight={!!story && !isGenerating}
+        enableFullScreen={true}
+        displayMode="scroll"
+        onProgressChange={(progress) => console.log('Progress:', progress)}
+        onBookmark={(bookmark) => console.log('Bookmark:', bookmark)}
+        onHighlight={(selection) => console.log('Highlight:', selection)}
+        onSettingsChange={(settings) => console.log('Settings:', settings)}
+        onModeChange={(mode) => console.log('Mode changed:', mode)}
+        onDownload={story ? handleDownloadStory : undefined}
+        onClose={onClose}
+      />
+    </div>,
+    document.body
   );
 };

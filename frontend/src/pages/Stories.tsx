@@ -1,14 +1,20 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { AlertModal, ConfirmModal } from '../components/Modal';
 import PublishStoryModal from '../components/Story/PublishStoryModal';
 import StoryPageCard from '../components/Story/StoryPageCard';
-import ReadingModal from '../components/StoryReader/ReadingModal';
-import StoryReader from '../components/StoryReader/StoryReader';
+import { AiStoryReader } from '@drdata/ai-styles';
 import { useModals } from '../hooks/useModals';
 import { fetchRecentStories, formatRelativeTime, RecentStory } from '../services/dashboardService';
-import { deleteDBStory, fetchSingleDBStory } from '../services/scenario';
+import { deleteDBStory, fetchSingleDBStory, fetchScenarioById } from '../services/scenario';
+import { Scenario } from '../types/ScenarioTypes';
 import './Stories.css';
+
+// Extended story interface for character data
+interface StoryWithScenario extends RecentStory {
+  scenario?: Scenario;
+}
 
 const Stories: React.FC = () => {
   const navigate = useNavigate();
@@ -25,7 +31,7 @@ const Stories: React.FC = () => {
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
   
   // Modal state for displaying story content
-  const [selectedStory, setSelectedStory] = useState<RecentStory | null>(null);
+  const [selectedStory, setSelectedStory] = useState<StoryWithScenario | null>(null);
   const [showStoryModal, setShowStoryModal] = useState(false);
   const [storyContent, setStoryContent] = useState<string>('');
   const [loadingStoryContent, setLoadingStoryContent] = useState(false);
@@ -86,13 +92,21 @@ const Stories: React.FC = () => {
     setLoadingStoryContent(true);
     
     try {
-      // Fetch the individual story using the optimized single story endpoint
-      const fullStory = await fetchSingleDBStory(story.id);
+      // Fetch both the story content and scenario data to get characters
+      const [fullStory, scenario] = await Promise.all([
+        fetchSingleDBStory(story.id),
+        fetchScenarioById(story.scenarioId)
+      ]);
       
       if (fullStory && fullStory.text) {
         setStoryContent(fullStory.text);
       } else {
         setStoryContent('Story content not found.');
+      }
+      
+      // Store scenario for character data
+      if (scenario) {
+        setSelectedStory(prev => prev ? { ...prev, scenario } : null);
       }
     } catch (err) {
       console.error('Error fetching story content:', err);
@@ -361,31 +375,51 @@ const Stories: React.FC = () => {
         )}
       </div>
 
-      {/* Story View Modal */}
-      <ReadingModal
-        show={showStoryModal}
-        onClose={() => {
-          setShowStoryModal(false);
-          setSelectedStory(null);
-          setStoryContent('');
-        }}
-        title={selectedStory ? `Story: ${selectedStory.scenarioTitle}` : 'Story'}
-        content={storyContent}
-      >
-        <StoryReader
-          content={storyContent}
-          isLoading={loadingStoryContent}
-          metadata={selectedStory ? {
-            scenario: selectedStory.scenarioTitle,
-            created: formatRelativeTime(selectedStory.created),
-            wordCount: selectedStory.wordCount
-          } : undefined}
-          onDownload={selectedStory ? () => handleDownloadStory(selectedStory) : undefined}
-          onEditScenario={selectedStory ? () => handleEditScenario(selectedStory.scenarioId) : undefined}
-          onDelete={selectedStory ? () => handleDeleteStory(selectedStory.id, selectedStory.scenarioTitle) : undefined}
-          onContinue={selectedStory ? () => handleContinueStory(selectedStory) : undefined}
-        />
-      </ReadingModal>
+      {/* Story View Modal - Full viewport AiStoryReader like Storybook */}
+      {showStoryModal && selectedStory && createPortal(
+        <div style={{ 
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          width: '100vw', 
+          height: '100vh',
+          zIndex: 1000,
+          backgroundColor: '#000'
+        }}>
+          <AiStoryReader
+            text={loadingStoryContent ? 'Loading story content...' : (storyContent || 'No content available')}
+            title={selectedStory.scenarioTitle}
+            author="You"
+            readingTime={Math.ceil(selectedStory.wordCount / 200)}
+            coverImage={selectedStory.imageUrl || 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1200&h=600&fit=crop'}
+            characters={selectedStory.scenario?.characters?.map(char => ({
+              id: char.id,
+              name: char.name || 'Unknown',
+              image: char.photoUrl || char.photo_data ? 
+                (char.photoUrl || `data:${char.photo_mime_type || 'image/jpeg'};base64,${char.photo_data}`) :
+                'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face'
+            })) || []}
+            enableTTS={true}
+            enableBookmark={true}
+            enableHighlight={true}
+            enableFullScreen={true}
+            onProgressChange={(progress) => console.log('Progress:', progress)}
+            onBookmark={(bookmark) => console.log('Bookmark:', bookmark)}
+            onHighlight={(selection) => console.log('Highlight:', selection)}
+            onSettingsChange={(settings) => console.log('Settings:', settings)}
+            onModeChange={(mode) => console.log('Mode changed:', mode)}
+            onDownload={() => handleDownloadStory(selectedStory)}
+            onClose={() => {
+              setShowStoryModal(false);
+              setSelectedStory(null);
+              setStoryContent('');
+            }}
+          />
+        </div>,
+        document.body
+      )}
 
       {/* Publish Story Modal */}
       {storyToPublish && (

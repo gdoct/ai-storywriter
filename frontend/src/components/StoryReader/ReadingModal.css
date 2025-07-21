@@ -297,24 +297,13 @@
   min-height: 500px;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
-.reading-modal-body .story-content-section .ds-story-reader {
+.reading-modal-body .story-content-section .ai-story-reader {
   height: 100% !important;
   flex: 1 !important;
-  display: flex !important;
-  flex-direction: column !important;
-}
-
-.reading-modal-body .story-content-section .ds-story-reader .ds-text-area,
-.reading-modal-body .story-content-section .ds-story-reader .ds-content,
-.reading-modal-body .story-content-section .ds-story-reader textarea,
-.reading-modal-body .story-content-section .ds-story-reader [class*="text"],
-.reading-modal-body .story-content-section .ds-story-reader [class*="content"] {
-  flex: 1 !important;
-  height: 100% !important;
-  min-height: 400px !important;
-  max-height: none !important;
+  border-radius: 8px !important;
 }
 
 /* Responsive Design for Enhanced Story Reader */

@@ -11,72 +11,12 @@
 }
 
 /* Override AI Story Reader component styles to match app theme */
-.story-reader-wrapper .ai-story-reader,
-.story-reader-wrapper .ai-story-reader * {
-  background: var(--color-surface-primary) !important;
-  color: var(--color-text-primary) !important;
-}
-
-/* Force AI Story Reader to use full height */
 .story-reader-wrapper .ai-story-reader {
   min-height: 70vh !important;
   height: 100% !important;
   max-height: none !important;
-}
-
-.story-reader-wrapper .ai-story-reader .content-area {
-  background: var(--color-surface-primary) !important;
-  color: var(--color-text-primary) !important;
-  border: 1px solid var(--color-border-primary) !important;
-  min-height: 60vh !important;
-  height: 100% !important;
-  max-height: none !important;
-}
-
-.story-reader-wrapper .ai-story-reader .toolbar {
-  background: var(--color-surface-secondary) !important;
-  border-bottom: 1px solid var(--color-border-primary) !important;
-}
-
-.story-reader-wrapper .ai-story-reader .toolbar button,
-.story-reader-wrapper .ai-story-reader .toolbar select {
-  background: var(--color-surface-primary) !important;
-  color: var(--color-text-primary) !important;
-  border: 1px solid var(--color-border-primary) !important;
-}
-
-.story-reader-wrapper .ai-story-reader .toolbar button:hover,
-.story-reader-wrapper .ai-story-reader .toolbar select:hover {
-  background: var(--color-surface-secondary) !important;
-}
-
-/* Reading area styling */
-.story-reader-wrapper .ai-story-reader .reading-area {
-  background: var(--color-surface-primary) !important;
-  color: var(--color-text-primary) !important;
-  line-height: 1.6;
-  padding: 2rem !important;
-  min-height: 55vh !important;
-  height: 100% !important;
-  max-height: none !important;
-}
-
-/* Scrollbar styling */
-.story-reader-wrapper .ai-story-reader ::-webkit-scrollbar {
-  width: 8px;
-}
-
-.story-reader-wrapper .ai-story-reader ::-webkit-scrollbar-track {
-  background: var(--color-surface-secondary);
-}
-
-.story-reader-wrapper .ai-story-reader ::-webkit-scrollbar-thumb {
-  background: var(--color-border-secondary);
-  border-radius: 4px;
-}
-
-.story-reader-wrapper .ai-story-reader ::-webkit-scrollbar-thumb:hover {
-  background: var(--color-border-tertiary);
+  border-radius: 8px !important;
+  overflow: hidden !important;
 }
 
 /* Header styling - compact */
@@ -176,69 +116,18 @@
   flex-shrink: 0;
 }
 
-/* Main reading area - dramatically larger to match intended layout */
+/* Main reading area - allow the AiStoryReader to handle its own layout */
 .story-reader-main {
   flex: 1;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  min-height: 0; /* Important for flex child to shrink */
+  min-height: 0;
 }
 
 .story-reader-main .ai-story-reader {
   height: 100% !important;
   flex: 1 !important;
-  display: flex !important;
-  flex-direction: column !important;
-  overflow: hidden !important;
-}
-
-.story-reader-main .ai-story-reader .content-area,
-.story-reader-main .ai-story-reader .reading-area {
-  flex: 1 !important;
-  height: auto !important;
-  overflow-y: auto !important;
-  max-height: none !important;
-}
-
-/* Target the actual AI Story Reader class */
-.story-reader-main .ds-story-reader {
-  height: 100% !important;
-  min-height: 70vh !important;
-  max-height: none !important;
-  display: flex !important;
-  flex-direction: column !important;
-  flex: 1 !important;
-}
-
-/* Toolbar should stay compact and horizontal */
-.story-reader-main .ds-story-reader .ds-toolbar,
-.story-reader-main .ds-story-reader [class*="toolbar"],
-.story-reader-main .ds-story-reader [class*="controls"] {
-  flex: none !important;
-  display: flex !important;
-  flex-direction: row !important;
-  height: auto !important;
-  min-height: auto !important;
-  align-items: center !important;
-  gap: 1rem !important;
-}
-
-.story-reader-main .ds-story-reader > div:not([class*="toolbar"]):not([class*="controls"]) {
-  flex: 1 !important;
-  display: flex !important;
-  flex-direction: column !important;
-}
-
-.story-reader-main .ds-story-reader .ds-text-area,
-.story-reader-main .ds-story-reader .ds-content,
-.story-reader-main .ds-story-reader textarea,
-.story-reader-main .ds-story-reader [class*="text"],
-.story-reader-main .ds-story-reader [class*="content"] {
-  flex: 1 !important;
-  height: 100% !important;
-  min-height: 60vh !important;
-  max-height: none !important;
 }
 
 /* Mobile responsive */
