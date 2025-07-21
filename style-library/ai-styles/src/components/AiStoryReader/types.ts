@@ -24,6 +24,13 @@ export interface CharacterData {
   id: string;
   name: string;
   image: string;
+  // Extended character information for tooltips
+  alias?: string;
+  role?: string;
+  gender?: string;
+  appearance?: string;
+  backstory?: string;
+  extraInfo?: string;
 }
 
 export interface AiStoryReaderProps {

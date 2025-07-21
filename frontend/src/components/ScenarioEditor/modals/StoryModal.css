@@ -35,10 +35,11 @@
 .story-modal__generation-overlay {
   position: absolute;
   top: 20px;
-  left: 20px;
   right: 20px;
   z-index: 1001;
   pointer-events: none;
+  /* Don't stretch across full width to avoid overlaying title */
+  width: auto;
 }
 
 .story-modal__generation-controls {
@@ -55,6 +56,9 @@
     0 0 0 1px rgba(255, 255, 255, 0.8),
     inset 0 1px 0 rgba(255, 255, 255, 0.9);
   border: 2px solid rgba(255, 255, 255, 0.9);
+  /* Ensure controls don't get too wide */
+  max-width: fit-content;
+  margin-left: auto;
 }
 
 /* Status Strip */

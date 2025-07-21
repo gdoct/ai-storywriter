@@ -19,6 +19,7 @@ import './ScenarioEditor.css';
 import { BackstoryTab } from './tabs/BackstoryTab';
 import { CharacterRelationshipsTab } from './tabs/CharacterRelationshipsTab';
 import { CharactersTab } from './tabs/CharactersTab';
+import { FillInTab } from './tabs/FillInTab';
 import { GeneralTab } from './tabs/GeneralTab';
 import MultipleChaptersTab from './tabs/MultipleChaptersTab/MultipleChaptersTab';
 import { NotesTab } from './tabs/NotesTab';
@@ -68,6 +69,13 @@ const tabs: TabConfig[] = [
     label: 'Story Arc',
     icon: FaEye,
     component: StoryArcTab,
+    optional: true,
+  },
+  {
+    id: 'fillin',
+    label: 'Fill-In Story',
+    icon: FaBook,
+    component: FillInTab,
     optional: true,
   },
   {
@@ -573,6 +581,8 @@ export const ScenarioEditor: React.FC<ScenarioEditorProps> = ({
         isGenerating={state.isGenerating}
         isStorySaved={state.isStorySaved}
         title={state.scenario.title}
+        scenario={state.scenario}
+        coverImage={state.scenario.imageUrl}
       />
 
       {/* Chat Agent */}

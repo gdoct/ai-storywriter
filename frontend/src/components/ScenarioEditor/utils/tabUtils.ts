@@ -50,6 +50,18 @@ export function getTabsWithData(scenario: Scenario): TabId[] {
     tabsWithData.push('storyarc');
   }
 
+  // Check if fill-in tab has data
+  if (scenario.fillIn) {
+    const fillIn = scenario.fillIn;
+    const hasFillInData = (
+      (fillIn.beginning && fillIn.beginning.trim().length > 0) ||
+      (fillIn.ending && fillIn.ending.trim().length > 0)
+    );
+    if (hasFillInData) {
+      tabsWithData.push('fillin');
+    }
+  }
+
   // Check if notes tab has data
   if (scenario.notes?.trim()) {
     tabsWithData.push('notes');
@@ -204,6 +216,14 @@ export function tabHasData(scenario: Scenario, tabId: TabId): boolean {
     
     case 'storyarc':
       return !!scenario.storyarc?.trim();
+    
+    case 'fillin':
+      if (!scenario.fillIn) return false;
+      const fillIn = scenario.fillIn;
+      return (
+        (fillIn.beginning && fillIn.beginning.trim().length > 0) ||
+        (fillIn.ending && fillIn.ending.trim().length > 0)
+      );
     
     case 'notes':
       return !!scenario.notes?.trim();

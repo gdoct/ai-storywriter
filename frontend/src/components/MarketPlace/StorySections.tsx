@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
+import { AiStoryReader } from '@drdata/ai-styles';
 import { downloadStory, getMarketStory } from '../../services/marketPlaceApi';
 import { MarketStory, MarketStoryCard } from '../../types/marketplace';
+import { createPortal } from 'react-dom';
 import EnhancedStoryCard from '../Story/EnhancedStoryCard';
 import StoryCard from '../Story/StoryCard';
-import ReadingModal from '../StoryReader/ReadingModal';
-import EnhancedStoryReader from '../StoryReader/EnhancedStoryReader';
 import './StorySections.css';
 import StoryTooltip from './StoryTooltip';
 
@@ -22,12 +22,11 @@ interface StorySectionsProps {
 }
 
 const StorySections: React.FC<StorySectionsProps> = ({ sections, hasRole, handleModerationAction, loadSections, onViewMore }) => {
-  const [showReadingModal, setShowReadingModal] = useState(false);
+  const [showStoryModal, setShowStoryModal] = useState(false);
   const [selectedStoryId, setSelectedStoryId] = useState<number | null>(null);
   const [selectedStory, setSelectedStory] = useState<MarketStory | null>(null);
   const [storyLoading, setStoryLoading] = useState(false);
   const [storyError, setStoryError] = useState<string | null>(null);
-  const [userRating, setUserRating] = useState<number | undefined>(undefined);
   const [tooltipData, setTooltipData] = useState<{
     storyId: number | null;
     visible: boolean;
@@ -42,7 +41,7 @@ const StorySections: React.FC<StorySectionsProps> = ({ sections, hasRole, handle
 
   const handleStoryClick = async (storyId: number) => {
     setSelectedStoryId(storyId);
-    setShowReadingModal(true);
+    setShowStoryModal(true);
     setStoryLoading(true);
     setStoryError(null);
     setSelectedStory(null);
@@ -50,7 +49,6 @@ const StorySections: React.FC<StorySectionsProps> = ({ sections, hasRole, handle
     try {
       const story = await getMarketStory(storyId);
       setSelectedStory(story);
-      setUserRating(story.user_rating);
       
       // Track reading as a download
       try {
@@ -66,16 +64,15 @@ const StorySections: React.FC<StorySectionsProps> = ({ sections, hasRole, handle
     }
   };
 
-  const handleCloseReadingModal = () => {
-    setShowReadingModal(false);
+  const handleCloseStoryModal = () => {
+    setShowStoryModal(false);
     setSelectedStoryId(null);
     setSelectedStory(null);
     setStoryError(null);
-    setUserRating(undefined);
   };
 
   const handleRatingChange = async (newRating: number) => {
-    setUserRating(newRating);
+    console.log('Rating changed to:', newRating);
     
     // Update the selected story's rating data
     if (selectedStory) {
@@ -159,13 +156,6 @@ const StorySections: React.FC<StorySectionsProps> = ({ sections, hasRole, handle
     }
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-  };
 
   const getWordCount = (content: string) => {
     return content.trim().split(/\s+/).filter(word => word.length > 0).length;
@@ -257,50 +247,112 @@ const StorySections: React.FC<StorySectionsProps> = ({ sections, hasRole, handle
         </section>
       ))}
 
-      <ReadingModal
-        show={showReadingModal}
-        onClose={handleCloseReadingModal}
-        title={selectedStory?.title || 'Story Details'}
-        content={selectedStory?.content || 'No content available for this story.'}
-      >
-        {storyLoading && (
-          <div className="section-loading">
-            <div className="loading-spinner"></div>
-            <p>Loading story content...</p>
-          </div>
-        )}
+      {showStoryModal && createPortal(
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          width: '100vw',
+          height: '100vh',
+          zIndex: 1000,
+          backgroundColor: '#000'
+        }}>
+          {storyLoading && (
+            <div style={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              color: 'white',
+              textAlign: 'center',
+              zIndex: 1002
+            }}>
+              <div className="loading-spinner" style={{ marginBottom: '1rem' }}></div>
+              <p>Loading story content...</p>
+            </div>
+          )}
 
-        {storyError && (
-          <div className="section-error">
-            <p>Error: {storyError}</p>
-            <button 
-              className="retry-button"
-              onClick={() => selectedStoryId && handleStoryClick(selectedStoryId)}
-            >
-              Try Again
-            </button>
-          </div>
-        )}
+          {storyError && (
+            <div style={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              color: 'white',
+              textAlign: 'center',
+              zIndex: 1002
+            }}>
+              <p>Error: {storyError}</p>
+              <button 
+                className="retry-button"
+                onClick={() => selectedStoryId && handleStoryClick(selectedStoryId)}
+                style={{
+                  marginTop: '1rem',
+                  padding: '0.5rem 1rem',
+                  backgroundColor: '#3b82f6',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '0.5rem',
+                  cursor: 'pointer'
+                }}
+              >
+                Try Again
+              </button>
+            </div>
+          )}
 
-        {selectedStory && !storyLoading && !storyError && (
-          <EnhancedStoryReader
-            content={selectedStory.content || 'No content available for this story.'}
-            isLoading={false}
-            title={selectedStory.title}
-            author={selectedStory.author}
-            publishedAt={selectedStory.published_at}
-            wordCount={getWordCount(selectedStory.content || '')}
-            imageUri={selectedStory.image_uri}
-            scenarioJson={selectedStory.scenario_json}
-            storyId={selectedStory.id}
-            averageRating={selectedStory.average_rating}
-            ratingCount={selectedStory.rating_count}
-            userRating={userRating}
-            onRatingChange={handleRatingChange}
-            onDownload={handleDownloadStory}
-          />
-        )}
-      </ReadingModal>
+          {selectedStory && !storyLoading && !storyError && (
+            <AiStoryReader
+              text={selectedStory.content || 'No content available for this story.'}
+              title={selectedStory.title}
+              author={selectedStory.author}
+              readingTime={Math.ceil(getWordCount(selectedStory.content || '') / 200)}
+              coverImage={selectedStory.image_uri || 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1200&h=600&fit=crop'}
+              characters={
+                (() => {
+                  try {
+                    if (!selectedStory.scenario_json) return [];
+                    const scenario = JSON.parse(selectedStory.scenario_json);
+                    return scenario.characters?.filter((char: any) => char.name).map((char: any) => ({
+                      id: char.id,
+                      name: char.name,
+                      image: char.photoUrl || 
+                             (char.photo_data ? `data:${char.photo_mime_type || 'image/jpeg'};base64,${char.photo_data}` : '') ||
+                             'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face',
+                      alias: char.alias,
+                      role: char.role,
+                      gender: char.gender,
+                      appearance: char.appearance,
+                      backstory: char.backstory,
+                      extraInfo: char.extraInfo
+                    })) || [];
+                  } catch (error) {
+                    console.warn('Failed to parse scenario JSON:', error);
+                    return [];
+                  }
+                })()
+              }
+              enableTTS={true}
+              enableBookmark={true}
+              enableHighlight={true}
+              enableFullScreen={true}
+              enableRating={true}
+              displayMode="scroll"
+              onProgressChange={(progress) => console.log('Progress:', progress)}
+              onBookmark={(bookmark) => console.log('Bookmark:', bookmark)}
+              onHighlight={(selection) => console.log('Highlight:', selection)}
+              onRating={handleRatingChange}
+              onSettingsChange={(settings) => console.log('Settings:', settings)}
+              onModeChange={(mode) => console.log('Mode changed:', mode)}
+              onDownload={() => selectedStory && handleDownloadStory()}
+              onClose={handleCloseStoryModal}
+            />
+          )}
+        </div>,
+        document.body
+      )}
 
       {/* Floating Tooltip */}
       {tooltipData.visible && tooltipData.storyId && (

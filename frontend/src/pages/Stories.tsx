@@ -399,7 +399,13 @@ const Stories: React.FC = () => {
               name: char.name || 'Unknown',
               image: char.photoUrl || char.photo_data ? 
                 (char.photoUrl || `data:${char.photo_mime_type || 'image/jpeg'};base64,${char.photo_data}`) :
-                'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face'
+                'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face',
+              alias: char.alias,
+              role: char.role,
+              gender: char.gender,
+              appearance: char.appearance,
+              backstory: char.backstory,
+              extraInfo: char.extraInfo
             })) || []}
             enableTTS={true}
             enableBookmark={true}

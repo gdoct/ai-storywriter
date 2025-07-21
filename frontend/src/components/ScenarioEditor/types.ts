@@ -2,7 +2,7 @@ import React from 'react';
 import { Scenario } from '../../types/ScenarioTypes';
 
 // Tab identifiers
-export type TabId = 'general' | 'characters' | 'backstory' | 'storyarc' | 'notes' | 'worldbuilding' | 'timeline' | 'objectsactions' | 'themessymbols' | 'characterrelationships' | 'multiplechapters' | 'randomizers';
+export type TabId = 'general' | 'characters' | 'backstory' | 'storyarc' | 'fillin' | 'notes' | 'worldbuilding' | 'timeline' | 'objectsactions' | 'themessymbols' | 'characterrelationships' | 'multiplechapters' | 'randomizers';
 
 // Tab configuration interface
 export interface TabConfig {

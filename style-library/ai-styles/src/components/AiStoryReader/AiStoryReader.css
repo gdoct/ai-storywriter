@@ -134,10 +134,11 @@
 }
 
 .character-avatar {
+  position: relative;
   width: 48px;
   height: 48px;
   border-radius: 50%;
-  overflow: hidden;
+  overflow: visible;
   border: 3px solid rgba(255, 255, 255, 0.8);
   background: white;
   cursor: pointer;
@@ -149,12 +150,192 @@
   transform: scale(1.1);
   border-color: white;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
 }
 
-.character-avatar img {
+.character-avatar > img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  border-radius: 50%;
+}
+
+/* Character Tooltip */
+.character-tooltip {
+  position: absolute;
+  bottom: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1001;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+  width: max-content;
+  max-width: 320px;
+}
+
+.character-avatar:hover .character-tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(-8px);
+  pointer-events: auto;
+}
+
+.character-tooltip__content {
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(20px);
+  border-radius: 16px;
+  padding: 1.5rem;
+  border: 2px solid rgba(255, 255, 255, 0.9);
+  box-shadow: 
+    0 20px 35px rgba(0, 0, 0, 0.4),
+    0 8px 20px rgba(0, 0, 0, 0.2),
+    0 0 0 1px rgba(255, 255, 255, 0.8),
+    inset 0 2px 0 rgba(255, 255, 255, 0.9);
+  color: #1f2937;
+  position: relative;
+}
+
+.character-tooltip__content::before {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border: 8px solid transparent;
+  border-top-color: rgba(255, 255, 255, 0.98);
+}
+
+.character-tooltip__header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.character-tooltip__header img {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 2px solid rgba(59, 130, 246, 0.3);
+  object-fit: cover;
+}
+
+.character-tooltip__name {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #111827;
+  line-height: 1.2;
+}
+
+.character-tooltip__alias {
+  margin: 0.25rem 0 0 0;
+  font-size: 0.875rem;
+  font-style: italic;
+  color: #6b7280;
+}
+
+.character-tooltip__basics {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.character-tooltip__tag {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  text-transform: capitalize;
+}
+
+.character-tooltip__tag.role {
+  background: rgba(59, 130, 246, 0.15);
+  color: #2563eb;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.character-tooltip__tag.gender {
+  background: rgba(16, 185, 129, 0.15);
+  color: #059669;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.character-tooltip__section {
+  margin-bottom: 1rem;
+}
+
+.character-tooltip__section:last-child {
+  margin-bottom: 0;
+}
+
+.character-tooltip__section h4 {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #374151;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.character-tooltip__section p {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: #4b5563;
+}
+
+/* Dark theme support for tooltips */
+[data-theme="dark"] .character-tooltip__content {
+  background: rgba(31, 41, 55, 0.98);
+  border-color: rgba(55, 65, 81, 0.9);
+  color: #f9fafb;
+}
+
+[data-theme="dark"] .character-tooltip__content::before {
+  border-top-color: rgba(31, 41, 55, 0.98);
+}
+
+[data-theme="dark"] .character-tooltip__name {
+  color: #f9fafb;
+}
+
+[data-theme="dark"] .character-tooltip__alias {
+  color: #9ca3af;
+}
+
+[data-theme="dark"] .character-tooltip__section h4 {
+  color: #d1d5db;
+}
+
+[data-theme="dark"] .character-tooltip__section p {
+  color: #9ca3af;
+}
+
+/* Responsive tooltip adjustments */
+@media (max-width: 768px) {
+  .character-tooltip {
+    max-width: 280px;
+    bottom: 50px;
+  }
+  
+  .character-tooltip__content {
+    padding: 1rem;
+  }
+  
+  .character-tooltip__header {
+    gap: 0.75rem;
+  }
+  
+  .character-tooltip__header img {
+    width: 40px;
+    height: 40px;
+  }
 }
 
 /* Hero actions */
@@ -330,14 +511,35 @@
   align-items: center;
   justify-content: center;
   font-size: 12px;
-  z-index: 10;
+  z-index: 150;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  /* Always visible and accessible */
+  opacity: 1;
+  pointer-events: auto;
 }
 
 .hero-section__toggle:hover {
   background: var(--ds-bg-secondary, #f9fafb);
   transform: translateX(-50%) translateY(-2px);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* When hero section is collapsed, make toggle more visible */
+.hero-section.collapsed .hero-section__toggle {
+  background: var(--ds-primary, #3b82f6);
+  color: white;
+  border-color: var(--ds-primary, #3b82f6);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+  bottom: -20px;
+  width: 36px;
+  height: 36px;
+  font-size: 14px;
+}
+
+.hero-section.collapsed .hero-section__toggle:hover {
+  background: var(--ds-primary-hover, #2563eb);
+  transform: translateX(-50%) translateY(-4px);
+  box-shadow: 0 6px 16px rgba(59, 130, 246, 0.6);
 }
 
 /* ========== SLIDE-IN PANELS ========== */
@@ -363,6 +565,8 @@
   border-bottom-left-radius: 12px;
   border-bottom-right-radius: 12px;
   border-top: none;
+  /* Ensure it appears above generation controls */
+  z-index: 1002;
 }
 
 .slide-panel--top.visible {
@@ -588,6 +792,7 @@
   left: 0;
   right: 0;
   height: 60px;
+  z-index: 100;
 }
 
 .ui-trigger--bottom {
@@ -600,6 +805,32 @@
 .ui-trigger:hover {
   opacity: 0.1;
   background: var(--ds-primary, #3b82f6);
+}
+
+/* When hero is collapsed, make top trigger more obvious */
+.hero-section.collapsed + .slide-panel + .slide-panel + * .ui-trigger--top,
+.hero-section.collapsed ~ * .ui-trigger--top {
+  background: rgba(59, 130, 246, 0.05);
+  opacity: 0.3;
+}
+
+.hero-section.collapsed + .slide-panel + .slide-panel + * .ui-trigger--top:hover,
+.hero-section.collapsed ~ * .ui-trigger--top:hover {
+  opacity: 0.2;
+  background: var(--ds-primary, #3b82f6);
+}
+
+/* Reading controls button - make it stand out */
+.hero-action-btn-compact.reading-controls-btn {
+  background: rgba(59, 130, 246, 0.1) !important;
+  border-color: rgba(59, 130, 246, 0.5) !important;
+  color: var(--ds-primary, #3b82f6) !important;
+}
+
+.hero-action-btn-compact.reading-controls-btn:hover {
+  background: rgba(59, 130, 246, 0.2) !important;
+  border-color: var(--ds-primary, #3b82f6) !important;
+  color: var(--ds-primary, #3b82f6) !important;
 }
 
 /* ========== DARK THEME ========== */

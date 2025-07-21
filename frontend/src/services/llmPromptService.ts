@@ -204,23 +204,72 @@ export function createFinalStoryPrompt(scenario: Scenario): llmCompletionRequest
       userMessage: ''
     };
   }
+  
+  // Check if this is a fill-in story scenario
+  const hasFillInData = scenario.fillIn && (
+    (scenario.fillIn.beginning && scenario.fillIn.beginning.trim()) ||
+    (scenario.fillIn.ending && scenario.fillIn.ending.trim())
+  );
+  
   const markdown = formatScenarioAsMarkdown(scenario);
   const style = scenario.writingStyle || { genre: "General Fiction" };
   let prompt = "You are an exceptional storyteller";
   if (style.genre) {
     prompt += ` with expertise in the genre ${style.genre}`;
   }
-  prompt += ".\n\nCreate a complete, engaging narrative based on the following scenario:\n\n";
-  prompt += "Guidelines:\n";
-  prompt += "- Write all chapters and scenes fully, but do not use chapter headers\n";
-  prompt += "- Write the complete story up to the end\n";
-  prompt += "- IMPORTANT: do not use the names 'Silas', 'Blackwood' or 'Lyra'\n";
-  prompt += "- Include meaningful character interactions and development\n";
-  prompt += "- Honor the established character backgrounds and relationships\n";
-  prompt += "- Maintain consistent pacing appropriate to the genre\n";
-  prompt += "- Incorporate any specified themes, settings, and plot elements\n";
-  prompt += "- Present only the finished story with no meta-commentary, or markdown. Divide the story in paragraphs.\n\n";
+  
+  if (hasFillInData) {
+    prompt += ".\n\nFill in the missing parts of this story based on the provided scenario and story segments:\n\n";
+    
+    // Add specific fill-in instructions
+    prompt += "Fill-In Instructions:\n";
+    if (scenario.fillIn!.beginning && scenario.fillIn!.beginning.trim()) {
+      if (scenario.fillIn!.ending && scenario.fillIn!.ending.trim()) {
+        prompt += "- You have been provided with both the beginning and ending of the story\n";
+        prompt += "- Create the middle section that naturally connects the beginning to the ending\n";
+        prompt += "- Ensure smooth transitions and logical story progression\n";
+      } else {
+        prompt += "- You have been provided with the beginning of the story\n";
+        prompt += "- Continue from where the beginning leaves off and create a complete ending\n";
+      }
+    } else if (scenario.fillIn!.ending && scenario.fillIn!.ending.trim()) {
+      prompt += "- You have been provided with the ending of the story\n";
+      prompt += "- Create a compelling beginning and middle that leads naturally to the provided ending\n";
+    }
+    
+    prompt += "- Maintain consistent tone, style, and character voice throughout\n";
+    prompt += "- Honor all character backgrounds and scenario details\n";
+    prompt += "- IMPORTANT: do not use the names 'Silas', 'Blackwood' or 'Lyra'\n";
+    prompt += "- Present the complete story as one continuous narrative\n";
+    prompt += "- Do not include section markers or indicate where you filled in content\n\n";
+    
+    // Add the provided story segments
+    if (scenario.fillIn!.beginning && scenario.fillIn!.beginning.trim()) {
+      prompt += "STORY BEGINNING (provided):\n";
+      prompt += scenario.fillIn!.beginning.trim() + "\n\n";
+    }
+    
+    if (scenario.fillIn!.ending && scenario.fillIn!.ending.trim()) {
+      prompt += "STORY ENDING (provided):\n";
+      prompt += scenario.fillIn!.ending.trim() + "\n\n";
+    }
+    
+  } else {
+    prompt += ".\n\nCreate a complete, engaging narrative based on the following scenario:\n\n";
+    prompt += "Guidelines:\n";
+    prompt += "- Write all chapters and scenes fully, but do not use chapter headers\n";
+    prompt += "- Write the complete story up to the end\n";
+    prompt += "- IMPORTANT: do not use the names 'Silas', 'Blackwood' or 'Lyra'\n";
+    prompt += "- Include meaningful character interactions and development\n";
+    prompt += "- Honor the established character backgrounds and relationships\n";
+    prompt += "- Maintain consistent pacing appropriate to the genre\n";
+    prompt += "- Incorporate any specified themes, settings, and plot elements\n";
+    prompt += "- Present only the finished story with no meta-commentary, or markdown. Divide the story in paragraphs.\n\n";
+  }
+  
+  prompt += "SCENARIO DETAILS:\n";
   prompt += markdown;
+  
   return {
     systemMessage: 'You are an exceptional storyteller.',
     userMessage: prompt

@@ -4,6 +4,12 @@ import { ObjectsAndActions } from '../components/ScenarioEditor/tabs/ObjectsActi
 import { ThemesAndSymbols } from '../components/ScenarioEditor/tabs/ThemesSymbolsTab/types/themesSymbols';
 import { MultipleChapters } from './chapters';
 
+// Fill-in story interface for FillInTab
+export interface FillIn {
+    beginning?: string;
+    ending?: string;
+}
+
 // Style settings interface based on StoryStyleTab
 export interface StyleSettings {
     style?: string;
@@ -77,6 +83,7 @@ export type Scenario = {
     characterRelationships?: CharacterRelationships;
     multipleChapters?: MultipleChapters;
     randomizers?: RandomizerTab;
+    fillIn?: FillIn;
     
     // Image fields
     imageId?: string; // ID of the associated image from scenario_images table

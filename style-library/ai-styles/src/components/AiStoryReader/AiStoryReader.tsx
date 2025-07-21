@@ -197,6 +197,55 @@ export const AiStoryReader: React.FC<AiStoryReaderProps> = ({
       {characters.map((character) => (
         <div key={character.id} className="character-avatar" title={character.name}>
           <img src={character.image} alt={character.name} />
+          <div className="character-tooltip">
+            <div className="character-tooltip__content">
+              <div className="character-tooltip__header">
+                <img src={character.image} alt={character.name} />
+                <div>
+                  <h3 className="character-tooltip__name">{character.name}</h3>
+                  {character.alias && (
+                    <p className="character-tooltip__alias">"{character.alias}"</p>
+                  )}
+                </div>
+              </div>
+              
+              {(character.role || character.gender) && (
+                <div className="character-tooltip__basics">
+                  {character.role && (
+                    <span className="character-tooltip__tag role">
+                      {character.role}
+                    </span>
+                  )}
+                  {character.gender && (
+                    <span className="character-tooltip__tag gender">
+                      {character.gender}
+                    </span>
+                  )}
+                </div>
+              )}
+              
+              {character.appearance && (
+                <div className="character-tooltip__section">
+                  <h4>Appearance</h4>
+                  <p>{character.appearance}</p>
+                </div>
+              )}
+              
+              {character.backstory && (
+                <div className="character-tooltip__section">
+                  <h4>Background</h4>
+                  <p>{character.backstory}</p>
+                </div>
+              )}
+              
+              {character.extraInfo && (
+                <div className="character-tooltip__section">
+                  <h4>Additional Info</h4>
+                  <p>{character.extraInfo}</p>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       ))}
     </div>
@@ -257,6 +306,13 @@ export const AiStoryReader: React.FC<AiStoryReaderProps> = ({
             {characters && characters.length > 0 && renderCharacterAvatars(characters)}
           </div>
           <div className="hero-section__actions">
+            <IconButton
+              icon="⚙️"
+              onClick={showTopPanel}
+              title="Show reading controls (font, theme, etc.)"
+              size="sm"
+              className="hero-action-btn-compact reading-controls-btn"
+            />
             {onDownload && (
               <IconButton
                 icon="📥"
