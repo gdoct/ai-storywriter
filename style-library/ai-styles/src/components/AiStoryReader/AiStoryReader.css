@@ -705,6 +705,8 @@
 .ai-story-reader__content {
   flex: 1;
   padding: 3rem 4rem;
+  /* Add bottom padding to ensure last lines are always visible */
+  padding-bottom: 8rem;
   overflow-y: auto;
   scroll-behavior: smooth;
   background: var(--ds-bg, #ffffff);
@@ -721,6 +723,7 @@
 
 .ai-story-reader.fullscreen .ai-story-reader__content {
   padding: 4rem 6rem;
+  padding-bottom: 8rem;
   min-height: 100vh;
 }
 
@@ -914,10 +917,12 @@
 @media (max-width: 768px) {
   .ai-story-reader__content {
     padding: 2rem 1.5rem;
+    padding-bottom: 6rem;
   }
   
   .ai-story-reader.fullscreen .ai-story-reader__content {
     padding: 2rem 1.5rem;
+    padding-bottom: 6rem;
   }
   
   .slide-panel__content {
@@ -949,6 +954,7 @@
 @media (max-width: 480px) {
   .ai-story-reader__content {
     padding: 1.5rem 1rem;
+    padding-bottom: 5rem;
   }
   
   .slide-panel__content {

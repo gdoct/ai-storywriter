@@ -270,6 +270,12 @@ export const AiStoryReader: React.FC<AiStoryReaderProps> = ({
               {characters && characters.length > 0 && renderCharacterAvatars(characters)}
             </div>
             <div className="hero-section__actions">
+              <IconButton
+                icon="⚙️"
+                onClick={showTopPanel}
+                title="Show reading controls (font, theme, etc.)"
+                className="hero-action-btn"
+              />
               {onDownload && (
                 <IconButton
                   icon="📥"
