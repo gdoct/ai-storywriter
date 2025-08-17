@@ -16,16 +16,29 @@ interface TimelineCanvasProps {
   onEventUpdate: (eventId: string, updates: Partial<TimelineEvent>) => void;
 }
 
-interface LayoutEvent extends TimelineEvent {
-  layoutX: number;
-  layoutY: number;
-  children: LayoutEvent[];
+interface Connection {
+  id: string;
+  fromEventId: string;
+  toEventId: string;
+  fromX: number;
+  fromY: number;
+  toX: number;
+  toY: number;
+}
+
+interface DragState {
+  type: 'none' | 'event' | 'connection';
+  eventId?: string;
+  offset?: { x: number; y: number };
+  fromEventId?: string;
+  currentX?: number;
+  currentY?: number;
 }
 
 const EVENT_WIDTH = 180;
 const EVENT_HEIGHT = 80;
-const ROW_HEIGHT = 120;
-const COLUMN_WIDTH = 220;
+const CONNECTION_POINT_RADIUS = 8;
+const GRID_SIZE = 20;
 
 export const TimelineCanvas: React.FC<TimelineCanvasProps> = ({
   events,
@@ -42,161 +55,117 @@ export const TimelineCanvas: React.FC<TimelineCanvasProps> = ({
   onEventUpdate,
 }) => {
   const svgRef = useRef<SVGSVGElement>(null);
-  const [isDragging, setIsDragging] = useState(false);
+  const [isPanning, setIsPanning] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
-  const [draggedEventId, setDraggedEventId] = useState<string | null>(null);
-  const [draggedEventOffset, setDraggedEventOffset] = useState({ x: 0, y: 0 });
+  const [dragState, setDragState] = useState<DragState>({ type: 'none' });
+  const [hoveredConnectionPoint, setHoveredConnectionPoint] = useState<{ eventId: string; type: 'input' | 'output' } | null>(null);
 
-  // Calculate layout for events
-  const layoutEvents = useMemo(() => {
-    const eventMap = new Map<string, LayoutEvent>();
+  // Use events directly (no migration needed)
+  const canvasEvents = events;
+
+  // Detect circular dependencies using DFS
+  const hasCircularDependency = useCallback((fromId: string, toId: string): boolean => {
+    const visited = new Set<string>();
+    const recursionStack = new Set<string>();
     
-    // Convert events to layout events and build map
-    events.forEach(event => {
-      eventMap.set(event.id, {
-        ...event,
-        layoutX: 0,
-        layoutY: 0,
-        children: []
-      });
-    });
-
-    // Build parent-child relationships
-    events.forEach(event => {
-      if (event.parentId) {
-        const parent = eventMap.get(event.parentId);
-        const child = eventMap.get(event.id);
-        if (parent && child) {
-          parent.children.push(child);
+    const dfs = (currentId: string): boolean => {
+      if (recursionStack.has(currentId)) return true;
+      if (visited.has(currentId)) return false;
+      
+      visited.add(currentId);
+      recursionStack.add(currentId);
+      
+      const currentEvent = canvasEvents.find(e => e.id === currentId);
+      if (currentEvent) {
+        for (const outputId of currentEvent.connections.outputs) {
+          if (dfs(outputId)) return true;
         }
       }
-    });
-
-    // Find root event (no parent)
-    const rootEvent = Array.from(eventMap.values()).find(event => !event.parentId);
-    if (!rootEvent) return [];
-
-    // Calculate positions using layout algorithm
-    const positioned = new Set<string>();
-    const rows: LayoutEvent[][] = [];
-
-    const positionEvent = (event: LayoutEvent, row: number, column: number) => {
-      if (positioned.has(event.id)) return;
       
-      // Ensure row exists
-      while (rows.length <= row) {
-        rows.push([]);
-      }
-
-      // Position event
-      event.layoutX = column * COLUMN_WIDTH + 100; // 100px offset from left
-      event.layoutY = row * ROW_HEIGHT + 50; // 50px offset from top
-      event.row = row;
-      
-      rows[row].push(event);
-      positioned.add(event.id);
-
-      // Position children in next row
-      if (event.children.length > 0) {
-        // Limit to max 3 children
-        const children = event.children.slice(0, 3);
-        const childStartColumn = Math.max(0, column - Math.floor(children.length / 2));
-        
-        children.forEach((child, index) => {
-          positionEvent(child, row + 1, childStartColumn + index);
-        });
-      }
+      recursionStack.delete(currentId);
+      return false;
     };
-
-    // Start positioning from root
-    positionEvent(rootEvent, 0, 0);
-
-    // Center the layout
-    if (rows.length > 0) {
-      const maxWidth = Math.max(...rows.map(row => row.length));
-      const centerOffset = (maxWidth * COLUMN_WIDTH) / 2;
-      
-      Array.from(eventMap.values()).forEach(event => {
-        event.layoutX += centerOffset;
-      });
-    }
-
-    return Array.from(eventMap.values());
-  }, [events]);
+    
+    // Temporarily add the connection and check for cycles
+    return dfs(fromId);
+  }, [canvasEvents]);
 
   // Calculate connections between events
-  const connections = useMemo(() => {
-    const lines: Array<{
-      x1: number;
-      y1: number;
-      x2: number;
-      y2: number;
-      isParentChild: boolean;
-    }> = [];
-
-    layoutEvents.forEach(event => {
-      event.children.forEach(child => {
-        const startX = event.layoutX + EVENT_WIDTH / 2;
-        const startY = event.layoutY + EVENT_HEIGHT;
-        const endX = child.layoutX + EVENT_WIDTH / 2;
-        const endY = child.layoutY;
-
-        lines.push({
-          x1: startX,
-          y1: startY,
-          x2: endX,
-          y2: endY,
-          isParentChild: true
-        });
-      });
-
-      // Add connections to orphaned events (connect to first event in next row)
-      if (event.children.length === 0) {
-        const nextRowEvents = layoutEvents.filter(e => e.row === event.row + 1);
-        if (nextRowEvents.length > 0) {
-          const firstInNextRow = nextRowEvents.reduce((prev, curr) => 
-            prev.layoutX < curr.layoutX ? prev : curr
-          );
-          
-          const startX = event.layoutX + EVENT_WIDTH / 2;
-          const startY = event.layoutY + EVENT_HEIGHT;
-          const endX = firstInNextRow.layoutX + EVENT_WIDTH / 2;
-          const endY = firstInNextRow.layoutY;
-
-          lines.push({
-            x1: startX,
-            y1: startY,
-            x2: endX,
-            y2: endY,
-            isParentChild: false
+  const connections = useMemo((): Connection[] => {
+    const connectionList: Connection[] = [];
+    
+    canvasEvents.forEach(event => {
+      event.connections.outputs.forEach(outputId => {
+        const targetEvent = canvasEvents.find(e => e.id === outputId);
+        if (targetEvent) {
+          connectionList.push({
+            id: `${event.id}-${outputId}`,
+            fromEventId: event.id,
+            toEventId: outputId,
+            fromX: event.position.x + EVENT_WIDTH / 2,
+            fromY: event.position.y + EVENT_HEIGHT,
+            toX: targetEvent.position.x + EVENT_WIDTH / 2,
+            toY: targetEvent.position.y
           });
         }
-      }
+      });
     });
+    
+    return connectionList;
+  }, [canvasEvents]);
 
-    return lines;
-  }, [layoutEvents]);
+  // Convert screen coordinates to SVG coordinates
+  const screenToSVG = useCallback((screenX: number, screenY: number) => {
+    const rect = svgRef.current?.getBoundingClientRect();
+    if (!rect) return { x: 0, y: 0 };
+    
+    return {
+      x: (screenX - rect.left) / zoom - panX,
+      y: (screenY - rect.top) / zoom - panY
+    };
+  }, [zoom, panX, panY]);
 
   // Handle mouse events for panning
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    if (e.target === svgRef.current) {
-      setIsDragging(true);
+    // Allow panning when clicking on SVG background, grid, or connections
+    const target = e.target as SVGElement;
+    const isBackground = target === svgRef.current || 
+                        target.classList.contains('timeline-grid') ||
+                        target.tagName === 'rect' && target.getAttribute('fill') === 'url(#grid)';
+    
+    if (isBackground) {
+      setIsPanning(true);
       setDragStart({ x: e.clientX - panX, y: e.clientY - panY });
     }
   }, [panX, panY]);
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    if (isDragging && !draggedEventId) {
+    if (isPanning && dragState.type === 'none') {
       const deltaX = e.clientX - dragStart.x;
       const deltaY = e.clientY - dragStart.y;
       onPan(deltaX - panX, deltaY - panY);
+    } else if (dragState.type === 'event' && dragState.eventId) {
+      const svgPos = screenToSVG(e.clientX, e.clientY);
+      const newX = Math.round((svgPos.x - (dragState.offset?.x || 0)) / GRID_SIZE) * GRID_SIZE;
+      const newY = Math.round((svgPos.y - (dragState.offset?.y || 0)) / GRID_SIZE) * GRID_SIZE;
+      
+      onEventUpdate(dragState.eventId, {
+        position: { x: Math.max(0, newX), y: Math.max(0, newY) }
+      });
+    } else if (dragState.type === 'connection') {
+      const svgPos = screenToSVG(e.clientX, e.clientY);
+      setDragState(prev => ({
+        ...prev,
+        currentX: svgPos.x,
+        currentY: svgPos.y
+      }));
     }
-  }, [isDragging, draggedEventId, dragStart, panX, panY, onPan]);
+  }, [isPanning, dragState, dragStart, panX, panY, onPan, screenToSVG, onEventUpdate]);
 
   const handleMouseUp = useCallback(() => {
-    setIsDragging(false);
-    setDraggedEventId(null);
-    setDraggedEventOffset({ x: 0, y: 0 });
+    setIsPanning(false);
+    setDragState({ type: 'none' });
+    setHoveredConnectionPoint(null);
   }, []);
 
   // Handle wheel events for zooming
@@ -207,8 +176,8 @@ export const TimelineCanvas: React.FC<TimelineCanvasProps> = ({
     if (!rect) return;
 
     // Calculate mouse position in SVG coordinates
-    const mouseX = (e.clientX - rect.left) / zoom + panX;
-    const mouseY = (e.clientY - rect.top) / zoom + panY;
+    const mouseX = (e.clientX - rect.left) / zoom - panX;
+    const mouseY = (e.clientY - rect.top) / zoom - panY;
 
     // Zoom delta
     const zoomDelta = e.deltaY > 0 ? -0.1 : 0.1;
@@ -216,8 +185,8 @@ export const TimelineCanvas: React.FC<TimelineCanvasProps> = ({
 
     // Calculate new pan to keep mouse position stable
     const zoomRatio = newZoom / zoom;
-    const newPanX = mouseX - (mouseX - panX) * zoomRatio;
-    const newPanY = mouseY - (mouseY - panY) * zoomRatio;
+    const newPanX = mouseX - (mouseX + panX) * zoomRatio;
+    const newPanY = mouseY - (mouseY + panY) * zoomRatio;
 
     // Update zoom and pan through parent
     onZoom(newZoom);
@@ -248,40 +217,92 @@ export const TimelineCanvas: React.FC<TimelineCanvasProps> = ({
   // Handle event drag start
   const handleEventMouseDown = useCallback((eventId: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    const rect = svgRef.current?.getBoundingClientRect();
-    if (!rect) return;
-
-    const event = layoutEvents.find(ev => ev.id === eventId);
+    const svgPos = screenToSVG(e.clientX, e.clientY);
+    const event = canvasEvents.find(ev => ev.id === eventId);
     if (!event) return;
 
-    setDraggedEventId(eventId);
-    setDraggedEventOffset({
-      x: (e.clientX - rect.left) / zoom + panX - event.layoutX,
-      y: (e.clientY - rect.top) / zoom + panY - event.layoutY
+    setDragState({
+      type: 'event',
+      eventId,
+      offset: {
+        x: svgPos.x - event.position.x,
+        y: svgPos.y - event.position.y
+      }
     });
-  }, [layoutEvents, zoom, panX, panY]);
+  }, [canvasEvents, screenToSVG]);
 
-  // Handle event drag
-  const handleEventMouseMove = useCallback((e: React.MouseEvent) => {
-    if (!draggedEventId || !svgRef.current) return;
-
-    const rect = svgRef.current.getBoundingClientRect();
-    const newX = (e.clientX - rect.left) / zoom + panX - draggedEventOffset.x;
-    const newY = (e.clientY - rect.top) / zoom + panY - draggedEventOffset.y;
-
-    // Snap to grid (optional)
-    const gridSize = 20;
-    const snappedX = Math.round(newX / gridSize) * gridSize;
-    const snappedY = Math.round(newY / gridSize) * gridSize;
-
-    onEventUpdate(draggedEventId, {
-      position: { x: snappedX, y: snappedY }
+  // Handle connection point interactions
+  const handleConnectionStart = useCallback((fromEventId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const svgPos = screenToSVG(e.clientX, e.clientY);
+    
+    setDragState({
+      type: 'connection',
+      fromEventId,
+      currentX: svgPos.x,
+      currentY: svgPos.y
     });
-  }, [draggedEventId, zoom, panX, panY, draggedEventOffset, onEventUpdate]);
+  }, [screenToSVG]);
+
+  const handleConnectionEnd = useCallback((toEventId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    if (dragState.type === 'connection' && dragState.fromEventId && dragState.fromEventId !== toEventId) {
+      // Check for circular dependency
+      if (!hasCircularDependency(dragState.fromEventId, toEventId)) {
+        // Update connections
+        const fromEvent = canvasEvents.find(event => event.id === dragState.fromEventId);
+        const toEvent = canvasEvents.find(event => event.id === toEventId);
+        
+        if (fromEvent && toEvent) {
+          // Add to outputs of source event
+          const newOutputs = [...fromEvent.connections.outputs];
+          if (!newOutputs.includes(toEventId)) {
+            newOutputs.push(toEventId);
+            onEventUpdate(dragState.fromEventId!, {
+              connections: { ...fromEvent.connections, outputs: newOutputs }
+            });
+          }
+          
+          // Add to inputs of target event
+          const newInputs = [...toEvent.connections.inputs];
+          if (!newInputs.includes(dragState.fromEventId)) {
+            newInputs.push(dragState.fromEventId);
+            onEventUpdate(toEventId, {
+              connections: { ...toEvent.connections, inputs: newInputs }
+            });
+          }
+        }
+      }
+    }
+    
+    setDragState({ type: 'none' });
+  }, [dragState, hasCircularDependency, canvasEvents, onEventUpdate]);
+
+  const handleConnectionRemove = useCallback((connection: Connection, e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    const fromEvent = canvasEvents.find(event => event.id === connection.fromEventId);
+    const toEvent = canvasEvents.find(event => event.id === connection.toEventId);
+    
+    if (fromEvent && toEvent) {
+      // Remove from outputs of source event
+      const newOutputs = fromEvent.connections.outputs.filter(id => id !== connection.toEventId);
+      onEventUpdate(connection.fromEventId, {
+        connections: { ...fromEvent.connections, outputs: newOutputs }
+      });
+      
+      // Remove from inputs of target event
+      const newInputs = toEvent.connections.inputs.filter(id => id !== connection.fromEventId);
+      onEventUpdate(connection.toEventId, {
+        connections: { ...toEvent.connections, inputs: newInputs }
+      });
+    }
+  }, [canvasEvents, onEventUpdate]);
 
   // Calculate viewport dimensions
-  const maxX = Math.max(...layoutEvents.map(e => e.layoutX + EVENT_WIDTH), 800);
-  const maxY = Math.max(...layoutEvents.map(e => e.layoutY + EVENT_HEIGHT), 600);
+  const maxX = Math.max(...canvasEvents.map(e => e.position.x + EVENT_WIDTH), 800);
+  const maxY = Math.max(...canvasEvents.map(e => e.position.y + EVENT_HEIGHT), 600);
   const viewBoxWidth = maxX + 200;
   const viewBoxHeight = maxY + 200;
 
@@ -292,10 +313,7 @@ export const TimelineCanvas: React.FC<TimelineCanvasProps> = ({
         className="timeline-canvas__svg"
         viewBox={`${-panX} ${-panY} ${viewBoxWidth / zoom} ${viewBoxHeight / zoom}`}
         onMouseDown={handleMouseDown}
-        onMouseMove={(e) => {
-          handleMouseMove(e);
-          handleEventMouseMove(e);
-        }}
+        onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onWheel={handleWheel}
       >
@@ -312,26 +330,67 @@ export const TimelineCanvas: React.FC<TimelineCanvasProps> = ({
           >
             <polygon points="0 0, 10 3.5, 0 7" />
           </marker>
+          
+          {/* Grid pattern */}
+          <pattern
+            id="grid"
+            width={GRID_SIZE}
+            height={GRID_SIZE}
+            patternUnits="userSpaceOnUse"
+          >
+            <path
+              d={`M ${GRID_SIZE} 0 L 0 0 0 ${GRID_SIZE}`}
+              fill="none"
+              stroke="#e0e0e0"
+              strokeWidth="0.5"
+              opacity="0.3"
+            />
+          </pattern>
         </defs>
 
+        {/* Background grid */}
+        <rect
+          x={-panX}
+          y={-panY}
+          width={viewBoxWidth / zoom}
+          height={viewBoxHeight / zoom}
+          fill="url(#grid)"
+          className="timeline-grid"
+        />
+
         {/* Render connections */}
-        {connections.map((connection, index) => (
-          <line
-            key={index}
-            x1={connection.x1}
-            y1={connection.y1}
-            x2={connection.x2}
-            y2={connection.y2}
-            className={`timeline-connection ${!connection.isParentChild ? 'timeline-connection--merge' : ''}`}
-          />
+        {connections.map((connection) => (
+          <g key={connection.id}>
+            <line
+              x1={connection.fromX}
+              y1={connection.fromY}
+              x2={connection.toX}
+              y2={connection.toY}
+              className="timeline-connection"
+              markerEnd="url(#arrowhead)"
+              onClick={(e) => handleConnectionRemove(connection, e)}
+            />
+          </g>
         ))}
 
+        {/* Render active connection during drag */}
+        {dragState.type === 'connection' && dragState.fromEventId && (
+          <line
+            x1={canvasEvents.find(e => e.id === dragState.fromEventId)?.position.x! + EVENT_WIDTH / 2}
+            y1={canvasEvents.find(e => e.id === dragState.fromEventId)?.position.y! + EVENT_HEIGHT}
+            x2={dragState.currentX || 0}
+            y2={dragState.currentY || 0}
+            className="timeline-connection timeline-connection--active"
+            strokeDasharray="5,5"
+          />
+        )}
+
         {/* Render events */}
-        {layoutEvents.map(event => (
+        {canvasEvents.map(event => (
           <g
             key={event.id}
             className={`timeline-event ${selectedEventId === event.id ? 'timeline-event--selected' : ''}`}
-            transform={`translate(${event.layoutX}, ${event.layoutY})`}
+            transform={`translate(${event.position.x}, ${event.position.y})`}
             onClick={(e) => handleEventClick(event.id, e)}
             onDoubleClick={(e) => handleEventDoubleClick(event.id, e)}
             onMouseDown={(e) => handleEventMouseDown(event.id, e)}
@@ -350,6 +409,7 @@ export const TimelineCanvas: React.FC<TimelineCanvasProps> = ({
               className="timeline-event__title"
               x={EVENT_WIDTH / 2}
               y={EVENT_HEIGHT / 2 - 18}
+              textAnchor="middle"
             >
               {event.title.length > 20 ? `${event.title.substring(0, 20)}...` : event.title}
             </text>
@@ -360,6 +420,7 @@ export const TimelineCanvas: React.FC<TimelineCanvasProps> = ({
                 className="timeline-event__location"
                 x={EVENT_WIDTH / 2}
                 y={EVENT_HEIGHT / 2 - 2}
+                textAnchor="middle"
               >
                 📍 {event.location.length > 15 ? `${event.location.substring(0, 15)}...` : event.location}
               </text>
@@ -371,6 +432,7 @@ export const TimelineCanvas: React.FC<TimelineCanvasProps> = ({
                 className="timeline-event__subtitle"
                 x={EVENT_WIDTH / 2}
                 y={EVENT_HEIGHT / 2 + 14}
+                textAnchor="middle"
               >
                 {event.date}
               </text>
@@ -384,6 +446,38 @@ export const TimelineCanvas: React.FC<TimelineCanvasProps> = ({
               r="6"
             >
               <title>{event.includeInStory ? 'Include in story' : 'Backstory only'}</title>
+            </circle>
+
+            {/* Input connection point (top) */}
+            <circle
+              className={`timeline-connection-point timeline-connection-point--input ${
+                hoveredConnectionPoint?.eventId === event.id && hoveredConnectionPoint?.type === 'input' 
+                  ? 'timeline-connection-point--hovered' : ''
+              }`}
+              cx={EVENT_WIDTH / 2}
+              cy={0}
+              r={CONNECTION_POINT_RADIUS}
+              onMouseEnter={() => setHoveredConnectionPoint({ eventId: event.id, type: 'input' })}
+              onMouseLeave={() => setHoveredConnectionPoint(null)}
+              onMouseUp={(e) => handleConnectionEnd(event.id, e)}
+            >
+              <title>Input connection point</title>
+            </circle>
+
+            {/* Output connection point (bottom) */}
+            <circle
+              className={`timeline-connection-point timeline-connection-point--output ${
+                hoveredConnectionPoint?.eventId === event.id && hoveredConnectionPoint?.type === 'output' 
+                  ? 'timeline-connection-point--hovered' : ''
+              }`}
+              cx={EVENT_WIDTH / 2}
+              cy={EVENT_HEIGHT}
+              r={CONNECTION_POINT_RADIUS}
+              onMouseEnter={() => setHoveredConnectionPoint({ eventId: event.id, type: 'output' })}
+              onMouseLeave={() => setHoveredConnectionPoint(null)}
+              onMouseDown={(e) => handleConnectionStart(event.id, e)}
+            >
+              <title>Output connection point</title>
             </circle>
 
             {/* Control buttons (visible on hover) */}
@@ -403,14 +497,15 @@ export const TimelineCanvas: React.FC<TimelineCanvasProps> = ({
                 <text
                   className="timeline-event__control-icon"
                   x="10"
-                  y="10"
+                  y="14"
+                  textAnchor="middle"
                 >
                   +
                 </text>
               </g>
 
-              {/* Remove event button (not for root) */}
-              {event.parentId && (
+              {/* Remove event button (not for root without inputs) */}
+              {event.connections.inputs.length > 0 && (
                 <g
                   className="timeline-event__control-btn timeline-event__control-btn--remove"
                   transform={`translate(${EVENT_WIDTH - 60}, ${EVENT_HEIGHT - 25})`}
@@ -425,7 +520,8 @@ export const TimelineCanvas: React.FC<TimelineCanvasProps> = ({
                   <text
                     className="timeline-event__control-icon"
                     x="10"
-                    y="10"
+                    y="14"
+                    textAnchor="middle"
                   >
                     ×
                   </text>

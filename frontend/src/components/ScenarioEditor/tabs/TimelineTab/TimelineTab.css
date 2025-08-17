@@ -78,6 +78,10 @@
   height: 100%;
   cursor: grab;
   position: relative;
+  background: linear-gradient(45deg, #f8f9fa 25%, transparent 25%, transparent 75%, #f8f9fa 75%, #f8f9fa),
+              linear-gradient(45deg, #f8f9fa 25%, transparent 25%, transparent 75%, #f8f9fa 75%, #f8f9fa);
+  background-size: 20px 20px;
+  background-position: 0 0, 10px 10px;
 }
 
 .timeline-canvas:active {
@@ -88,6 +92,16 @@
   width: 100%;
   height: 100%;
   display: block;
+}
+
+/* Event drag cursor */
+.timeline-event--dragging {
+  cursor: grabbing;
+}
+
+/* Grid styles */
+.timeline-grid {
+  opacity: 0.2;
 }
 
 /* Event node styles */
@@ -205,19 +219,57 @@
 
 /* Connection lines */
 .timeline-connection {
-  stroke: var(--color-border-primary);
+  stroke: var(--color-primary-400);
   stroke-width: 2;
   fill: none;
-  marker-end: url(#arrowhead);
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
-.timeline-connection--merge {
-  stroke-dasharray: 5,5;
+.timeline-connection:hover {
+  stroke: var(--color-error-500);
+  stroke-width: 3;
+}
+
+.timeline-connection--active {
+  stroke: var(--color-primary-500);
+  stroke-width: 2;
+  opacity: 0.7;
+}
+
+/* Connection points */
+.timeline-connection-point {
+  fill: var(--color-primary-500);
+  stroke: var(--color-surface-primary);
+  stroke-width: 2;
+  cursor: crosshair;
+  opacity: 0.3;
+  transition: all 0.2s ease;
+}
+
+.timeline-event:hover .timeline-connection-point {
+  opacity: 0.8;
+}
+
+.timeline-connection-point:hover,
+.timeline-connection-point--hovered {
+  opacity: 1;
+  r: 10;
+  fill: var(--color-primary-400);
+  stroke-width: 3;
+}
+
+.timeline-connection-point--input {
+  fill: var(--color-success-500);
+}
+
+.timeline-connection-point--output {
+  fill: var(--color-primary-500);
 }
 
 /* Arrow marker */
 .timeline-arrow-marker {
-  fill: var(--color-border-primary);
+  fill: var(--color-primary-400);
 }
 
 /* Loading state */

@@ -108,7 +108,7 @@ def generate_character_from_image(image_data: bytes, user_prompt: str) -> Dict[s
     """Generate character data from image using LLM service."""
     try:
         # Import here to avoid circular imports
-        from services.locationFieldGenerator import generate_character_from_image as llm_generate_character
+        from llm_services.llm_service import generate_character_from_image as llm_generate_character
         return llm_generate_character(image_data, user_prompt)
     except Exception as e:
         logger.error(f"Error generating character from image: {e}")
@@ -118,7 +118,8 @@ def generate_character_from_image(image_data: bytes, user_prompt: str) -> Dict[s
             'alias': '',
             'role': 'Character',
             'gender': 'Unknown',
-            'appearance': user_prompt,
+            'appearance': 'Based on uploaded photo. Distinctive appearance that matches the uploaded image.',
+            'backstory': 'A character generated from an uploaded photograph with unique traits and history.',
             'extraInfo': 'Generated from uploaded photo'
         }
 
@@ -396,7 +397,7 @@ async def generate_field_from_photo(
         
         # Generate field value using LLM service
         try:
-            from services.locationFieldGenerator import generate_field_from_image
+            from llm_services.llm_service import generate_field_from_image
             field_value = generate_field_from_image(
                 compressed_data, field_name, current_value, prompt
             )

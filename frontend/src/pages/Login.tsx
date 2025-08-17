@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import './Login.css';
 
@@ -9,14 +9,18 @@ const Login: React.FC = () => {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const { authenticated, login } = useAuth();
 
-  // Redirect to dashboard if already authenticated
+  // Get the URL the user was trying to access before being redirected to login
+  const from = location.state?.from?.pathname + location.state?.from?.search || '/dashboard';
+
+  // Redirect to intended destination if already authenticated
   useEffect(() => {
     if (authenticated) {
-      navigate('/dashboard');
+      navigate(from, { replace: true });
     }
-  }, [authenticated, navigate]);
+  }, [authenticated, navigate, from]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,7 +36,7 @@ const Login: React.FC = () => {
     setIsLoading(false);
     
     if (success) {
-      navigate('/dashboard');
+      navigate(from, { replace: true });
     } else {
       setError('Login failed. Please check your credentials.');
     }

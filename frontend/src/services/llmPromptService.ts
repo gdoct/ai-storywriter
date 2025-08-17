@@ -256,14 +256,15 @@ export function createFinalStoryPrompt(scenario: Scenario): llmCompletionRequest
   } else {
     prompt += ".\n\nCreate a complete, engaging narrative based on the following scenario:\n\n";
     prompt += "Guidelines:\n";
-    prompt += "- Write all chapters and scenes fully, but do not use chapter headers\n";
-    prompt += "- Write the complete story up to the end\n";
+    prompt += "- Write the entire story, and divide it in paragraphs of 10 sentences or less each.\n";
     prompt += "- IMPORTANT: do not use the names 'Silas', 'Blackwood' or 'Lyra'\n";
     prompt += "- Include meaningful character interactions and development\n";
     prompt += "- Honor the established character backgrounds and relationships\n";
     prompt += "- Maintain consistent pacing appropriate to the genre\n";
     prompt += "- Incorporate any specified themes, settings, and plot elements\n";
-    prompt += "- Present only the finished story with no meta-commentary, or markdown. Divide the story in paragraphs.\n\n";
+    prompt += "- Present only the finished story with no meta-commentary. \n";
+    prompt += "- Divide the story in paragraphs, en divide paragraphs with a double line break. Never use paragraph headers.\n";
+    prompt += "- Make sure to maintain the established tone and style throughout the story.\n";
   }
   
   prompt += "SCENARIO DETAILS:\n";
@@ -846,12 +847,25 @@ export function createCharacterFromPhotoPrompt(
   let prompt = "You are an expert character creator for " + (scenario.writingStyle?.genre || "general") + " stories. Analyze the provided photo carefully and create a character based on what you see in the image and the story context.\n\n";
   prompt += "IMPORTANT: Base your character description on the actual visual details from the photo - clothing, appearance, facial expressions, setting, activity, etc.\n";
   prompt += "If the character is doing an activity in the photo, describe that activity in the character backstory as a favorite pastime.\n\n";
-  if (characterName && characterName.trim()) { prompt += `Character Name: ${characterName.trim()}\n`; }
-  else { prompt += 'Give this character a name based on what you see in the photo. The name should be appropriate for the genre, not be cliche, and the first name should NOT be "Silas" or "Seraphina".\n'; }
-  prompt += '  "Appearance": "(detailed physical description based on what you observe in the photo - include clothing, build, facial features, age, etc.)",\n';
-  if (characterRole && characterRole.trim()) { prompt += `Character Role: ${characterRole.trim()}\n`; }
-  if (additionalPrompt && additionalPrompt.trim()) { prompt += `Additional Context: ${additionalPrompt.trim()}\n`; }
+  
+  // Character-specific instructions
+  if (characterName && characterName.trim()) { 
+    prompt += `Character Name: ${characterName.trim()}\n`; 
+  } else { 
+    prompt += 'Give this character a name based on what you see in the photo. The name should be appropriate for the genre, not be cliche, and the first name should NOT be "Silas" or "Seraphina".\n'; 
+  }
+  
+  if (characterRole && characterRole.trim()) { 
+    prompt += `Character Role: ${characterRole.trim()}\n`; 
+  }
+  
+  if (additionalPrompt && additionalPrompt.trim()) { 
+    prompt += `Additional Context: ${additionalPrompt.trim()}\n`; 
+  }
+  
   prompt += `\nThe new character should fit in a story with these characteristics:\n`;
+  
+  // Story context
   if (scenario && scenario.writingStyle) {
     prompt += `Genre: ${scenario.writingStyle.genre || "General Fiction"}\n`;
     if (scenario.writingStyle.tone) {
@@ -866,6 +880,7 @@ export function createCharacterFromPhotoPrompt(
   } else {
     prompt += "Genre: General Fiction\n";
   }
+  
   if (scenario && scenario.title) {
     prompt += `Story Title: ${scenario.title}\n`;
   }
@@ -878,16 +893,19 @@ export function createCharacterFromPhotoPrompt(
   if (scenario && scenario.notes) {
     prompt += `Notes: ${scenario.notes}\n`;
   }
+  
+  // JSON format instructions
   prompt += `\n\nIMPORTANT: Your response must be in JSON format ONLY with the following structure:\n`;
   prompt += `{\n`;
-  prompt += '  "name": "(name)",\n';
-  prompt += '  "alias": "(alias)",\n';
-  prompt += '  "role": "(role)",\n';
-  prompt += '  "gender": "(gender)",\n';
-  prompt += '  "appearance": "(appearance)",\n';
-  prompt += '  "backstory": "(backstory)",\n';
-  prompt += '  "extraInfo": "(extraInfo)"\n';
-  prompt += `}\n`;  
+  prompt += '  "name": "(character name)",\n';
+  prompt += '  "alias": "(character alias or nickname)",\n';
+  prompt += '  "role": "(character role in story)",\n';
+  prompt += '  "gender": "(character gender)",\n';
+  prompt += '  "appearance": "(detailed physical description based on what you observe in the photo - include clothing, build, facial features, age, etc.)",\n';
+  prompt += '  "backstory": "(character background and history)",\n';
+  prompt += '  "extraInfo": "(additional character traits, skills, or personality details)"\n';
+  prompt += `}\n`;
+  prompt += `\nDo not include any explanatory text outside of the JSON structure.`;
 
   return prompt;
 }

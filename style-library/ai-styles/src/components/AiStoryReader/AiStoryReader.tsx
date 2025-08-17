@@ -13,6 +13,34 @@ const DEFAULT_SETTINGS: ThemeSettings = {
   theme: 'light'
 };
 
+// Helper function to format text with proper line breaks and paragraphs
+const formatStoryText = (text: string): React.ReactNode => {
+  if (!text) return null;
+  
+  // Split by double line breaks to create paragraphs
+  const paragraphs = text.split(/\n\s*\n/);
+  
+  return paragraphs.map((paragraph, index) => {
+    // Replace single line breaks within paragraphs with <br> tags
+    const formattedParagraph = paragraph
+      .split('\n')
+      .map((line, lineIndex) => {
+        if (lineIndex === 0) return line.trim();
+        return line.trim() ? <><br />{line.trim()}</> : <br />;
+      });
+    
+    // Return as paragraph if content exists
+    if (paragraph.trim()) {
+      return (
+        <p key={index} className="story-paragraph">
+          {formattedParagraph}
+        </p>
+      );
+    }
+    return null;
+  }).filter(Boolean);
+};
+
 export const AiStoryReader: React.FC<AiStoryReaderProps> = ({
   text,
   title,
@@ -506,7 +534,7 @@ export const AiStoryReader: React.FC<AiStoryReaderProps> = ({
         onClick={() => !isFullScreen && (showTopPanel(), showBottomPanel())}
         role="article"
       >
-        {text}
+        {formatStoryText(text)}
       </div>
 
       {/* Non-fullscreen UI triggers */}

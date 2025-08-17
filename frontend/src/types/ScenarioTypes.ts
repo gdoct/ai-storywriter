@@ -80,9 +80,11 @@ export interface TimelineEvent {
     location?: string; // Location name where the event takes place
     charactersInvolved: string[]; // Array of character names
     includeInStory: boolean; // Whether to render in story or use as backstory
-    parentId: string | null; // Parent event ID for tree structure
-    position: { x: number; y: number }; // Position in the flowchart
-    row: number; // Row number for layout algorithm
+    position: { x: number; y: number }; // Position in the flowchart (freely movable)
+    connections: {
+        inputs: string[]; // IDs of events connected to this event's top connection point
+        outputs: string[]; // IDs of events connected from this event's bottom connection point
+    };
 }
 
 export type Scenario = {

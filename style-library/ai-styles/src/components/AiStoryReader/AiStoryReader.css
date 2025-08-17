@@ -721,6 +721,25 @@
   min-height: calc(100vh - 120px);
 }
 
+/* Story paragraph styling */
+.ai-story-reader__content .story-paragraph {
+  margin: 0 0 1.5rem 0;
+  text-align: justify;
+  text-indent: 1.5em;
+  line-height: inherit;
+  font-size: inherit;
+  font-family: inherit;
+  color: inherit;
+}
+
+.ai-story-reader__content .story-paragraph:first-child {
+  text-indent: 0;
+}
+
+.ai-story-reader__content .story-paragraph:last-child {
+  margin-bottom: 0;
+}
+
 .ai-story-reader.fullscreen .ai-story-reader__content {
   padding: 4rem 6rem;
   padding-bottom: 8rem;

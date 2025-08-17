@@ -69,11 +69,20 @@ should render to (in this specific order!)
 ## Characters
 .. character details
 
+## Locations
+.. location details
+
 ## Backstory
 <backstory>
 
 ## Story Arc
 <storyarc>
+
+## Scenes
+.. scene details
+
+## Timeline & Events
+.. timeline events in chronological order
 
 ## CustomTab1
 ...
@@ -131,6 +140,30 @@ export function scenarioCharactersToMarkdown(scenario: Scenario): string {
         });
     } else {
         markdown += `This scenario has not specified any characters.\n`;
+    }
+
+    return markdown;
+}
+
+export function scenarioLocationsToMarkdown(scenario: Scenario): string {
+    let markdown = `## Locations\n\n`;
+
+    if (scenario.locations && scenario.locations.length > 0) {
+        scenario.locations.forEach((location) => {
+            markdown += `### Location: ${location.name || "Unnamed Location"}\n`;
+            if (typeof location.visualDescription === 'string' && location.visualDescription.trim()) {
+                markdown += `#### Visual Description\n${location.visualDescription}\n\n`;
+            }
+            if (typeof location.background === 'string' && location.background.trim()) {
+                markdown += `#### Background\n${location.background}\n\n`;
+            }
+            if (typeof location.extraInfo === 'string' && location.extraInfo.trim()) {
+                markdown += `#### Additional Information\n${location.extraInfo}\n\n`;
+            }
+            markdown += `---\n\n`;
+        });
+    } else {
+        markdown += `This scenario has not specified any locations.\n\n`;
     }
 
     return markdown;
@@ -195,6 +228,62 @@ export function scenarioBackstoryToMarkdown(scenario: Scenario): string {
     }
 }
 
+function sortEventsByChronology(events: TimelineEvent[]): TimelineEvent[] {
+    return [...events].sort((a, b) => {
+        // If both events have dates, try to parse and compare them
+        if (a.date && b.date) {
+            const dateA = new Date(a.date);
+            const dateB = new Date(b.date);
+            
+            // If dates are valid, sort by date
+            if (!isNaN(dateA.getTime()) && !isNaN(dateB.getTime())) {
+                return dateA.getTime() - dateB.getTime();
+            }
+            
+            // If dates aren't parseable as Date objects, sort alphabetically
+            return a.date.localeCompare(b.date);
+        }
+        
+        // Events with dates come before events without dates
+        if (a.date && !b.date) return -1;
+        if (!a.date && b.date) return 1;
+        
+        // If neither has dates, maintain original order (stable sort)
+        return 0;
+    });
+}
+
+function renderEventToMarkdown(event: TimelineEvent): string {
+    let markdown = `#### ${event.title}\n`;
+    if (!event.includeInStory) {
+        markdown += `**(Backstory Event: This event is for reference only, and should not be translated to a chapter)**\n`;
+    } else {
+        markdown += `**(Story Event)**\n`;
+    }
+    if (event.description?.trim()) {
+        markdown += `${event.description}\n\n`;
+    }
+    
+    if (event.date?.trim()) {
+        markdown += `**Date:** ${event.date}\n\n`;
+    }
+    
+    if (event.location?.trim()) {
+        markdown += `**Location:** ${event.location}\n\n`;
+    }
+    
+    if (event.charactersInvolved && event.charactersInvolved.length > 0) {
+        markdown += `**Characters involved:**\n`;
+        event.charactersInvolved.forEach(character => {
+            markdown += `* ${character}\n`;
+        });
+        markdown += '\n';
+    }
+    
+    markdown += '---\n\n';
+    return markdown;
+}
+
 export function scenarioTimelineToMarkdown(scenario: Scenario): string {
     if (!scenario.timeline || scenario.timeline.length === 0) {
         return '';
@@ -202,53 +291,15 @@ export function scenarioTimelineToMarkdown(scenario: Scenario): string {
 
     let markdown = `## Timeline & Events\n\n`;
 
-    // Separate story events from backstory events
-    const storyEvents = scenario.timeline.filter(event => event.includeInStory);
-    const backstoryEvents = scenario.timeline.filter(event => !event.includeInStory);
+    // Combine and sort all events chronologically
+    const sortedEvents = sortEventsByChronology(scenario.timeline);
 
-    // Render story events
-    if (storyEvents.length > 0) {
-        markdown += `### Story Events\n\n`;
-        storyEvents.forEach(event => {
-            markdown += `#### ${event.title}\n`;
-            if (event.description?.trim()) {
-                markdown += `${event.description}\n\n`;
-            }
-            if (event.date?.trim()) {
-                markdown += `**Date:** ${event.date}\n\n`;
-            }
-            if (event.charactersInvolved && event.charactersInvolved.length > 0) {
-                markdown += `**Characters involved:**\n`;
-                event.charactersInvolved.forEach(character => {
-                    markdown += `* ${character}\n`;
-                });
-                markdown += '\n';
-            }
-            markdown += '---\n\n';
-        });
-    }
-
-    // Render backstory events
-    if (backstoryEvents.length > 0) {
-        markdown += `### Backstory Events\n\n`;
-        backstoryEvents.forEach(event => {
-            markdown += `#### ${event.title}\n`;
-            if (event.description?.trim()) {
-                markdown += `${event.description}\n\n`;
-            }
-            if (event.date?.trim()) {
-                markdown += `**Date:** ${event.date}\n\n`;
-            }
-            if (event.charactersInvolved && event.charactersInvolved.length > 0) {
-                markdown += `**Characters involved:**\n`;
-                event.charactersInvolved.forEach(character => {
-                    markdown += `* ${character}\n`;
-                });
-                markdown += '\n';
-            }
-            markdown += '---\n\n';
-        });
-    }
+    // Render events in chronological order with indication of type
+    sortedEvents.forEach(event => {
+        const eventType = event.includeInStory ? "Story Event" : "Backstory Event";
+        markdown += `**(${eventType})**\n`;
+        markdown += renderEventToMarkdown(event);
+    });
 
     return markdown;
 }
@@ -314,6 +365,7 @@ export function formatScenarioAsMarkdown(scenario: Scenario): string {
     markdown += scenarioStyleToMarkdown(scenario);
     markdown += scenarioNotesToMarkdown(scenario);
     markdown += scenarioCharactersToMarkdown(scenario);
+    markdown += scenarioLocationsToMarkdown(scenario);
     markdown += scenarioBackstoryToMarkdown(scenario);
     markdown += scenarioStoryArcToMarkdown(scenario);
     markdown += scenarioScenesToMarkdown(scenario);
@@ -333,6 +385,7 @@ export function formatScenarioAsMarkdownWithoutBackStory(scenario: Scenario): st
     markdown += scenarioStyleToMarkdown(scenario);
     markdown += scenarioNotesToMarkdown(scenario);
     markdown += scenarioCharactersToMarkdown(scenario);
+    markdown += scenarioLocationsToMarkdown(scenario);
     markdown += scenarioScenesToMarkdown(scenario);
     markdown += scenarioStoryArcToMarkdown(scenario);
     markdown += scenarioTimelineToMarkdown(scenario);
@@ -351,6 +404,7 @@ export function formatScenarioAsMarkdownWithoutStoryArc(scenario: Scenario): str
     markdown += scenarioStyleToMarkdown(scenario);
     markdown += scenarioNotesToMarkdown(scenario);
     markdown += scenarioCharactersToMarkdown(scenario);
+    markdown += scenarioLocationsToMarkdown(scenario);
     markdown += scenarioScenesToMarkdown(scenario);
     markdown += scenarioBackstoryToMarkdown(scenario);
     markdown += scenarioTimelineToMarkdown(scenario);

@@ -1,3 +1,28 @@
+/**
+ * TimelineTab
+ *
+ * Purpose:
+ * - Displays and edits a scenario's timeline as a node-based event canvas.
+ *
+ * Key features:
+ * - Initializes timeline with a root "Story start" event when none exists.
+ * - Renders events via TimelineCanvas and allows selecting and editing events.
+ * - Adds child events (max 3 parallel children per parent) and reattaches children
+ *   of a removed event to the removed event's parent.
+ * - Opens EventModal for editing event details (title, description, date,
+ *   characters involved, includeInStory, etc.).
+ * - Provides pan/zoom controls (zoom in/out, reset) and exposes pan/zoom state
+ *   to the canvas. Zoom is clamped between 0.1 and 3.
+ * - Persists timeline changes back to the parent scenario using onScenarioChange.
+ *
+ * Notes for maintainers:
+ * - Timeline layout (positions/rows) is managed by the canvas/layout logic;
+ *   TimelineTab provides initial positions/row values for new events.
+ * - Removing the root event is prevented.
+ * - This file contains only UI wiring; business logic adjustments should be
+ *   coordinated with TimelineCanvas and EventModal components.
+ */
+
 import React, { useCallback, useMemo, useState } from 'react';
 import { FaPlus, FaTimes } from 'react-icons/fa';
 import { MdSchedule } from 'react-icons/md';
@@ -34,9 +59,11 @@ export const TimelineTab: React.FC<TabProps> = ({
       date: '',
       charactersInvolved: [],
       includeInStory: true,
-      parentId: null,
-      position: { x: 0, y: 0 },
-      row: 0
+      position: { x: 300, y: 100 }, // Start in a reasonable position
+      connections: {
+        inputs: [],
+        outputs: []
+      }
     };
     
     return [rootEvent];
@@ -50,13 +77,7 @@ export const TimelineTab: React.FC<TabProps> = ({
     const parent = timeline.find(event => event.id === parentId);
     if (!parent) return;
 
-    // Check if parent already has 3 children (max limit)
-    const siblings = timeline.filter(event => event.parentId === parentId);
-    if (siblings.length >= 3) {
-      alert('Maximum of 3 parallel events allowed');
-      return;
-    }
-
+    // Generate a new event positioned below and slightly to the right of the parent
     const newEvent: TimelineEvent = {
       id: uuidv4(),
       title: 'New Event',
@@ -64,12 +85,29 @@ export const TimelineTab: React.FC<TabProps> = ({
       date: '',
       charactersInvolved: [],
       includeInStory: true,
-      parentId,
-      position: { x: 0, y: 0 }, // Will be calculated by layout algorithm
-      row: parent.row + 1
+      position: { 
+        x: parent.position.x + (parent.connections.outputs.length * 50), // Spread children horizontally
+        y: parent.position.y + 150 // Position below parent
+      },
+      connections: {
+        inputs: [parentId], // Connect to parent
+        outputs: []
+      }
     };
 
-    const newTimeline = [...timeline, newEvent];
+    // Update parent to include this child in outputs
+    const updatedParent = {
+      ...parent,
+      connections: {
+        ...parent.connections,
+        outputs: [...parent.connections.outputs, newEvent.id]
+      }
+    };
+
+    const newTimeline = timeline.map(event => 
+      event.id === parentId ? updatedParent : event
+    ).concat(newEvent);
+    
     updateTimeline(newTimeline);
     setEditingEventId(newEvent.id);
   }, [timeline, updateTimeline]);
@@ -78,24 +116,22 @@ export const TimelineTab: React.FC<TabProps> = ({
     const eventToRemove = timeline.find(event => event.id === eventId);
     if (!eventToRemove) return;
 
-    // Don't allow removing the root event
-    if (!eventToRemove.parentId) {
+    // Don't allow removing the root event (one without any inputs)
+    if (eventToRemove.connections.inputs.length === 0) {
       alert('Cannot remove the root event');
       return;
     }
 
-    // Find children of the event being removed
-    const children = timeline.filter(event => event.parentId === eventId);
-    
-    // Update children to connect to the removed event's parent
+    // Remove all connections to and from this event
     const updatedTimeline = timeline
       .filter(event => event.id !== eventId)
-      .map(event => {
-        if (children.some(child => child.id === event.id)) {
-          return { ...event, parentId: eventToRemove.parentId };
+      .map(event => ({
+        ...event,
+        connections: {
+          inputs: event.connections.inputs.filter(id => id !== eventId),
+          outputs: event.connections.outputs.filter(id => id !== eventId)
         }
-        return event;
-      });
+      }));
 
     updateTimeline(updatedTimeline);
     
