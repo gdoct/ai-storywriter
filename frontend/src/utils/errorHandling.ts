@@ -6,7 +6,7 @@
  * Checks if an error is related to insufficient credits
  */
 export function isInsufficientCreditsError(error: Error): boolean {
-  const message = error.message.toLowerCase();
+  const message = (error.message || '').toLowerCase();
   return message.includes('insufficient credits') || 
          (message.includes('credit') && (message.includes('needed') || message.includes('required')));
 }

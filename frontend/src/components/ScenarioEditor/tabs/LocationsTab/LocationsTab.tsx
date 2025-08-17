@@ -1,6 +1,7 @@
 import { AiTextArea, AiTextBox, Button } from '@drdata/ai-styles';
 import React, { useCallback, useMemo, useState } from 'react';
 import { FaDownload, FaPlus, FaTrash } from 'react-icons/fa';
+import { FaLocationDot } from 'react-icons/fa6';
 import { v4 as uuidv4 } from 'uuid';
 import { AI_STATUS, useAIStatus } from '../../../../contexts/AIStatusContext';
 import { useAuth } from '../../../../contexts/AuthContext';
@@ -9,7 +10,7 @@ import { showUserFriendlyError } from '../../../../utils/errorHandling';
 import ImportModal from '../../../common/ImportModal';
 import { TabProps } from '../../types';
 import './LocationsTab.css';
-import { LocationImageUploadModal } from './LocationImageUploadModal';
+import { GenerateLocationModal } from './GenerateLocationModal';
 
 export const LocationsTab: React.FC<TabProps> = ({
   scenario,
@@ -21,7 +22,7 @@ export const LocationsTab: React.FC<TabProps> = ({
   const locations = useMemo(() => scenario.locations || [], [scenario.locations]);
   const [expandedLocation, setExpandedLocation] = useState<string | null>(null);
   const [showImportModal, setShowImportModal] = useState(false);
-  const [showImageUploadModal, setShowImageUploadModal] = useState(false);
+  const [showGenerateModal, setShowGenerateModal] = useState(false);
   const [fieldGenerationInProgress, setFieldGenerationInProgress] = useState<{ locationId: string; fieldName: string } | null>(null);
   const [fieldStreamedText, setFieldStreamedText] = useState('');
   const { setAiStatus, setShowAIBusyModal } = useAIStatus();
@@ -116,10 +117,10 @@ export const LocationsTab: React.FC<TabProps> = ({
     }
   }, [locations, handleLocationChange, setAiStatus, setShowAIBusyModal, refreshCredits]);
 
-  const handleImageUpload = useCallback((locationData: Partial<Location>) => {
+  const handleLocationGenerated = useCallback((locationData: Partial<Location>) => {
     const updatedLocations = [...locations, { id: uuidv4(), ...locationData }];
     onScenarioChange({ locations: updatedLocations });
-    setShowImageUploadModal(false);
+    setShowGenerateModal(false);
   }, [locations, onScenarioChange]);
 
   const handleExportLocations = useCallback(() => {
@@ -163,10 +164,10 @@ export const LocationsTab: React.FC<TabProps> = ({
           <div className="locations-actions">
             <Button
               variant="secondary"
-              onClick={() => setShowImageUploadModal(true)}
+              onClick={() => setShowGenerateModal(true)}
               disabled={isLoading}
             >
-              <FaPlus /> Generate from Image
+              <FaPlus /> Generate...
             </Button>
             <Button
               variant="secondary"
@@ -202,29 +203,26 @@ export const LocationsTab: React.FC<TabProps> = ({
         ) : (
           <div className="locations-list">
             {locations.map(location => (
-              <div key={location.id} className="location-card">
-                <div className="location-header" onClick={() => 
+              <div key={location.id} className="location-item">
+                <div className="location-compact-row" onClick={() => 
                   setExpandedLocation(expandedLocation === location.id ? null : location.id)
                 }>
-                  <div className="location-info">
+                  <div className="location-icon">
+                    <FaLocationDot />
+                  </div>
+                  <div className="location-content">
                     <div className="location-name">
                       {location.name || 'Unnamed Location'}
                     </div>
-                    <div className="location-preview">
-                      {location.visualDescription?.substring(0, 100)}
-                      {location.visualDescription && location.visualDescription.length > 100 && '...'}
+                    <div className="location-description">
+                      {location.visualDescription?.substring(0, 80) || 'No description'}
+                      {location.visualDescription && location.visualDescription.length > 80 && '...'}
                     </div>
                   </div>
                   <div className="location-actions">
-                    {location.image_data && (
-                      <img 
-                        src={location.image_data} 
-                        alt={location.name} 
-                        className="location-thumbnail"
-                      />
-                    )}
                     <Button
                       variant="danger"
+                      size="sm"
                       onClick={(e) => {
                         e.stopPropagation();
                         handleDeleteLocation(location.id);
@@ -339,10 +337,10 @@ export const LocationsTab: React.FC<TabProps> = ({
         />
       )}
 
-      {showImageUploadModal && (
-        <LocationImageUploadModal
-          onLocationGenerated={handleImageUpload}
-          onClose={() => setShowImageUploadModal(false)}
+      {showGenerateModal && (
+        <GenerateLocationModal
+          onLocationGenerated={handleLocationGenerated}
+          onClose={() => setShowGenerateModal(false)}
         />
       )}
     </div>
