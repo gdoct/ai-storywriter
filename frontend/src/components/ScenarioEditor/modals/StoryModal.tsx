@@ -3,12 +3,14 @@ import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { FaRedo, FaSave, FaTimes } from 'react-icons/fa';
 import { Scenario } from '../../../types/ScenarioTypes';
+import { getShowThinkingSetting } from '../../../services/settings';
 import './StoryModal.css';
 
 export interface StoryModalProps {
   isOpen: boolean;
   onClose: () => void;
   story: string | null;
+  thinking?: string | null;
   onRegenerate: () => void;
   onSaveStory?: () => void;
   onCancelGeneration?: () => void;
@@ -23,6 +25,7 @@ export const StoryModal: React.FC<StoryModalProps> = ({
   isOpen,
   onClose,
   story,
+  thinking,
   onRegenerate,
   onSaveStory,
   onCancelGeneration,
@@ -34,6 +37,26 @@ export const StoryModal: React.FC<StoryModalProps> = ({
 }) => {
   const [hasStartedGeneration, setHasStartedGeneration] = useState(false);
   const [displayStory, setDisplayStory] = useState<string>('');
+  const [showThinking, setShowThinking] = useState(false);
+
+  // Load thinking setting
+  useEffect(() => {
+    const loadThinkingSetting = async () => {
+      try {
+        const thinkingSetting = await getShowThinkingSetting();
+        console.log('StoryModal loaded thinking setting:', thinkingSetting); // Debug log
+        setShowThinking(thinkingSetting);
+      } catch (error) {
+        console.error('Failed to load thinking setting:', error);
+      }
+    };
+    loadThinkingSetting();
+  }, []);
+
+  // Debug thinking prop changes
+  useEffect(() => {
+    console.log('StoryModal thinking prop changed:', thinking); // Debug log
+  }, [thinking]);
 
   // Reset state when modal opens
   useEffect(() => {
@@ -173,6 +196,45 @@ export const StoryModal: React.FC<StoryModalProps> = ({
           </div>
         )}
       </div>
+
+      {/* Thinking Display */}
+      {showThinking && thinking && (
+        <div style={{
+          position: 'fixed',
+          top: '120px',
+          right: '20px',
+          width: '350px',
+          maxHeight: '400px',
+          backgroundColor: 'rgba(0, 0, 0, 0.9)',
+          color: 'white',
+          padding: '16px',
+          borderRadius: '8px',
+          zIndex: 1001,
+          overflow: 'auto',
+          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)'
+        }}>
+          <div style={{
+            fontSize: '14px',
+            fontWeight: 'bold',
+            marginBottom: '12px',
+            color: '#9ca3af',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
+          }}>
+            🤔 AI Thinking...
+          </div>
+          <div style={{
+            fontSize: '13px',
+            lineHeight: '1.4',
+            whiteSpace: 'pre-wrap',
+            fontFamily: 'monospace',
+            color: '#e5e7eb'
+          }}>
+            {thinking}
+          </div>
+        </div>
+      )}
 
       {/* AiStoryReader as full viewport component */}
       <AiStoryReader

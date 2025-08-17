@@ -1,9 +1,14 @@
 import { Button } from '@drdata/ai-styles';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { FaDice, FaPlus, FaTrash, FaUser } from 'react-icons/fa';
+import { FaWandMagicSparkles } from 'react-icons/fa6';
 import { deleteScenarioImage, getRandomScenarioImage, uploadScenarioImage } from '../../../../services/scenarioImageService';
 import { Scenario } from '../../../../types/ScenarioTypes';
 import { showUserFriendlyError } from '../../../../utils/errorHandling';
+import { isImageGenerationAvailable } from '../../../../services/featureDetection';
+import { getSavedSettings } from '../../../../services/settings';
+import { generateImage, createScenarioImagePrompt } from '../../../../services/imageGenerationService';
+import { ImageGenerationModal } from '../../modals/ImageGenerationModal';
 import './ScenarioImage.css';
 
 interface ScenarioImageProps {
@@ -22,7 +27,26 @@ export const ScenarioImage: React.FC<ScenarioImageProps> = ({
   const [isUploading, setIsUploading] = useState(false);
   const [imageError, setImageError] = useState(false);
   const [isFetchingRandom, setIsFetchingRandom] = useState(false);
+  const [isGeneratingAI, setIsGeneratingAI] = useState(false);
+  const [canGenerateImages, setCanGenerateImages] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Check if image generation is available for current backend
+  useEffect(() => {
+    const checkImageGeneration = async () => {
+      try {
+        const settings = await getSavedSettings();
+        if (settings) {
+          setCanGenerateImages(isImageGenerationAvailable(settings.backendType));
+        }
+      } catch (error) {
+        console.error('Failed to check image generation capability:', error);
+        setCanGenerateImages(false);
+      }
+    };
+    
+    checkImageGeneration();
+  }, []);
 
   const handleRandomImage = useCallback(async () => {
     if (!genre) return;
@@ -45,6 +69,41 @@ export const ScenarioImage: React.FC<ScenarioImageProps> = ({
       setIsFetchingRandom(false);
     }
   }, [genre, onScenarioChange]);
+
+  const handleAIGeneration = useCallback(async () => {
+    if (!canGenerateImages) return;
+    
+    setIsGeneratingAI(true);
+    try {
+      // Create prompt for scenario image
+      const prompt = createScenarioImagePrompt(scenario);
+      
+      // Generate image
+      const result = await generateImage({
+        prompt,
+        model: 'dall-e-3', // Default model, could be configurable
+        n: 1,
+        size: '1024x1024'
+      });
+
+      if (result.data && result.data.length > 0) {
+        const generatedImage = result.data[0];
+        onScenarioChange({
+          imageUrl: generatedImage.url,
+          imageId: undefined // This is a generated image, not an uploaded one
+        });
+        setImageError(false);
+      }
+    } catch (error) {
+      console.error('Failed to generate AI image:', error);
+      showUserFriendlyError(
+        error instanceof Error ? error : new Error('Failed to generate AI image'),
+        'AI Generation Error'
+      );
+    } finally {
+      setIsGeneratingAI(false);
+    }
+  }, [canGenerateImages, scenario, onScenarioChange]);
 
   // Auto-fetch random image when genre changes and no image is set
   useEffect(() => {
@@ -175,18 +234,30 @@ export const ScenarioImage: React.FC<ScenarioImageProps> = ({
                   variant="ghost"
                   size="sm"
                   onClick={() => fileInputRef.current?.click()}
-                  disabled={isUploading || isFetchingRandom}
+                  disabled={isUploading || isFetchingRandom || isGeneratingAI}
                   icon={<FaPlus />}
                   className="scenario-image__action-btn"
                 >
                   Replace
                 </Button>
+                {canGenerateImages && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleAIGeneration}
+                    disabled={isUploading || isFetchingRandom || isGeneratingAI}
+                    icon={<FaWandMagicSparkles />}
+                    className="scenario-image__action-btn"
+                  >
+                    ✨ AI
+                  </Button>
+                )}
                 {genre && (
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={handleRandomImage}
-                    disabled={isUploading || isFetchingRandom}
+                    disabled={isUploading || isFetchingRandom || isGeneratingAI}
                     icon={<FaDice />}
                     className="scenario-image__action-btn"
                   >
@@ -197,7 +268,7 @@ export const ScenarioImage: React.FC<ScenarioImageProps> = ({
                   variant="ghost"
                   size="sm"
                   onClick={handleImageDelete}
-                  disabled={isUploading || isFetchingRandom}
+                  disabled={isUploading || isFetchingRandom || isGeneratingAI}
                   icon={<FaTrash />}
                   className="scenario-image__action-btn scenario-image__action-btn--danger"
                 >
@@ -208,7 +279,7 @@ export const ScenarioImage: React.FC<ScenarioImageProps> = ({
           </div>
         ) : (
           <div
-            className={`scenario-image__placeholder ${(isUploading || isFetchingRandom) ? 'scenario-image__placeholder--uploading' : ''}`}
+            className={`scenario-image__placeholder ${(isUploading || isFetchingRandom || isGeneratingAI) ? 'scenario-image__placeholder--uploading' : ''}`}
             onDragOver={handleDragOver}
             onDrop={handleDrop}
           >
@@ -221,6 +292,11 @@ export const ScenarioImage: React.FC<ScenarioImageProps> = ({
               <>
                 <FaDice className="scenario-image__placeholder-icon scenario-image__placeholder-icon--uploading" />
                 <span className="scenario-image__placeholder-text">Getting random image...</span>
+              </>
+            ) : isGeneratingAI ? (
+              <>
+                <FaWandMagicSparkles className="scenario-image__placeholder-icon scenario-image__placeholder-icon--uploading" />
+                <span className="scenario-image__placeholder-text">✨ Generating AI image...</span>
               </>
             ) : (
               <>
@@ -237,18 +313,30 @@ export const ScenarioImage: React.FC<ScenarioImageProps> = ({
                       variant="ghost"
                       size="sm"
                       onClick={() => fileInputRef.current?.click()}
-                      disabled={isUploading || isFetchingRandom}
+                      disabled={isUploading || isFetchingRandom || isGeneratingAI}
                       icon={<FaPlus />}
                       className="scenario-image__placeholder-btn"
                     >
                       Upload Image
                     </Button>
+                    {canGenerateImages && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleAIGeneration}
+                        disabled={isUploading || isFetchingRandom || isGeneratingAI}
+                        icon={<FaWandMagicSparkles />}
+                        className="scenario-image__placeholder-btn"
+                      >
+                        ✨ Generate AI
+                      </Button>
+                    )}
                     {genre && (
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={handleRandomImage}
-                        disabled={isUploading || isFetchingRandom}
+                        disabled={isUploading || isFetchingRandom || isGeneratingAI}
                         icon={<FaDice />}
                         className="scenario-image__placeholder-btn"
                       >
@@ -268,9 +356,14 @@ export const ScenarioImage: React.FC<ScenarioImageProps> = ({
           accept="image/*"
           onChange={handleImageSelect}
           style={{ display: 'none' }}
-          disabled={isUploading}
+          disabled={isUploading || isGeneratingAI}
         />
       </div>
+
+      <ImageGenerationModal 
+        isOpen={isGeneratingAI} 
+        title="Generating Scenario Image"
+      />
     </div>
   );
 };

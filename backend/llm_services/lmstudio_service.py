@@ -11,7 +11,7 @@ class LMStudioService(BaseLLMService):
         super().__init__(config)
         self.base_url = config.get('url', 'http://localhost:1234')
 
-    def get_models(self):
+    def _fetch_models(self):
         resp = requests.get(f"{self.base_url}/v1/models", timeout=10)
         resp.raise_for_status()
         data = resp.json()

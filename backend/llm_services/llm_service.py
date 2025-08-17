@@ -84,7 +84,32 @@ class BaseLLMService(abc.ABC):
         self.config = config
 
     @abc.abstractmethod
-    def get_models(self):        pass
+    def _fetch_models(self):
+        """Fetch models from the backend API. Implemented by subclasses."""
+        pass
+    
+    def get_models(self, use_cache: bool = True):
+        """Get models with optional caching."""
+        if not use_cache:
+            return self._fetch_models()
+        
+        # Try to get from cache first
+        from llm_services.model_cache import get_model_cache
+        cache = get_model_cache()
+        
+        cached_models = cache.get(self.__class__.__name__.lower().replace('service', ''), self.config)
+        if cached_models is not None:
+            return cached_models
+        
+        # Cache miss - fetch from backend and cache result
+        try:
+            models = self._fetch_models()
+            cache.set(self.__class__.__name__.lower().replace('service', ''), self.config, models)
+            return models
+        except Exception as e:
+            # If fetch fails, return empty list and don't cache
+            print(f"Failed to fetch models: {e}")
+            return []
 
     @abc.abstractmethod
     def test_connection(self):
@@ -119,6 +144,9 @@ def get_llm_service(backend_type, config):
     elif backend_type == 'chatgpt':
         from llm_services.openai_service import OpenAIService
         return OpenAIService(config)
+    elif backend_type == 'github':
+        from llm_services.github_service import GitHubService
+        return GitHubService(config)
     else:
         raise ValueError(f"Unknown backend_type: {backend_type}")
 
@@ -236,3 +264,4 @@ def generate_field_from_image(image_data, field_name, character_context="", user
 from llm_services.lmstudio_service import LMStudioService  # noqa: F401
 from llm_services.ollama_service import OllamaService  # noqa: F401
 from llm_services.openai_service import OpenAIService  # noqa: F401
+# GitHubService import moved to avoid circular import - import directly when needed

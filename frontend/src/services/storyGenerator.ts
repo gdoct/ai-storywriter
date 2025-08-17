@@ -3,8 +3,9 @@ import { llmCompletionRequestMessage } from '../types/LLMTypes';
 import { GeneratedStory, Scenario } from '../types/ScenarioTypes';
 import * as llmPromptService from './llmPromptService';
 import { createRewriteStoryArcPrompt, createStoryArcPrompt, createSummaryPrompt } from './llmPromptService';
-import { streamChatCompletionWithStatus } from './llmService';
+import { streamChatCompletionWithStatus, streamChatCompletionWithThinking } from './llmService';
 import { getSelectedModel } from './modelSelection';
+import { getShowThinkingSetting } from './settings';
 
 
 // Helper for prompt-based streaming using llmService, with AI status context
@@ -127,6 +128,7 @@ export async function generateStory(
   scenario: Scenario, 
   options: { 
     onProgress?: (text: string) => void,
+    onThinking?: (thinking: string) => void,
     temperature?: number,
     numberOfChapters?: number, // ignored, kept for compatibility
     seed?: number | null
@@ -140,26 +142,62 @@ export async function generateStory(
   const resultPromise = new Promise<GeneratedStory>(async (resolve, reject) => {
     try {
       const selectedModel = getSelectedModel();
+      const showThinking = await getShowThinkingSetting();
       let fullText = '';
-      await streamChatCompletionWithStatus(
-        promptObj,
-        (text, isDone) => {
-          if (isDone) {
-            fullText = text;
-          } else {
-            fullText += text;
-            if (options.onProgress) options.onProgress(text);
-          }
-        },
-        { 
-          model: selectedModel || undefined,
-          temperature: options.temperature, 
-          max_tokens: 6000,
-          signal: abortController.signal
-        },
-        setAiStatus,
-        setShowAIBusyModal
-      );
+      
+      if (showThinking) {
+        // console.log('Using thinking-enabled streaming'); // Debug log
+        let lastResponseLength = 0;
+        await streamChatCompletionWithThinking(
+          promptObj,
+          (thinkingContent) => {
+            // console.log('Thinking callback:', thinkingContent); // Debug log
+            if (thinkingContent.isDone) {
+              fullText = thinkingContent.response;
+            } else {
+              fullText = thinkingContent.response;
+              // Only pass the new chunk, not the full accumulated response
+              if (options.onProgress && thinkingContent.response.length > lastResponseLength) {
+                const newChunk = thinkingContent.response.slice(lastResponseLength);
+                options.onProgress(newChunk);
+                lastResponseLength = thinkingContent.response.length;
+              }
+              if (options.onThinking) {
+                // console.log('Calling onThinking with:', thinkingContent.thinking); // Debug log
+                options.onThinking(thinkingContent.thinking);
+              }
+            }
+          },
+          { 
+            model: selectedModel || undefined,
+            temperature: options.temperature, 
+            max_tokens: 6000,
+            signal: abortController.signal
+          },
+          setAiStatus,
+          setShowAIBusyModal
+        );
+      } else {
+        await streamChatCompletionWithStatus(
+          promptObj,
+          (text, isDone) => {
+            if (isDone) {
+              fullText = text;
+            } else {
+              fullText += text;
+              if (options.onProgress) options.onProgress(text);
+            }
+          },
+          { 
+            model: selectedModel || undefined,
+            temperature: options.temperature, 
+            max_tokens: 6000,
+            signal: abortController.signal
+          },
+          setAiStatus,
+          setShowAIBusyModal
+        );
+      }
       resolve({ completeText: fullText, chapters: [] });
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') {
@@ -466,7 +504,7 @@ export async function generateRandomWritingStyle(
         setAiStatus,
         setShowAIBusyModal
       );
-      console.log(fullText); 
+      // console.log(fullText); 
       resolve(fullText);
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') {

@@ -25,6 +25,7 @@ const initialState: ScenarioEditorState = {
   errors: {},
   showStoryModal: false,
   generatedStory: null,
+  storyThinking: null,
   isStorySaved: false,
 };
 
@@ -52,9 +53,7 @@ function scenarioEditorReducer(
         ...state,
         scenario: { 
           ...state.scenario, 
-          ...action.payload,
-          // Always persist current visible tabs with scenario data
-          visibleTabs: state.visibleTabs
+          ...action.payload
         },
         isDirty: true,
       };
@@ -159,6 +158,12 @@ function scenarioEditorReducer(
       return {
         ...state,
         generatedStory: action.payload,
+      };
+
+    case 'SET_STORY_THINKING':
+      return {
+        ...state,
+        storyThinking: action.payload,
       };
 
     case 'SET_STORY_SAVED':

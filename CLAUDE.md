@@ -4,13 +4,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**StoryWriter** is a web application for creating, editing, and managing scenarios that can be sent to AI models to generate engaging stories. The app features a React frontend with TypeScript and a Flask backend with Python, along with a custom React component library.
+**StoryWriter** is a web application for creating, editing, and managing scenarios that can be sent to AI models to generate engaging stories. The app features a React frontend with TypeScript and a FastAPI backend with Python, along with a custom React component library.
 
 ## Architecture
 
 ### Monorepo Structure
 - `frontend/` - React/TypeScript frontend application (Vite + React 19)
-- `backend/` - Python/Flask REST API backend
+- `backend/` - Python/FastAPI REST API backend
 - `style-library/` - Custom React component library (@drdata/ai-styles)
   - `ai-styles/` - Core component library package
   - `storybook/` - Component documentation and demos
@@ -18,11 +18,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Key Technologies
 - **Frontend**: React 19, TypeScript, Vite, React Router v6, Axios
-- **Backend**: Flask, SQLAlchemy, JWT authentication, Flask-CORS
+- **Backend**: FastAPI, SQLAlchemy, JWT authentication, Pydantic validation
 - **Database**: SQLite (with PostgreSQL support via SQLAlchemy)
 - **Testing**: Jest (frontend), Playwright (E2E), pytest (backend)
 - **UI Library**: Custom @drdata/ai-styles component library
 - **AI Integration**: OpenAI-compatible APIs (LM Studio, Ollama)
+
+## TESTING and AUTHENTICATION
+if authentication is needed, use these credentials
+* frontend/playwright-tests/.testuser
+for a regular user that was created with the playwright test
 
 ## Common Development Commands
 
@@ -72,8 +77,11 @@ npm run test:playwright:ui  # Playwright with UI
 # Install dependencies
 pip install -r requirements.txt
 
-# Start development server
+# Start FastAPI development server
 python app.py
+
+# Alternative: using uvicorn directly
+uvicorn app:app --host 0.0.0.0 --port 5000 --reload
 
 # Run tests
 pytest
@@ -113,17 +121,23 @@ npm run build
 - **Authentication**: JWT tokens with role-based permissions (admin, moderator, user)
 
 ### Backend API Structure
-- **Blueprint Organization**: Feature-based controllers in `controllers/` directory
+- **Router Organization**: Feature-based routers in `routers/` directory
 - **Database**: SQLAlchemy ORM with SQLite default, PostgreSQL support
-- **Authentication**: Flask-JWT-Extended with role-based access control
-- **AI Integration**: Proxy controller for LLM services (OpenAI-compatible APIs)
+- **Authentication**: JWT with FastAPI dependency injection and role-based access control
+- **Validation**: Pydantic models for request/response type safety
+- **Documentation**: Automatic OpenAPI/Swagger docs at `/api/docs`
+- **AI Integration**: Router for LLM services (OpenAI-compatible APIs)
 
-### Key Backend Blueprints
-- `auth_controller` - User authentication and registration
-- `scenario_controller` - Scenario CRUD operations
-- `chat_controller` - AI chat interactions
-- `marketplace_controller` - Story marketplace features
-- `dashboard_controller` - User dashboard data
+### Key Backend Routers
+- `auth` - User authentication and registration
+- `scenario` - Scenario CRUD operations
+- `chat` - AI chat interactions
+- `marketplace` - Story marketplace features
+- `settings` - LLM and application settings
+- `dashboard` - User dashboard and analytics
+- `payment` - Credit packages and transactions
+- `moderation` - Content moderation tools
+- `role` - Role and user management
 - `llm_proxy` - AI model communication
 
 ### Database Models (SQLAlchemy)
@@ -143,8 +157,8 @@ npm run build
 
 ### Running the Full Stack
 1. Install dependencies: `cd frontend && npm install && cd ../backend && pip install -r requirements.txt`
-2. The user runs the backend server in the background and will immediately notice any changes and report them back
-3. The user runs the frontend server in the background and will notice any changes and report them back
+2. The user is always running the backend server in a terminal window. Ask the user for feedback if required, and do not attempt to start the backend server.
+3. The user is always running the frontend server in a terminal window. Ask the user for feedback if required, and do not attempt to start the frontend server.
 To test a full e2e flow, run the playwright tests with
  `cd frontend && ./scripts/e2e-flow.sh`
 4. The user can run the Storybook server to view and test components: `cd style-library/storybook && npm run dev`

@@ -12,7 +12,7 @@ class OpenAIService(BaseLLMService):
         self.api_key = config.get('api_key')
         self.base_url = config.get('url', 'https://api.openai.com/v1')
 
-    def get_models(self):
+    def _fetch_models(self):
         headers = {'Authorization': f'Bearer {self.api_key}'}
         resp = requests.get(f"{self.base_url}/models", headers=headers, timeout=10)
         resp.raise_for_status()

@@ -1,7 +1,4 @@
 // Import types for other tabs
-import { CharacterRelationships } from '../components/ScenarioEditor/tabs/CharacterRelationshipsTab/types/relationships';
-import { ObjectsAndActions } from '../components/ScenarioEditor/tabs/ObjectsActionsTab/types/objectsActions';
-import { ThemesAndSymbols } from '../components/ScenarioEditor/tabs/ThemesSymbolsTab/types/themesSymbols';
 import { MultipleChapters } from './chapters';
 
 // Fill-in story interface for FillInTab
@@ -50,6 +47,19 @@ export interface Character {
     photo_mime_type?: string; // MIME type of the photo (when available)
 }
 
+// Location interface for LocationsTab
+export interface Location {
+    id: string; // should be a GUID
+    name?: string;
+    visualDescription?: string; // Physical appearance and atmosphere
+    background?: string; // History, significance, and context
+    extraInfo?: string; // Additional details
+    imageId?: string; // ID of the associated image from location_images table
+    imageUrl?: string; // URL/path to the image file
+    image_data?: string; // Base64 encoded image data (when available)
+    image_mime_type?: string; // MIME type of the image (when available)
+}
+
 export interface Scene {
     id: string; // Unique identifier for the scene
     title?: string;
@@ -59,6 +69,20 @@ export interface Scene {
     time?: string; // e.g., "Morning", "Evening"
     notes?: string;
     order?: number; // To maintain the order of scenes
+}
+
+// Timeline event interface for TimelineTab
+export interface TimelineEvent {
+    id: string; // Unique identifier (UUID)
+    title: string;
+    description: string;
+    date: string;
+    location?: string; // Location name where the event takes place
+    charactersInvolved: string[]; // Array of character names
+    includeInStory: boolean; // Whether to render in story or use as backstory
+    parentId: string | null; // Parent event ID for tree structure
+    position: { x: number; y: number }; // Position in the flowchart
+    row: number; // Row number for layout algorithm
 }
 
 export type Scenario = {
@@ -73,17 +97,13 @@ export type Scenario = {
     writingStyle?: StyleSettings;
     storyarc?: string;
     characters?: Character[];
+    locations?: Location[];
     scenes? : Scene[];
     notes?: string;
     backstory?: string;
-    worldBuilding?: WorldBuilding;
-    timeline?: Timeline;
-    objectsAndActions?: ObjectsAndActions;
-    themesAndSymbols?: ThemesAndSymbols;
-    characterRelationships?: CharacterRelationships;
     multipleChapters?: MultipleChapters;
-    randomizers?: RandomizerTab;
     fillIn?: FillIn;
+    timeline?: TimelineEvent[];
     
     // Image fields
     imageId?: string; // ID of the associated image from scenario_images table
@@ -92,228 +112,3 @@ export type Scenario = {
     // Optional tabs functionality
     visibleTabs?: string[]; // Track which tabs are visible for this scenario
 };
-
-// World Building interfaces
-export interface Location {
-  id: string;
-  name: string;
-  type: 'city' | 'region' | 'building' | 'landmark' | 'natural' | 'other';
-  description: string;
-  climate?: string;
-  population?: string;
-  government?: string;
-  economy?: string;
-  culture?: string;
-  history?: string;
-  threats?: string;
-  resources?: string;
-  photoId?: string;
-  photoUrl?: string;
-  tags: string[];
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface Culture {
-  id: string;
-  name: string;
-  description: string;
-  values: string;
-  traditions: string;
-  language?: string;
-  clothing?: string;
-  architecture?: string;
-  food?: string;
-  socialStructure?: string;
-  photoId?: string;
-  photoUrl?: string;
-  tags: string[];
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface MagicSystem {
-  id: string;
-  name: string;
-  description: string;
-  rules: string;
-  costs: string;
-  limitations: string;
-  source: string;
-  practitioners?: string;
-  effects?: string;
-  history?: string;
-  tags: string[];
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface Technology {
-  id: string;
-  name: string;
-  description: string;
-  functionality: string;
-  availability: string;
-  creators?: string;
-  impact?: string;
-  limitations?: string;
-  evolution?: string;
-  photoId?: string;
-  photoUrl?: string;
-  tags: string[];
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface Religion {
-  id: string;
-  name: string;
-  description: string;
-  beliefs: string;
-  practices: string;
-  hierarchy?: string;
-  symbols?: string;
-  holidays?: string;
-  prophecies?: string;
-  influence?: string;
-  photoId?: string;
-  photoUrl?: string;
-  tags: string[];
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface Organization {
-  id: string;
-  name: string;
-  type: 'guild' | 'government' | 'military' | 'religious' | 'criminal' | 'academic' | 'commercial' | 'other';
-  description: string;
-  purpose: string;
-  structure: string;
-  membership?: string;
-  resources?: string;
-  influence?: string;
-  rivals?: string;
-  history?: string;
-  photoId?: string;
-  photoUrl?: string;
-  tags: string[];
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface WorldBuilding {
-  locations: Location[];
-  cultures: Culture[];
-  magicSystems: MagicSystem[];
-  technologies: Technology[];
-  religions: Religion[];
-  organizations: Organization[];
-  generalNotes: string;
-}
-
-// Timeline interfaces
-export interface EventDate {
-  era?: string;
-  year: number;
-  month?: number;
-  day?: number;
-  hour?: number;
-  displayFormat: string; // How to display this date
-  isApproximate: boolean;
-  calendar?: string; // Calendar system ID
-}
-
-export interface EventDuration {
-  years?: number;
-  months?: number;
-  days?: number;
-  hours?: number;
-  description?: string;
-}
-
-export interface TimelineEvent {
-  id: string;
-  title: string;
-  description: string;
-  type: 'historical' | 'plot' | 'character' | 'world' | 'planned' | 'other';
-  importance: 'critical' | 'major' | 'minor' | 'background';
-  date: EventDate;
-  duration?: EventDuration;
-  location?: string;
-  participants: string[];
-  consequences: string;
-  causes: string;
-  relatedEvents: string[]; // IDs of related events
-  storyRelevance: string;
-  tags: string[];
-  photoUrl?: string;
-  isCompleted: boolean; // For planned events
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface Era {
-  id: string;
-  name: string;
-  description: string;
-  startDate: EventDate;
-  endDate?: EventDate;
-  characteristics: string;
-  keyEvents: string[]; // Event IDs
-  technology: string;
-  culture: string;
-  politics: string;
-  conflicts: string;
-  photoUrl?: string;
-  tags: string[];
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface SpecialDay {
-  name: string;
-  month: number;
-  day: number;
-  description: string;
-  significance: string;
-}
-
-export interface Calendar {
-  id: string;
-  name: string;
-  description: string;
-  type: 'standard' | 'lunar' | 'seasonal' | 'magical' | 'technological' | 'custom';
-  yearLength: number; // days
-  monthsPerYear: number;
-  daysPerMonth: number[];
-  monthNames: string[];
-  specialDays: SpecialDay[];
-  notes: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface Timeline {
-  events: TimelineEvent[];
-  eras: Era[];
-  calendars: Calendar[];
-  generalNotes: string;
-}
-
-// Randomizer interfaces
-export interface Randomizer {
-  id: string;
-  name: string;
-  description?: string;
-  keywords: string[];
-  selectedCount: number; // Number of keywords to select (1 to keywords.length)
-  isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface RandomizerTab {
-  randomizers: Randomizer[];
-  generalNotes: string;
-}

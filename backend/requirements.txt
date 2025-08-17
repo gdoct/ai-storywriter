@@ -1,16 +1,19 @@
-flask
-flask-jwt-extended
-flask-cors
+fastapi
+uvicorn[standard]
+python-jose[cryptography]
+python-multipart
 python-dotenv
 Pillow>=9.0.0
 
 requests
 
 pytest>=7.0.0
-pytest-flask>=1.2.0
+pytest-asyncio>=0.21.0
+httpx>=0.24.0
 pytest-mock>=3.8.0
 requests-mock>=1.9.0
 
 SQLAlchemy>=1.4
 psycopg2-binary # If using PostgreSQL, otherwise use the appropriate DB driver e.g. mysqlclient for MySQL
 tiktoken # Added for token counting
+

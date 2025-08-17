@@ -1,4 +1,4 @@
-import { Scenario } from "../types/ScenarioTypes";
+import { Scenario, TimelineEvent } from "../types/ScenarioTypes";
 
 /** ISSUE: is not rendering all data in the scenario object.
  * An example scenario json is below. it contains data from 3 custom tabs in the scenario editor:
@@ -195,6 +195,64 @@ export function scenarioBackstoryToMarkdown(scenario: Scenario): string {
     }
 }
 
+export function scenarioTimelineToMarkdown(scenario: Scenario): string {
+    if (!scenario.timeline || scenario.timeline.length === 0) {
+        return '';
+    }
+
+    let markdown = `## Timeline & Events\n\n`;
+
+    // Separate story events from backstory events
+    const storyEvents = scenario.timeline.filter(event => event.includeInStory);
+    const backstoryEvents = scenario.timeline.filter(event => !event.includeInStory);
+
+    // Render story events
+    if (storyEvents.length > 0) {
+        markdown += `### Story Events\n\n`;
+        storyEvents.forEach(event => {
+            markdown += `#### ${event.title}\n`;
+            if (event.description?.trim()) {
+                markdown += `${event.description}\n\n`;
+            }
+            if (event.date?.trim()) {
+                markdown += `**Date:** ${event.date}\n\n`;
+            }
+            if (event.charactersInvolved && event.charactersInvolved.length > 0) {
+                markdown += `**Characters involved:**\n`;
+                event.charactersInvolved.forEach(character => {
+                    markdown += `* ${character}\n`;
+                });
+                markdown += '\n';
+            }
+            markdown += '---\n\n';
+        });
+    }
+
+    // Render backstory events
+    if (backstoryEvents.length > 0) {
+        markdown += `### Backstory Events\n\n`;
+        backstoryEvents.forEach(event => {
+            markdown += `#### ${event.title}\n`;
+            if (event.description?.trim()) {
+                markdown += `${event.description}\n\n`;
+            }
+            if (event.date?.trim()) {
+                markdown += `**Date:** ${event.date}\n\n`;
+            }
+            if (event.charactersInvolved && event.charactersInvolved.length > 0) {
+                markdown += `**Characters involved:**\n`;
+                event.charactersInvolved.forEach(character => {
+                    markdown += `* ${character}\n`;
+                });
+                markdown += '\n';
+            }
+            markdown += '---\n\n';
+        });
+    }
+
+    return markdown;
+}
+
 function renderCustomTabsToMarkdown(scenario: any): string {
     let markdown = '';
     
@@ -259,6 +317,7 @@ export function formatScenarioAsMarkdown(scenario: Scenario): string {
     markdown += scenarioBackstoryToMarkdown(scenario);
     markdown += scenarioStoryArcToMarkdown(scenario);
     markdown += scenarioScenesToMarkdown(scenario);
+    markdown += scenarioTimelineToMarkdown(scenario);
     markdown += renderCustomTabsToMarkdown(scenario);
 
     return markdown;
@@ -276,6 +335,7 @@ export function formatScenarioAsMarkdownWithoutBackStory(scenario: Scenario): st
     markdown += scenarioCharactersToMarkdown(scenario);
     markdown += scenarioScenesToMarkdown(scenario);
     markdown += scenarioStoryArcToMarkdown(scenario);
+    markdown += scenarioTimelineToMarkdown(scenario);
     markdown += renderCustomTabsToMarkdown(scenario);
 
     return markdown;
@@ -293,6 +353,7 @@ export function formatScenarioAsMarkdownWithoutStoryArc(scenario: Scenario): str
     markdown += scenarioCharactersToMarkdown(scenario);
     markdown += scenarioScenesToMarkdown(scenario);
     markdown += scenarioBackstoryToMarkdown(scenario);
+    markdown += scenarioTimelineToMarkdown(scenario);
     markdown += renderCustomTabsToMarkdown(scenario);
 
     return markdown;

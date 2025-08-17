@@ -13,8 +13,20 @@ export interface LLMChatOptions {
 
 export type LLMStreamCallback = (chunk: string, isDone: boolean) => void;
 
-const BACKEND_URL = 'http://localhost:5000';
-const LLM_PROXY_ENDPOINT = `${BACKEND_URL}/proxy/llm/v1/chat/completions`;
+export interface ThinkingContent {
+  thinking: string;
+  response: string;
+  isThinking: boolean;
+  isDone: boolean;
+}
+
+export type LLMThinkingStreamCallback = (content: ThinkingContent) => void;
+
+// Auto-detect if we're running in dev mode (localhost:3000) or production (localhost:5000)
+const isDevMode = window.location.port === '3000';
+const LLM_PROXY_ENDPOINT = isDevMode 
+  ? 'http://localhost:5000/api/proxy/llm/v1/chat/completions'
+  : '/api/proxy/llm/v1/chat/completions';
 
 /**
  * Streams chat completion from the LLM backend, calling onStream for each content chunk.
@@ -144,6 +156,184 @@ export async function streamChatCompletionWithStatus(
       }
     }
     onStream(assistantText, true);
+  } catch (err) {
+    setAiStatus(AI_STATUS.IDLE);
+    setShowAIBusyModal(false);
+    throw err;
+  }
+}
+
+/**
+ * Enhanced streaming chat completion that can handle reasoning model thinking output.
+ * @param prompt
+ * @param onStream
+ * @param options  
+ * @param setAiStatus
+ * @param setShowAIBusyModal
+ */
+export async function streamChatCompletionWithThinking(
+  prompt: llmCompletionRequestMessage,
+  onStream: LLMThinkingStreamCallback,
+  options: LLMChatOptions = {},
+  setAiStatus: (s: AI_STATUS) => void,
+  setShowAIBusyModal: (b: boolean) => void
+): Promise<void> {
+  try {
+    const messages = buildMessagesFromRequest(prompt);
+    const payload: any = {
+      model: options.model || '',
+      messages,
+      temperature: options.temperature ?? 0.8,
+      max_tokens: options.max_tokens ?? 1024,
+    };
+    
+    // Only include keep_alive if explicitly requested
+    if (options.keepAlive) {
+      payload.keep_alive = options.keepAlive;
+    }
+    
+    if (!options.model || options.model.trim() === '') {
+      throw new Error('Model must be specified');
+    }
+    
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json'
+    };
+    
+    const token = getToken();
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
+    
+    const response = await fetch(LLM_PROXY_ENDPOINT, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(payload),
+      signal: options.signal,
+    });
+    
+    await handle409Error(response, setAiStatus, setShowAIBusyModal);
+    
+    // Handle other error status codes
+    if (!response.ok) {
+      let errorMessage = `Request failed with status ${response.status}`;
+      try {
+        const errorData = await response.json();
+        if (response.status === 402) {
+          // Insufficient credits error
+          errorMessage = errorData.error || 'Insufficient credits to complete this request. Please purchase more credits to continue.';
+        } else {
+          errorMessage = errorData.error || errorData.message || errorMessage;
+        }
+      } catch (e) {
+        // If we can't parse the error response, use the default message
+      }
+      throw new Error(errorMessage);
+    }
+    
+    if (!response.body) throw new Error('No response body');
+    const reader = response.body.getReader();
+    let done = false;
+    let fullText = '';
+    let thinkingContent = '';
+    let responseContent = '';
+    let isInsideThinking = false;
+
+    while (!done) {
+      const { value, done: doneReading } = await reader.read();
+      done = doneReading;
+      if (value) {
+        const chunk = new TextDecoder().decode(value);
+        // eslint-disable-next-line
+        chunk.split('\n').forEach(line => {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6);
+            if (data === '[DONE]') return;
+            try {
+              const parsed = JSON.parse(data);
+              if (parsed.choices && parsed.choices[0] && parsed.choices[0].delta && parsed.choices[0].delta.content) {
+                const content = parsed.choices[0].delta.content;
+                fullText += content;
+                
+                // console.log('LLM Chunk:', content); // Debug log
+                
+                // Parse thinking tags
+                const parseThinking = (text: string) => {
+                  let currentText = text;
+                  let thinking = thinkingContent;
+                  let response = responseContent;
+                  let insideThinking = isInsideThinking;
+                  
+                  // console.log('Parsing chunk:', text, 'insideThinking:', insideThinking); // Debug log
+                  
+                  // Handle opening think tag
+                  if (currentText.includes('<think>')) {
+                    // console.log('Found <think> tag!'); // Debug log
+                    const parts = currentText.split('<think>');
+                    for (let i = 0; i < parts.length; i++) {
+                      if (i === 0) {
+                        // Content before first <think> tag
+                        if (!insideThinking) {
+                          response += parts[i];
+                        } else {
+                          thinking += parts[i];
+                        }
+                      } else {
+                        // Content after <think> tag
+                        insideThinking = true;
+                        thinking += parts[i];
+                      }
+                    }
+                    currentText = '';
+                  }
+                  
+                  // Handle closing think tag
+                  if (thinking.includes('</think>')) {
+                    // console.log('Found </think> tag!'); // Debug log
+                    const parts = thinking.split('</think>');
+                    thinking = parts[0]; // Keep only content before </think>
+                    insideThinking = false;
+                    // Content after </think> goes to response
+                    for (let i = 1; i < parts.length; i++) {
+                      response += parts[i];
+                    }
+                    // Add any remaining current text to response
+                    response += currentText;
+                  } else if (currentText && !insideThinking) {
+                    response += currentText;
+                  } else if (currentText && insideThinking) {
+                    thinking += currentText;
+                  }
+                  
+                  return { thinking, response, insideThinking };
+                };
+                
+                const parsed_content = parseThinking(content);
+                thinkingContent = parsed_content.thinking;
+                responseContent = parsed_content.response;
+                isInsideThinking = parsed_content.insideThinking;
+                
+                onStream({
+                  thinking: thinkingContent,
+                  response: responseContent,
+                  isThinking: isInsideThinking,
+                  isDone: false
+                });
+              }
+            } catch (e) {
+              // Ignore malformed lines
+            }
+          }
+        });
+      }
+    }
+    
+    onStream({
+      thinking: thinkingContent,
+      response: responseContent,
+      isThinking: false,
+      isDone: true
+    });
   } catch (err) {
     setAiStatus(AI_STATUS.IDLE);
     setShowAIBusyModal(false);

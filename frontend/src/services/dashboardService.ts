@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios from './http';
 
 // Type definitions
 export interface DashboardStats {

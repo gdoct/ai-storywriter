@@ -17,6 +17,15 @@ export interface ChatOptions {
 
 export type ChatStreamCallback = (chunk: string, isDone: boolean) => void;
 
+export interface ChatThinkingContent {
+  thinking: string;
+  response: string;
+  isThinking: boolean;
+  isDone: boolean;
+}
+
+export type ChatThinkingStreamCallback = (content: ChatThinkingContent) => void;
+
 const BACKEND_URL = 'http://localhost:5000';
 const CHAT_ENDPOINT = `${BACKEND_URL}/api/chat/completions`;
 
@@ -118,6 +127,162 @@ export class ChatService {
       }
       
       onStream(assistantText, true);
+    } catch (error) {
+      console.error('Chat service error:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Stream chat completion with thinking support for reasoning models
+   */
+  async streamChatCompletionWithThinking(
+    prompt: llmCompletionRequestMessage,
+    onStream: ChatThinkingStreamCallback,
+    options: ChatOptions = {}
+  ): Promise<void> {
+    const messages = this.buildMessagesFromRequest(prompt);
+    
+    const payload = {
+      model: options.model || 'default',
+      messages,
+      temperature: options.temperature ?? 0.8,
+      max_tokens: options.max_tokens ?? 1024,
+      stream: true,
+    };
+
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json'
+    };
+    
+    const token = getToken();
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
+
+    try {
+      const response = await fetch(CHAT_ENDPOINT, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(payload),
+        signal: options.signal,
+      });
+
+      if (!response.ok) {
+        let errorMessage = `Chat service error: ${response.statusText}`;
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorData.message || errorMessage;
+        } catch (e) {
+          // Use default error message if JSON parsing fails
+        }
+        throw new Error(errorMessage);
+      }
+
+      if (!response.body) {
+        throw new Error('No response body from chat service');
+      }
+
+      const reader = response.body.getReader();
+      let done = false;
+      let fullText = '';
+      let thinkingContent = '';
+      let responseContent = '';
+      let isInsideThinking = false;
+
+      while (!done) {
+        const { value, done: doneReading } = await reader.read();
+        done = doneReading;
+        
+        if (value) {
+          const chunk = new TextDecoder().decode(value);
+          
+          // Process each "data:" line from the SSE stream
+          const lines = chunk.split('\n');
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const data = line.slice(6);
+              if (data === '[DONE]') continue;
+              
+              try {
+                const parsed = JSON.parse(data);
+                if (parsed.choices && parsed.choices[0] && parsed.choices[0].delta && parsed.choices[0].delta.content) {
+                  const content = parsed.choices[0].delta.content;
+                  fullText += content;
+
+                  // Parse thinking tags
+                  const parseThinking = (text: string) => {
+                    let currentText = text;
+                    let thinking = thinkingContent;
+                    let response = responseContent;
+                    let insideThinking = isInsideThinking;
+                    
+                    // Handle opening think tag
+                    if (currentText.includes('<think>')) {
+                      const parts = currentText.split('<think>');
+                      for (let i = 0; i < parts.length; i++) {
+                        if (i === 0) {
+                          // Content before first <think> tag
+                          if (!insideThinking) {
+                            response += parts[i];
+                          } else {
+                            thinking += parts[i];
+                          }
+                        } else {
+                          // Content after <think> tag
+                          insideThinking = true;
+                          thinking += parts[i];
+                        }
+                      }
+                      currentText = '';
+                    }
+                    
+                    // Handle closing think tag
+                    if (thinking.includes('</think>')) {
+                      const parts = thinking.split('</think>');
+                      thinking = parts[0]; // Keep only content before </think>
+                      insideThinking = false;
+                      // Content after </think> goes to response
+                      for (let i = 1; i < parts.length; i++) {
+                        response += parts[i];
+                      }
+                      // Add any remaining current text to response
+                      response += currentText;
+                    } else if (currentText && !insideThinking) {
+                      response += currentText;
+                    } else if (currentText && insideThinking) {
+                      thinking += currentText;
+                    }
+                    
+                    return { thinking, response, insideThinking };
+                  };
+                  
+                  const parsed_content = parseThinking(content);
+                  thinkingContent = parsed_content.thinking;
+                  responseContent = parsed_content.response;
+                  isInsideThinking = parsed_content.insideThinking;
+                  
+                  onStream({
+                    thinking: thinkingContent,
+                    response: responseContent,
+                    isThinking: isInsideThinking,
+                    isDone: false
+                  });
+                }
+              } catch (e) {
+                // Ignore malformed lines
+              }
+            }
+          }
+        }
+      }
+      
+      onStream({
+        thinking: thinkingContent,
+        response: responseContent,
+        isThinking: false,
+        isDone: true
+      });
     } catch (error) {
       console.error('Chat service error:', error);
       throw error;

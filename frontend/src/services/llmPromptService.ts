@@ -240,8 +240,7 @@ export function createFinalStoryPrompt(scenario: Scenario): llmCompletionRequest
     prompt += "- Maintain consistent tone, style, and character voice throughout\n";
     prompt += "- Honor all character backgrounds and scenario details\n";
     prompt += "- IMPORTANT: do not use the names 'Silas', 'Blackwood' or 'Lyra'\n";
-    prompt += "- Present the complete story as one continuous narrative\n";
-    prompt += "- Do not include section markers or indicate where you filled in content\n\n";
+    prompt += "- Do not use section markers or paragraph headers\n\n";
     
     // Add the provided story segments
     if (scenario.fillIn!.beginning && scenario.fillIn!.beginning.trim()) {

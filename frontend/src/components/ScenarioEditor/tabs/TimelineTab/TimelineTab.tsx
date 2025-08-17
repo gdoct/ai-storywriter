@@ -1,15 +1,12 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { FaCalendar, FaChartBar, FaGlobe, FaRegClock } from 'react-icons/fa6';
-import { Calendar, Era, Timeline, TimelineEvent } from '../../../../types/ScenarioTypes';
-import { renderIcon } from '../../common/IconUtils';
+import { FaPlus, FaTimes } from 'react-icons/fa';
+import { MdSchedule } from 'react-icons/md';
 import { TabProps } from '../../types';
-import { CalendarsManager } from './components/CalendarsManager';
-import { ErasManager } from './components/ErasManager';
-import { EventsManager } from './components/EventsManager';
-import { TimelineView } from './components/TimelineView';
+import { TimelineEvent } from '../../../../types/ScenarioTypes';
+import { v4 as uuidv4 } from 'uuid';
 import './TimelineTab.css';
-
-type TimelineSubTab = 'timeline' | 'events' | 'eras' | 'calendars';
+import { TimelineCanvas } from './TimelineCanvas';
+import { EventModal } from './EventModal';
 
 export const TimelineTab: React.FC<TabProps> = ({
   scenario,
@@ -17,196 +14,201 @@ export const TimelineTab: React.FC<TabProps> = ({
   isDirty,
   isLoading,
 }) => {
-  const [activeSubTab, setActiveSubTab] = useState<TimelineSubTab>('timeline');
-  
-  // Initialize timeline data if it doesn't exist
-  const timeline = useMemo((): Timeline => {
-    if (scenario.timeline) {
+  const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
+  const [editingEventId, setEditingEventId] = useState<string | null>(null);
+  const [zoom, setZoom] = useState(1);
+  const [panX, setPanX] = useState(0);
+  const [panY, setPanY] = useState(0);
+
+  // Get timeline from scenario or initialize with root event
+  const timeline = useMemo(() => {
+    if (scenario.timeline && scenario.timeline.length > 0) {
       return scenario.timeline;
     }
-    return {
-      events: [],
-      eras: [],
-      calendars: [],
-      generalNotes: '',
+    
+    // Initialize with root "Story start" event
+    const rootEvent: TimelineEvent = {
+      id: uuidv4(),
+      title: 'Story start',
+      description: '',
+      date: '',
+      charactersInvolved: [],
+      includeInStory: true,
+      parentId: null,
+      position: { x: 0, y: 0 },
+      row: 0
     };
+    
+    return [rootEvent];
   }, [scenario.timeline]);
 
-  const handleTimelineChange = useCallback((updates: Partial<Timeline>) => {
-    const updatedTimeline = { ...timeline, ...updates };
-    onScenarioChange({ timeline: updatedTimeline });
-  }, [timeline, onScenarioChange]);
+  const updateTimeline = useCallback((newTimeline: TimelineEvent[]) => {
+    onScenarioChange({ timeline: newTimeline });
+  }, [onScenarioChange]);
 
-  const handleAddEvent = useCallback(() => {
+  const handleAddChild = useCallback((parentId: string) => {
+    const parent = timeline.find(event => event.id === parentId);
+    if (!parent) return;
+
+    // Check if parent already has 3 children (max limit)
+    const siblings = timeline.filter(event => event.parentId === parentId);
+    if (siblings.length >= 3) {
+      alert('Maximum of 3 parallel events allowed');
+      return;
+    }
+
     const newEvent: TimelineEvent = {
-      id: crypto.randomUUID(),
+      id: uuidv4(),
       title: 'New Event',
       description: '',
-      type: 'plot',
-      importance: 'minor',
-      date: {
-        year: new Date().getFullYear(),
-        displayFormat: `Year ${new Date().getFullYear()}`,
-        isApproximate: false,
-      },
-      participants: [],
-      consequences: '',
-      causes: '',
-      relatedEvents: [],
-      storyRelevance: '',
-      tags: [],
-      isCompleted: false,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      date: '',
+      charactersInvolved: [],
+      includeInStory: true,
+      parentId,
+      position: { x: 0, y: 0 }, // Will be calculated by layout algorithm
+      row: parent.row + 1
     };
-    
-    const updatedEvents = [...timeline.events, newEvent];
-    handleTimelineChange({ events: updatedEvents });
-  }, [timeline.events, handleTimelineChange]);
 
-  const handleAddEra = useCallback(() => {
-    const newEra: Era = {
-      id: crypto.randomUUID(),
-      name: 'New Era',
-      description: '',
-      startDate: {
-        year: new Date().getFullYear(),
-        displayFormat: `Year ${new Date().getFullYear()}`,
-        isApproximate: false,
-      },
-      characteristics: '',
-      keyEvents: [],
-      technology: '',
-      culture: '',
-      politics: '',
-      conflicts: '',
-      tags: [],
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-    
-    const updatedEras = [...timeline.eras, newEra];
-    handleTimelineChange({ eras: updatedEras });
-  }, [timeline.eras, handleTimelineChange]);
+    const newTimeline = [...timeline, newEvent];
+    updateTimeline(newTimeline);
+    setEditingEventId(newEvent.id);
+  }, [timeline, updateTimeline]);
 
-  const handleAddCalendar = useCallback(() => {
-    const newCalendar: Calendar = {
-      id: crypto.randomUUID(),
-      name: 'New Calendar',
-      description: '',
-      type: 'standard',
-      yearLength: 365,
-      monthsPerYear: 12,
-      daysPerMonth: [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31],
-      monthNames: [
-        'January', 'February', 'March', 'April', 'May', 'June',
-        'July', 'August', 'September', 'October', 'November', 'December'
-      ],
-      specialDays: [],
-      notes: '',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-    
-    const updatedCalendars = [...timeline.calendars, newCalendar];
-    handleTimelineChange({ calendars: updatedCalendars });
-  }, [timeline.calendars, handleTimelineChange]);
+  const handleRemoveEvent = useCallback((eventId: string) => {
+    const eventToRemove = timeline.find(event => event.id === eventId);
+    if (!eventToRemove) return;
 
-  // Create scenario context for AI generation
-  const scenarioContext = useMemo(() => ({
-    title: scenario.title,
-    genre: scenario.writingStyle?.genre,
-    theme: scenario.writingStyle?.theme,
-    characters: scenario.characters?.map(char => ({
-      name: char.name || 'Unnamed Character',
-      role: char.role || 'Character'
-    })) || [],
-  }), [scenario.title, scenario.writingStyle, scenario.characters]);
-
-  const renderSubTabContent = () => {
-    switch (activeSubTab) {
-      case 'timeline':
-        return (
-          <TimelineView
-            timeline={timeline}
-            onTimelineChange={handleTimelineChange}
-            onAddEvent={handleAddEvent}
-          />
-        );
-      case 'events':
-        return (
-          <EventsManager
-            events={timeline.events}
-            onEventsChange={(events) => handleTimelineChange({ events })}
-            onAddEvent={handleAddEvent}
-            scenarioContext={scenarioContext}
-          />
-        );
-      case 'eras':
-        return (
-          <ErasManager
-            eras={timeline.eras}
-            onErasChange={(eras) => handleTimelineChange({ eras })}
-            onAddEra={handleAddEra}
-            scenarioContext={scenarioContext}
-          />
-        );
-      case 'calendars':
-        return (
-          <CalendarsManager
-            calendars={timeline.calendars}
-            onCalendarsChange={(calendars) => handleTimelineChange({ calendars })}
-            onAddCalendar={handleAddCalendar}
-            scenarioContext={scenarioContext}
-          />
-        );
-      default:
-        return null;
+    // Don't allow removing the root event
+    if (!eventToRemove.parentId) {
+      alert('Cannot remove the root event');
+      return;
     }
-  };
 
-  const subTabs = [
-    { id: 'timeline' as const, label: 'Timeline', icon: FaRegClock },
-    { id: 'events' as const, label: 'Events', icon: FaChartBar },
-    { id: 'eras' as const, label: 'Eras', icon: FaGlobe },
-    { id: 'calendars' as const, label: 'Calendars', icon: FaCalendar },
-  ];
+    // Find children of the event being removed
+    const children = timeline.filter(event => event.parentId === eventId);
+    
+    // Update children to connect to the removed event's parent
+    const updatedTimeline = timeline
+      .filter(event => event.id !== eventId)
+      .map(event => {
+        if (children.some(child => child.id === event.id)) {
+          return { ...event, parentId: eventToRemove.parentId };
+        }
+        return event;
+      });
+
+    updateTimeline(updatedTimeline);
+    
+    // Clear selection if removed event was selected
+    if (selectedEventId === eventId) {
+      setSelectedEventId(null);
+    }
+    if (editingEventId === eventId) {
+      setEditingEventId(null);
+    }
+  }, [timeline, updateTimeline, selectedEventId, editingEventId]);
+
+  const handleEventUpdate = useCallback((eventId: string, updates: Partial<TimelineEvent>) => {
+    const updatedTimeline = timeline.map(event =>
+      event.id === eventId ? { ...event, ...updates } : event
+    );
+    updateTimeline(updatedTimeline);
+  }, [timeline, updateTimeline]);
+
+  const handleEventSelect = useCallback((eventId: string) => {
+    setSelectedEventId(eventId);
+  }, []);
+
+  const handleEventEdit = useCallback((eventId: string) => {
+    setEditingEventId(eventId);
+  }, []);
+
+  const handleCloseModal = useCallback(() => {
+    setEditingEventId(null);
+  }, []);
+
+  const handleZoomDelta = useCallback((delta: number) => {
+    setZoom(prev => Math.max(0.1, Math.min(3, prev + delta)));
+  }, []);
+
+  const handlePan = useCallback((deltaX: number, deltaY: number) => {
+    setPanX(prev => prev + deltaX);
+    setPanY(prev => prev + deltaY);
+  }, []);
+
+  const handleZoom = useCallback((newZoom: number) => {
+    setZoom(newZoom);
+  }, []);
+
+  const resetView = useCallback(() => {
+    setZoom(1);
+    setPanX(0);
+    setPanY(0);
+  }, []);
+
+  const editingEvent = editingEventId ? timeline.find(event => event.id === editingEventId) : null;
 
   return (
     <div className="timeline-tab">
       <div className="timeline-tab__header">
-        <div className="timeline-tab__sub-tabs">
-          {subTabs.map(tab => (
+        <div className="timeline-tab__header-content">
+          <div className="timeline-tab__title">
+            <MdSchedule className="timeline-tab__title-icon" />
+            <h3>Timeline & Events</h3>
+          </div>
+          <div className="timeline-tab__controls">
             <button
-              key={tab.id}
-              className={`timeline-tab__sub-tab ${activeSubTab === tab.id ? 'active' : ''}`}
-              onClick={() => setActiveSubTab(tab.id)}
-              disabled={isLoading}
+              className="timeline-tab__control-btn"
+              onClick={() => handleZoomDelta(0.1)}
+              title="Zoom In"
             >
-              {renderIcon(tab.icon, { className: "timeline-tab__sub-tab-icon" })}
-              {tab.label}
+              +
             </button>
-          ))}
-        </div>
-        
-        <div className="timeline-tab__stats">
-          <span className="timeline-tab__stat">
-            Events: {timeline.events.length}
-          </span>
-          <span className="timeline-tab__stat">
-            Eras: {timeline.eras.length}
-          </span>
-          <span className="timeline-tab__stat">
-            Calendars: {timeline.calendars.length}
-          </span>
+            <span className="timeline-tab__zoom-level">{Math.round(zoom * 100)}%</span>
+            <button
+              className="timeline-tab__control-btn"
+              onClick={() => handleZoomDelta(-0.1)}
+              title="Zoom Out"
+            >
+              -
+            </button>
+            <button
+              className="timeline-tab__control-btn"
+              onClick={resetView}
+              title="Reset View"
+            >
+              Reset
+            </button>
+          </div>
         </div>
       </div>
 
       <div className="timeline-tab__content">
-        {renderSubTabContent()}
+        <TimelineCanvas
+          events={timeline}
+          selectedEventId={selectedEventId}
+          zoom={zoom}
+          panX={panX}
+          panY={panY}
+          onEventSelect={handleEventSelect}
+          onEventEdit={handleEventEdit}
+          onAddChild={handleAddChild}
+          onRemoveEvent={handleRemoveEvent}
+          onPan={handlePan}
+          onZoom={handleZoom}
+          onEventUpdate={handleEventUpdate}
+        />
       </div>
+
+      {editingEvent && (
+        <EventModal
+          event={editingEvent}
+          scenario={scenario}
+          isOpen={!!editingEventId}
+          onClose={handleCloseModal}
+          onUpdate={(updates) => handleEventUpdate(editingEventId!, updates)}
+        />
+      )}
     </div>
   );
 };
-
-export default TimelineTab;

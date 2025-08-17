@@ -1,0 +1,1 @@
+export { LocationsTab } from './LocationsTab';

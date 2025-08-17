@@ -1,6 +1,8 @@
 import { ExpandableTabs } from '@drdata/ai-styles';
 import React, { useCallback, useEffect, useRef } from 'react';
 import { FaBook, FaDice, FaEye, FaRedo, FaSave, FaStickyNote, FaTrash, FaUser, FaUsers } from 'react-icons/fa';
+import { FaLocationDot } from 'react-icons/fa6';
+import { MdSchedule } from 'react-icons/md';
 import { useNavigate } from 'react-router-dom';
 import { useModals } from '../../hooks/useModals';
 import { createScenario, deleteScenario, updateScenario } from '../../services/scenario';
@@ -17,18 +19,13 @@ import { useScenarioEditor } from './context';
 import { StoryModal } from './modals/StoryModal';
 import './ScenarioEditor.css';
 import { BackstoryTab } from './tabs/BackstoryTab';
-import { CharacterRelationshipsTab } from './tabs/CharacterRelationshipsTab';
 import { CharactersTab } from './tabs/CharactersTab';
 import { FillInTab } from './tabs/FillInTab';
 import { GeneralTab } from './tabs/GeneralTab';
-import MultipleChaptersTab from './tabs/MultipleChaptersTab/MultipleChaptersTab';
+import { LocationsTab } from './tabs/LocationsTab';
 import { NotesTab } from './tabs/NotesTab';
-import { ObjectsActionsTab } from './tabs/ObjectsActionsTab';
-import { RandomizerTab } from './tabs/RandomizerTab';
 import { StoryArcTab } from './tabs/StoryArcTab';
-import { ThemesSymbolsTab } from './tabs/ThemesSymbolsTab';
 import { TimelineTab } from './tabs/TimelineTab';
-import { WorldBuildingTab } from './tabs/WorldBuildingTab';
 import { SaveOptions, TabConfig, TabId } from './types';
 import { tabHasData } from './utils/tabUtils';
 
@@ -51,10 +48,10 @@ const tabs: TabConfig[] = [
     optional: true,
   },
   {
-    id: 'characterrelationships',
-    label: 'Character Relationships',
-    icon: FaUsers,
-    component: CharacterRelationshipsTab,
+    id: 'locations',
+    label: 'Locations',
+    icon: FaLocationDot,
+    component: LocationsTab,
     optional: true,
   },
   {
@@ -79,20 +76,6 @@ const tabs: TabConfig[] = [
     optional: true,
   },
   {
-    id: 'worldbuilding',
-    label: 'World Building',
-    icon: FaDice,
-    component: WorldBuildingTab,
-    optional: true,
-  },
-  {
-    id: 'timeline',
-    label: 'Timeline',
-    icon: FaBook, // Using FaBook as placeholder for timeline icon
-    component: TimelineTab,
-    optional: true,
-  },
-  {
     id: 'notes',
     label: 'Notes',
     icon: FaStickyNote,
@@ -100,34 +83,12 @@ const tabs: TabConfig[] = [
     optional: true,
   },
   {
-    id: 'objectsactions',
-    label: 'Objects & Actions',
-    icon: FaDice,
-    component: ObjectsActionsTab,
+    id: 'timeline',
+    label: 'Timeline & Events',
+    icon: MdSchedule,
+    component: TimelineTab,
     optional: true,
   },
-  {
-    id: 'themessymbols',
-    label: 'Themes & Symbols',
-    icon: FaEye,
-    component: ThemesSymbolsTab,
-    optional: true,
-  },
-  {
-    id: 'multiplechapters',
-    label: 'Multiple Chapters',
-    icon: FaBook, // Or a more suitable icon
-    component: MultipleChaptersTab,
-    optional: true,
-  },
-  {
-    id: 'randomizers',
-    label: 'Randomizers',
-    icon: FaDice,
-    component: RandomizerTab,
-    optional: true,
-  },
-
 ];
 
 interface ScenarioEditorProps {
@@ -187,6 +148,7 @@ export const ScenarioEditor: React.FC<ScenarioEditorProps> = ({
         storyarc: '',
         backstory: '',
         notes: '',
+        timeline: [],
       };
       dispatch({ type: 'SET_SCENARIO', payload: newScenario });
     }
@@ -280,15 +242,22 @@ export const ScenarioEditor: React.FC<ScenarioEditorProps> = ({
     dispatch({ type: 'SET_GENERATING', payload: true });
     dispatch({ type: 'CLEAR_ALL_ERRORS' });
     dispatch({ type: 'SET_GENERATED_STORY', payload: '' }); // Clear existing story
+    dispatch({ type: 'SET_STORY_THINKING', payload: '' }); // Clear existing thinking
     dispatch({ type: 'SET_STORY_SAVED', payload: false }); // Reset saved status
 
     try {
       let accumulatedText = '';
+      let thinkingText = '';
       const { result, cancelGeneration } = await generateStory(state.scenario, {
         onProgress: (newTextChunk) => {
           // Accumulate the new text chunk
           accumulatedText += newTextChunk;
           dispatch({ type: 'SET_GENERATED_STORY', payload: accumulatedText });
+        },
+        onThinking: (thinking) => {
+          console.log('ScenarioEditor onThinking received:', thinking); // Debug log
+          thinkingText = thinking;
+          dispatch({ type: 'SET_STORY_THINKING', payload: thinking });
         }
       });
 
@@ -575,6 +544,7 @@ export const ScenarioEditor: React.FC<ScenarioEditorProps> = ({
         isOpen={state.showStoryModal}
         onClose={handleCloseStoryModal}
         story={state.generatedStory}
+        thinking={state.storyThinking}
         onRegenerate={handleRegenerateStory}
         onSaveStory={handleSaveStory}
         onCancelGeneration={handleCancelGeneration}

@@ -35,7 +35,6 @@ if [ ! -f .env ]; then
   announceStep "Creating .env file..."
   echo "JWT_SECRET_KEY=your-secure-secret-key-change-this-in-production" > .env
   echo "STORYWRITER_DB_PATH=$(pwd)/backend/storywriter.db" >> .env
-  echo "FLASK_ENV=production" >> .env   
   echo "VITE_API_URL=http://localhost:5000" >> .env
 fi
 

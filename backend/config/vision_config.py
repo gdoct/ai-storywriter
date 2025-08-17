@@ -32,6 +32,15 @@ VISION_MODELS = {
         'model': 'default',  # LMStudio uses default loaded model
         'timeout': 45,
         'options': {}
+    },
+    
+    # Default vision model for GitHub Models service
+    'github': {
+        'model': 'openai/gpt-4o',  # Vision-capable model available on GitHub Models
+        'timeout': 60,
+        'options': {
+            'max_tokens': 1000
+        }
     }
 }
 
@@ -41,7 +50,7 @@ def get_vision_config(backend_type):
     Get the vision model configuration for a specific backend.
     
     Args:
-        backend_type (str): The backend type ('ollama', 'chatgpt', or 'lmstudio')
+        backend_type (str): The backend type ('ollama', 'chatgpt', 'lmstudio', or 'github')
         
     Returns:
         dict: A configuration dictionary for the vision model

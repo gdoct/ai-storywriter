@@ -19,6 +19,8 @@ export async function fetchLLMSettings(): Promise<LLMConfig | null> {
     lmstudio: { url: 'http://localhost:1234' }, // default
     ollama: { url: 'http://localhost:11434' }, // default
     chatgpt: { apiKey: '' }, // default
+    github: { githubToken: '' }, // default
+    showThinking: backendData.showThinking || false, // Get from backend response
   };
 
   // Update the specific backend config
@@ -28,6 +30,8 @@ export async function fetchLLMSettings(): Promise<LLMConfig | null> {
     frontendConfig.ollama = { url: backendData.config.url || 'http://localhost:11434' };
   } else if (backendData.backend_type === 'chatgpt' && backendData.config) {
     frontendConfig.chatgpt = { apiKey: backendData.config.api_key || '' };
+  } else if (backendData.backend_type === 'github' && backendData.config) {
+    frontendConfig.github = { githubToken: backendData.config.githubToken || '' };
   }
 
   return frontendConfig;
@@ -43,11 +47,14 @@ export async function saveLLMSettings(config: LLMConfig): Promise<LLMConfig | nu
     backendConfig = config.ollama;
   } else if (config.backendType === 'chatgpt' && config.chatgpt) {
     backendConfig = { api_key: config.chatgpt.apiKey };
+  } else if (config.backendType === 'github' && config.github) {
+    backendConfig = { githubToken: config.github.githubToken };
   }
 
   const saveData = {
     backend_type: config.backendType,
-    config: backendConfig
+    config: backendConfig,
+    showThinking: config.showThinking || false // Include showThinking field
   };
 
   const res = await fetch(API_BASE, {
@@ -69,6 +76,8 @@ export async function testLLMConnection(config: LLMConfig): Promise<any> {
     backendConfig = config.ollama;
   } else if (config.backendType === 'chatgpt' && config.chatgpt) {
     backendConfig = { api_key: config.chatgpt.apiKey };
+  } else if (config.backendType === 'github' && config.github) {
+    backendConfig = { githubToken: config.github.githubToken };
   }
 
   const testData = {

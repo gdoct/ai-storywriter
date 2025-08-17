@@ -7,6 +7,7 @@ const backendOptions: { label: string; value: BackendType }[] = [
   { label: 'LM Studio', value: 'lmstudio' },
   { label: 'Ollama', value: 'ollama' },
   { label: 'ChatGPT', value: 'chatgpt' },
+  { label: 'GitHub Models', value: 'github' },
 ];
 
 const defaultConfig: LLMConfig = {
@@ -14,6 +15,8 @@ const defaultConfig: LLMConfig = {
   lmstudio: { url: 'http://localhost:1234' },
   ollama: { url: 'http://localhost:11434' },
   chatgpt: { apiKey: '' },
+  github: { githubToken: '' },
+  showThinking: false,
 };
 
 const LLMSettings: React.FC = () => {
@@ -22,6 +25,8 @@ const LLMSettings: React.FC = () => {
   const [saveMessage, setSaveMessage] = useState('');
   const [testMessage, setTestMessage] = useState('');
   const [testStatus, setTestStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [refreshing, setRefreshing] = useState(false);
+  const [refreshMessage, setRefreshMessage] = useState('');
 
   // Load settings from backend
   useEffect(() => {
@@ -59,6 +64,30 @@ const LLMSettings: React.FC = () => {
     setTimeout(() => setSaveMessage(''), 2000);
   };
 
+  // Refresh models
+  const handleRefreshModels = async () => {
+    setRefreshing(true);
+    setRefreshMessage('');
+    try {
+      const response = await fetch('/api/settings/llm/models/refresh', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      const result = await response.json();
+      
+      if (result.refreshed) {
+        setRefreshMessage(`Refreshed! Found ${result.models?.length || 0} models.`);
+      } else {
+        setRefreshMessage(result.error || 'Failed to refresh models');
+      }
+    } catch (e) {
+      setRefreshMessage('Failed to refresh models');
+    } finally {
+      setRefreshing(false);
+      setTimeout(() => setRefreshMessage(''), 3000);
+    }
+  };
+
   // Handle backend type change
   const handleBackendChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const backendType = e.target.value as BackendType;
@@ -78,6 +107,8 @@ const LLMSettings: React.FC = () => {
         return { ...prev, ollama: { url: value } };
       } else if (prev.backendType === 'chatgpt') {
         return { ...prev, chatgpt: { apiKey: value } };
+      } else if (prev.backendType === 'github') {
+        return { ...prev, github: { githubToken: value } };
       }
       return prev;
     });
@@ -125,6 +156,22 @@ const LLMSettings: React.FC = () => {
             />
           </div>
         );
+      case 'github':
+        return (
+          <div className="form-row">
+            <label>GitHub Token:</label>
+            <input
+              type="password"
+              value={config.github?.githubToken || ''}
+              onChange={(e) => handleConfigChange('githubToken', e.target.value)}
+              placeholder="ghp_..."
+              className="settings-input"
+            />
+            <div className="help-text">
+              GitHub personal access token for accessing GitHub Models API at https://models.github.ai
+            </div>
+          </div>
+        );
       default:
         return null;
     }
@@ -143,6 +190,17 @@ const LLMSettings: React.FC = () => {
           </select>
         </div>
         {renderConfigForm()}
+        <div className="form-row">
+          <label>
+            <input
+              type="checkbox"
+              checked={config.showThinking || false}
+              onChange={(e) => setConfig(prev => ({ ...prev, showThinking: e.target.checked }))}
+              style={{ marginRight: '8px' }}
+            />
+            Show reasoning model thinking process (displays &lt;think&gt; content)
+          </label>
+        </div>
         <div className="button-row">
           <button className="settings-btn primary-btn" onClick={handleSave} disabled={loading}>
             Save Settings
@@ -150,11 +208,15 @@ const LLMSettings: React.FC = () => {
           <button className="settings-btn secondary-btn" onClick={handleTestConnection} disabled={loading}>
             {loading ? 'Testing...' : 'Test Connection'}
           </button>
+          <button className="settings-btn secondary-btn" onClick={handleRefreshModels} disabled={refreshing}>
+            {refreshing ? 'Refreshing...' : 'Refresh Models'}
+          </button>
         </div>
         {saveMessage && <div className="message success-message">{saveMessage}</div>}
         {testMessage && (
           <div className={`message ${testStatus === 'success' ? 'success-message' : 'error-message'}`}>{testMessage}</div>
         )}
+        {refreshMessage && <div className="message success-message">{refreshMessage}</div>}
       </div>
     </div>
   );

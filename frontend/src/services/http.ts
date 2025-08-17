@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { getToken } from './security';
+import { getToken } from './tokenUtils';
 
 // Create an interceptor to add the JWT token to all outgoing requests
 axios.interceptors.request.use(

@@ -15,14 +15,7 @@ export const FillInTab: React.FC<TabProps> = ({
 
   const handleFillInChange = useCallback((updates: Partial<FillIn>) => {
     const updatedFillIn = { ...fillIn, ...updates };
-    
-    // If both beginning and ending are empty, remove the fillIn from scenario
-    if (!updatedFillIn.beginning?.trim() && !updatedFillIn.ending?.trim()) {
-      const { fillIn: _, ...scenarioWithoutFillIn } = scenario;
-      onScenarioChange(scenarioWithoutFillIn);
-    } else {
-      onScenarioChange({ fillIn: updatedFillIn });
-    }
+    onScenarioChange({ fillIn: updatedFillIn });
   }, [fillIn, scenario, onScenarioChange]);
 
   return (

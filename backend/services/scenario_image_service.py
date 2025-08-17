@@ -5,7 +5,7 @@ import uuid
 from io import BytesIO
 
 from data.repositories import ScenarioRepository
-from flask import current_app
+# Removed Flask dependency - using direct path configuration
 from PIL import Image
 
 # Configuration
@@ -65,7 +65,9 @@ class ScenarioImageService:
     def save_image_file(file_data, filename, user_id, image_id):
         """Save image file to disk and return the file path."""
         # Create user-specific upload directory
-        user_upload_dir = os.path.join(current_app.root_path, UPLOAD_FOLDER, str(user_id))
+        # Get backend directory and create upload path
+        backend_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        user_upload_dir = os.path.join(backend_dir, UPLOAD_FOLDER, str(user_id))
         os.makedirs(user_upload_dir, exist_ok=True)
         
         # Generate filename with image_id prefix
@@ -84,7 +86,9 @@ class ScenarioImageService:
     @staticmethod
     def delete_image_file(image_id, user_id):
         """Delete image file from disk."""
-        user_upload_dir = os.path.join(current_app.root_path, UPLOAD_FOLDER, str(user_id))
+        # Get backend directory and create upload path
+        backend_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        user_upload_dir = os.path.join(backend_dir, UPLOAD_FOLDER, str(user_id))
         image_files = glob.glob(os.path.join(user_upload_dir, f"{image_id}.*"))
         
         deleted_files = []
@@ -140,7 +144,8 @@ class ScenarioImageService:
         except Exception as e:
             # Clean up the uploaded file if scenario update failed
             try:
-                os.remove(os.path.join(current_app.root_path, file_path))
+                backend_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+                os.remove(os.path.join(backend_dir, file_path))
             except:
                 pass
             raise e
@@ -207,7 +212,8 @@ class ScenarioImageService:
         except Exception as e:
             # Clean up the uploaded file if scenario operations failed
             try:
-                os.remove(os.path.join(current_app.root_path, file_path))
+                backend_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+                os.remove(os.path.join(backend_dir, file_path))
             except:
                 pass
             raise e
@@ -236,11 +242,12 @@ class ScenarioImageService:
     
     @staticmethod
     def serve_image_file(image_id):
-        """Serve image file by image_id."""
-        from flask import send_file
-
-        # Get the upload directory
-        upload_dir = os.path.join(current_app.root_path, UPLOAD_FOLDER)
+        """Serve image file by image_id - returns FileResponse for FastAPI."""
+        from fastapi.responses import FileResponse
+        
+        # Get the upload directory (relative to backend directory)
+        backend_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        upload_dir = os.path.join(backend_dir, UPLOAD_FOLDER)
         
         # Search for files that start with the image_id in all user directories
         for user_folder in os.listdir(upload_dir):
@@ -259,8 +266,8 @@ class ScenarioImageService:
                             elif file_extension == 'gif':
                                 mime_type = 'image/gif'
                             
-                            # Serve the file
-                            return send_file(file_path, mimetype=mime_type)
+                            # Return FastAPI FileResponse
+                            return FileResponse(file_path, media_type=mime_type)
         
         # If not found, raise FileNotFoundError
         raise FileNotFoundError(f"Image {image_id} not found")

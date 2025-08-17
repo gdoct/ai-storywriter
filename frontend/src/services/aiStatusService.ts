@@ -1,11 +1,24 @@
 import { AI_STATUS } from '../contexts/AIStatusContext';
+import { getToken } from './tokenUtils';
 
-const BACKEND_URL = 'http://localhost:5000';
-const STATUS_ENDPOINT = `${BACKEND_URL}/proxy/llm/v1/status`;
+// Auto-detect if we're running in dev mode (localhost:3000) or production (localhost:5000)
+const isDevMode = window.location.port === '3000';
+const STATUS_ENDPOINT = isDevMode 
+  ? 'http://localhost:5000/api/proxy/llm/v1/status'
+  : '/api/proxy/llm/v1/status';
 
 export async function fetchAIBackendStatus(): Promise<AI_STATUS> {
   try {
-    const res = await fetch(STATUS_ENDPOINT, { method: 'GET' });
+    const headers: Record<string, string> = {};
+    const token = getToken();
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
+    
+    const res = await fetch(STATUS_ENDPOINT, { 
+      method: 'GET',
+      headers
+    });
     if (res.status === 200) {
       const data = await res.json();
       // Backend returns { busy: true/false }

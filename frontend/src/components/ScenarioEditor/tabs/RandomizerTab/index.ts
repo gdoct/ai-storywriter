@@ -1,1 +1,0 @@
-export { RandomizerTab } from './RandomizerTab';

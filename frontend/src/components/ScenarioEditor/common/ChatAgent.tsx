@@ -2,8 +2,9 @@ import { Button } from '@drdata/ai-styles';
 import React, { useEffect, useRef, useState } from 'react';
 import { FaComment, FaCopy, FaRedo, FaTimes } from 'react-icons/fa';
 import { useAuth } from '../../../contexts/AuthContext';
-import { chatService, ChatStreamCallback } from '../../../services/chatService';
+import { streamChatCompletionWithStatus, streamChatCompletionWithThinking, LLMStreamCallback, LLMThinkingStreamCallback } from '../../../services/llmService';
 import { createContextAwareChatPrompt } from '../../../services/llmPromptService';
+import { getShowThinkingSetting } from '../../../services/settings';
 import { getSelectedModel } from '../../../services/modelSelection';
 import { llmCompletionRequestMessage } from '../../../types/LLMTypes';
 import { Scenario } from '../../../types/ScenarioTypes';
@@ -13,6 +14,7 @@ interface Message {
   role: 'user' | 'assistant';
   content: string;
   followUpQuestions?: string[];
+  thinking?: string;
 }
 
 interface ChatAgentProps {
@@ -142,6 +144,7 @@ export const ChatAgent: React.FC<ChatAgentProps> = ({ scenario }) => {
   const [panelSize, setPanelSize] = useState({ width: 400, height: 600 });
   const [isResizing, setIsResizing] = useState(false);
   const [lastUserMessage, setLastUserMessage] = useState<string>('');
+  const [showThinking, setShowThinking] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -151,23 +154,33 @@ export const ChatAgent: React.FC<ChatAgentProps> = ({ scenario }) => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Check chat service availability on mount
+  // Check LLM service availability on mount by checking if we have a selected model
   useEffect(() => {
-    const checkChatService = async () => {
+    const checkLLMService = async () => {
       try {
-        const isAvailable = await chatService.isAvailable();
-        if (!isAvailable) {
+        const model = getSelectedModel();
+        if (!model) {
           setChatStatus(CHAT_STATUS.UNAVAILABLE);
         } else {
           setChatStatus(CHAT_STATUS.IDLE);
         }
       } catch (error) {
-        console.error('Failed to check chat service:', error);
+        console.error('Failed to check LLM service:', error);
         setChatStatus(CHAT_STATUS.UNAVAILABLE);
       }
     };
     
-    checkChatService();
+    const loadThinkingSetting = async () => {
+      try {
+        const thinking = await getShowThinkingSetting();
+        setShowThinking(thinking);
+      } catch (error) {
+        console.error('Failed to load thinking setting:', error);
+      }
+    };
+    
+    checkLLMService();
+    loadThinkingSetting();
   }, []);
 
   const isChatUnavailable = [CHAT_STATUS.UNAVAILABLE, CHAT_STATUS.ERROR].includes(chatStatus);
@@ -210,56 +223,121 @@ export const ChatAgent: React.FC<ChatAgentProps> = ({ scenario }) => {
       const model = getSelectedModel();
       let fullResponse = '';
       
-      const onStream: ChatStreamCallback = (assistantText, isDone) => {
-        if (isDone) {
-          fullResponse = assistantText;
-        } else {
-          fullResponse += assistantText;
-        }
-        
-        // During streaming, extract and show just the answer content
-        const displayText = extractAnswerFromPartialJson(fullResponse);
-        setMessages(prev => {
-          const updated = [...prev];
-          for (let i = updated.length - 1; i >= 0; i--) {
-            if (updated[i].role === 'assistant') {
-              updated[i] = { ...updated[i], content: displayText };
-              break;
-            }
+      if (showThinking) {
+        const onThinkingStream: LLMThinkingStreamCallback = (thinkingContent) => {
+          if (thinkingContent.isDone) {
+            fullResponse = thinkingContent.response;
+          } else {
+            fullResponse = thinkingContent.response;
           }
-          return updated;
-        });
-        
-        // When streaming is complete, parse the full structured response
-        if (isDone) {
-          const parsed = parseStructuredResponse(fullResponse);
+          
+          // Update message with both thinking and response content
           setMessages(prev => {
             const updated = [...prev];
             for (let i = updated.length - 1; i >= 0; i--) {
               if (updated[i].role === 'assistant') {
+                const displayText = thinkingContent.isDone ? 
+                  parseStructuredResponse(thinkingContent.response).content :
+                  extractAnswerFromPartialJson(thinkingContent.response);
+                
                 updated[i] = { 
                   ...updated[i], 
-                  content: parsed.content,
-                  followUpQuestions: parsed.followUpQuestions
+                  content: displayText,
+                  thinking: thinkingContent.thinking
                 };
                 break;
               }
             }
             return updated;
           });
-        }
-      };
+          
+          // When streaming is complete, parse the full structured response
+          if (thinkingContent.isDone) {
+            const parsed = parseStructuredResponse(thinkingContent.response);
+            setMessages(prev => {
+              const updated = [...prev];
+              for (let i = updated.length - 1; i >= 0; i--) {
+                if (updated[i].role === 'assistant') {
+                  updated[i] = { 
+                    ...updated[i], 
+                    content: parsed.content,
+                    thinking: thinkingContent.thinking,
+                    followUpQuestions: parsed.followUpQuestions
+                  };
+                  break;
+                }
+              }
+              return updated;
+            });
+          }
+        };
 
-      await chatService.streamChatCompletion(
-        promptObj,
-        onStream,
-        { 
-          model: model || undefined, 
-          temperature: 0.8, 
-          max_tokens: 1024,
-          signal: abortControllerRef.current?.signal
-        }
-      );
+        await streamChatCompletionWithThinking(
+          promptObj,
+          onThinkingStream,
+          { 
+            model: model || undefined, 
+            temperature: 0.8, 
+            max_tokens: 1024,
+            signal: abortControllerRef.current?.signal
+          },
+          () => {}, // setAiStatus - no-op for chat
+          () => {}  // setShowAIBusyModal - no-op for chat
+        );
+      } else {
+        const onStream: LLMStreamCallback = (assistantText, isDone) => {
+          if (isDone) {
+            fullResponse = assistantText;
+          } else {
+            fullResponse += assistantText;
+          }
+          
+          // During streaming, extract and show just the answer content
+          const displayText = extractAnswerFromPartialJson(fullResponse);
+          setMessages(prev => {
+            const updated = [...prev];
+            for (let i = updated.length - 1; i >= 0; i--) {
+              if (updated[i].role === 'assistant') {
+                updated[i] = { ...updated[i], content: displayText };
+                break;
+              }
+            }
+            return updated;
+          });
+          
+          // When streaming is complete, parse the full structured response
+          if (isDone) {
+            const parsed = parseStructuredResponse(fullResponse);
+            setMessages(prev => {
+              const updated = [...prev];
+              for (let i = updated.length - 1; i >= 0; i--) {
+                if (updated[i].role === 'assistant') {
+                  updated[i] = { 
+                    ...updated[i], 
+                    content: parsed.content,
+                    followUpQuestions: parsed.followUpQuestions
+                  };
+                  break;
+                }
+              }
+              return updated;
+            });
+          }
+        };
+
+        await streamChatCompletionWithStatus(
+          promptObj,
+          onStream,
+          { 
+            model: model || undefined, 
+            temperature: 0.8, 
+            max_tokens: 1024,
+            signal: abortControllerRef.current?.signal
+          },
+          () => {}, // setAiStatus - no-op for chat
+          () => {}  // setShowAIBusyModal - no-op for chat
+        );
+      }
     } catch (err) {
       // Check if the error is due to cancellation
       if (err instanceof Error && err.name === 'AbortError') {
@@ -329,7 +407,7 @@ export const ChatAgent: React.FC<ChatAgentProps> = ({ scenario }) => {
             const model = getSelectedModel();
             let fullResponse = '';
             
-            const onStream: ChatStreamCallback = (assistantText, isDone) => {
+            const onStream: LLMStreamCallback = (assistantText, isDone) => {
               if (isDone) {
                 fullResponse = assistantText;
               } else {
@@ -369,10 +447,12 @@ export const ChatAgent: React.FC<ChatAgentProps> = ({ scenario }) => {
               }
             };
 
-            await chatService.streamChatCompletion(
+            await streamChatCompletionWithStatus(
               promptObj,
               onStream,
-              { model: model || undefined, temperature: 0.8, max_tokens: 1024 }
+              { model: model || undefined, temperature: 0.8, max_tokens: 1024 },
+              () => {}, // setAiStatus - no-op for chat
+              () => {}  // setShowAIBusyModal - no-op for chat
             );
           } catch (err) {
             console.error('Chat error:', err);
@@ -506,7 +586,7 @@ export const ChatAgent: React.FC<ChatAgentProps> = ({ scenario }) => {
       const model = getSelectedModel();
       let fullResponse = '';
       
-      const onStream: ChatStreamCallback = (assistantText, isDone) => {
+      const onStream: LLMStreamCallback = (assistantText, isDone) => {
         if (isDone) {
           fullResponse = assistantText;
         } else {
@@ -546,7 +626,7 @@ export const ChatAgent: React.FC<ChatAgentProps> = ({ scenario }) => {
         }
       };
 
-      await chatService.streamChatCompletion(
+      await streamChatCompletionWithStatus(
         promptObj,
         onStream,
         { 
@@ -554,7 +634,9 @@ export const ChatAgent: React.FC<ChatAgentProps> = ({ scenario }) => {
           temperature: 0.8, 
           max_tokens: 1024,
           signal: abortControllerRef.current?.signal
-        }
+        },
+        () => {}, // setAiStatus - no-op for chat
+        () => {}  // setShowAIBusyModal - no-op for chat
       );
     } catch (err) {
       // Check if the error is due to cancellation
@@ -658,6 +740,26 @@ export const ChatAgent: React.FC<ChatAgentProps> = ({ scenario }) => {
                   return (
                     <div key={idx} className={`chat-agent-message chat-agent-message--${msg.role}`}>
                       <div className="chat-agent-message__header">
+                        {msg.role === 'assistant' && msg.thinking && showThinking && (
+                          <div className="chat-agent-thinking">
+                            <details>
+                              <summary style={{cursor: 'pointer', color: '#666', fontStyle: 'italic', marginBottom: '8px'}}>
+                                🤔 Thinking...
+                              </summary>
+                              <div style={{
+                                background: '#f5f5f5', 
+                                padding: '8px', 
+                                borderRadius: '4px', 
+                                fontSize: '0.9em',
+                                color: '#666',
+                                whiteSpace: 'pre-wrap',
+                                marginBottom: '8px'
+                              }}>
+                                {msg.thinking}
+                              </div>
+                            </details>
+                          </div>
+                        )}
                         <div className="chat-agent-message__content">{msg.content}</div>
                         {msg.role === 'assistant' && msg.content && (
                           <button

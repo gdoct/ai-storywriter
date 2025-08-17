@@ -190,6 +190,14 @@
   background: rgba(40, 167, 69, 1);
 }
 
+.character-photo__ai-btn {
+  background: rgba(138, 43, 226, 0.9);
+}
+
+.character-photo__ai-btn:hover {
+  background: rgba(138, 43, 226, 1);
+}
+
 .character-photo--small .character-photo__action-btn {
   width: 18px;
   height: 18px;

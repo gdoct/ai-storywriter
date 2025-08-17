@@ -1,5 +1,6 @@
 import { LoginResponse, Permission, UserRole, UserTier } from '../types/auth';
-import axios from './http';
+import axios from 'axios';
+import { setToken, removeToken } from './tokenUtils';
 
 interface SignupData {
   username: string;
@@ -13,7 +14,7 @@ export const login = async (email: string, password: string): Promise<boolean> =
     const response = await axios.post<LoginResponse>('/api/login', { email, password });
     if (response.data.access_token) {
       // Store the token and user info in localStorage
-      localStorage.setItem('token', response.data.access_token);
+      setToken(response.data.access_token);
       localStorage.setItem('username', response.data.username);
       localStorage.setItem('email', response.data.email || '');
       localStorage.setItem('tier', response.data.tier);
@@ -33,7 +34,7 @@ export const signup = async (signupData: SignupData): Promise<boolean> => {
     const response = await axios.post<LoginResponse>('/api/signup', signupData);
     if (response.data.access_token) {
       // Store the token and user info in localStorage
-      localStorage.setItem('token', response.data.access_token);
+      setToken(response.data.access_token);
       localStorage.setItem('username', response.data.username);
       localStorage.setItem('email', response.data.email || '');
       localStorage.setItem('tier', response.data.tier);
@@ -49,7 +50,7 @@ export const signup = async (signupData: SignupData): Promise<boolean> => {
 };
 
 export const logout = (): void => {
-  localStorage.removeItem('token');
+  removeToken();
   localStorage.removeItem('username');
   localStorage.removeItem('email');
   localStorage.removeItem('tier');
@@ -58,14 +59,7 @@ export const logout = (): void => {
   localStorage.removeItem('user_id');
 };
 
-export const isAuthenticated = (): boolean => {
-  const token = localStorage.getItem('token');
-  return !!token;
-};
-
-export const getToken = (): string | null => {
-  return localStorage.getItem('token');
-};
+export { isAuthenticated, getToken } from './tokenUtils';
 
 export const getUsername = (): string | null => {
   return localStorage.getItem('username');

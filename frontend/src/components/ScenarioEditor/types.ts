@@ -2,7 +2,7 @@ import React from 'react';
 import { Scenario } from '../../types/ScenarioTypes';
 
 // Tab identifiers
-export type TabId = 'general' | 'characters' | 'backstory' | 'storyarc' | 'fillin' | 'notes' | 'worldbuilding' | 'timeline' | 'objectsactions' | 'themessymbols' | 'characterrelationships' | 'multiplechapters' | 'randomizers';
+export type TabId = 'general' | 'characters' | 'locations' | 'backstory' | 'storyarc' | 'fillin' | 'notes' | 'worldbuilding' | 'timeline' | 'objectsactions' | 'themessymbols' | 'characterrelationships' | 'multiplechapters' | 'randomizers';
 
 // Tab configuration interface
 export interface TabConfig {
@@ -34,6 +34,7 @@ export interface ScenarioEditorState {
   errors: Record<string, string>;
   showStoryModal: boolean;
   generatedStory: string | null;
+  storyThinking: string | null;
   isStorySaved: boolean;
 }
 
@@ -55,6 +56,7 @@ export type ScenarioEditorAction =
   | { type: 'CLEAR_ALL_ERRORS' }
   | { type: 'SET_SHOW_STORY_MODAL'; payload: boolean }
   | { type: 'SET_GENERATED_STORY'; payload: string | null }
+  | { type: 'SET_STORY_THINKING'; payload: string | null }
   | { type: 'SET_STORY_SAVED'; payload: boolean };
 
 // Save options

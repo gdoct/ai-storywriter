@@ -23,20 +23,17 @@ export function getTabsWithData(scenario: Scenario): TabId[] {
     }
   }
 
-  // Check if character relationships tab has data
-  if (scenario.characterRelationships) {
-    const cr = scenario.characterRelationships;
-    const hasCharacterRelationshipsData = (
-      (cr.relationships && cr.relationships.length > 0) ||
-      (cr.relationshipTypes && cr.relationshipTypes.length > 0) ||
-      (cr.dynamics && cr.dynamics.length > 0) ||
-      (cr.conflicts && cr.conflicts.length > 0) ||
-      (cr.histories && cr.histories.length > 0) ||
-      (cr.groups && cr.groups.length > 0) ||
-      (cr.generalNotes && cr.generalNotes.trim().length > 0)
+  // Check if locations tab has data
+  if (scenario.locations && scenario.locations.length > 0) {
+    // Check if any location has meaningful data
+    const hasLocationData = scenario.locations.some(loc => 
+      loc.name?.trim() || 
+      loc.visualDescription?.trim() || 
+      loc.background?.trim() || 
+      loc.extraInfo?.trim()
     );
-    if (hasCharacterRelationshipsData) {
-      tabsWithData.push('characterrelationships');
+    if (hasLocationData) {
+      tabsWithData.push('locations');
     }
   }
 
@@ -67,66 +64,16 @@ export function getTabsWithData(scenario: Scenario): TabId[] {
     tabsWithData.push('notes');
   }
 
-  // Check if world building tab has data
-  if (scenario.worldBuilding) {
-    const wb = scenario.worldBuilding;
-    const hasWorldBuildingData = (
-      (wb.locations && wb.locations.length > 0) ||
-      (wb.cultures && wb.cultures.length > 0) ||
-      (wb.magicSystems && wb.magicSystems.length > 0) ||
-      (wb.technologies && wb.technologies.length > 0) ||
-      (wb.religions && wb.religions.length > 0) ||
-      (wb.organizations && wb.organizations.length > 0) ||
-      (wb.generalNotes && wb.generalNotes.trim().length > 0)
-    );
-    if (hasWorldBuildingData) {
-      tabsWithData.push('worldbuilding');
-    }
-  }
-
   // Check if timeline tab has data
-  if (scenario.timeline) {
-    const tl = scenario.timeline;
-    const hasTimelineData = (
-      (tl.events && tl.events.length > 0) ||
-      (tl.eras && tl.eras.length > 0) ||
-      (tl.calendars && tl.calendars.length > 0) ||
-      (tl.generalNotes && tl.generalNotes.trim().length > 0)
-    );
+  if (scenario.timeline && scenario.timeline.length > 0) {
+    // Check if there are events other than just the root
+    const hasTimelineData = scenario.timeline.length > 1 || 
+      (scenario.timeline.length === 1 && 
+       (!!scenario.timeline[0].description?.trim() ||
+        !!scenario.timeline[0].date?.trim() ||
+        (scenario.timeline[0].charactersInvolved?.length || 0) > 0));
     if (hasTimelineData) {
       tabsWithData.push('timeline');
-    }
-  }
-
-  // Check if objects & actions tab has data
-  if (scenario.objectsAndActions) {
-    const oa = scenario.objectsAndActions;
-    const hasObjectsActionsData = (
-      (oa.objects && oa.objects.length > 0) ||
-      (oa.actions && oa.actions.length > 0) ||
-      (oa.interactions && oa.interactions.length > 0) ||
-      (oa.sequences && oa.sequences.length > 0) ||
-      (oa.generalNotes && oa.generalNotes.trim().length > 0)
-    );
-    if (hasObjectsActionsData) {
-      tabsWithData.push('objectsactions');
-    }
-  }
-
-  // Check if themes & symbols tab has data
-  if (scenario.themesAndSymbols) {
-    const ts = scenario.themesAndSymbols;
-    const hasThemesSymbolsData = (
-      (ts.themes && ts.themes.length > 0) ||
-      (ts.symbols && ts.symbols.length > 0) ||
-      (ts.motifs && ts.motifs.length > 0) ||
-      (ts.metaphors && ts.metaphors.length > 0) ||
-      (ts.archetypes && ts.archetypes.length > 0) ||
-      (ts.literaryDevices && ts.literaryDevices.length > 0) ||
-      (ts.generalNotes && ts.generalNotes.trim().length > 0)
-    );
-    if (hasThemesSymbolsData) {
-      tabsWithData.push('themessymbols');
     }
   }
 
@@ -143,18 +90,6 @@ export function getTabsWithData(scenario: Scenario): TabId[] {
     );
     if (hasMultipleChaptersData) {
       tabsWithData.push('multiplechapters');
-    }
-  }
-
-  // Check if randomizers tab has data
-  if (scenario.randomizers) {
-    const r = scenario.randomizers;
-    const hasRandomizersData = (
-      (r.randomizers && r.randomizers.length > 0) ||
-      (r.generalNotes && r.generalNotes.trim().length > 0)
-    );
-    if (hasRandomizersData) {
-      tabsWithData.push('randomizers');
     }
   }
 
@@ -198,18 +133,14 @@ export function tabHasData(scenario: Scenario, tabId: TabId): boolean {
           char.extraInfo?.trim()
         );
     
-    case 'characterrelationships':
-      if (!scenario.characterRelationships) return false;
-      const cr = scenario.characterRelationships;
-      return (
-        (cr.relationships && cr.relationships.length > 0) ||
-        (cr.relationshipTypes && cr.relationshipTypes.length > 0) ||
-        (cr.dynamics && cr.dynamics.length > 0) ||
-        (cr.conflicts && cr.conflicts.length > 0) ||
-        (cr.histories && cr.histories.length > 0) ||
-        (cr.groups && cr.groups.length > 0) ||
-        (cr.generalNotes && cr.generalNotes.trim().length > 0)
-      );
+    case 'locations':
+      return scenario.locations && scenario.locations.length > 0 &&
+        scenario.locations.some(loc => 
+          loc.name?.trim() || 
+          loc.visualDescription?.trim() || 
+          loc.background?.trim() || 
+          loc.extraInfo?.trim()
+        );
     
     case 'backstory':
       return !!scenario.backstory?.trim();
@@ -228,72 +159,14 @@ export function tabHasData(scenario: Scenario, tabId: TabId): boolean {
     case 'notes':
       return !!scenario.notes?.trim();
     
-    case 'worldbuilding':
-      if (!scenario.worldBuilding) return false;
-      const wb = scenario.worldBuilding;
-      return (
-        (wb.locations && wb.locations.length > 0) ||
-        (wb.cultures && wb.cultures.length > 0) ||
-        (wb.magicSystems && wb.magicSystems.length > 0) ||
-        (wb.technologies && wb.technologies.length > 0) ||
-        (wb.religions && wb.religions.length > 0) ||
-        (wb.organizations && wb.organizations.length > 0) ||
-        (wb.generalNotes && wb.generalNotes.trim().length > 0)
-      );
-    
     case 'timeline':
-      if (!scenario.timeline) return false;
-      const tl = scenario.timeline;
-      return (
-        (tl.events && tl.events.length > 0) ||
-        (tl.eras && tl.eras.length > 0) ||
-        (tl.calendars && tl.calendars.length > 0) ||
-        (tl.generalNotes && tl.generalNotes.trim().length > 0)
-      );
-    
-    case 'objectsactions':
-      if (!scenario.objectsAndActions) return false;
-      const oa = scenario.objectsAndActions;
-      return (
-        (oa.objects && oa.objects.length > 0) ||
-        (oa.actions && oa.actions.length > 0) ||
-        (oa.interactions && oa.interactions.length > 0) ||
-        (oa.sequences && oa.sequences.length > 0) ||
-        (oa.generalNotes && oa.generalNotes.trim().length > 0)
-      );
-    
-    case 'themessymbols':
-      if (!scenario.themesAndSymbols) return false;
-      const ts = scenario.themesAndSymbols;
-      return (
-        (ts.themes && ts.themes.length > 0) ||
-        (ts.symbols && ts.symbols.length > 0) ||
-        (ts.motifs && ts.motifs.length > 0) ||
-        (ts.metaphors && ts.metaphors.length > 0) ||
-        (ts.archetypes && ts.archetypes.length > 0) ||
-        (ts.literaryDevices && ts.literaryDevices.length > 0) ||
-        (ts.generalNotes && ts.generalNotes.trim().length > 0)
-      );
-    
-    case 'multiplechapters':
-      if (!scenario.multipleChapters) return false;
-      const mc = scenario.multipleChapters;
-      return (
-        (mc.chapters && mc.chapters.length > 0) ||
-        (mc.globalSettings && (
-          mc.globalSettings.namingConvention !== 'Chapter %' ||
-          mc.globalSettings.defaultWordCount !== 1500
-        )) ||
-        (mc.crossReferences && mc.crossReferences.length > 0)
-      );
-    
-    case 'randomizers':
-      if (!scenario.randomizers) return false;
-      const r = scenario.randomizers;
-      return (
-        (r.randomizers && r.randomizers.length > 0) ||
-        (r.generalNotes && r.generalNotes.trim().length > 0)
-      );
+      if (!scenario.timeline || scenario.timeline.length === 0) return false;
+      // Check if there are events other than just the root, or if root has meaningful data
+      return scenario.timeline.length > 1 || 
+        (scenario.timeline.length === 1 && 
+         (!!scenario.timeline[0].description?.trim() ||
+          !!scenario.timeline[0].date?.trim() ||
+          (scenario.timeline[0].charactersInvolved?.length || 0) > 0));
     
     default:
       return false;
