@@ -4,20 +4,14 @@ import StarRating from '../Rating/StarRating';
 import TTSPlayer from '../TTS/TTSPlayer';
 import './StoryReader.css';
 
-interface Character {
-  name: string;
-  description: string;
-  imageUrl?: string;
-}
-
-interface ScenarioData {
-  title?: string;
-  description?: string;
-  imageUrl?: string;
-  characters?: Character[];
-  setting?: string;
-  genre?: string;
-}
+// interface ScenarioData {
+//   title?: string;
+//   description?: string;
+//   imageUrl?: string;
+//   characters?: Character[];
+//   setting?: string;
+//   genre?: string;
+// }
 
 interface StoryReaderProps {
   content: string;
@@ -57,8 +51,8 @@ const StoryReader: React.FC<StoryReaderProps> = ({
   ratingCount = 0,
   userRating,
   onRatingChange,
-  imageUri,
-  scenarioJson
+  imageUri: _imageUri,
+  scenarioJson: _scenarioJson
 }) => {
 
   if (isLoading) {

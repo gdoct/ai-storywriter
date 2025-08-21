@@ -1,8 +1,6 @@
 import React, { MouseEvent, ReactNode, useEffect, useRef } from 'react';
-import { Button, Card } from '@drdata/ai-styles';
+import { Card } from '@drdata/ai-styles';
 import { AiStoryReader } from '@drdata/ai-styles';
-import StarRating from '../Rating/StarRating';
-import TTSPlayer from '../TTS/TTSPlayer';
 import './ReadingModal.css';
 
 interface Character {
@@ -45,15 +43,15 @@ const ReadingModal: React.FC<ReadingModalProps> = ({
   title, 
   content,
   author,
-  publishedAt,
+  publishedAt: _publishedAt,
   wordCount,
-  imageUri,
+  imageUri: _imageUri,
   scenarioJson,
-  storyId,
-  averageRating = 0,
-  ratingCount = 0,
-  userRating,
-  onRatingChange,
+  storyId: _storyId,
+  averageRating: _averageRating = 0,
+  ratingCount: _ratingCount = 0,
+  userRating: _userRating,
+  onRatingChange: _onRatingChange,
   onDownload,
   children
 }) => {
@@ -69,13 +67,13 @@ const ReadingModal: React.FC<ReadingModalProps> = ({
     }
   }
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-  };
+  // const formatDate = (dateString: string) => {
+  //   return new Date(dateString).toLocaleDateString('en-US', {
+  //     year: 'numeric',
+  //     month: 'long',
+  //     day: 'numeric'
+  //   });
+  // };
 
   // Handle escape key
   useEffect(() => {
@@ -131,7 +129,7 @@ const ReadingModal: React.FC<ReadingModalProps> = ({
                   title={title}
                   author={author}
                   readingTime={wordCount ? Math.ceil(wordCount / 200) : undefined}
-                  coverImage={imageUri || scenarioData.imageUrl}
+                  coverImage={_imageUri || scenarioData.imageUrl}
                   characters={scenarioData.characters?.map((char, index) => ({
                     id: index.toString(),
                     name: char.name,

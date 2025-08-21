@@ -35,7 +35,7 @@ function scenarioEditorReducer(
   action: ScenarioEditorAction
 ): ScenarioEditorState {
   switch (action.type) {
-    case 'SET_SCENARIO':
+    case 'SET_SCENARIO': {
       // When setting a scenario, initialize visible tabs based on existing data
       const visibleTabs = getDefaultVisibleTabs(action.payload);
       
@@ -47,6 +47,7 @@ function scenarioEditorReducer(
         isDirty: false,
         errors: {},
       };
+    }
 
     case 'UPDATE_SCENARIO':
       return {
@@ -90,7 +91,7 @@ function scenarioEditorReducer(
         activeTab: action.payload, // Make the newly added tab active
       };
 
-    case 'REMOVE_TAB':
+    case 'REMOVE_TAB': {
       if (action.payload === 'general') {
         return state; // Cannot remove general tab
       }
@@ -101,6 +102,7 @@ function scenarioEditorReducer(
         // If we're removing the active tab, switch to the first visible tab
         activeTab: state.activeTab === action.payload ? newVisibleTabs[0] : state.activeTab,
       };
+    }
 
     case 'SET_DIRTY':
       return {
@@ -135,12 +137,13 @@ function scenarioEditorReducer(
         },
       };
 
-    case 'CLEAR_ERROR':
+    case 'CLEAR_ERROR': {
       const { [action.payload]: _, ...remainingErrors } = state.errors;
       return {
         ...state,
         errors: remainingErrors,
       };
+    }
 
     case 'CLEAR_ALL_ERRORS':
       return {
@@ -197,6 +200,7 @@ export const ScenarioEditorProvider: React.FC<{ children: React.ReactNode }> = (
 };
 
 // Custom hook to use the context
+// eslint-disable-next-line react-refresh/only-export-components
 export const useScenarioEditor = () => {
   const context = useContext(ScenarioEditorContext);
   if (!context) {

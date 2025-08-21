@@ -24,7 +24,7 @@
  */
 
 import React, { useCallback, useMemo, useState } from 'react';
-import { FaPlus, FaTimes } from 'react-icons/fa';
+// import { FaPlus, FaTimes } from 'react-icons/fa'; // Unused imports
 import { MdSchedule } from 'react-icons/md';
 import { TabProps } from '../../types';
 import { TimelineEvent } from '../../../../types/ScenarioTypes';
@@ -36,8 +36,8 @@ import { EventModal } from './EventModal';
 export const TimelineTab: React.FC<TabProps> = ({
   scenario,
   onScenarioChange,
-  isDirty,
-  isLoading,
+  isDirty: _isDirty,
+  isLoading: _isLoading,
 }) => {
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [editingEventId, setEditingEventId] = useState<string | null>(null);

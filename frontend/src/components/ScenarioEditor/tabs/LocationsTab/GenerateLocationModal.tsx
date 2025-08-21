@@ -52,7 +52,7 @@ export const GenerateLocationModal: React.FC<GenerateLocationModalProps> = ({
     elapsedTime: number;
     tokensReceived?: number;
   }>({ stage: '', elapsedTime: 0 });
-  const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const progressIntervalRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   // AI Status context
@@ -304,7 +304,11 @@ export const GenerateLocationModal: React.FC<GenerateLocationModalProps> = ({
         prompt,
         (chunk: string, isDone: boolean) => {
           accumulatedText += chunk;
-          updateProgressStage('Receiving response...', 50);
+          if (isDone) {
+            updateProgressStage('Finalizing response...', 80);
+          } else {
+            updateProgressStage('Receiving response...', 50);
+          }
         },
         {
           model: selectedModel || undefined,
@@ -346,6 +350,7 @@ export const GenerateLocationModal: React.FC<GenerateLocationModalProps> = ({
         };
       } catch (parseError) {
         console.warn('Failed to parse JSON response:', accumulatedText);
+        console.warn(parseError);
         // Fallback if JSON parsing fails
         locationData = {
           name: textLocationName || 'Generated Location',
@@ -370,7 +375,7 @@ export const GenerateLocationModal: React.FC<GenerateLocationModalProps> = ({
     } finally {
       setIsGenerating(false);
     }
-  }, [textDescription, createTextLocationPrompt, textLocationName, onLocationGenerated, startProgressTracking, updateProgressStage, stopProgressTracking, setAiStatus, refreshCredits, handleClose]);
+  }, [textDescription, createTextLocationPrompt, textLocationName, onLocationGenerated, startProgressTracking, updateProgressStage, stopProgressTracking, setAiStatus, setShowAIBusyModal, refreshCredits, handleClose]);
 
   const handleGenerateFromMaps = useCallback(async () => {
     if (!selectedMapLocation) {
@@ -396,7 +401,11 @@ export const GenerateLocationModal: React.FC<GenerateLocationModalProps> = ({
         prompt,
         (chunk: string, isDone: boolean) => {
           accumulatedText += chunk;
+          if (isDone) {
+            updateProgressStage('Finalizing response...', 80);
+          } else {
           updateProgressStage('Receiving response...', 50);
+          }
         },
         {
           model: selectedModel || undefined,
@@ -438,6 +447,7 @@ export const GenerateLocationModal: React.FC<GenerateLocationModalProps> = ({
         };
       } catch (parseError) {
         console.warn('Failed to parse JSON response:', accumulatedText);
+        console.warn(parseError);
         // Fallback if JSON parsing fails
         locationData = {
           name: mapsLocationName || 'Generated Location',
@@ -462,7 +472,7 @@ export const GenerateLocationModal: React.FC<GenerateLocationModalProps> = ({
     } finally {
       setIsGenerating(false);
     }
-  }, [selectedMapLocation, createMapsLocationPrompt, mapsLocationName, onLocationGenerated, startProgressTracking, updateProgressStage, stopProgressTracking, setAiStatus, refreshCredits, handleClose]);
+  }, [selectedMapLocation, createMapsLocationPrompt, mapsLocationName, onLocationGenerated, startProgressTracking, updateProgressStage, stopProgressTracking, setAiStatus, setShowAIBusyModal, refreshCredits, handleClose]);
 
   const handleGenerate = useCallback(() => {
     switch (activeTab) {

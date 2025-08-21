@@ -130,7 +130,7 @@ const Stories: React.FC = () => {
     URL.revokeObjectURL(url);
   };
 
-  const handleDeleteStory = async (storyId: number, storyTitle: string) => {
+  const handleDeleteStory = async (storyId: number, _: string) => {
     const confirmed = await customConfirm(
       `Are you sure you want to delete this story? This action cannot be undone.`,
       {

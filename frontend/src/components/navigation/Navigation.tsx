@@ -7,13 +7,13 @@ interface NavigationProps {
   className?: string;
 }
 
-export const Navigation: React.FC<NavigationProps> = ({ className }) => {
+export const Navigation: React.FC<NavigationProps> = ({ className: _className }) => {
   const { userProfile, authenticated } = useAuth();
   const location = useLocation();
 
-  const isActive = (path: string) => {
-    return location.pathname === path ? 'active' : '';
-  };
+  // const isActive = (path: string) => {
+  //   return location.pathname === path ? 'active' : '';
+  // };
 
   if (!authenticated || !userProfile) {
     return null;

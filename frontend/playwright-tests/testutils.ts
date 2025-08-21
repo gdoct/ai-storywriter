@@ -215,32 +215,29 @@ export async function waitForTextInputToSettle(page: Page, selector: string, tim
   const el = await input.evaluateHandle(el => el as HTMLInputElement);
   if (!el) return false;
 
-  return new Promise<boolean>(async (resolve) => {
-    let currentLength = await el.evaluate(el => el.value.length);
-    if (await el.evaluate(el => el.value) === 'Untitled Story') { currentLength = 0; }
-    let stableCount = 0;
-    let lastLength = currentLength;
-    const maxTries = Math.floor(timeout / delay);
+  let currentLength = await el.evaluate(el => el.value.length);
+  if (await el.evaluate(el => el.value) === 'Untitled Story') { currentLength = 0; }
+  let stableCount = 0;
+  let lastLength = currentLength;
+  const maxTries = Math.floor(timeout / delay);
+  
+  for (let tries = 0; tries < maxTries; tries++) {
+    currentLength = await el.evaluate(el => el.value.length);
     
-    for (let tries = 0; tries < maxTries; tries++) {
-      currentLength = await el.evaluate(el => el.value.length);
-      
-      if (currentLength > 0 && currentLength === lastLength) {
-        stableCount++;
-        if (stableCount >= 2) {
-          resolve(true);
-          return;
-        }
-      } else {
-        stableCount = 0;
+    if (currentLength > 0 && currentLength === lastLength) {
+      stableCount++;
+      if (stableCount >= 2) {
+        return true;
       }
-      
-      lastLength = currentLength;
-      await new Promise(resolve => setTimeout(resolve, delay));
+    } else {
+      stableCount = 0;
     }
     
-    resolve(false);
-  });
+    lastLength = currentLength;
+    await new Promise(resolveTimeout => setTimeout(resolveTimeout, delay));
+  }
+  
+  return false;
 }
 
 export async function waitForAiTextBoxGeneration(page: Page, startTimeout: number = 10000, completionTimeout: number = 600000): Promise<void> {

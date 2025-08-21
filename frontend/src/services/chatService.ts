@@ -84,6 +84,7 @@ export class ChatService {
           const errorData = await response.json();
           errorMessage = errorData.error || errorData.message || errorMessage;
         } catch (e) {
+          console.error('Error parsing chat service error response:', e);
           // Use default error message if JSON parsing fails
         }
         throw new Error(errorMessage);
@@ -119,6 +120,7 @@ export class ChatService {
                   onStream(content, false);
                 }
               } catch (e) {
+                console.error('Error parsing SSE chunk:', e);
                 // Ignore malformed lines
               }
             }
@@ -174,6 +176,7 @@ export class ChatService {
           const errorData = await response.json();
           errorMessage = errorData.error || errorData.message || errorMessage;
         } catch (e) {
+          console.error('Error parsing chat service error response:', e);
           // Use default error message if JSON parsing fails
         }
         throw new Error(errorMessage);
@@ -185,7 +188,6 @@ export class ChatService {
 
       const reader = response.body.getReader();
       let done = false;
-      let fullText = '';
       let thinkingContent = '';
       let responseContent = '';
       let isInsideThinking = false;
@@ -208,7 +210,6 @@ export class ChatService {
                 const parsed = JSON.parse(data);
                 if (parsed.choices && parsed.choices[0] && parsed.choices[0].delta && parsed.choices[0].delta.content) {
                   const content = parsed.choices[0].delta.content;
-                  fullText += content;
 
                   // Parse thinking tags
                   const parseThinking = (text: string) => {
@@ -270,6 +271,7 @@ export class ChatService {
                   });
                 }
               } catch (e) {
+                console.error('Error parsing SSE chunk:', e);
                 // Ignore malformed lines
               }
             }
@@ -329,6 +331,7 @@ export class ChatService {
           const errorData = await response.json();
           errorMessage = errorData.error || errorData.message || errorMessage;
         } catch (e) {
+          console.error('Error parsing chat service error response:', e);
           // Use default error message if JSON parsing fails
         }
         throw new Error(errorMessage);

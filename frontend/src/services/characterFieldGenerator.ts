@@ -30,45 +30,47 @@ export async function generateCharacterField(
   let cancelGeneration = () => { cancelled = true; };
 
   const promptObj = createCharacterFieldPrompt(scenario, character, fieldName, fieldDisplayName);
-  const resultPromise = new Promise<string>(async (resolve, reject) => {
-    try {
-      const selectedModel = getSelectedModel();
-      let fullText = '';
-      await streamChatCompletionWithStatus(
-        promptObj,
-        (text: string, isDone: boolean) => {
-          if (!cancelled) {
-            if (isDone) {
-              fullText = text;
-            } else {
-              fullText += text;
+  const resultPromise = new Promise<string>((resolve, reject) => {
+    (async () => {
+      try {
+        const selectedModel = getSelectedModel();
+        let fullText = '';
+        await streamChatCompletionWithStatus(
+          promptObj,
+          (text: string, isDone: boolean) => {
+            if (!cancelled) {
+              if (isDone) {
+                fullText = text;
+              } else {
+                fullText += text;
+              }
+              if (options.onProgress) {
+                options.onProgress(fullText);
+              }
             }
-            if (options.onProgress) {
-              options.onProgress(fullText);
-            }
+          },
+          {
+            model: selectedModel || undefined,
+            temperature: options.temperature || 0.8,
+            max_tokens: 200
+          },
+          options.setAiStatus || (() => {}),
+          options.setShowAIBusyModal || (() => {})
+        );
+        if (!cancelled) {
+          let cleaned = fullText.trim();
+          if ((cleaned.startsWith('"') && cleaned.endsWith('"')) || 
+              (cleaned.startsWith("'") && cleaned.endsWith("'"))) {
+            cleaned = cleaned.slice(1, -1);
           }
-        },
-        {
-          model: selectedModel || undefined,
-          temperature: options.temperature || 0.8,
-          max_tokens: 200
-        },
-        options.setAiStatus || (() => {}),
-        options.setShowAIBusyModal || (() => {})
-      );
-      if (!cancelled) {
-        let cleaned = fullText.trim();
-        if ((cleaned.startsWith('"') && cleaned.endsWith('"')) || 
-            (cleaned.startsWith("'") && cleaned.endsWith("'"))) {
-          cleaned = cleaned.slice(1, -1);
+          resolve(cleaned);
         }
-        resolve(cleaned);
+      } catch (e) { 
+        if (!cancelled) {
+          reject(e);
+        }
       }
-    } catch (e) { 
-      if (!cancelled) {
-        reject(e);
-      }
-    }
+    })();
   });
   return { result: resultPromise, cancelGeneration };
 }

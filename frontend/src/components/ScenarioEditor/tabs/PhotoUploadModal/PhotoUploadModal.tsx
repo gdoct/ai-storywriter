@@ -37,7 +37,7 @@ export const PhotoUploadModal: React.FC<PhotoUploadModalProps> = ({
     elapsedTime: number;
     tokensReceived?: number;
   }>({ stage: '', elapsedTime: 0 });
-  const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const progressIntervalRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Helper function to start progress tracking
@@ -243,6 +243,7 @@ export const PhotoUploadModal: React.FC<PhotoUploadModalProps> = ({
           errorMessage = errorData.error || errorMessage;
         } catch (jsonError) {
           // If response isn't JSON, try to get it as text
+          console.error(jsonError);
           try {
             const errorText = await response.text();
             console.error('Non-JSON error response:', errorText);

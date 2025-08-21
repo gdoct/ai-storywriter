@@ -12,7 +12,6 @@ import {
   saveBYOKCredentials,
   getBYOKCredentials,
   clearBYOKCredentials,
-  hasBYOKCredentials
 } from '../services/settings';
 
 const Settings: React.FC = () => {
@@ -22,8 +21,8 @@ const Settings: React.FC = () => {
   const [settings, setSettings] = useState<UserSettings>({
     username: userProfile?.username || '',
     email: userProfile?.email || '',
-    firstName: userProfile?.firstName || '',
-    lastName: userProfile?.lastName || '',
+    firstName: '',
+    lastName: '',
     notifications: {
       email: true,
       marketing: false
@@ -51,12 +50,12 @@ const Settings: React.FC = () => {
     try {
       // Load user settings
       const userSettings = await getUserSettings();
-      setSettings(prev => ({
+      setSettings(_ => ({
         ...userSettings,
         username: userProfile?.username || userSettings.username,
         email: userProfile?.email || userSettings.email,
-        firstName: userProfile?.firstName || userSettings.firstName || '',
-        lastName: userProfile?.lastName || userSettings.lastName || ''
+        firstName:userSettings.firstName || '',
+        lastName: userSettings.lastName || ''
       }));
 
       // Load BYOK credentials if they exist
@@ -180,24 +179,7 @@ const Settings: React.FC = () => {
   };
 
   const handleClearBYOKKeys = () => {
-    customConfirm(
-      'Are you sure you want to clear your saved API credentials? This action cannot be undone.',
-      'Clear API Credentials',
-      () => {
-        clearBYOKCredentials();
-        setBYOKCredentials({
-          provider: 'openai',
-          apiKey: '',
-          baseUrl: ''
-        });
-        setHasSavedKeys(false);
-        setHasChanges(true);
-        customAlert('API credentials cleared successfully.', 'Success');
-      },
-      'Clear',
-      'Cancel',
-      'danger'
-    );
+    
   };
 
   const handleLogout = () => {

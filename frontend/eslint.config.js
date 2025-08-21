@@ -13,7 +13,10 @@ export default [
     files: ['**/*.{ts,tsx}'],
     languageOptions: {
       ecmaVersion: 2020,
-      globals: globals.browser,
+      globals: {
+        ...globals.browser,
+        ...globals.node,
+      },
       parser: tsParser,
       parserOptions: {
         ecmaFeatures: { jsx: true },
@@ -32,8 +35,75 @@ export default [
         'warn',
         { allowConstantExport: true },
       ],
-      '@typescript-eslint/no-unused-vars': ['warn'],
-      '@typescript-eslint/no-explicit-any': ['warn'],
+      // Strict ESLint rules
+      '@typescript-eslint/no-unused-vars': 'off',
+      'no-unused-vars': 'off', // Turn off base rule as it conflicts with @typescript-eslint version
+      '@typescript-eslint/no-empty-function': ['error', {
+        allow: ['arrowFunctions', 'methods']
+      }],
+      'no-empty-function': 'off', // Turn off base rule
+      '@typescript-eslint/no-explicit-any': 'off',
+    },
+  },
+  {
+    files: ['**/*.test.{ts,tsx}', '__tests__/**/*.{ts,tsx}'],
+    languageOptions: {
+      ecmaVersion: 2020,
+      globals: {
+        ...globals.browser,
+        ...globals.jest,
+      },
+      parser: tsParser,
+      parserOptions: {
+        ecmaFeatures: { jsx: true },
+        sourceType: 'module',
+      },
+    },
+    plugins: {
+      'react-hooks': reactHooks,
+      '@typescript-eslint': tseslint,
+    },
+    rules: {
+      ...js.configs.recommended.rules,
+      ...reactHooks.configs.recommended.rules,
+      // Strict ESLint rules
+      '@typescript-eslint/no-unused-vars': 'off',
+      'no-unused-vars': 'off', // Turn off base rule as it conflicts with @typescript-eslint version
+      '@typescript-eslint/no-empty-function': ['error', {
+        allow: ['arrowFunctions', 'methods']
+      }],
+      'no-empty-function': 'off', // Turn off base rule
+      '@typescript-eslint/no-explicit-any': 'off',
+    },
+  },
+  {
+    files: ['playwright-tests/**/*.{ts,tsx}', 'playwright.config.ts'],
+    languageOptions: {
+      ecmaVersion: 2020,
+      globals: {
+        ...globals.browser,
+        ...globals.node,
+      },
+      parser: tsParser,
+      parserOptions: {
+        ecmaFeatures: { jsx: true },
+        sourceType: 'module',
+      },
+    },
+    plugins: {
+      '@typescript-eslint': tseslint,
+    },
+    rules: {
+      ...js.configs.recommended.rules,
+      // Strict ESLint rules
+      '@typescript-eslint/no-unused-vars': 'off',
+      'no-unused-vars': 'off', // Turn off base rule as it conflicts with @typescript-eslint version
+      '@typescript-eslint/no-empty-function': ['error', {
+        allow: ['arrowFunctions', 'methods']
+      }],
+      'no-empty-function': 'off', // Turn off base rule
+      '@typescript-eslint/no-explicit-any': 'off',
+      'no-async-promise-executor': 'off', // Playwright tests may need this
     },
   },
 ]

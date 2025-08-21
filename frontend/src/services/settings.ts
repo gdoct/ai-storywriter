@@ -1,6 +1,6 @@
 import { LLMConfig } from '../types/LLMTypes';
 import { fetchLLMSettings, saveLLMSettings } from './llmBackend';
-import { apiRequest } from './http';
+import apiRequest from './http';
 
 export interface UserSettings {
   username: string;
@@ -39,7 +39,7 @@ export async function getShowThinkingSetting(): Promise<boolean> {
 export async function getUserSettings(): Promise<UserSettings> {
   try {
     const response = await apiRequest('/api/user/settings', { method: 'GET' });
-    return response;
+    return response.data;
   } catch (error) {
     console.error('Error fetching user settings:', error);
     // Return default settings as fallback
@@ -63,7 +63,7 @@ export async function saveUserSettings(settings: Partial<UserSettings>): Promise
     await apiRequest('/api/user/settings', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(settings)
+      data: JSON.stringify(settings)
     });
   } catch (error) {
     console.error('Error saving user settings:', error);

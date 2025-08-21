@@ -123,17 +123,6 @@ export const LocationsTab: React.FC<TabProps> = ({
     setShowGenerateModal(false);
   }, [locations, onScenarioChange]);
 
-  const handleExportLocations = useCallback(() => {
-    const locationsData = locations.map(({ image_data, image_mime_type, imageId, imageUrl, ...locationData }) => locationData);
-    const dataStr = JSON.stringify(locationsData, null, 2);
-    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
-    
-    const exportFileDefaultName = 'locations.json';
-    const linkElement = document.createElement('a');
-    linkElement.setAttribute('href', dataUri);
-    linkElement.setAttribute('download', exportFileDefaultName);
-    linkElement.click();
-  }, [locations]);
 
   const handleImportLocations = useCallback((importedData: any[]) => {
     try {
@@ -148,7 +137,7 @@ export const LocationsTab: React.FC<TabProps> = ({
       const updatedLocations = [...locations, ...importedLocations];
       onScenarioChange({ locations: updatedLocations });
       setShowImportModal(false);
-    } catch (error) {
+    } catch {
       showUserFriendlyError(new Error('Invalid location data format. Please check your JSON file.'));
     }
   }, [locations, onScenarioChange]);

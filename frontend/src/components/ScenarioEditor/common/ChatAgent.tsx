@@ -113,7 +113,7 @@ const extractAnswerFromPartialJson = (partialResponse: string): string => {
     } else if (parsed.response) {
       return parsed.response;
     }
-  } catch (error) {
+  } catch {
     // If full JSON parsing fails, try to extract partial answer using regex
     // Try different field names - prioritize "answer" since that's what createContextAwareChatPrompt uses
     const patterns = [

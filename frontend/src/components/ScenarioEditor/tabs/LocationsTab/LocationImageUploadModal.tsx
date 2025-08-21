@@ -29,7 +29,7 @@ export const LocationImageUploadModal: React.FC<LocationImageUploadModalProps> =
     elapsedTime: number;
     tokensReceived?: number;
   }>({ stage: '', elapsedTime: 0 });
-  const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const progressIntervalRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Helper function to start progress tracking

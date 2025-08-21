@@ -12,7 +12,7 @@ import './BackstoryTab.css';
 export const BackstoryTab: React.FC<TabProps> = ({
   scenario,
   onScenarioChange,
-  isDirty,
+  isDirty: _isDirty,
   isLoading,
 }) => {
   const [isGenerating, setIsGenerating] = useState(false);

@@ -1,7 +1,6 @@
 import { expect, test } from '@playwright/test';
 import dotenv from 'dotenv';
-import { TEST_BASE_URL } from '../__tests__/testsettings';
-import { getUserProfile, loginToSite, navigateToPage, readTestUserFromFile, TestUser, upgradeUserToPremium } from './testutils';
+import { getUserProfile, loginToSite, readTestUserFromFile, TestUser, upgradeUserToPremium } from './testutils';
 
 dotenv.config();
 

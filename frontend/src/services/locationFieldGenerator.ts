@@ -71,6 +71,7 @@ export async function generateLocationField(
               }
             } catch (e) {
               // Skip malformed JSON
+              console.warn('Failed to parse SSE data:', e);
               console.warn('Failed to parse SSE data:', data);
             }
           }

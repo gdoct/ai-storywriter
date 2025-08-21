@@ -13,7 +13,7 @@
  * @returns A string containing the markdown representation
  */
 export function jsonToMarkdown(
-  json: any, 
+  json: string, 
   options: {
     initialLevel?: number,
     arrayItemPrefix?: string
@@ -47,7 +47,7 @@ export function jsonToMarkdown(
     
     // Handle different types of nodes
     switch (typeof node) {
-      case 'object':
+      case 'object': {
         // Handle arrays
         if (Array.isArray(node)) {
           // Empty array
@@ -96,6 +96,7 @@ export function jsonToMarkdown(
           }
         });
         break;
+      }
         
       // Handle primitive types
       default:

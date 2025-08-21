@@ -10,7 +10,7 @@ import './StoryArcTab.css';
 export const StoryArcTab: React.FC<TabProps> = ({
   scenario,
   onScenarioChange,
-  isDirty,
+  isDirty: _isDirty,
   isLoading,
 }) => {
   const [isGenerating, setIsGenerating] = useState(false);

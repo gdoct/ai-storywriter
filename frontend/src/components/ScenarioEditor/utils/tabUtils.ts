@@ -148,13 +148,14 @@ export function tabHasData(scenario: Scenario, tabId: TabId): boolean {
     case 'storyarc':
       return !!scenario.storyarc?.trim();
     
-    case 'fillin':
+    case 'fillin': {
       if (!scenario.fillIn) return false;
       const fillIn = scenario.fillIn;
       return (
         (fillIn.beginning && fillIn.beginning.trim().length > 0) ||
         (fillIn.ending && fillIn.ending.trim().length > 0)
       );
+    }
     
     case 'notes':
       return !!scenario.notes?.trim();

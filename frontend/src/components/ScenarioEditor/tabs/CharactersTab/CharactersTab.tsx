@@ -18,7 +18,7 @@ import { PhotoUploadModal } from '../PhotoUploadModal';
 export const CharactersTab: React.FC<TabProps> = ({
   scenario,
   onScenarioChange,
-  isDirty,
+  isDirty: _isDirty,
   isLoading,
 }) => {
   // Wrap characters in useMemo to stabilize reference for useCallback deps

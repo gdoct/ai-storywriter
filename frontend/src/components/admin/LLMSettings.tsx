@@ -49,7 +49,7 @@ const LLMSettings: React.FC = () => {
         setTestStatus('error');
         setTestMessage(result.error || 'Connection failed');
       }
-    } catch (e) {
+    } catch {
       setTestStatus('error');
       setTestMessage('Connection failed');
     } finally {
@@ -80,7 +80,7 @@ const LLMSettings: React.FC = () => {
       } else {
         setRefreshMessage(result.error || 'Failed to refresh models');
       }
-    } catch (e) {
+    } catch {
       setRefreshMessage('Failed to refresh models');
     } finally {
       setRefreshing(false);

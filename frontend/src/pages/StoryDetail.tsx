@@ -71,7 +71,7 @@ const StoryDetail: React.FC = () => {
       // Update download count in UI
       setStory(prev => prev ? { ...prev, total_downloads: prev.total_downloads + 1 } : null);
     } catch (error) {
-      customAlert('Failed to download story', 'Error');
+      customAlert('Failed to download story: ' + error, 'Error');
     }
   };
 

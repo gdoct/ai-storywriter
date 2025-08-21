@@ -4,7 +4,7 @@ import { loginToSite, readTestUserFromFile, TestUser } from './testutils';
 
 dotenv.config();
 
-const generes = ['Science Fiction', 'Fantasy', 'Romance'];
+// const generes = ['Science Fiction', 'Fantasy', 'Romance'];
 
 
 

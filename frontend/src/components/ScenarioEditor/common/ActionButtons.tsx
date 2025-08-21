@@ -25,16 +25,16 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
   className = '',
   disabled = false,
 }) => {
-  // Map custom variants to docomo variants
-  const mapVariant = (v: string | undefined) => {
-    switch (v) {
-      case 'ghost': return 'secondary';
-      case 'success': return 'primary';
-      case 'danger': return 'danger';
-      case 'primary': return 'primary';
-      default: return 'secondary' as 'primary' | 'secondary' | 'danger';
-    }
-  };
+  // Map custom variants to docomo variants (commented out as unused)
+  // const mapVariant = (v: string | undefined) => {
+  //   switch (v) {
+  //     case 'ghost': return 'secondary';
+  //     case 'success': return 'primary';
+  //     case 'danger': return 'danger';
+  //     case 'primary': return 'primary';
+  //     default: return 'secondary' as 'primary' | 'secondary' | 'danger';
+  //   }
+  // };
 
   const iconButtons = items.map((item) => (
     <IconButton

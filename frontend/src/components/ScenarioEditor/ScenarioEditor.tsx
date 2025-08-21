@@ -1,6 +1,6 @@
 import { ExpandableTabs } from '@drdata/ai-styles';
 import React, { useCallback, useEffect, useRef } from 'react';
-import { FaBook, FaDice, FaEye, FaRedo, FaSave, FaStickyNote, FaTrash, FaUser, FaUsers } from 'react-icons/fa';
+import { FaBook, FaEye, FaRedo, FaSave, FaStickyNote, FaTrash, FaUser, FaUsers } from 'react-icons/fa';
 import { FaLocationDot } from 'react-icons/fa6';
 import { MdSchedule } from 'react-icons/md';
 import { useNavigate } from 'react-router-dom';
@@ -100,7 +100,7 @@ interface ScenarioEditorProps {
 export const ScenarioEditor: React.FC<ScenarioEditorProps> = ({
   initialScenario,
   onScenarioSave,
-  onClose,
+  onClose: _onClose,
 }) => {
   const { state, dispatch } = useScenarioEditor();
   const { alertState, confirmState, hideAlert, hideConfirm, customAlert, customConfirm } = useModals();
@@ -247,7 +247,7 @@ export const ScenarioEditor: React.FC<ScenarioEditorProps> = ({
 
     try {
       let accumulatedText = '';
-      let thinkingText = '';
+      let _thinkingText = '';
       const { result, cancelGeneration } = await generateStory(state.scenario, {
         onProgress: (newTextChunk) => {
           // Accumulate the new text chunk
@@ -256,7 +256,7 @@ export const ScenarioEditor: React.FC<ScenarioEditorProps> = ({
         },
         onThinking: (thinking) => {
           console.log('ScenarioEditor onThinking received:', thinking); // Debug log
-          thinkingText = thinking;
+          _thinkingText = thinking;
           dispatch({ type: 'SET_STORY_THINKING', payload: thinking });
         }
       });

@@ -11,7 +11,7 @@ import './NotesTab.css';
 export const NotesTab: React.FC<TabProps> = ({
   scenario,
   onScenarioChange,
-  isDirty,
+  isDirty: _isDirty,
   isLoading,
 }) => {
   const [showImportModal, setShowImportModal] = useState(false);

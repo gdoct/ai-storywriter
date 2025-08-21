@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { AI_STATUS, useAIStatus } from '../../contexts/AIStatusContext';
+import { useAIStatus } from '../../contexts/AIStatusContext';
 import { createContinueStoryPrompt } from '../../services/llmPromptService';
 import { generateChapterSummary, generateStory } from '../../services/storyGenerator';
 import { Scenario } from '../../types/ScenarioTypes';
@@ -52,17 +52,17 @@ const formatDateForTabTitle = (dateString?: string): string => {
 const generateTabId = (prefix: string = 'tab') => `${prefix}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
 const ReadingPane: React.FC<ReadingPaneProps> = ({
-  content, // Initial content for currentScenario
+  content: _content, // Initial content for currentScenario
   onSubmit,
   canSubmit = false,
   currentScenario = null,
   onStoryGenerated, // Callback when a story in an active tab is finalized or selected
   onStoryVersionSelect, // Callback to inform parent about version selection (e.g., to clear it)
-  currentTimestamp, // Timestamp if `content` is a specific version
+  currentTimestamp: _currentTimestamp, // Timestamp if `content` is a specific version
   onDisableStoryDropdown,
   isStoryDropdownDisabled = false,
 }) => {
-  const { aiStatus } = useAIStatus();
+  const { aiStatus: _aiStatus } = useAIStatus();
 
   // Global state for all tabs across all scenarios
   const [tabs, setTabs] = useState<Tab[]>([]);
@@ -340,10 +340,10 @@ const ReadingPane: React.FC<ReadingPaneProps> = ({
       setContinueSummary(summary);
       setContinuePrompt(createContinueStoryPrompt(currentScenario, summary).userMessage || '');
       setShowContinueModal(true);
-    } catch (err) {
+    } catch (_err) {
       setIsSummarizing(false);
       setIsContinuing(false);
-      alert('Failed to continue story: ' + (err instanceof Error ? err.message : err));
+      alert('Failed to continue story: ' + (_err instanceof Error ? _err.message : _err));
       return;
     }
     setIsSummarizing(false);
@@ -380,6 +380,7 @@ const ReadingPane: React.FC<ReadingPaneProps> = ({
       );
       setTabs(prevTabs => prevTabs.map(t => t.id === newTabId ? { ...t, content: accumulated, title: 'Continued Story', isGenerating: false } : t));
     } catch (err) {
+      console.log("error: " + err);
       setTabs(prevTabs => prevTabs.map(t => t.id === newTabId ? { ...t, title: 'Generation Failed', isGenerating: false } : t));
     }
     setIsContinuing(false);
@@ -391,7 +392,7 @@ const ReadingPane: React.FC<ReadingPaneProps> = ({
     setContinuePrompt('');
   };
 
-  const isGenerateButtonDisabled = aiStatus === AI_STATUS.BUSY;
+  // const isGenerateButtonDisabled = aiStatus === AI_STATUS.BUSY;
 
   return (
     <div className="reading-pane">

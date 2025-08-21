@@ -134,6 +134,7 @@ export const ByokOrPremium: React.FC<ByokOrPremiumProps> = ({ fallback, children
 );
 
 // Hook for imperative permission checking
+// eslint-disable-next-line react-refresh/only-export-components
 export const usePermissions = () => {
   const { hasRole, hasPermission, hasTier, hasMinimumTier, userProfile } = useAuth();
 

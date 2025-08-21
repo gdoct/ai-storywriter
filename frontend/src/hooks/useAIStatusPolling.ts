@@ -7,7 +7,7 @@ export function useAIStatusPolling(interval: number = DEFAULT_POLL_INTERVAL) {
   const { setAiStatus } = useAIStatus();
 
   useEffect(() => {
-    let timeout: NodeJS.Timeout;
+    let timeout: ReturnType<typeof setTimeout>;
 
     const poll = async () => {
       // const status = await fetchAIBackendStatus();

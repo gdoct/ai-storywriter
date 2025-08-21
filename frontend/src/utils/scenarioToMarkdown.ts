@@ -304,7 +304,7 @@ export function scenarioTimelineToMarkdown(scenario: Scenario): string {
     return markdown;
 }
 
-function renderCustomTabsToMarkdown(scenario: any): string {
+function renderCustomTabsToMarkdown(scenario: Scenario): string {
     let markdown = '';
     
     // Check for custom tabs (customTab1, customTab2, customTab3, etc.)

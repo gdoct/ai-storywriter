@@ -23,7 +23,6 @@ test.describe('Add character workflows', () => {
         test('should create a new character and save it', async ({ page }) => {
           test.setTimeout(600000); // 10 minutes
           console.log('\nTEST: Create a new character and save it');
-          const DELAY = 500;
           await loginToSite(page, testUser);
           await page.getByRole('button', { name: 'Edit' }).click();
           await page.getByTestId('characters-tab').click();

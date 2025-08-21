@@ -57,7 +57,7 @@ export async function generateEmail(localPart?: string, options: EmailGeneratorO
         });
         break;
       case 'mixed':
-      default:
+      default: {
         // Randomly choose between the two styles
         const useMixed = Math.random() < 0.5;
         if (useMixed) {
@@ -74,6 +74,7 @@ export async function generateEmail(localPart?: string, options: EmailGeneratorO
           });
         }
         break;
+      }
     }
     
     // Add common TLD

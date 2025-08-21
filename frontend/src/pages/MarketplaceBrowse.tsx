@@ -45,7 +45,7 @@ const MarketplaceBrowse: React.FC = () => {
     return 'Browse Stories';
   };
 
-  const loadStories = async (pageNum: number = 1, append: boolean = false) => {
+  const loadStories = async (_: number = 1, append: boolean = false) => {
     try {
       setLoading(true);
       let newStories: MarketStoryCard[] = [];
@@ -106,7 +106,7 @@ const MarketplaceBrowse: React.FC = () => {
     loadStories(nextPage, true);
   };
 
-  const handleModerationAction = (storyId: number, action: string) => {
+  const handleModerationAction = (_: number, __: string) => {
     // Refresh the stories after moderation action
     loadStories(1, false);
     setPage(1);
@@ -192,14 +192,6 @@ const MarketplaceBrowse: React.FC = () => {
         URL.revokeObjectURL(element.href);
       }
     }
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
   };
 
   const getWordCount = (content: string) => {

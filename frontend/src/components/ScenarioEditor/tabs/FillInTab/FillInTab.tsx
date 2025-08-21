@@ -8,7 +8,7 @@ import './FillInTab.css';
 export const FillInTab: React.FC<TabProps> = ({
   scenario,
   onScenarioChange,
-  isDirty,
+  isDirty: _isDirty,
   isLoading,
 }) => {
   const fillIn = scenario.fillIn || {};
@@ -39,7 +39,7 @@ export const FillInTab: React.FC<TabProps> = ({
             <span className="fill-in-tab__optional">Optional</span>
           </div>
           <p className="fill-in-tab__section-description">
-            Start your story here. The AI will continue from this point.
+            Start your {scenario.writingStyle?.genre ?? 'custom'} story here. The AI will continue from this point.
           </p>
           <AiTextArea
             value={fillIn.beginning || ''}

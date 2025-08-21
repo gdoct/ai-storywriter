@@ -33,6 +33,7 @@ export async function fetchAIBackendStatus(): Promise<AI_STATUS> {
       return AI_STATUS.UNAVAILABLE;
     }
   } catch (e) {
+    console.error('Error fetching AI backend status:', e);
     return AI_STATUS.UNAVAILABLE;
   }
 }

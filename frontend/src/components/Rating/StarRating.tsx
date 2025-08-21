@@ -38,7 +38,7 @@ const StarRating: React.FC<StarRatingProps> = ({
       });
 
       if (response.ok) {
-        const data = await response.json();
+        await response.json();
         // Call the callback with the new rating and updated average/count
         onRatingChange?.(rating);
       } else {

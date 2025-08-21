@@ -30,10 +30,6 @@ export interface Chapter {
   selectedVersionId: string | null;
   customContent: string;
   synopsis: ChapterSynopsis;
-  outline: any; // to be defined later
-  objectives: any; // to be defined later
-  plotPoints: any; // to be defined later
-  characterArcs: any; // to be defined later
   linkedEvents: string[];
   linkedCharacters: string[];
   linkedLocations: string[];

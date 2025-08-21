@@ -123,6 +123,7 @@ export async function streamChatCompletionWithStatus(
         }
       } catch (e) {
         // If we can't parse the error response, use the default message
+        console.error('Error parsing chat service error response:', e);
       }
       throw new Error(errorMessage);
     }
@@ -150,6 +151,7 @@ export async function streamChatCompletionWithStatus(
               }
             } catch (e) {
               // Ignore malformed lines
+              console.error('Error parsing SSE chunk:', e);
             }
           }
         });
@@ -227,6 +229,7 @@ export async function streamChatCompletionWithThinking(
         }
       } catch (e) {
         // If we can't parse the error response, use the default message
+        console.error('Error parsing chat service error response:', e); // Debug log
       }
       throw new Error(errorMessage);
     }
@@ -234,7 +237,6 @@ export async function streamChatCompletionWithThinking(
     if (!response.body) throw new Error('No response body');
     const reader = response.body.getReader();
     let done = false;
-    let fullText = '';
     let thinkingContent = '';
     let responseContent = '';
     let isInsideThinking = false;
@@ -253,9 +255,6 @@ export async function streamChatCompletionWithThinking(
               const parsed = JSON.parse(data);
               if (parsed.choices && parsed.choices[0] && parsed.choices[0].delta && parsed.choices[0].delta.content) {
                 const content = parsed.choices[0].delta.content;
-                fullText += content;
-                
-                // console.log('LLM Chunk:', content); // Debug log
                 
                 // Parse thinking tags
                 const parseThinking = (text: string) => {
@@ -322,6 +321,7 @@ export async function streamChatCompletionWithThinking(
               }
             } catch (e) {
               // Ignore malformed lines
+              console.error('Error parsing SSE chunk:', e);
             }
           }
         });
@@ -403,6 +403,7 @@ export async function chatCompletionWithStatus(
       }
     } catch (e) {
       // If we can't parse the error response, use the default message
+      console.error('Error parsing chat service error response:', e);
     }
     throw new Error(errorMessage);
   }
@@ -474,6 +475,7 @@ export async function chatCompletion(
         errorMessage = errorData.error || errorData.message || errorMessage;
       }
     } catch (e) {
+      console.error('Error parsing chat service error response:', e);
       // If we can't parse the error response, use the default message
     }
     throw new Error(errorMessage);

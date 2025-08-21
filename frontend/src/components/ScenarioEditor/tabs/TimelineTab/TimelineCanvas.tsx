@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { TimelineEvent } from '../../../../types/ScenarioTypes';
 
 interface TimelineCanvasProps {
@@ -64,7 +64,7 @@ export const TimelineCanvas: React.FC<TimelineCanvasProps> = ({
   const canvasEvents = events;
 
   // Detect circular dependencies using DFS
-  const hasCircularDependency = useCallback((fromId: string, toId: string): boolean => {
+  const hasCircularDependency = useCallback((fromId: string, _toId: string): boolean => {
     const visited = new Set<string>();
     const recursionStack = new Set<string>();
     

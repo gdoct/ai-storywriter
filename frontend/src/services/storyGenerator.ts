@@ -139,8 +139,9 @@ export async function generateStory(
   const promptObj = llmPromptService.createFinalStoryPrompt(scenario);
   const abortController = new AbortController();
   let cancelGeneration = () => { abortController.abort(); };
-  const resultPromise = new Promise<GeneratedStory>(async (resolve, reject) => {
-    try {
+  const resultPromise = new Promise<GeneratedStory>((resolve, reject) => {
+    (async () => {
+      try {
       const selectedModel = getSelectedModel();
       const showThinking = await getShowThinkingSetting();
       let fullText = '';
@@ -199,13 +200,14 @@ export async function generateStory(
         );
       }
       resolve({ completeText: fullText, chapters: [] });
-    } catch (error) {
-      if (error instanceof Error && error.name === 'AbortError') {
-        reject(new Error('Generation was cancelled'));
-      } else {
-        reject(error);
+      } catch (error) {
+        if (error instanceof Error && error.name === 'AbortError') {
+          reject(new Error('Generation was cancelled'));
+        } else {
+          reject(error);
+        }
       }
-    }
+    })();
   });
   return { result: resultPromise, cancelGeneration };
 }
@@ -227,39 +229,41 @@ export async function generateBackstory(
   const abortController = new AbortController();
   let cancelGeneration = () => { abortController.abort(); };
   let fullText = '';
-  const resultPromise = new Promise<string>(async (resolve, reject) => {
-    try {
-      const selectedModel = getSelectedModel();
-      await streamChatCompletionWithStatus(
-        promptObj,
-        (text, isDone) => {
-          if (isDone) {
-            // Final call with complete text
-            fullText = text;
-            if (options.onProgress) options.onProgress(text);
-          } else {
-            // Incremental chunk during streaming
-            fullText += text;
-            if (options.onProgress) options.onProgress(text);
-          }
-        },
-        { 
-          model: selectedModel || undefined,
-          temperature: options.temperature, 
-          max_tokens: 1000,
-          signal: abortController.signal
-        },
-        setAiStatus,
-        setShowAIBusyModal
-      );
-      resolve(fullText);
-    } catch (error) {
-      if (error instanceof Error && error.name === 'AbortError') {
-        reject(new Error('Generation was cancelled'));
-      } else {
-        reject(error);
+  const resultPromise = new Promise<string>((resolve, reject) => {
+    (async () => {
+      try {
+        const selectedModel = getSelectedModel();
+        await streamChatCompletionWithStatus(
+          promptObj,
+          (text, isDone) => {
+            if (isDone) {
+              // Final call with complete text
+              fullText = text;
+              if (options.onProgress) options.onProgress(text);
+            } else {
+              // Incremental chunk during streaming
+              fullText += text;
+              if (options.onProgress) options.onProgress(text);
+            }
+          },
+          { 
+            model: selectedModel || undefined,
+            temperature: options.temperature, 
+            max_tokens: 1000,
+            signal: abortController.signal
+          },
+          setAiStatus,
+          setShowAIBusyModal
+        );
+        resolve(fullText);
+      } catch (error) {
+        if (error instanceof Error && error.name === 'AbortError') {
+          reject(new Error('Generation was cancelled'));
+        } else {
+          reject(error);
+        }
       }
-    }
+    })();
   });
   return { result: resultPromise, cancelGeneration };
 }
@@ -376,11 +380,12 @@ export async function rewriteBackstory(
   const promptObj = llmPromptService.createRewriteBackstoryPrompt(scenario);
   const abortController = new AbortController();
   let cancelGeneration = () => { abortController.abort(); };
-  const resultPromise = new Promise<string>(async (resolve, reject) => {
-    try {
-      const selectedModel = getSelectedModel();
-      let fullText = '';
-      await streamChatCompletionWithStatus(
+  const resultPromise = new Promise<string>((resolve, reject) => {
+    (async () => {
+      try {
+        const selectedModel = getSelectedModel();
+        let fullText = '';
+        await streamChatCompletionWithStatus(
         promptObj,
         (text, isDone) => {
           if (isDone) {
@@ -402,14 +407,15 @@ export async function rewriteBackstory(
         setAiStatus,
         setShowAIBusyModal
       );
-      resolve(fullText);
-    } catch (error) {
-      if (error instanceof Error && error.name === 'AbortError') {
-        reject(new Error('Generation was cancelled'));
-      } else {
-        reject(error);
+        resolve(fullText);
+      } catch (error) {
+        if (error instanceof Error && error.name === 'AbortError') {
+          reject(new Error('Generation was cancelled'));
+        } else {
+          reject(error);
+        }
       }
-    }
+    })();
   });
   return { result: resultPromise, cancelGeneration };
 }
@@ -430,8 +436,9 @@ export async function rewriteStoryArc(
   const prompt = createRewriteStoryArcPrompt(scenario);
   const abortController = new AbortController();
   let cancelGeneration = () => { abortController.abort(); };
-  const resultPromise = new Promise<string>(async (resolve, reject) => {
-    try {
+  const resultPromise = new Promise<string>((resolve, reject) => {
+    (async () => {
+      try {
       const selectedModel = getSelectedModel();
       let fullText = '';
       
@@ -455,13 +462,14 @@ export async function rewriteStoryArc(
         setShowAIBusyModal
       );
       resolve(fullText);
-    } catch (error) {
-      if (error instanceof Error && error.name === 'AbortError') {
-        reject(new Error('Generation was cancelled'));
-      } else {
-        reject(error);
+      } catch (error) {
+        if (error instanceof Error && error.name === 'AbortError') {
+          reject(new Error('Generation was cancelled'));
+        } else {
+          reject(error);
+        }
       }
-    }
+    })();
   });
   return { result: resultPromise, cancelGeneration };
 }
@@ -481,11 +489,12 @@ export async function generateRandomWritingStyle(
   const abortController = new AbortController();
   let cancelGeneration = () => { abortController.abort(); };
   const promptObj = llmPromptService.createWritingStylePrompt();
-  const resultPromise = new Promise<any>(async (resolve, reject) => {
-    try {
-      const selectedModel = getSelectedModel();
-      let fullText = '';
-      await streamChatCompletionWithStatus(
+  const resultPromise = new Promise<any>((resolve, reject) => {
+    (async () => {
+      try {
+        const selectedModel = getSelectedModel();
+        let fullText = '';
+        await streamChatCompletionWithStatus(
         promptObj,
         (text, isDone) => {
           if (isDone) {
@@ -505,14 +514,15 @@ export async function generateRandomWritingStyle(
         setShowAIBusyModal
       );
       // console.log(fullText); 
-      resolve(fullText);
-    } catch (error) {
-      if (error instanceof Error && error.name === 'AbortError') {
-        reject(new Error('Generation was cancelled'));
-      } else {
-        reject(error);
+        resolve(fullText);
+      } catch (error) {
+        if (error instanceof Error && error.name === 'AbortError') {
+          reject(new Error('Generation was cancelled'));
+        } else {
+          reject(error);
+        }
       }
-    }
+    })();
   });
   return { result: resultPromise, cancelGeneration };
 }
@@ -537,11 +547,12 @@ export async function generateRandomCharacter(
   const promptObj = options.additionalInstructions 
     ? await llmPromptService.createRandomCharacterPrompt(scenario, characterType, options.additionalInstructions)
     : await llmPromptService.createCharacterPrompt(scenario, characterType);
-  const resultPromise = new Promise<any>(async (resolve, reject) => {
-    try {
-      const selectedModel = getSelectedModel();
-      let fullText = '';
-      await streamChatCompletionWithStatus(
+  const resultPromise = new Promise<any>((resolve, reject) => {
+    (async () => {
+      try {
+        const selectedModel = getSelectedModel();
+        let fullText = '';
+        await streamChatCompletionWithStatus(
         promptObj,
         (text, isDone) => {
           if (isDone) {
@@ -569,13 +580,14 @@ export async function generateRandomCharacter(
         cleaned = cleaned.slice(0, -3);
       }
       resolve(cleaned.trim());
-    } catch (error) {
-      if (error instanceof Error && error.name === 'AbortError') {
-        reject(new Error('Generation was cancelled'));
-      } else {
-        reject(error);
+      } catch (error) {
+        if (error instanceof Error && error.name === 'AbortError') {
+          reject(new Error('Generation was cancelled'));
+        } else {
+          reject(error);
+        }
       }
-    }
+    })();
   });
   return { result: resultPromise, cancelGeneration };
 }
@@ -613,8 +625,9 @@ export async function generateStoryArc(
   const prompt = createStoryArcPrompt(scenario);
   const abortController = new AbortController();
   let cancelGeneration = () => { abortController.abort(); };
-  const resultPromise = new Promise<string>(async (resolve, reject) => {
-    try {
+  const resultPromise = new Promise<string>((resolve, reject) => {
+    (async () => {
+      try {
       const selectedModel = getSelectedModel();
       let fullText = '';
       await streamChatCompletionWithStatus(
@@ -637,13 +650,14 @@ export async function generateStoryArc(
         setShowAIBusyModal
       );
       resolve(fullText);
-    } catch (error) {
-      if (error instanceof Error && error.name === 'AbortError') {
-        reject(new Error('Generation was cancelled'));
-      } else {
-        reject(error);
+      } catch (error) {
+        if (error instanceof Error && error.name === 'AbortError') {
+          reject(new Error('Generation was cancelled'));
+        } else {
+          reject(error);
+        }
       }
-    }
+    })();
   });
   return { result: resultPromise, cancelGeneration };
 }
@@ -661,8 +675,9 @@ export async function generateNotes(
   const abortController = new AbortController();
   let cancelGeneration = () => { abortController.abort(); };
   let fullText = '';
-  const resultPromise = new Promise<string>(async (resolve, reject) => {
-    try {
+  const resultPromise = new Promise<string>((resolve, reject) => {
+    (async () => {
+      try {
       const selectedModel = getSelectedModel();
       await streamChatCompletionWithStatus(
         promptObj,
@@ -686,13 +701,14 @@ export async function generateNotes(
         () => {}  // setShowAIBusyModal
       );
       resolve(fullText);
-    } catch (error) {
-      if (error instanceof Error && error.name === 'AbortError') {
-        reject(new Error('Generation was cancelled'));
-      } else {
-        reject(error);
+      } catch (error) {
+        if (error instanceof Error && error.name === 'AbortError') {
+          reject(new Error('Generation was cancelled'));
+        } else {
+          reject(error);
+        }
       }
-    }
+    })();
   });
   return { result: resultPromise, cancelGeneration };
 }

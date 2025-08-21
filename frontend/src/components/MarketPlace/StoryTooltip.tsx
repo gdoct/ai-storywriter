@@ -9,7 +9,7 @@ interface StoryTooltipProps {
   handleCloseTooltip: () => void;
 }
 
-const StoryTooltip: React.FC<StoryTooltipProps> = ({ storyId, showTooltip, handleCloseTooltip }) => {
+const StoryTooltip: React.FC<StoryTooltipProps> = ({ storyId, showTooltip, handleCloseTooltip: _handleCloseTooltip }) => {
   const [story, setStory] = useState<MarketStory | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

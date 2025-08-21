@@ -82,7 +82,7 @@ const ReadingPaneHeader = React.forwardRef<any, ReadingPaneHeaderProps>((props, 
         setDbStories(stories);
         // Don't automatically select any story - let user choose explicitly
         setSelectedDbStoryId(null);
-      } catch (e) {
+      } catch {
         setDbStories([]);
         setSelectedDbStoryId(null);
       } finally {
@@ -139,7 +139,7 @@ const ReadingPaneHeader = React.forwardRef<any, ReadingPaneHeaderProps>((props, 
       // Don't automatically select any story after saving - let user choose explicitly
       setHasUnsavedChanges(false);
       alert('Story saved successfully!');
-    } catch (error) {
+    } catch {
       setSaveError('Failed to save story. Please try again.');
     } finally {
       setIsSaving(false);
@@ -181,7 +181,7 @@ const ReadingPaneHeader = React.forwardRef<any, ReadingPaneHeaderProps>((props, 
         setSelectedDbStoryId(null);
         if (onStorySelectedFromDb) onStorySelectedFromDb(null);
       }
-    } catch (e) {
+    } catch {
       customAlert('Failed to delete story.', 'Error');
     }
   };

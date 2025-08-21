@@ -7,7 +7,7 @@ dotenv.config();
 test.describe('Cleanup test user', () => {
 
     test.describe('Scenario creation flow', () => {
-        test('delete the test user from the backend', async ({ page }) => {
+        test('delete the test user from the backend', async ({ page: _page }) => {
             console.log('TEST: Cleanup test user');
             await deleteExistingTestUser();
             await deleteTestUserFile();

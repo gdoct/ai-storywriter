@@ -13,8 +13,8 @@ import { StyleFields } from '../StyleFields';
 export const GeneralTab: React.FC<TabProps> = ({
   scenario,
   onScenarioChange,
-  isDirty,
-  isLoading,
+  isDirty: _isDirty,
+  isLoading: _isLoading,
 }) => {
   // Wrap writingStyle in useMemo to stabilize reference for useCallback deps
   const writingStyle: StyleSettings = useMemo(() => scenario.writingStyle || {}, [scenario.writingStyle]);
