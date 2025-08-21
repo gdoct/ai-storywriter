@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
 import { Icon, LatLng } from 'leaflet';
-import { FaSearch } from 'react-icons/fa';
+import { FaUser } from 'react-icons/fa';
 import { AiTextBox } from '@drdata/ai-styles';
 import 'leaflet/dist/leaflet.css';
 import './LocationMapPicker.css';
@@ -62,7 +62,7 @@ export const LocationMapPicker: React.FC<LocationMapPickerProps> = ({
   const [isSearching, setIsSearching] = useState(false);
   const [mapCenter, setMapCenter] = useState<[number, number]>([51.505, -0.09]); // Default to London
   const [mapZoom, setMapZoom] = useState(13);
-  const searchTimeoutRef = useRef<NodeJS.Timeout>();
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Set default icon for all markers
   useEffect(() => {
@@ -172,7 +172,7 @@ export const LocationMapPicker: React.FC<LocationMapPickerProps> = ({
               className="search-button"
               disabled={isSearching || !searchQuery.trim()}
             >
-              <FaSearch />
+              <FaUser />
             </button>
           </div>
         </form>

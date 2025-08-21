@@ -166,26 +166,22 @@ export const LocationsTab: React.FC<TabProps> = ({
               variant="secondary"
               onClick={() => setShowGenerateModal(true)}
               disabled={isLoading}
+              icon={<FaPlus />}
             >
-              <FaPlus /> Generate...
+              Generate
             </Button>
             <Button
               variant="secondary"
               onClick={handleAddLocation}
               disabled={isLoading}
+              icon={<FaPlus />}
             >
-              <FaPlus /> Add Location
-            </Button>
-            <Button
-              variant="secondary"
-              onClick={handleExportLocations}
-              disabled={locations.length === 0}
-            >
-              <FaDownload /> Export
+              Add Location
             </Button>
             <Button
               variant="secondary"
               onClick={() => setShowImportModal(true)}
+              icon={<FaDownload />}
             >
               Import
             </Button>
@@ -198,7 +194,7 @@ export const LocationsTab: React.FC<TabProps> = ({
           <div className="locations-empty">
             <span className="locations-empty-icon">📍</span>
             <h3>No locations yet</h3>
-            <p>Add locations where your story takes place. You can create them manually or generate them from images.</p>
+            <p>Add locations where your story takes place. You can create them manually or generate them from images, a description or a map location.</p>
           </div>
         ) : (
           <div className="locations-list">

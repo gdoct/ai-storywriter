@@ -17,6 +17,7 @@ import Marketplace from './pages/Marketplace';
 import MarketplaceBrowse from './pages/MarketplaceBrowse';
 import PricingPage from './pages/PricingPage';
 import Scenarios from './pages/Scenarios';
+import Settings from './pages/Settings';
 import Signup from './pages/Signup';
 import Stories from './pages/Stories';
 import StoryDetail from './pages/StoryDetail';
@@ -98,6 +99,14 @@ const getRoutes = (): RouteObject[] => {
     { path: '/privacy', element: <PrivacyPolicy /> },
     { path: '/terms', element: <TermsOfService /> },
     { path: '/test', element: <Test /> },
+    { 
+      path: '/settings', 
+      element: (
+        <ProtectedRoute>
+          <Settings />
+        </ProtectedRoute>
+      )
+    },
     
     // Admin-only routes
     { 

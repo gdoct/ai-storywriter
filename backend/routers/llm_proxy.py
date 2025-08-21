@@ -3,16 +3,19 @@ import json
 import threading
 import traceback
 import logging
-from typing import Dict, Any
+import time
+from typing import Dict, Any, Optional
 from fastapi import APIRouter, HTTPException, status, Depends, Request
 from fastapi.responses import StreamingResponse, JSONResponse
 from models.llm import (
     LLMCompletionRequest, LLMModelsResponse, LLMModel, 
     LLMStatusResponse, LLMErrorResponse
 )
-from data.db import get_db_connection
 from data.repositories import UserRepository
-from llm_services.llm_service import get_llm_service
+from data.user_preferences_repository import UserPreferencesRepository
+from data.llm_repository import LLMRepository
+from services.llm_proxy_service import LLMProxyService
+from services.credit_service import CreditService
 from middleware.fastapi_auth import get_current_user
 import tiktoken
 
@@ -44,27 +47,18 @@ async def proxy_status():
     return LLMStatusResponse(busy=is_busy)
 
 @router.get("/proxy/llm/v1/models", response_model=LLMModelsResponse)
-async def proxy_models():
+async def proxy_models(request: Request, current_user: dict = Depends(get_current_user)):
     """
-    Get available models from the active LLM backend
+    Get available models from the LLM backend based on user's mode
     """
     try:
-        conn = get_db_connection()
-        c = conn.cursor()
-        c.execute('SELECT * FROM settings WHERE is_active=1 ORDER BY updated_at DESC LIMIT 1')
-        row = c.fetchone()
-        conn.close()
+        user_id = current_user.get('user_id') or current_user.get('id') or current_user.get('username')
         
-        if not row:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="No active LLM backend configured"
-            )
+        # Extract BYOK headers if present
+        byok_headers = LLMProxyService.extract_byok_headers(dict(request.headers))
         
-        backend_type = row['backend_type']
-        config = json.loads(row['config_json']) if row['config_json'] else {}
-        
-        service = get_llm_service(backend_type, config)
+        # Get appropriate LLM service for the user
+        service, provider, mode = LLMProxyService.get_llm_service_for_user(user_id, byok_headers)
         models = service.get_models()
         
         return LLMModelsResponse(
@@ -75,7 +69,7 @@ async def proxy_models():
         raise
     except Exception as e:
         now = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        logger.error(f"[{now}] LLM proxy error - Backend: {backend_type}, Error: {str(e)}")
+        logger.error(f"[{now}] LLM proxy models error - User: {user_id}, Error: {str(e)}")
         logger.error(traceback.format_exc())
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
@@ -84,11 +78,12 @@ async def proxy_models():
 
 @router.post("/proxy/llm/v1/chat/completions")
 async def proxy_chat_completions(
-    request: LLMCompletionRequest,
+    completion_request: LLMCompletionRequest,
+    request: Request,
     current_user: dict = Depends(get_current_user)
 ):
     """
-    Proxy chat completions with credit system and locking mechanism
+    Proxy chat completions with BYOK and member mode support, credit system, and locking mechanism
     """
     # Try to acquire the lock (non-blocking)
     if not ai_lock.acquire(blocking=False):
@@ -97,74 +92,70 @@ async def proxy_chat_completions(
             detail="AI is currently processing another request. Please try again shortly."
         )
 
+    start_time = time.time()
+    user_id = current_user.get('user_id') or current_user.get('id') or current_user.get('username')
+    
     try:
-        user_id = current_user['id']
+        # Extract BYOK headers if present
+        byok_headers = LLMProxyService.extract_byok_headers(dict(request.headers))
         
-        # Estimate request tokens for initial check
+        # Get user's LLM mode
+        llm_mode = UserPreferencesRepository.get_user_llm_mode(user_id)
+        
+        # Estimate request tokens for credit checking (only for member mode)
         request_text_parts = []
-        for message in request.messages:
+        for message in completion_request.messages:
             if isinstance(message.content, str):
                 request_text_parts.append(message.content)
         
         request_text = " ".join(request_text_parts)
-        estimated_request_tokens = count_tokens(request_text, request.model)
-
-        current_balance = UserRepository.get_user_credit_balance(user_id)
-
-        # Check if balance can cover at least the request tokens (minimum cost)
-        if current_balance < estimated_request_tokens:
-            raise HTTPException(
-                status_code=status.HTTP_402_PAYMENT_REQUIRED,
-                detail=f'Insufficient credits. Estimated {estimated_request_tokens} credits needed for request, you have {current_balance}.'
-            )
-
-        # Get LLM service
-        conn = get_db_connection()
-        c = conn.cursor()
-        c.execute('SELECT * FROM settings WHERE is_active=1 ORDER BY updated_at DESC LIMIT 1')
-        row = c.fetchone()
-        conn.close()
+        estimated_request_tokens = count_tokens(request_text, completion_request.model)
         
-        if not row:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="No active LLM backend configured"
-            )
-        
-        backend_type = row['backend_type']
-        config = json.loads(row['config_json']) if row['config_json'] else {}
-        
-        service = get_llm_service(backend_type, config)
+        # Credit check only for member mode
+        if llm_mode == 'member':
+            current_balance = UserRepository.get_user_credit_balance(user_id)
+            
+            # Check if balance can cover at least the request tokens (minimum cost)
+            if current_balance < estimated_request_tokens:
+                raise HTTPException(
+                    status_code=status.HTTP_402_PAYMENT_REQUIRED,
+                    detail=f'Insufficient credits. Estimated {estimated_request_tokens} credits needed for request, you have {current_balance}.'
+                )
+
+        # Get appropriate LLM service for the user
+        service, provider, mode = LLMProxyService.get_llm_service_for_user(user_id, byok_headers)
         
         # Prepare payload
         payload = {
-            'model': request.model,
-            'messages': [msg.dict() for msg in request.messages],
-            'temperature': request.temperature,
-            'max_tokens': request.max_tokens,
+            'model': completion_request.model,
+            'messages': [msg.dict() for msg in completion_request.messages],
+            'temperature': completion_request.temperature,
+            'max_tokens': completion_request.max_tokens,
             'stream': True  # Force streaming for better control
         }
 
         # Add optional parameters
-        if request.top_p is not None:
-            payload['top_p'] = request.top_p
-        if request.presence_penalty is not None:
-            payload['presence_penalty'] = request.presence_penalty
-        if request.frequency_penalty is not None:
-            payload['frequency_penalty'] = request.frequency_penalty
+        if completion_request.top_p is not None:
+            payload['top_p'] = completion_request.top_p
+        if completion_request.presence_penalty is not None:
+            payload['presence_penalty'] = completion_request.presence_penalty
+        if completion_request.frequency_penalty is not None:
+            payload['frequency_penalty'] = completion_request.frequency_penalty
 
-        # Deduct initial estimated request tokens
-        UserRepository.add_credit_transaction(
-            user_id=user_id,
-            transaction_type='usage_request',
-            amount=-estimated_request_tokens,
-            description=f"AI chat request tokens for model: {request.model}",
-            related_entity_id=request.model
-        )
+        # Deduct initial estimated request tokens (only for member mode)
+        if mode == 'member':
+            UserRepository.add_credit_transaction(
+                user_id=user_id,
+                transaction_type='usage_request',
+                amount=-estimated_request_tokens,
+                description=f"AI chat request tokens for model: {completion_request.model}",
+                related_entity_id=completion_request.model
+            )
 
         def generate():
             total_response_tokens = 0
             accumulated_content = []
+            request_endpoint = f"{service.base_url}/chat/completions" if hasattr(service, 'base_url') else "unknown"
             
             try:
                 for chunk in service.chat_completion_stream(payload):
@@ -185,22 +176,49 @@ async def proxy_chat_completions(
                         
                         yield chunk
                 
-                # After streaming is complete, calculate response tokens and deduct
+                # After streaming is complete, calculate response tokens and process credits/logging
                 if accumulated_content:
                     response_text = ''.join(accumulated_content)
-                    total_response_tokens = count_tokens(response_text, request.model)
+                    total_response_tokens = count_tokens(response_text, completion_request.model)
                     
-                    # Deduct response tokens
-                    UserRepository.add_credit_transaction(
-                        user_id=user_id,
-                        transaction_type='usage_response',
-                        amount=-total_response_tokens,
-                        description=f"AI chat response tokens for model: {request.model}",
-                        related_entity_id=request.model
-                    )
+                    # Deduct response tokens (only for member mode)
+                    if mode == 'member':
+                        UserRepository.add_credit_transaction(
+                            user_id=user_id,
+                            transaction_type='usage_response',
+                            amount=-total_response_tokens,
+                            description=f"AI chat response tokens for model: {completion_request.model}",
+                            related_entity_id=completion_request.model
+                        )
+                
+                # Log the request
+                LLMProxyService.log_request(
+                    user_id=user_id,
+                    endpoint_url=request_endpoint,
+                    provider=provider,
+                    mode=mode,
+                    tokens_sent=estimated_request_tokens,
+                    tokens_received=total_response_tokens,
+                    start_time=start_time,
+                    status="success"
+                )
                 
             except Exception as e:
                 logger.error(f"Streaming error: {str(e)}")
+                
+                # Log the error
+                LLMProxyService.log_request(
+                    user_id=user_id,
+                    endpoint_url=request_endpoint,
+                    provider=provider,
+                    mode=mode,
+                    tokens_sent=estimated_request_tokens,
+                    tokens_received=0,
+                    start_time=start_time,
+                    status="error",
+                    error_message=str(e)
+                )
+                
                 error_chunk = f'data: {{"error": "Stream error: {str(e)}"}}\n\n'
                 yield error_chunk.encode('utf-8')
             finally:

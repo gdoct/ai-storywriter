@@ -1,11 +1,11 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import (JSON, Boolean, Column, DateTime, Integer, String,
-                        create_engine)
+from sqlalchemy import (JSON, Boolean, Column, DateTime, Integer, String, Float,
+                        create_engine, ForeignKey)
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, relationship
 
 Base = declarative_base()
 
@@ -64,6 +64,70 @@ class AppActivePolicy(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     is_active = Column(Boolean, default=True) # Should only be one active record
+
+class LLMProviderPreset(Base):
+    __tablename__ = 'llm_provider_presets'
+
+    id = Column(Integer, primary_key=True)
+    provider_name = Column(String, nullable=False, unique=True)
+    display_name = Column(String, nullable=False)
+    base_url = Column(String)
+    is_enabled = Column(Boolean, default=True)
+    credit_multiplier = Column(Float, default=1.0)
+    config_json = Column(String)  # JSON as string for SQLite compatibility
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relationship to admin keys
+    admin_keys = relationship('LLMAdminKey', back_populates='provider_preset', cascade='all, delete-orphan')
+
+class LLMAdminKey(Base):
+    __tablename__ = 'llm_admin_keys'
+
+    id = Column(Integer, primary_key=True)
+    provider_preset_id = Column(Integer, ForeignKey('llm_provider_presets.id'), nullable=False)
+    key_name = Column(String, nullable=False)
+    encrypted_value = Column(String, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relationship to provider preset
+    provider_preset = relationship('LLMProviderPreset', back_populates='admin_keys')
+
+class UserPreference(Base):
+    __tablename__ = 'user_preferences'
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(String, nullable=False, unique=True)  # TEXT for SQLite compatibility
+    llm_mode = Column(String, default='member')  # 'member' or 'byok'
+    byok_provider = Column(String)  # 'openai' or 'github'
+    email_notifications = Column(Boolean, default=True)
+    marketing_emails = Column(Boolean, default=False)
+    first_name = Column(String)
+    last_name = Column(String)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+class LLMRequestLog(Base):
+    __tablename__ = 'llm_request_logs'
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(String, nullable=False)
+    endpoint_url = Column(String, nullable=False)
+    provider = Column(String, nullable=False)
+    mode = Column(String, nullable=False)  # 'member' or 'byok'
+    tokens_sent = Column(Integer, default=0)
+    tokens_received = Column(Integer, default=0)
+    credits_used = Column(Integer, default=0)
+    request_timestamp = Column(DateTime, default=datetime.utcnow)
+    response_timestamp = Column(DateTime)
+    duration_ms = Column(Integer)
+    status = Column(String)  # 'success', 'error', 'timeout'
+    error_message = Column(String)
+    
+    @property
+    def total_tokens(self):
+        return (self.tokens_sent or 0) + (self.tokens_received or 0)
 
 # Example for setting up the database connection (adjust as needed for your project)
 # from data.db import get_db_url # Assuming you have a way to get the DB URL

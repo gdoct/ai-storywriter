@@ -49,7 +49,7 @@ async def health_check():
 # Import and register routers
 from routers import (
     auth, scenario, chat, llm_proxy, settings, dashboard, marketplace, 
-    image, character_photo, scenario_image, payment, moderation, role
+    image, character_photo, scenario_image, payment, moderation, role, user_settings
 )
 app.include_router(auth.router, prefix="/api", tags=["auth"])
 app.include_router(scenario.router, prefix="/api", tags=["scenarios"])
@@ -64,6 +64,7 @@ app.include_router(scenario_image.router, prefix="/api", tags=["scenario_images"
 app.include_router(payment.router, prefix="/api", tags=["payment"])
 app.include_router(moderation.router, prefix="/api", tags=["moderation"])
 app.include_router(role.router, prefix="/api", tags=["roles"])
+app.include_router(user_settings.router, prefix="/api", tags=["user_settings"])
 
 # Serve React frontend static files (after API routes are registered)
 frontend_build_path = Path(__file__).parent.parent / "frontend" / "build"

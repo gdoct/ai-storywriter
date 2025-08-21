@@ -1,6 +1,7 @@
 import { AiTextArea, AiTextBox, Button } from '@drdata/ai-styles';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { FaImage, FaMap, FaMapMarkerAlt, FaPlus, FaTimes } from 'react-icons/fa';
+import { FaPlus, FaTimes, FaUser } from 'react-icons/fa';
+import { FaMap } from 'react-icons/fa6';
 import { FaLocationDot } from 'react-icons/fa6';
 import { AI_STATUS, useAIStatus } from '../../../../contexts/AIStatusContext';
 import { useAuth } from '../../../../contexts/AuthContext';
@@ -521,14 +522,14 @@ export const GenerateLocationModal: React.FC<GenerateLocationModalProps> = ({
             onClick={() => setActiveTab('image')}
             disabled={isGenerating}
           >
-            <FaImage /> From Image
+            <FaPlus /> From Image
           </button>
           <button
             className={`tab-button ${activeTab === 'text' ? 'active' : ''}`}
             onClick={() => setActiveTab('text')}
             disabled={isGenerating}
           >
-            <FaMapMarkerAlt /> From Description
+            <FaUser /> From Description
           </button>
           <button
             className={`tab-button ${activeTab === 'maps' ? 'active' : ''}`}
