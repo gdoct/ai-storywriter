@@ -104,7 +104,9 @@ async def get_recent_scenarios(
                 created=row['created_at'],
                 generatedStoryCount=row['story_count'],
                 lastModified=row['updated_at'] or row['created_at'],
-                imageUrl=jsondata.get('imageUrl') if jsondata else None
+                imageUrl=jsondata.get('imageUrl') if jsondata else None,
+                synopsis=jsondata.get('synopsis') if jsondata else None,
+                characters=jsondata.get('characters') if jsondata else None
             ))
 
         # Calculate pagination info

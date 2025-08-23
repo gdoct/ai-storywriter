@@ -10,6 +10,7 @@ const SceneHoverContext = createContext<SceneHoverContextType>({
   setHoveredSceneId: () => {}
 });
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useSceneHover = () => useContext(SceneHoverContext);
 
 export const SceneHoverProvider: React.FC<{children: ReactNode}> = ({ children }) => {

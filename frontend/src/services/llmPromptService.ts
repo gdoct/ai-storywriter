@@ -240,8 +240,9 @@ export function createFinalStoryPrompt(scenario: Scenario): llmCompletionRequest
     prompt += "- Maintain consistent tone, style, and character voice throughout\n";
     prompt += "- Honor all character backgrounds and scenario details\n";
     prompt += "- IMPORTANT: do not use the names 'Silas', 'Blackwood' or 'Lyra'\n";
-    prompt += "- Do not use section markers or paragraph headers\n\n";
-    
+    prompt += "- Do not use section markers or paragraph headers";
+    prompt += "- IMPORTANT: do not use headers for story events, such as '**Story Event: Start**'\n\n";
+
     // Add the provided story segments
     if (scenario.fillIn!.beginning && scenario.fillIn!.beginning.trim()) {
       prompt += "STORY BEGINNING (provided):\n";
@@ -1059,6 +1060,119 @@ Generate creative and useful notes for this story. Include a mix of the followin
 Format the notes in a clear, organized way with headers. Be creative and think outside the box. Provide practical ideas that would help a writer develop and enrich their story.`;
 
   return {
+    userMessage: prompt
+  };
+}
+
+/**
+ * Create a prompt for generating a similar scenario based on existing scenario and user selections
+ */
+export function createSimilarScenarioPrompt(
+  existingScenario: Scenario,
+  selections: {
+    retainCharacters: boolean;
+    retainLocations: boolean;
+    retainNotes: boolean;
+    selectedCharacters: string[];
+    selectedLocations: string[];
+  }
+): llmCompletionRequestMessage {
+  if (!existingScenario) {
+    console.error("Error: existingScenario is null or undefined");
+    throw new Error("Existing scenario is required for generating similar scenario");
+  }
+
+  const writingStyle = existingScenario.writingStyle || { genre: "General Fiction" };
+  const genre = writingStyle.genre || "General Fiction";
+  
+  let prompt = `You are an expert storyteller specializing in ${genre} fiction. Create a new, similar scenario based on the existing one provided, following the user's retention preferences.\n\n`;
+  
+  prompt += "EXISTING SCENARIO:\n";
+  prompt += formatScenarioAsMarkdown(existingScenario) + "\n\n";
+  
+  prompt += "RETENTION REQUIREMENTS:\n";
+  
+  // Writing style is always retained
+  prompt += "✓ ALWAYS RETAIN: Writing style (genre, tone, theme, language, other style elements)\n";
+  
+  // User-selected elements
+  if (selections.retainCharacters) {
+    prompt += "✓ RETAIN: characters " + selections.selectedCharacters.join(", ") + "\n";
+    prompt += "✓ CREATE NEW: at least 1 new character\n";
+  } else {
+    prompt += "✗ CREATE NEW: All characters (don't use any existing characters)\n";
+  }
+  
+  if (selections.retainLocations) {
+    prompt += "✓ RETAIN: Some existing locations (keep " + selections.selectedLocations.join(", ") + ")\n";
+    prompt += "✓ CREATE NEW: at least 1 new location\n";
+  } else {
+    prompt += "✗ CREATE NEW: All locations (don't use any existing locations)\n";
+  }
+  
+  if (selections.retainNotes) {
+    prompt += "✓ REFERENCE: Existing notes (use as inspiration but don't copy directly)\n";
+  } else {
+    prompt += "✗ IGNORE: Existing notes (don't reference the notes)\n";
+  }
+  
+  prompt += "\n";
+  prompt += "✗ NEVER RETAIN: Backstory, timeline/story arc, fill-in story (always generate new)\n\n";
+  
+  prompt += "GENERATION REQUIREMENTS:\n";
+  prompt += "• Create a NEW title and NEW synopsis (don't copy existing ones)\n";
+  prompt += "• Generate at least ONE completely new character\n";
+  prompt += "• Create a fresh backstory with new events and circumstances\n";
+  prompt += "• Develop a new story arc/timeline with different plot progression\n";
+  prompt += "• Make the scenario feel related but distinct from the original\n";
+  prompt += "• Maintain the same writing style, genre, and thematic elements\n";
+  prompt += `• Ensure it fits ${genre} conventions and the specified tone\n\n`;
+  
+  if (writingStyle.tone) {
+    prompt += `• Preserve the ${writingStyle.tone} tone throughout\n`;
+  }
+  if (writingStyle.theme) {
+    prompt += `• Continue exploring themes of ${writingStyle.theme}\n`;
+  }
+  
+  prompt += "\nOUTPUT FORMAT: Respond with a complete scenario as a JSON object with this exact structure:\n";
+  prompt += "{\n";
+  prompt += '  "title": "(new creative title)",\n';
+  prompt += '  "synopsis": "(new engaging synopsis)",\n';
+  prompt += '  "writingStyle": {\n';
+  prompt += '    "genre": "(preserved genre)",\n';
+  prompt += '    "tone": "(preserved tone)",\n';
+  prompt += '    "style": "(preserved style)",\n';
+  prompt += '    "language": "(preserved language)",\n';
+  prompt += '    "theme": "(preserved theme)",\n';
+  prompt += '    "other": "(preserved other style elements)"\n';
+  prompt += '  },\n';
+  prompt += '  "characters": [\n';
+  prompt += '    {\n';
+  prompt += '      "name": "(character name)",\n';
+  prompt += '      "alias": "(alias or empty string)",\n';
+  prompt += '      "role": "(character role)",\n';
+  prompt += '      "gender": "(character gender)",\n';
+  prompt += '      "appearance": "(physical description)",\n';
+  prompt += '      "backstory": "(character background)",\n';
+  prompt += '      "extraInfo": "(additional traits)"\n';
+  prompt += '    }\n';
+  prompt += '  ],\n';
+  prompt += '  "locations": [\n';
+  prompt += '    {\n';
+  prompt += '      "name": "(location name)",\n';
+  prompt += '      "description": "(location description)"\n';
+  prompt += '    }\n';
+  prompt += '  ],\n';
+  prompt += '  "backstory": "(new backstory - 2-3 paragraphs)",\n';
+  prompt += '  "storyarc": "(new story arc as bullet points)",\n';
+  prompt += '  "notes": "(new creative notes and ideas)"\n';
+  prompt += '}\n\n';
+  
+  prompt += "IMPORTANT: Provide ONLY the JSON object - no explanations, commentary, or additional text.";
+  
+  return {
+    systemMessage: `You are an expert storyteller and scenario creator specializing in ${genre} fiction. You excel at creating fresh, engaging scenarios that feel familiar yet original.`,
     userMessage: prompt
   };
 }

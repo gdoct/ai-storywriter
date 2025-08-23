@@ -99,9 +99,9 @@
   --color-text-placeholder: #9ca3af;
 
   /* Border Colors */
-  --color-border-primary: #374151;
-  --color-border-secondary: #4b5563;
-  --color-border-tertiary: #6b7280;
+  --color-border-primary: #4b5563;
+  --color-border-secondary: #6b7280;
+  --color-border-tertiary: #9ca3af;
   --color-border-focus: var(--color-primary-400);
   --color-border-error: var(--color-error-400);
   --color-border-success: var(--color-success-400);

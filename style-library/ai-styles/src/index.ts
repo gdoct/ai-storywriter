@@ -20,6 +20,8 @@ export { ConfirmDialog } from './components/modal/ConfirmDialog';
 export type { ConfirmDialogProps } from './components/modal/ConfirmDialog';
 export { ErrorDialog } from './components/modal/ErrorDialog';
 export type { ErrorDialogProps } from './components/modal/ErrorDialog';
+export { Dialog } from './components/Dialog';
+export type { DialogProps } from './components/Dialog';
 // Design System Styles
 import './styles/index.css';
 

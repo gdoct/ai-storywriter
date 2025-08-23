@@ -15,7 +15,7 @@ class LLMRepository:
                    credit_multiplier, config_json, created_at, updated_at
             FROM llm_provider_presets 
             WHERE is_enabled = 1
-            ORDER BY provider_name
+            ORDER BY updated_at DESC
         ''')
         
         rows = c.fetchall()

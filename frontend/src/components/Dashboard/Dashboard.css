@@ -7,10 +7,10 @@
   align-items: center;
   margin-bottom: var(--spacing-2xl);
   padding: var(--spacing-xl);
-  background: var(--color-surface);
+  background: var(--color-surface-elevated);
   border-radius: var(--radius-lg);
-  border: 1px solid var(--color-border);
-  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--color-border-secondary);
+  box-shadow: var(--shadow-md);
   flex-wrap: wrap;
   gap: var(--spacing-lg);
 }
@@ -50,19 +50,19 @@
 }
 
 .stat-card {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
+  background: var(--color-surface-elevated);
+  border: 1px solid var(--color-border-secondary);
   border-radius: var(--radius-lg);
   padding: var(--spacing-xl);
   display: flex;
   align-items: center;
   gap: var(--spacing-lg);
-  box-shadow: var(--shadow-sm);
-  transition: box-shadow 0.2s ease, transform 0.2s ease;
+  box-shadow: var(--shadow-md);
+  transition: box-shadow var(--transition-normal), transform var(--transition-normal);
 }
 
 .stat-card:hover {
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--shadow-lg);
   transform: translateY(-2px);
 }
 
@@ -94,10 +94,10 @@
 
 /* Recent Scenarios and Recent Stories Sections */
 .recent-section {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
+  background: var(--color-surface-elevated);
+  border: 1px solid var(--color-border-secondary);
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-md);
   display: flex;
   flex-direction: column;
   height: 500px; /* Fixed height for consistent layout */
@@ -109,8 +109,8 @@
   align-items: center;
   justify-content: space-between;
   padding: var(--spacing-lg);
-  border-bottom: 1px solid var(--color-border);
-  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border-primary);
+  background: var(--color-surface-primary);
   flex-shrink: 0;
   height: 20%; /* Top row takes 20% of height */
   min-height: 60px;
@@ -135,7 +135,7 @@
   flex: 1;
   padding: var(--spacing-lg);
   overflow-y: auto;
-  background: var(--color-surface);
+  background: var(--color-surface-elevated);
   height: 80%; /* Bottom row takes 80% of height */
   display: flex;
   flex-direction: column;
@@ -173,20 +173,21 @@
 
 /* List items */
 .recent-item {
-  background: var(--color-surface-variant);
-  border: 1px solid var(--color-border);
+  background: var(--color-surface-primary);
+  border: 1px solid var(--color-border-primary);
   border-radius: var(--radius-md);
   padding: var(--spacing-md);
   margin-bottom: var(--spacing-md);
-  transition: box-shadow 0.2s ease, transform 0.2s ease;
+  transition: box-shadow var(--transition-normal), transform var(--transition-normal);
   display: flex;
   gap: var(--spacing-md);
   align-items: flex-start;
 }
 
 .recent-item:hover {
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--shadow-lg);
   transform: translateY(-1px);
+  border-color: var(--color-border-secondary);
 }
 
 .recent-item-image {

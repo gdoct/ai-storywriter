@@ -7,6 +7,7 @@ interface AuthenticatedUserContextType {
 
 const AuthenticatedUserContext = createContext<AuthenticatedUserContextType | undefined>(undefined);
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useAuthenticatedUser = () => {
   const ctx = useContext(AuthenticatedUserContext);
   if (!ctx) throw new Error('useAuthenticatedUser must be used within AuthenticatedUserProvider');

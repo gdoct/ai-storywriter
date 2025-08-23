@@ -1,5 +1,6 @@
 import { createContext, ReactNode, useContext, useState } from 'react';
 
+// eslint-disable-next-line react-refresh/only-export-components
 export enum AI_STATUS {
   IDLE = 'idle',
   BUSY = 'busy',
@@ -19,6 +20,7 @@ interface AIStatusContextType {
 
 const AIStatusContext = createContext<AIStatusContextType | undefined>(undefined);
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useAIStatus = () => {
   const ctx = useContext(AIStatusContext);
   if (!ctx) throw new Error('useAIStatus must be used within AIStatusProvider');

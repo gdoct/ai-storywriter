@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { downloadStory, getMarketStory, rateStory } from '../../services/marketPlaceApi';
 import { MarketStory } from '../../types/marketplace';
@@ -20,13 +20,7 @@ const StoryModal: React.FC<StoryModalProps> = ({ storyId, show, onClose }) => {
   const [isRating, setIsRating] = useState(false);
   const { authenticated } = useAuth();
 
-  useEffect(() => {
-    if (show && storyId) {
-      fetchStory();
-    }
-  }, [show, storyId]);
-
-  const fetchStory = async () => {
+  const fetchStory = useCallback(async () => {
     if (!storyId) return;
     
     setLoading(true);
@@ -45,7 +39,13 @@ const StoryModal: React.FC<StoryModalProps> = ({ storyId, show, onClose }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [storyId]);
+
+  useEffect(() => {
+    if (show && storyId) {
+      fetchStory();
+    }
+  }, [show, storyId, fetchStory]);
 
   const handleDownload = async () => {
     if (!story || !authenticated) return;

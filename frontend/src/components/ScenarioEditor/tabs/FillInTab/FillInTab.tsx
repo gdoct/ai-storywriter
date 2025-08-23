@@ -1,5 +1,5 @@
 import { AiTextArea } from '@drdata/ai-styles';
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { FaBook, FaUser } from 'react-icons/fa';
 import { FillIn } from '../../../../types/ScenarioTypes';
 import { TabProps } from '../../types';
@@ -11,12 +11,12 @@ export const FillInTab: React.FC<TabProps> = ({
   isDirty: _isDirty,
   isLoading,
 }) => {
-  const fillIn = scenario.fillIn || {};
+  const fillIn = useMemo(() => scenario.fillIn || {}, [scenario.fillIn]);
 
   const handleFillInChange = useCallback((updates: Partial<FillIn>) => {
     const updatedFillIn = { ...fillIn, ...updates };
     onScenarioChange({ fillIn: updatedFillIn });
-  }, [fillIn, scenario, onScenarioChange]);
+  }, [fillIn, onScenarioChange]);
 
   return (
     <div className="fill-in-tab">

@@ -49,16 +49,19 @@ class LLMProxyService:
             selected_provider = enabled_providers[0]
             provider_name = selected_provider['provider_name']
             
-            # Get admin API key for the provider
-            api_key = LLMRepository.get_provider_admin_key(provider_name)
-            if not api_key:
-                raise ValueError(f"No admin API key configured for provider: {provider_name}")
-            
             # Create config from provider preset
-            config = {
-                'api_key': api_key,  # TODO: Decrypt the encrypted value
-                'base_url': selected_provider.get('base_url')
-            }
+            config = {}
+            
+            # Some providers need admin API keys, others don't (like local services)
+            if provider_name in ['openai', 'github']:  # API-key based providers
+                api_key = LLMRepository.get_provider_admin_key(provider_name)
+                if not api_key:
+                    raise ValueError(f"No admin API key configured for provider: {provider_name}")
+                config['api_key'] = api_key  # TODO: Decrypt the encrypted value
+            
+            # Add base URL if available
+            if selected_provider.get('base_url'):
+                config['base_url'] = selected_provider.get('base_url')
             
             # Add provider-specific config
             if selected_provider.get('config_json'):

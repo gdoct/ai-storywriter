@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import List, Optional, Any
 
 class DashboardStats(BaseModel):
     scenariosCreated: int
@@ -22,6 +22,8 @@ class RecentScenario(BaseModel):
     generatedStoryCount: int
     lastModified: str
     imageUrl: Optional[str] = None
+    synopsis: Optional[str] = None
+    characters: Optional[List[Any]] = None
 
 class RecentScenariosResponse(BaseModel):
     scenarios: List[RecentScenario]

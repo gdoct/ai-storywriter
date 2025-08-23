@@ -68,7 +68,7 @@ async def signup(user_data: SignupRequest):
         password_hash=password_hash
     )
     
-    if not user or not user.get('id'):
+    if not user or not user['id']:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to create user"

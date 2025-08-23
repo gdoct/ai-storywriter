@@ -13,33 +13,32 @@
 
 /* Header Section - Match Dashboard Style */
 .stories-header {
-  background: var(--hero-gradient);
-  border-radius: var(--radius-lg);
-  padding: var(--spacing-3xl);
-  margin-bottom: var(--spacing-3xl);
-  box-shadow: var(--shadow-lg);
-  border: 1px solid var(--color-border);
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  gap: var(--spacing-3xl);
-  color: var(--hero-title-color);
+  align-items: center;
+  margin-bottom: var(--spacing-2xl);
+  padding: var(--spacing-xl);
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-sm);
+  flex-wrap: wrap;
+  gap: var(--spacing-lg);
 }
 
 .header-content h1 {
   font-size: var(--font-size-3xl);
   font-weight: var(--font-weight-bold);
-  color: var(--hero-title-color);
+  color: var(--color-text-primary);
   margin: 0 0 var(--spacing-xs) 0;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.025em;
 }
 
-.stories-header .header-content p {
-  color: white !important;
+.header-content p {
   font-size: var(--font-size-lg);
+  color: var(--color-text-secondary);
   margin: 0;
   font-weight: var(--font-weight-medium);
-  opacity: 0.9;
 }
 
 /* Search Bar */

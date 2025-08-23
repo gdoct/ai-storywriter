@@ -80,7 +80,7 @@ export async function generateEmail(localPart?: string, options: EmailGeneratorO
     // Add common TLD
     const tlds = ['com', 'org', 'net', 'dev', 'io'];
     const tld = tlds[Math.floor(Math.random() * tlds.length)];
-    domain = `${domainName.toLowerCase()}.${tld}`;
+    domain = `${domainName.toLowerCase().replace(' ', '').replace(/[^\w.-]+/g, '')}.${tld}`;
   } else {
     // Use common test domains
     const commonDomains = ['example.com', 'test.org', 'demo.net'];

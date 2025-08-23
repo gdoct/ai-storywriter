@@ -42,5 +42,15 @@ class StoryDetail(BaseModel):
     created_at: str
     scenario_id: str
 
+class SaveStoryRequest(BaseModel):
+    content: str
+    scenario: dict
+
+class SaveStoryResponse(BaseModel):
+    id: str
+    content: str
+    timestamp: str
+    scenario_id: str
+
 class DeleteResponse(BaseModel):
     success: bool

@@ -11,11 +11,18 @@ export async function fetchLLMSettings(): Promise<LLMConfig | null> {
   if (!res.ok) return null;
   
   const backendData = await res.json();
+  // console.log('[DEBUG] fetchLLMSettings received:', backendData); // Debug log
+  
   if (!backendData.backend_type) return null;
 
-  // Transform backend format to frontend format
+  // Transform backend format to frontend format - normalize backend_type
+  let normalizedBackendType = backendData.backend_type;
+  if (normalizedBackendType === 'openai') {
+    normalizedBackendType = 'chatgpt'; // Normalize openai to chatgpt
+  }
+
   const frontendConfig: LLMConfig = {
-    backendType: backendData.backend_type,
+    backendType: normalizedBackendType,
     lmstudio: { url: 'http://localhost:1234' }, // default
     ollama: { url: 'http://localhost:11434' }, // default
     chatgpt: { apiKey: '' }, // default
@@ -23,15 +30,26 @@ export async function fetchLLMSettings(): Promise<LLMConfig | null> {
     showThinking: backendData.showThinking || false, // Get from backend response
   };
 
-  // Update the specific backend config
-  if (backendData.backend_type === 'lmstudio' && backendData.config) {
-    frontendConfig.lmstudio = { url: backendData.config.url || 'http://localhost:1234' };
-  } else if (backendData.backend_type === 'ollama' && backendData.config) {
-    frontendConfig.ollama = { url: backendData.config.url || 'http://localhost:11434' };
-  } else if (backendData.backend_type === 'chatgpt' && backendData.config) {
-    frontendConfig.chatgpt = { apiKey: backendData.config.api_key || '' };
-  } else if (backendData.backend_type === 'github' && backendData.config) {
-    frontendConfig.github = { githubToken: backendData.config.githubToken || '' };
+  // Update the specific backend config with more robust mapping
+  const config = backendData.config || {};
+  // console.log('[DEBUG] Backend config object:', config); // Debug log
+  
+  if (backendData.backend_type === 'lmstudio') {
+    frontendConfig.lmstudio = { 
+      url: config.url || backendData.base_url || 'http://localhost:1234' 
+    };
+  } else if (backendData.backend_type === 'ollama') {
+    frontendConfig.ollama = { 
+      url: config.url || backendData.base_url || 'http://localhost:11434' 
+    };
+  } else if (normalizedBackendType === 'chatgpt') {
+    frontendConfig.chatgpt = { 
+      apiKey: config.api_key || config.apiKey || '' 
+    };
+  } else if (backendData.backend_type === 'github') {
+    frontendConfig.github = { 
+      githubToken: config.githubToken || config.github_token || '' 
+    };
   }
 
   return frontendConfig;
@@ -57,13 +75,23 @@ export async function saveLLMSettings(config: LLMConfig): Promise<LLMConfig | nu
     showThinking: config.showThinking || false // Include showThinking field
   };
 
+  // console.log('[DEBUG] Saving LLM settings:', saveData); // Debug log
+
   const res = await fetch(API_BASE, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(saveData),
   });
-  if (!res.ok) return null;
-  return await res.json();
+  
+  if (!res.ok) {
+    const errorText = await res.text();
+    console.error('[DEBUG] Save failed:', res.status, errorText);
+    return null;
+  }
+  
+  const result = await res.json();
+  // console.log('[DEBUG] Save result:', result);
+  return result;
 }
 
 export async function testLLMConnection(config: LLMConfig): Promise<any> {

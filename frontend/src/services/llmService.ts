@@ -137,7 +137,6 @@ export async function streamChatCompletionWithStatus(
       done = doneReading;
       if (value) {
         const chunk = new TextDecoder().decode(value);
-        // eslint-disable-next-line
         chunk.split('\n').forEach(line => {
           if (line.startsWith('data: ')) {
             const data = line.slice(6);
@@ -246,7 +245,6 @@ export async function streamChatCompletionWithThinking(
       done = doneReading;
       if (value) {
         const chunk = new TextDecoder().decode(value);
-        // eslint-disable-next-line
         chunk.split('\n').forEach(line => {
           if (line.startsWith('data: ')) {
             const data = line.slice(6);
@@ -497,10 +495,11 @@ export async function chatCompletion(
     const lines = chunk.split('\n').filter(line => line.startsWith('data:'));
     for (const line of lines) {
       try {
-        if (line === "[DONE]\n\n") {
+        const dataContent = line.slice(5).trim(); // Remove "data:" prefix
+        if (dataContent === "[DONE]") {
           break; // End of stream
         }
-        const json = JSON.parse(line.slice(5).trim()); // Remove "data:" prefix and parse JSON
+        const json = JSON.parse(dataContent); // Parse JSON
         const content = json.choices?.[0]?.delta?.content;
         if (content) {
           assistantText += content;

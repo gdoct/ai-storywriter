@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button, Card } from '@drdata/ai-styles';
 import { getByGenre, getLatest, getMostPopular, getStaffPicks, getTopRated, getMarketStory, downloadStory, getAvailableGenres } from '../services/marketPlaceApi';
@@ -45,7 +45,7 @@ const MarketplaceBrowse: React.FC = () => {
     return 'Browse Stories';
   };
 
-  const loadStories = async (_: number = 1, append: boolean = false) => {
+  const loadStories = useCallback(async (_: number = 1, append: boolean = false) => {
     try {
       setLoading(true);
       let newStories: MarketStoryCard[] = [];
@@ -81,24 +81,24 @@ const MarketplaceBrowse: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    loadStories(1, false);
-    loadAvailableGenres();
   }, [section, staffPicks, genre]);
 
-  const loadAvailableGenres = async () => {
-    try {
-      setLoadingGenres(true);
-      const genres = await getAvailableGenres();
-      setAvailableGenres(genres);
-    } catch (error) {
-      console.error('Failed to load available genres:', error);
-    } finally {
-      setLoadingGenres(false);
-    }
-  };
+  useEffect(() => {
+    const loadAvailableGenres = async () => {
+      try {
+        setLoadingGenres(true);
+        const genres = await getAvailableGenres();
+        setAvailableGenres(genres);
+      } catch (error) {
+        console.error('Failed to load available genres:', error);
+      } finally {
+        setLoadingGenres(false);
+      }
+    };
+
+    loadStories(1, false);
+    loadAvailableGenres();
+  }, [loadStories]);
 
   const handleLoadMore = () => {
     const nextPage = page + 1;

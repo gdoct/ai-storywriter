@@ -39,7 +39,23 @@ export async function getShowThinkingSetting(): Promise<boolean> {
 export async function getUserSettings(): Promise<UserSettings> {
   try {
     const response = await apiRequest('/api/user/settings', { method: 'GET' });
-    return response.data;
+    const backendData = response.data;
+    
+    // Convert snake_case to camelCase for frontend
+    const frontendSettings: UserSettings = {
+      username: backendData.username || '',
+      email: backendData.email || '',
+      firstName: backendData.first_name || '',
+      lastName: backendData.last_name || '',
+      notifications: backendData.notifications || {
+        email: true,
+        marketing: false
+      },
+      llmMode: backendData.llm_mode || 'member',
+      byokProvider: backendData.byok_provider
+    };
+    
+    return frontendSettings;
   } catch (error) {
     console.error('Error fetching user settings:', error);
     // Return default settings as fallback
@@ -60,10 +76,21 @@ export async function getUserSettings(): Promise<UserSettings> {
 
 export async function saveUserSettings(settings: Partial<UserSettings>): Promise<void> {
   try {
+    // Convert camelCase to snake_case for backend
+    const backendSettings = {
+      username: settings.username,
+      email: settings.email,
+      first_name: settings.firstName,
+      last_name: settings.lastName,
+      notifications: settings.notifications,
+      llm_mode: settings.llmMode,
+      byok_provider: settings.byokProvider
+    };
+
     await apiRequest('/api/user/settings', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      data: JSON.stringify(settings)
+      data: JSON.stringify(backendSettings)
     });
   } catch (error) {
     console.error('Error saving user settings:', error);

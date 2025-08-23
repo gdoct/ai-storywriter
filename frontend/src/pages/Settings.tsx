@@ -1,5 +1,5 @@
 import { Button } from '@drdata/ai-styles';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import MarketingFooter from '../components/marketing/MarketingFooter';
 import { AlertModal, ConfirmModal } from '../components/Modal';
 import { useAuth } from '../contexts/AuthContext';
@@ -42,21 +42,18 @@ const Settings: React.FC = () => {
   const [showApiKey, setShowApiKey] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  useEffect(() => {
-    loadSettings();
-  }, [userProfile]);
-
-  const loadSettings = async () => {
+  const loadSettings = useCallback(async () => {
     try {
       // Load user settings
       const userSettings = await getUserSettings();
-      setSettings(_ => ({
+      console.log('Loaded user settings:', userSettings); // Debug log
+      setSettings({
         ...userSettings,
         username: userProfile?.username || userSettings.username,
         email: userProfile?.email || userSettings.email,
-        firstName:userSettings.firstName || '',
+        firstName: userSettings.firstName || '',
         lastName: userSettings.lastName || ''
-      }));
+      });
 
       // Load BYOK credentials if they exist
       const savedCredentials = getBYOKCredentials();
@@ -68,7 +65,11 @@ const Settings: React.FC = () => {
       console.error('Error loading settings:', error);
       customAlert('Failed to load settings. Using defaults.', 'Warning');
     }
-  };
+  }, [userProfile, customAlert]);
+
+  useEffect(() => {
+    loadSettings();
+  }, [loadSettings]);
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
@@ -170,6 +171,9 @@ const Settings: React.FC = () => {
       
       customAlert('Settings saved successfully!', 'Success');
       setHasChanges(false);
+      
+      // Reload settings to ensure form stays populated
+      await loadSettings();
     } catch (error) {
       console.error('Error saving settings:', error);
       customAlert('Failed to save settings. Please try again.', 'Error');
@@ -178,8 +182,28 @@ const Settings: React.FC = () => {
     }
   };
 
-  const handleClearBYOKKeys = () => {
+  const handleClearBYOKKeys = async () => {
+    const confirmed = await customConfirm(
+      'Are you sure you want to clear your API credentials? This cannot be undone.',
+      {
+        title: 'Clear API Credentials',
+        confirmText: 'Clear',
+        cancelText: 'Cancel',
+        variant: 'danger'
+      }
+    );
     
+    if (confirmed) {
+      clearBYOKCredentials();
+      setBYOKCredentials({
+        provider: 'openai',
+        apiKey: '',
+        baseUrl: ''
+      });
+      setHasSavedKeys(false);
+      setHasChanges(true);
+      customAlert('API credentials cleared successfully.', 'Success');
+    }
   };
 
   const handleLogout = () => {

@@ -6,7 +6,7 @@ import '../admin/AdminPanel.css';
 const backendOptions: { label: string; value: BackendType }[] = [
   { label: 'LM Studio', value: 'lmstudio' },
   { label: 'Ollama', value: 'ollama' },
-  { label: 'ChatGPT', value: 'chatgpt' },
+  { label: 'OpenAI', value: 'chatgpt' },
   { label: 'GitHub Models', value: 'github' },
 ];
 
@@ -27,11 +27,27 @@ const LLMSettings: React.FC = () => {
   const [testStatus, setTestStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [refreshing, setRefreshing] = useState(false);
   const [refreshMessage, setRefreshMessage] = useState('');
+  const [debugMessage, setDebugMessage] = useState('');
+
+  // Debug config changes
+  useEffect(() => {
+    // console.log('[DEBUG] Config state changed:', config);
+  }, [config]);
 
   // Load settings from backend
   useEffect(() => {
     fetchLLMSettings().then((data) => {
-      if (data) setConfig({ ...defaultConfig, ...data });
+      console.log('Loaded LLM settings:', data); // Debug log
+      if (data) {
+        const newConfig = { ...defaultConfig, ...data };
+        console.log('Setting config to:', newConfig); // Debug log
+        console.log('BackendType will be:', newConfig.backendType); // Debug log
+        setConfig(newConfig);
+      } else {
+        console.log('No data loaded, using default config'); // Debug log
+      }
+    }).catch((error) => {
+      console.error('Error loading LLM settings:', error); // Debug log
     });
   }, []);
 
@@ -41,17 +57,20 @@ const LLMSettings: React.FC = () => {
     setTestMessage('');
     setLoading(true);
     try {
+      // First save current settings to ensure we're testing the right backend
+      await saveLLMSettings(config);
+      
       const result = await testLLMConnection(config);
       if (result.status === 'connected') {
         setTestStatus('success');
-        setTestMessage('Connected! Models: ' + (result.models?.join(', ') || 'none'));
+        setTestMessage(`Connected to ${config.backendType}! Models: ` + (result.models?.join(', ') || 'none'));
       } else {
         setTestStatus('error');
         setTestMessage(result.error || 'Connection failed');
       }
-    } catch {
+    } catch (error) {
       setTestStatus('error');
-      setTestMessage('Connection failed');
+      setTestMessage('Connection failed: ' + (error instanceof Error ? error.message : 'Unknown error'));
     } finally {
       setLoading(false);
     }
@@ -69,6 +88,10 @@ const LLMSettings: React.FC = () => {
     setRefreshing(true);
     setRefreshMessage('');
     try {
+      // First save current settings to ensure backend knows which provider to use
+      await saveLLMSettings(config);
+      
+      // Then refresh models
       const response = await fetch('/api/settings/llm/models/refresh', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' }
@@ -76,12 +99,12 @@ const LLMSettings: React.FC = () => {
       const result = await response.json();
       
       if (result.refreshed) {
-        setRefreshMessage(`Refreshed! Found ${result.models?.length || 0} models.`);
+        setRefreshMessage(`Refreshed! Found ${result.models?.length || 0} models from ${config.backendType}.`);
       } else {
         setRefreshMessage(result.error || 'Failed to refresh models');
       }
-    } catch {
-      setRefreshMessage('Failed to refresh models');
+    } catch (error) {
+      setRefreshMessage('Failed to refresh models: ' + (error instanceof Error ? error.message : 'Unknown error'));
     } finally {
       setRefreshing(false);
       setTimeout(() => setRefreshMessage(''), 3000);
@@ -99,7 +122,7 @@ const LLMSettings: React.FC = () => {
   };
 
   // Handle config field changes
-  const handleConfigChange = (field: string, value: string) => {
+  const handleConfigChange = (_field: string, value: string) => {
     setConfig((prev) => {
       if (prev.backendType === 'lmstudio') {
         return { ...prev, lmstudio: { url: value } };
@@ -116,6 +139,8 @@ const LLMSettings: React.FC = () => {
 
   // Render dynamic config form
   const renderConfigForm = () => {
+    // console.log('[DEBUG] renderConfigForm called with backendType:', config.backendType); // Debug log
+    // console.log('[DEBUG] Full config:', config); // Debug log
     switch (config.backendType) {
       case 'lmstudio':
         return (
@@ -173,7 +198,14 @@ const LLMSettings: React.FC = () => {
           </div>
         );
       default:
-        return null;
+        // console.log('[DEBUG] Unhandled backend type:', config.backendType);
+        return (
+          <div className="form-row">
+            <div style={{ color: 'orange', fontStyle: 'italic' }}>
+              No configuration fields available for backend type: {config.backendType}
+            </div>
+          </div>
+        );
     }
   };
 
@@ -189,7 +221,10 @@ const LLMSettings: React.FC = () => {
             ))}
           </select>
         </div>
-        {renderConfigForm()}
+        {(() => {
+          // console.log('[DEBUG] About to render config form with backendType:', config.backendType);
+          return renderConfigForm();
+        })()}
         <div className="form-row">
           <label>
             <input

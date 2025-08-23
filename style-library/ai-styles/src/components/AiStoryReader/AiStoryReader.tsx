@@ -13,6 +13,31 @@ const DEFAULT_SETTINGS: ThemeSettings = {
   theme: 'light'
 };
 
+const STORAGE_KEY = 'ai-story-reader-settings';
+
+// Helper functions for localStorage
+const loadSettingsFromStorage = (): ThemeSettings => {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      // Merge with defaults to ensure all properties exist
+      return { ...DEFAULT_SETTINGS, ...parsed };
+    }
+  } catch (error) {
+    console.warn('Failed to load AiStoryReader settings from localStorage:', error);
+  }
+  return DEFAULT_SETTINGS;
+};
+
+const saveSettingsToStorage = (settings: ThemeSettings): void => {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+  } catch (error) {
+    console.warn('Failed to save AiStoryReader settings to localStorage:', error);
+  }
+};
+
 // Helper function to format text with proper line breaks and paragraphs
 const formatStoryText = (text: string): React.ReactNode => {
   if (!text) return null;
@@ -71,7 +96,7 @@ export const AiStoryReader: React.FC<AiStoryReaderProps> = ({
   const contentRef = useRef<HTMLDivElement>(null);
   const hideTimeoutRef = useRef<number | undefined>(undefined);
   
-  const [settings, setSettings] = useState<ThemeSettings>(DEFAULT_SETTINGS);
+  const [settings, setSettings] = useState<ThemeSettings>(() => loadSettingsFromStorage());
   const [isPlaying, setIsPlaying] = useState(false);
   const [_currentSelection, setCurrentSelection] = useState<TextSelection | null>(null);
   
@@ -205,6 +230,7 @@ export const AiStoryReader: React.FC<AiStoryReaderProps> = ({
   // Handle settings changes
   const handleSettingsChange = useCallback((newSettings: ThemeSettings) => {
     setSettings(newSettings);
+    saveSettingsToStorage(newSettings);
     onSettingsChange?.(newSettings);
   }, [onSettingsChange]);
 

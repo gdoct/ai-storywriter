@@ -267,7 +267,6 @@ export const StoryModal: React.FC<StoryModalProps> = ({
         enableHighlight={!!story && !isGenerating}
         enableFullScreen={true}
         displayMode="scroll"
-        onProgressChange={(progress) => console.log('Progress:', progress)}
         onBookmark={(bookmark) => console.log('Bookmark:', bookmark)}
         onHighlight={(selection) => console.log('Highlight:', selection)}
         onSettingsChange={(settings) => console.log('Settings:', settings)}

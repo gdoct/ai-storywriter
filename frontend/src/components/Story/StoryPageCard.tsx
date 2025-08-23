@@ -9,6 +9,7 @@ interface StoryPageCardProps {
     wordCount: number;
     preview: string;
     isPublished?: boolean;
+    imageUrl?: string;
   };
   onView: () => void;
   onPublish: () => void;
@@ -44,66 +45,68 @@ export const StoryPageCard: React.FC<StoryPageCardProps> = ({
   };
 
   return (
-    <div className="story-page-card">
-      <div className="story-page-card-content">
-        <div className="story-page-card-header">
+    <div className="story-page-card" onClick={onView}>
+      <div className="story-page-card-image-container">
+        <img
+          src={story.imageUrl || '/placeholder-image.png'}
+          alt={story.scenarioTitle || 'Story Image'}
+          className="story-page-card-thumbnail"
+        />
+        <div className="story-page-card-title-overlay">
           <h3 className="story-page-card-title">
             {story.scenarioTitle}
             {story.isPublished && (
               <span className="published-badge">Published</span>
             )}
           </h3>
-          <div className="story-page-card-meta">
-            <span className="story-page-card-date">
-              {formatRelativeTime(story.created)}
-            </span>
-            <span className="story-page-card-words">{story.wordCount} words</span>
-          </div>
         </div>
-        <p className="story-page-card-excerpt">{story.preview}</p>
       </div>
-      <div className="story-page-card-actions">
-        <button 
-          className="btn btn-primary btn-small"
-          onClick={onView}
-        >
-          <span className="btn-icon">👁️</span>
-          View
-        </button>
-        {!story.isPublished && (
+      <div className="story-page-card-content">
+        <div className="story-page-card-meta">
+          📅 {formatRelativeTime(story.created)} • 
+          📝 {story.wordCount} words
+        </div>
+        
+        <p className="story-page-card-excerpt">{story.preview}</p>
+        
+        <div className="story-page-card-actions">
+          {!story.isPublished && (
+            <button 
+              className="btn btn-marketplace btn-small"
+              onClick={(e) => {
+                e.stopPropagation();
+                onPublish();
+              }}
+              title="Publish to Marketplace"
+            >
+              <span className="btn-icon">🏪</span>
+              Publish
+            </button>
+          )}
+          {onContinue && (
+            <button 
+              className="btn btn-success btn-small"
+              onClick={(e) => {
+                e.stopPropagation();
+                onContinue();
+              }}
+              title="Continue this story with a new chapter"
+            >
+              <span className="btn-icon">➡️</span>
+              Continue
+            </button>
+          )}
           <button 
-            className="btn btn-marketplace btn-small"
-            onClick={onPublish}
-            title="Publish to Marketplace"
+            className="btn btn-danger btn-small"
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete();
+            }}
           >
-            <span className="btn-icon">🏪</span>
-            Publish
+            <span className="btn-icon">🗑️</span>
+            Delete
           </button>
-        )}
-        {onContinue && (
-          <button 
-            className="btn btn-success btn-small"
-            onClick={onContinue}
-            title="Continue this story with a new chapter"
-          >
-            <span className="btn-icon">➡️</span>
-            Continue
-          </button>
-        )}
-        <button 
-          className="btn btn-secondary btn-small"
-          onClick={onSaveAs}
-        >
-          <span className="btn-icon">💾</span>
-          Save As
-        </button>
-        <button 
-          className="btn btn-danger btn-small"
-          onClick={onDelete}
-        >
-          <span className="btn-icon">🗑️</span>
-          Delete
-        </button>
+        </div>
       </div>
     </div>
   );

@@ -25,6 +25,7 @@ import Templates from './pages/Templates';
 import Test from './pages/Test';
 
 // Component to handle the root route logic
+// eslint-disable-next-line react-refresh/only-export-components
 const MarketingHomeOrDashboard: React.FC = () => {
   const { authenticated } = useAuth();
   

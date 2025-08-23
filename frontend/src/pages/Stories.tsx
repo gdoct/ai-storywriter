@@ -130,7 +130,7 @@ const Stories: React.FC = () => {
     URL.revokeObjectURL(url);
   };
 
-  const handleDeleteStory = async (storyId: number, _: string) => {
+  const handleDeleteStory = async (storyId: number, scenarioId: string) => {
     const confirmed = await customConfirm(
       `Are you sure you want to delete this story? This action cannot be undone.`,
       {
@@ -146,7 +146,7 @@ const Stories: React.FC = () => {
     }
 
     try {
-      await deleteDBStory(storyId);
+      await deleteDBStory(storyId, scenarioId);
       
       // Reload the current page data
       const offset = (currentPage - 1) * storiesPerPage;
@@ -322,12 +322,13 @@ const Stories: React.FC = () => {
                           created: story.created,
                           wordCount: story.wordCount,
                           preview: story.preview,
-                          isPublished: story.isPublished
+                          isPublished: story.isPublished,
+                          imageUrl: story.imageUrl
                         }}
                         onView={() => handleViewStory(story)}
                         onPublish={() => handlePublishStory(story)}
                         onSaveAs={() => handleEditScenario(story.scenarioId)}
-                        onDelete={() => handleDeleteStory(story.id, story.scenarioTitle)}
+                        onDelete={() => handleDeleteStory(story.id, story.scenarioId)}
                         onContinue={() => handleContinueStory(story)}
                       />
                     ))}

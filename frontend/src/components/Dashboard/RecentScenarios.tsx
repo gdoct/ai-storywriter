@@ -7,12 +7,14 @@ import './Dashboard.css';
 interface RecentScenariosProps {
   recentScenarios: RecentScenario[];
   handleEditScenario: (scenarioId: string) => void;
+  handleGenerateSimilar: (scenarioId: string) => void;
 }
 
 const RecentScenarios: React.FC<RecentScenariosProps> = ({
   recentScenarios,
   handleEditScenario,
-}) => {
+  handleGenerateSimilar,
+}) => { 
   return (
     <div className="recent-section">
       {/* Header row - 20% height */}
@@ -56,13 +58,20 @@ const RecentScenarios: React.FC<RecentScenariosProps> = ({
                   📅 {formatRelativeTime(scenario.lastModified)} • 
                   📝 {scenario.generatedStoryCount} generated stories
                   </p>
-                  <div style={{ marginTop: 'var(--spacing-sm)' }}>
+                  <div style={{ marginTop: 'var(--spacing-sm)', display: 'flex', gap: 'var(--spacing-sm)' }}>
                   <Button
                     variant="primary"
                     size="sm"
                     onClick={() => handleEditScenario(scenario.id)}
                   >
                     Edit
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => handleGenerateSimilar(scenario.id)}
+                  >
+                    Generate Similar...
                   </Button>
                   </div>
                 </div>

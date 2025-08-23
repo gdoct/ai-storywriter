@@ -4,7 +4,8 @@ from typing import List, Dict, Any
 from fastapi import APIRouter, HTTPException, status, Depends
 from models.scenario import (
     ScenarioCreate, ScenarioUpdate, ScenarioListItem, 
-    ScenarioResponse, StoryPreview, StoryDetail, DeleteResponse
+    ScenarioResponse, StoryPreview, StoryDetail, DeleteResponse,
+    SaveStoryRequest, SaveStoryResponse
 )
 from data.db import get_db_connection
 from data.repositories import GeneratedTextRepository, ScenarioRepository, UserRepository
@@ -134,6 +135,84 @@ async def delete_scenario(
     return DeleteResponse(success=True)
 
 # --- STORY ENDPOINTS ---
+
+@router.post("/story/{scenario_id}", response_model=SaveStoryResponse)
+async def save_story(
+    scenario_id: str,
+    request: SaveStoryRequest,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Save a new story for a scenario
+    """
+    # Verify the scenario exists and belongs to the user
+    scenario = ScenarioRepository.get_scenario_by_id(scenario_id)
+    if not scenario:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Scenario not found"
+        )
+    
+    if scenario['user_id'] != current_user.get('user_id'):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You don't have permission to save stories for this scenario"
+        )
+    
+    # Create the story
+    created_story = GeneratedTextRepository.create_story(
+        scenario_id=scenario_id,
+        text=request.content,
+        scenario_json=json.dumps(request.scenario)
+    )
+    
+    if not created_story:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to create story"
+        )
+    
+    # The create_story method returns the full row, not just the ID
+    story = created_story
+    
+    return SaveStoryResponse(
+        id=str(story['id']),
+        content=story['text'],
+        timestamp=story['created_at'],
+        scenario_id=story['scenario_id']
+    )
+
+@router.get("/story/single/{story_id}", response_model=StoryDetail)
+async def get_single_story(
+    story_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Get a single story by its ID (without requiring scenario ID)
+    """
+    story = GeneratedTextRepository.get_story_by_id(story_id)
+    
+    if not story:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Story not found"
+        )
+    
+    # Verify the story belongs to the current user via scenario ownership
+    scenario = ScenarioRepository.get_scenario_by_id(story['scenario_id'])
+    if not scenario or scenario['user_id'] != current_user.get('user_id'):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Story not found"
+        )
+    
+    return StoryDetail(
+        id=str(story['id']),
+        text=story['text'],
+        word_count=len(story['text'].split()),
+        created_at=story['created_at'],
+        scenario_id=story['scenario_id']
+    )
 
 @router.get("/story/{scenario_id}", response_model=List[StoryPreview])
 async def get_stories(

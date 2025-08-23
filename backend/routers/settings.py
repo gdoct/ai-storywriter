@@ -21,11 +21,28 @@ router = APIRouter()
 
 def get_current_settings():
     """Helper: get current settings from provider presets"""
-    # Use the first enabled provider as the default for backwards compatibility
-    providers = LLMRepository.get_enabled_providers()
-    if providers:
+    # Use the most recently updated enabled provider
+    conn = get_db_connection()
+    c = conn.cursor()
+    
+    # Get the most recently updated enabled provider
+    c.execute('''
+        SELECT id, provider_name, display_name, base_url, is_enabled, 
+               credit_multiplier, config_json, created_at, updated_at
+        FROM llm_provider_presets 
+        WHERE is_enabled = 1
+        ORDER BY updated_at DESC
+        LIMIT 1
+    ''')
+    
+    row = c.fetchone()
+    conn.close()
+    
+    if row:
         # Convert provider preset to old settings format for compatibility
-        provider = providers[0]
+        provider = dict(row)
+        print(f"[DEBUG] Selected provider: {provider['provider_name']} (updated: {provider['updated_at']})")  # Debug log
+        
         config = {}
         if provider.get('config_json'):
             try:
@@ -41,6 +58,30 @@ def get_current_settings():
         }
     return None
 
+@router.get("/settings/llm/debug/providers")
+async def debug_get_all_providers():
+    """Debug endpoint to list all provider presets"""
+    try:
+        conn = get_db_connection()
+        c = conn.cursor()
+        
+        c.execute('''
+            SELECT id, provider_name, display_name, is_enabled, updated_at, config_json
+            FROM llm_provider_presets 
+            ORDER BY updated_at DESC
+        ''')
+        
+        rows = c.fetchall()
+        conn.close()
+        
+        providers = [dict(row) for row in rows]
+        print(f"[DEBUG] All providers in database: {providers}")
+        return {"providers": providers}
+        
+    except Exception as e:
+        print(f"[DEBUG] Error getting providers: {e}")
+        return {"error": str(e)}
+
 @router.get("/settings/llm", response_model=LLMSettingsResponse)
 async def get_llm_settings():
     """Get current LLM settings"""
@@ -48,6 +89,8 @@ async def get_llm_settings():
     if settings:
         config = json.loads(settings['config_json']) if settings['config_json'] else {}
         settings['config'] = config
+        
+        print(f"[DEBUG] LLM Settings - backend_type: {settings['backend_type']}, config: {config}")  # Debug log
         
         # Extract showThinking from config and put it at top level for frontend
         if 'showThinking' in config:
@@ -77,7 +120,9 @@ async def save_llm_settings(data: LLMSettingsRequest, current_user: dict = Depen
     config_json = json.dumps(config)
     
     # Find the provider preset and update it
+    print(f"[DEBUG] Looking for provider preset: {data.backend_type}")  # Debug log
     provider_preset = LLMRepository.get_provider_preset(data.backend_type)
+    print(f"[DEBUG] Found provider preset: {provider_preset}")  # Debug log
     if provider_preset:
         # Update existing provider preset
         update_data = {

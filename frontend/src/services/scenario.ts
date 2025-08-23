@@ -149,9 +149,9 @@ export const saveDBStory = async (scenarioId: number | string, text: string): Pr
   }
 };
 
-export const deleteDBStory = async (storyId: number): Promise<void> => {
+export const deleteDBStory = async (storyId: number, scenarioId: string): Promise<void> => {
   try {
-    await axios.delete(`/api/story/delete/${storyId}`);
+    await axios.delete(`/api/story/${scenarioId}/${storyId}`);
   } catch (error) {
     console.error(`Error deleting DB story ${storyId}:`, error);
     throw error;

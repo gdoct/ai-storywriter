@@ -1,4 +1,5 @@
 import axios from './http';
+import { Character } from '../types/ScenarioTypes';
 
 // Type definitions
 export interface DashboardStats {
@@ -17,6 +18,8 @@ export interface RecentScenario {
   generatedStoryCount: number;
   lastModified: string;
   imageUrl?: string; // Optional image URL for the scenario
+  synopsis?: string; // Optional synopsis for the scenario
+  characters?: Character[]; // Optional characters array
 }
 
 export interface RecentStory {

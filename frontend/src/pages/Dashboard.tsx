@@ -7,6 +7,8 @@ import {
     RecentScenarios,
     WritingStats
 } from '../components/Dashboard';
+import GeneratingModal from '../components/Dashboard/GeneratingModal';
+import GenerateSimilarModal, { ScenarioSelections } from '../components/Dashboard/GenerateSimilarModal';
 import MarketingFooter from '../components/marketing/MarketingFooter';
 import { AlertModal, ConfirmModal } from '../components/Modal';
 import PublishStoryModal from '../components/Story/PublishStoryModal';
@@ -20,6 +22,11 @@ import {
     RecentScenario,
     RecentStory
 } from '../services/dashboardService';
+import { createScenario, fetchScenarioById } from '../services/scenario';
+import { chatCompletion } from '../services/llmService';
+import { createSimilarScenarioPrompt } from '../services/llmPromptService';
+import { getSelectedModel } from '../services/modelSelection';
+import { Scenario } from '../types/ScenarioTypes';
 
 interface DashboardProps {
   // No props needed anymore
@@ -42,6 +49,12 @@ const Dashboard: React.FC<DashboardProps> = () => {
   // Publish modal state
   const [showPublishModal, setShowPublishModal] = useState(false);
   const [storyToPublish, setStoryToPublish] = useState<RecentStory | null>(null);
+  
+  // Generate similar scenario state
+  const [showGenerateSimilarModal, setShowGenerateSimilarModal] = useState(false);
+  const [showGeneratingModal, setShowGeneratingModal] = useState(false);
+  const [scenarioToSimilar, setScenarioToSimilar] = useState<RecentScenario | null>(null);
+  const [fullScenarioForModal, setFullScenarioForModal] = useState<Scenario | null>(null);
 
   // Load dashboard data
   useEffect(() => {
@@ -95,6 +108,102 @@ const Dashboard: React.FC<DashboardProps> = () => {
   const handleClosePublishModal = () => {
     setShowPublishModal(false);
     setStoryToPublish(null);
+  };
+
+  const handleGenerateSimilar = async (scenarioId: string) => {
+    console.log('handleGenerateSimilar called with scenarioId:', scenarioId);
+    const scenario = recentScenarios.find(s => s.id === scenarioId);
+    console.log('Found scenario:', scenario);
+    if (!scenario) {
+      customAlert('Scenario not found. Please try again.', 'Error');
+      return;
+    }
+    
+    try {
+      // Fetch the full scenario data for the modal
+      console.log('Fetching full scenario data...');
+      const fullScenario = await fetchScenarioById(scenarioId);
+      console.log('Full scenario loaded:', fullScenario);
+      
+      setScenarioToSimilar(scenario);
+      setFullScenarioForModal(fullScenario);
+      setShowGenerateSimilarModal(true);
+    } catch (error) {
+      console.error('Error fetching full scenario:', error);
+      customAlert('Failed to load scenario details. Please try again.', 'Error');
+    }
+  };
+
+  const handleGenerateSimilarConfirm = async (selections: ScenarioSelections) => {
+    if (!scenarioToSimilar || !fullScenarioForModal) return;
+    
+    try {
+      setShowGeneratingModal(true);
+      
+      // Use the already-loaded full scenario data
+      const fullScenario = fullScenarioForModal;
+      
+      // Generate the similar scenario using LLM
+      const prompt = createSimilarScenarioPrompt(fullScenario, selections);
+      const selectedModel = getSelectedModel();
+      const response = await chatCompletion(prompt, { 
+        model: selectedModel || 'default-model',
+        temperature: 0.8,
+        max_tokens: 2000
+      });
+      
+      if (!response) {
+        throw new Error('No response from AI service');
+      }
+      
+      console.log('Raw AI response:', response);
+      
+      // Parse the JSON response
+      let newScenarioData: any;
+      try {
+        newScenarioData = JSON.parse(response);
+        console.log('Parsed scenario data:', newScenarioData);
+      } catch (parseError) {
+        console.error('Failed to parse AI response:', response);
+        throw new Error('Invalid response format from AI service');
+      }
+      
+      // Create the new scenario - backend will assign id, userId, and createdAt
+      // Convert storyarc from array to string if needed
+      const storyarc = Array.isArray(newScenarioData.storyarc) 
+        ? newScenarioData.storyarc.map((item: string, index: number) => `• ${item}`).join('\n')
+        : newScenarioData.storyarc;
+      
+      const createdScenario = await createScenario({
+        title: newScenarioData.title,
+        synopsis: newScenarioData.synopsis,
+        writingStyle: newScenarioData.writingStyle,
+        characters: newScenarioData.characters || [],
+        locations: newScenarioData.locations || [],
+        backstory: newScenarioData.backstory,
+        storyarc: storyarc,
+        notes: newScenarioData.notes,
+      } as Scenario);
+      
+      setShowGeneratingModal(false);
+      
+      // Navigate to the new scenario in the editor
+      navigate(`/app?scenario=${createdScenario.id}`);
+      
+    } catch (error) {
+      console.error('Error generating similar scenario:', error);
+      setShowGeneratingModal(false);
+      customAlert(
+        error instanceof Error ? error.message : 'Failed to generate similar scenario. Please try again.',
+        'Error'
+      );
+    }
+  };
+
+  const handleCloseSimilarModal = () => {
+    setShowGenerateSimilarModal(false);
+    setScenarioToSimilar(null);
+    setFullScenarioForModal(null);
   };
 
   // Show loading state
@@ -190,6 +299,7 @@ const Dashboard: React.FC<DashboardProps> = () => {
             <RecentScenarios 
               recentScenarios={recentScenarios} 
               handleEditScenario={handleEditScenario} 
+              handleGenerateSimilar={handleGenerateSimilar}
             />
             <RecentGeneratedStories 
               recentStories={recentStories} 
@@ -212,6 +322,24 @@ const Dashboard: React.FC<DashboardProps> = () => {
             onSuccess={handlePublishSuccess}
           />
         )}
+
+        {/* Generate Similar Scenario Modals */}
+        {(() => {
+          console.log('Dashboard render - showGenerateSimilarModal:', showGenerateSimilarModal, 'scenarioToSimilar:', scenarioToSimilar);
+          return null;
+        })()}
+        <GenerateSimilarModal
+          isOpen={showGenerateSimilarModal}
+          onClose={handleCloseSimilarModal}
+          onGenerate={handleGenerateSimilarConfirm}
+          scenarioTitle={scenarioToSimilar?.title || ''}
+          characters={fullScenarioForModal?.characters?.map(c => ({ name: c.name || 'Unnamed', id: c.id })) || []}
+          locations={fullScenarioForModal?.locations?.map(l => ({ name: l.name || 'Unnamed', id: l.id || '' })) || []}
+        />
+        
+        <GeneratingModal
+          isOpen={showGeneratingModal}
+        />
 
         {/* Custom Modal Components */}
         <AlertModal
