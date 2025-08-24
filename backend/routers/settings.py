@@ -41,7 +41,7 @@ def get_current_settings():
     if row:
         # Convert provider preset to old settings format for compatibility
         provider = dict(row)
-        print(f"[DEBUG] Selected provider: {provider['provider_name']} (updated: {provider['updated_at']})")  # Debug log
+        # print(f"[DEBUG] Selected provider: {provider['provider_name']} (updated: {provider['updated_at']})")  # Debug log
         
         config = {}
         if provider.get('config_json'):
@@ -75,7 +75,7 @@ async def debug_get_all_providers():
         conn.close()
         
         providers = [dict(row) for row in rows]
-        print(f"[DEBUG] All providers in database: {providers}")
+        # print(f"[DEBUG] All providers in database: {providers}")
         return {"providers": providers}
         
     except Exception as e:
@@ -89,9 +89,9 @@ async def get_llm_settings():
     if settings:
         config = json.loads(settings['config_json']) if settings['config_json'] else {}
         settings['config'] = config
-        
-        print(f"[DEBUG] LLM Settings - backend_type: {settings['backend_type']}, config: {config}")  # Debug log
-        
+
+        # print(f"[DEBUG] LLM Settings - backend_type: {settings['backend_type']}, config: {config}")  # Debug log
+
         # Extract showThinking from config and put it at top level for frontend
         if 'showThinking' in config:
             settings['showThinking'] = config['showThinking']
@@ -120,9 +120,9 @@ async def save_llm_settings(data: LLMSettingsRequest, current_user: dict = Depen
     config_json = json.dumps(config)
     
     # Find the provider preset and update it
-    print(f"[DEBUG] Looking for provider preset: {data.backend_type}")  # Debug log
+    # print(f"[DEBUG] Looking for provider preset: {data.backend_type}")  # Debug log
     provider_preset = LLMRepository.get_provider_preset(data.backend_type)
-    print(f"[DEBUG] Found provider preset: {provider_preset}")  # Debug log
+    # print(f"[DEBUG] Found provider preset: {provider_preset}")  # Debug log
     if provider_preset:
         # Update existing provider preset
         update_data = {

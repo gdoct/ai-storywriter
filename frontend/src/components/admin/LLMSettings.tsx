@@ -29,22 +29,12 @@ const LLMSettings: React.FC = () => {
   const [refreshMessage, setRefreshMessage] = useState('');
   const [debugMessage, setDebugMessage] = useState('');
 
-  // Debug config changes
-  useEffect(() => {
-    // console.log('[DEBUG] Config state changed:', config);
-  }, [config]);
-
   // Load settings from backend
   useEffect(() => {
     fetchLLMSettings().then((data) => {
-      console.log('Loaded LLM settings:', data); // Debug log
       if (data) {
         const newConfig = { ...defaultConfig, ...data };
-        console.log('Setting config to:', newConfig); // Debug log
-        console.log('BackendType will be:', newConfig.backendType); // Debug log
         setConfig(newConfig);
-      } else {
-        console.log('No data loaded, using default config'); // Debug log
       }
     }).catch((error) => {
       console.error('Error loading LLM settings:', error); // Debug log
@@ -139,8 +129,6 @@ const LLMSettings: React.FC = () => {
 
   // Render dynamic config form
   const renderConfigForm = () => {
-    // console.log('[DEBUG] renderConfigForm called with backendType:', config.backendType); // Debug log
-    // console.log('[DEBUG] Full config:', config); // Debug log
     switch (config.backendType) {
       case 'lmstudio':
         return (
@@ -198,7 +186,6 @@ const LLMSettings: React.FC = () => {
           </div>
         );
       default:
-        // console.log('[DEBUG] Unhandled backend type:', config.backendType);
         return (
           <div className="form-row">
             <div style={{ color: 'orange', fontStyle: 'italic' }}>
@@ -222,7 +209,6 @@ const LLMSettings: React.FC = () => {
           </select>
         </div>
         {(() => {
-          // console.log('[DEBUG] About to render config form with backendType:', config.backendType);
           return renderConfigForm();
         })()}
         <div className="form-row">

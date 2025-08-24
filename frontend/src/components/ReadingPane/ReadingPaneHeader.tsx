@@ -173,7 +173,7 @@ const ReadingPaneHeader = React.forwardRef<any, ReadingPaneHeaderProps>((props, 
     if (!confirmed) return;
 
     try {
-      await deleteDBStory(storyId);
+      await deleteDBStory(storyId, currentScenario.id);
       if (currentScenario && currentScenario.id) {
         const stories = await fetchDBStories(currentScenario.id.toString());
         setDbStories(stories);

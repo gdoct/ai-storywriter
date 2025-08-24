@@ -257,14 +257,14 @@ export function createFinalStoryPrompt(scenario: Scenario): llmCompletionRequest
   } else {
     prompt += ".\n\nCreate a complete, engaging narrative based on the following scenario:\n\n";
     prompt += "Guidelines:\n";
-    prompt += "- Write the entire story, and divide it in paragraphs of 10 sentences or less each.\n";
+    prompt += "- Write the entire story, and divide it in paragraphs of 10 sentences or less each, but do not use paragraph headers.\n";
     prompt += "- IMPORTANT: do not use the names 'Silas', 'Blackwood' or 'Lyra'\n";
     prompt += "- Include meaningful character interactions and development\n";
     prompt += "- Honor the established character backgrounds and relationships\n";
     prompt += "- Maintain consistent pacing appropriate to the genre\n";
     prompt += "- Incorporate any specified themes, settings, and plot elements\n";
     prompt += "- Present only the finished story with no meta-commentary. \n";
-    prompt += "- Divide the story in paragraphs, en divide paragraphs with a double line break. Never use paragraph headers.\n";
+    prompt += "- Divide the story in paragraphs, en divide paragraphs with a double line break. Never use paragraph headers such as '**Paragraph 12**'.\n";
     prompt += "- Make sure to maintain the established tone and style throughout the story.\n";
   }
   
@@ -1087,33 +1087,35 @@ export function createSimilarScenarioPrompt(
   
   let prompt = `You are an expert storyteller specializing in ${genre} fiction. Create a new, similar scenario based on the existing one provided, following the user's retention preferences.\n\n`;
   
-  prompt += "EXISTING SCENARIO:\n";
+  prompt += "====== EXISTING SCENARIO ======\n";
   prompt += formatScenarioAsMarkdown(existingScenario) + "\n\n";
   
-  prompt += "RETENTION REQUIREMENTS:\n";
+  prompt += "====== RETENTION REQUIREMENTS ======\n";
   
   // Writing style is always retained
-  prompt += "✓ ALWAYS RETAIN: Writing style (genre, tone, theme, language, other style elements)\n";
+  prompt += "* ALWAYS RETAIN: Writing style (genre, tone, theme, language, other style elements)\n";
   
   // User-selected elements
   if (selections.retainCharacters) {
-    prompt += "✓ RETAIN: characters " + selections.selectedCharacters.join(", ") + "\n";
-    prompt += "✓ CREATE NEW: at least 1 new character\n";
+    prompt += "* IMPORTANT: KEEP ONLY these characters: " + selections.selectedCharacters.join(", ") + "\n";
+    if (selections.selectedCharacters.length <= 1) {
+      prompt += "* CREATE at least 1 new character\n";
+    }
   } else {
-    prompt += "✗ CREATE NEW: All characters (don't use any existing characters)\n";
+    prompt += "* CREATE NEW characters for the scenario (don't use any existing characters)\n";
   }
   
   if (selections.retainLocations) {
-    prompt += "✓ RETAIN: Some existing locations (keep " + selections.selectedLocations.join(", ") + ")\n";
-    prompt += "✓ CREATE NEW: at least 1 new location\n";
+    prompt += "* IMPORTANT: KEEP these locations " + selections.selectedLocations.join(", ") + "\n";
+    prompt += "* CREATE at least 1 new location\n";
   } else {
-    prompt += "✗ CREATE NEW: All locations (don't use any existing locations)\n";
+    prompt += "* CREATE NEW locations for the scenario (don't use any existing locations)\n";
   }
   
   if (selections.retainNotes) {
-    prompt += "✓ REFERENCE: Existing notes (use as inspiration but don't copy directly)\n";
+    prompt += "* REFERENCE: Existing notes (use as inspiration but don't copy directly)\n";
   } else {
-    prompt += "✗ IGNORE: Existing notes (don't reference the notes)\n";
+    prompt += "* IGNORE: Existing notes (don't reference the notes)\n";
   }
   
   prompt += "\n";
@@ -1121,8 +1123,12 @@ export function createSimilarScenarioPrompt(
   
   prompt += "GENERATION REQUIREMENTS:\n";
   prompt += "• Create a NEW title and NEW synopsis (don't copy existing ones)\n";
-  prompt += "• Generate at least ONE completely new character\n";
   prompt += "• Create a fresh backstory with new events and circumstances\n";
+  if (selections.selectedCharacters.length == 1) {
+    prompt += "* Ensure that the character " + selections.selectedCharacters[0] + " still exists in the story\n";
+  } else if (selections.selectedCharacters.length > 1) {
+    prompt += "* Ensure that the characters " + selections.selectedCharacters.join(", ") + " still exist in the story\n";
+  }
   prompt += "• Develop a new story arc/timeline with different plot progression\n";
   prompt += "• Make the scenario feel related but distinct from the original\n";
   prompt += "• Maintain the same writing style, genre, and thematic elements\n";

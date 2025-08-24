@@ -9,11 +9,9 @@ import './Scenarios.css';
 import { Button } from '@drdata/ai-styles';
 import GenerateSimilarModal, { ScenarioSelections } from '../components/Dashboard/GenerateSimilarModal';
 import { Scenario } from '../types/ScenarioTypes';
-import { createSimilarScenarioPrompt } from '../services/llmPromptService';
-import { chatCompletion } from '../services/llmService';
-import { getSelectedModel } from '../services/modelSelection';
-import { fetchScenarioById, createScenario } from '../services/scenario';
+import { fetchScenarioById } from '../services/scenario';
 import GeneratingModal from '../components/Dashboard/GeneratingModal';
+import { generateSimilarScenarios, ScenarioSelections as ServiceScenarioSelections, GenerationProgress } from '../services/similarScenarioService';
 
 const Scenarios: React.FC = () => {
   const navigate = useNavigate();
@@ -32,6 +30,12 @@ const Scenarios: React.FC = () => {
   const [showGeneratingModal, setShowGeneratingModal] = useState(false);
   const [scenarioToSimilar, setScenarioToSimilar] = useState<RecentScenario | null>(null);
   const [fullScenarioForModal, setFullScenarioForModal] = useState<Scenario | null>(null);
+  
+  // Progress tracking for multiple scenario generation
+  const [currentScenarioIndex, setCurrentScenarioIndex] = useState(1);
+  const [totalScenariosToGenerate, setTotalScenariosToGenerate] = useState(1);
+  const [isRetrying, setIsRetrying] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
 
   const scenariosPerPage = 12;
 
@@ -119,9 +123,7 @@ const Scenarios: React.FC = () => {
   };
 
   const handleGenerateSimilar = async (scenarioId: string) => {
-    console.log('handleGenerateSimilar called with scenarioId:', scenarioId);
     const scenario = scenarios.find(s => s.id === scenarioId);
-    console.log('Found scenario:', scenario);
     if (!scenario) {
       customAlert('Scenario not found. Please try again.', 'Error');
       return;
@@ -129,9 +131,7 @@ const Scenarios: React.FC = () => {
 
     try {
       // Fetch the full scenario data for the modal
-      console.log('Fetching full scenario data...');
       const fullScenario = await fetchScenarioById(scenarioId);
-      console.log('Full scenario loaded:', fullScenario);
 
       setScenarioToSimilar(scenario);
       setFullScenarioForModal(fullScenario);
@@ -142,69 +142,86 @@ const Scenarios: React.FC = () => {
     }
   };
 
+  const handleAbortGeneration = () => {
+    setShowGeneratingModal(false);
+    setCurrentScenarioIndex(1);
+    setTotalScenariosToGenerate(1);
+    setIsRetrying(false);
+    setRetryCount(0);
+  };
+
+  const handleProgressUpdate = (progress: GenerationProgress) => {
+    setCurrentScenarioIndex(progress.currentIndex);
+    setTotalScenariosToGenerate(progress.totalCount);
+    setIsRetrying(progress.isRetrying);
+    setRetryCount(progress.retryCount);
+  };
+
+
   const handleGenerateSimilarConfirm = async (selections: ScenarioSelections) => {
     if (!scenarioToSimilar || !fullScenarioForModal) return;
-
+    
     try {
       setShowGeneratingModal(true);
-
-      // Use the already-loaded full scenario data
+      setCurrentScenarioIndex(1);
+      setTotalScenariosToGenerate(selections.count);
+      setIsRetrying(false);
+      setRetryCount(0);
+      
       const fullScenario = fullScenarioForModal;
-
-      // Generate the similar scenario using LLM
-      const prompt = createSimilarScenarioPrompt(fullScenario, selections);
-      const selectedModel = getSelectedModel();
-      const response = await chatCompletion(prompt, {
-        model: selectedModel || 'default-model',
-        temperature: 0.8,
-        max_tokens: 2000
-      });
-
-      if (!response) {
-        throw new Error('No response from AI service');
-      }
-
-      console.log('Raw AI response:', response);
-
-      // Parse the JSON response
-      let newScenarioData: any;
-      try {
-        newScenarioData = JSON.parse(response);
-        console.log('Parsed scenario data:', newScenarioData);
-      } catch (parseError) {
-        console.error('Failed to parse AI response:', response);
-        throw new Error('Invalid response format from AI service');
-      }
-
-      // Create the new scenario - backend will assign id, userId, and createdAt
-      // Convert storyarc from array to string if needed
-      const storyarc = Array.isArray(newScenarioData.storyarc)
-        ? newScenarioData.storyarc.map((item: string, index: number) => `• ${item}`).join('\n')
-        : newScenarioData.storyarc;
-
-      const createdScenario = await createScenario({
-        title: newScenarioData.title,
-        synopsis: newScenarioData.synopsis,
-        writingStyle: newScenarioData.writingStyle,
-        characters: newScenarioData.characters || [],
-        locations: newScenarioData.locations || [],
-        backstory: newScenarioData.backstory,
-        storyarc: storyarc,
-        notes: newScenarioData.notes,
-      } as Scenario);
-
+      
+      // Convert ScenarioSelections to service format
+      const serviceSelections: ServiceScenarioSelections = {
+        retainCharacters: selections.retainCharacters,
+        retainLocations: selections.retainLocations,
+        retainNotes: selections.retainNotes,
+        selectedCharacters: selections.selectedCharacters,
+        selectedLocations: selections.selectedLocations,
+        count: selections.count
+      };
+      
+      // Generate scenarios using the service
+      const createdScenarios = await generateSimilarScenarios(
+        fullScenario,
+        serviceSelections,
+        handleProgressUpdate,
+        handleAbortGeneration
+      );
+      
       setShowGeneratingModal(false);
-
-      // Navigate to the new scenario in the editor
-      navigate(`/app?scenario=${createdScenario.id}`);
-
+      
+      // Navigate based on the number of scenarios generated
+      if (selections.count === 1) {
+        // Single scenario: open in editor
+        navigate(`/app?scenario=${createdScenarios[0].id}`);
+      } else {
+        // Multiple scenarios: reload scenarios list to show new ones
+        setCurrentPage(1); // Reset to first page to see new scenarios
+        const offset = 0;
+        const response = await fetchRecentScenarios(scenariosPerPage, offset);
+        setScenarios(response.scenarios);
+        setTotalScenarios(response.pagination.total);
+        setTotalPages(Math.ceil(response.pagination.total / scenariosPerPage));
+      }
+      
     } catch (error) {
       console.error('Error generating similar scenario:', error);
       setShowGeneratingModal(false);
+      
+      if (error instanceof Error && error.message === 'Generation was aborted') {
+        // Don't show error for aborted operations
+        return;
+      }
+      
       customAlert(
         error instanceof Error ? error.message : 'Failed to generate similar scenario. Please try again.',
         'Error'
       );
+    } finally {
+      setCurrentScenarioIndex(1);
+      setTotalScenariosToGenerate(1);
+      setIsRetrying(false);
+      setRetryCount(0);
     }
   };
 
@@ -414,6 +431,11 @@ const Scenarios: React.FC = () => {
 
           <GeneratingModal
             isOpen={showGeneratingModal}
+            currentIndex={currentScenarioIndex}
+            totalCount={totalScenariosToGenerate}
+            isRetrying={isRetrying}
+            retryCount={retryCount}
+            onAbort={handleAbortGeneration}
           />
 
           <ConfirmModal

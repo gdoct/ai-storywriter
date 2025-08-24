@@ -17,6 +17,7 @@ export interface ScenarioSelections {
   retainNotes: boolean;
   selectedCharacters: string[];
   selectedLocations: string[];
+  count: number;
   // Writing style is always retained
   // Backstory, timeline, and fill-in story cannot be retained
 }
@@ -35,6 +36,7 @@ const GenerateSimilarModal: React.FC<GenerateSimilarModalProps> = ({
     retainNotes: false,
     selectedCharacters: [],
     selectedLocations: [],
+    count: 1,
   });
 
   const handleGenerate = () => {
@@ -43,14 +45,13 @@ const GenerateSimilarModal: React.FC<GenerateSimilarModalProps> = ({
   };
 
   if (!isOpen) {
-    console.log('GenerateSimilarModal not rendering because isOpen is false');
     return null;
   }
 
-  console.log('GenerateSimilarModal rendering with isOpen:', isOpen, 'scenarioTitle:', scenarioTitle);
 
   const modalContent = (
-    <div style={{
+    <div data-testid="generate-similar-modal-outer"
+     style={{
       position: 'fixed',
       top: 0,
       left: 0,
@@ -61,8 +62,10 @@ const GenerateSimilarModal: React.FC<GenerateSimilarModalProps> = ({
       alignItems: 'center',
       justifyContent: 'center',
       zIndex: 'var(--z-modal)',
+     
     }}>
-      <div style={{
+      <div data-testid="generate-similar-modal-inner"
+       style={{
         backgroundColor: 'var(--color-surface-elevated)',
         borderRadius: 'var(--radius-xl)',
         padding: 'var(--spacing-xl)',
@@ -111,6 +114,7 @@ const GenerateSimilarModal: React.FC<GenerateSimilarModalProps> = ({
                   <input
                     type="checkbox"
                     checked={selections.retainCharacters}
+                    data-testid="generate-similar-modal-character-checkbox"
                     onChange={(e) => setSelections(prev => ({ 
                       ...prev, 
                       retainCharacters: e.target.checked,
@@ -139,6 +143,7 @@ const GenerateSimilarModal: React.FC<GenerateSimilarModalProps> = ({
                       }}>
                         <input
                           type="checkbox"
+                          data-testid={`generate-similar-modal-character-item-checkbox`}
                           checked={selections.selectedCharacters.includes(character.id)}
                           onChange={(e) => {
                             setSelections(prev => ({
@@ -243,6 +248,52 @@ const GenerateSimilarModal: React.FC<GenerateSimilarModalProps> = ({
           </div>
         </div>
         
+        {/* Count Selection */}
+        <div style={{ marginBottom: 'var(--spacing-xl)' }}>
+          <h4 style={{ 
+            marginBottom: 'var(--spacing-lg)', 
+            color: 'var(--color-text-primary)',
+            fontSize: 'var(--font-size-lg)'
+          }}>
+            Number of variations:
+          </h4>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-md)' }}>
+            <input
+              type="range"
+              min="1"
+              max="10"
+              value={selections.count}
+              onChange={(e) => setSelections(prev => ({ ...prev, count: parseInt(e.target.value) }))}
+              style={{
+                flex: 1,
+                height: '6px',
+                borderRadius: '3px',
+                background: 'var(--color-surface-tertiary)',
+                outline: 'none',
+                cursor: 'pointer'
+              }}
+            />
+            <span style={{ 
+              color: 'var(--color-text-primary)',
+              fontWeight: 'var(--font-weight-semibold)',
+              minWidth: '20px',
+              textAlign: 'center'
+            }}>
+              {selections.count}
+            </span>
+          </div>
+          <div style={{ 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            marginTop: 'var(--spacing-xs)',
+            fontSize: 'var(--font-size-sm)',
+            color: 'var(--color-text-tertiary)'
+          }}>
+            <span>1</span>
+            <span>10</span>
+          </div>
+        </div>
+        
         <div style={{ 
           padding: 'var(--spacing-md)',
           backgroundColor: 'var(--color-surface-secondary)',
@@ -316,8 +367,8 @@ const GenerateSimilarModal: React.FC<GenerateSimilarModalProps> = ({
           <Button variant="secondary" onClick={onClose}>
             Cancel
           </Button>
-          <Button variant="primary" onClick={handleGenerate}>
-            Generate Similar Scenario
+          <Button variant="primary" onClick={handleGenerate} data-testid="generate-similar-modal-generate-button">
+            Generate {selections.count} Similar Scenario{selections.count > 1 ? 's' : ''}
           </Button>
         </div>
       </div>

@@ -27,8 +27,6 @@ async def get_random_image(
     - JSON with image URL
     """
     try:
-        logger.info(f"Random image request - Raw params: genre='{genre}', type='{type}', gender='{gender}'")
-        
         # Validate genre parameter and map common variations
         genre_mapping = {
             'fantasy': 'fantasy',
@@ -65,8 +63,6 @@ async def get_random_image(
         normalized_genre = genre.lower().strip()
         mapped_genre = genre_mapping.get(normalized_genre, 'general')
         
-        logger.info(f"Original genre: '{genre}', normalized: '{normalized_genre}', mapped: '{mapped_genre}'")
-        
         # Use the mapped genre
         genre = mapped_genre
         
@@ -74,10 +70,6 @@ async def get_random_image(
         # Controller is in /backend/routers/, so we need to go up 3 levels to get to project root
         project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
         frontend_images_dir = os.path.join(project_root, 'frontend', 'public', 'images')
-        
-        logger.info(f"Project root: {project_root}")
-        logger.info(f"Frontend images dir: {frontend_images_dir}")
-        logger.info(f"Frontend images dir exists: {os.path.exists(frontend_images_dir)}")
         
         # Map image types to actual folder structure
         # Characters are in images/characters/genre/gender/
@@ -101,18 +93,10 @@ async def get_random_image(
             image_folder = os.path.join(frontend_images_dir, 'characters', genre, gender)
             url_prefix = f'/images/characters/{genre}/{gender}'
             
-            logger.info(f"Constructed image folder: {image_folder}")
-            logger.info(f"Image folder exists: {os.path.exists(image_folder)}")
-            if os.path.exists(image_folder):
-                files_in_folder = os.listdir(image_folder)
-                logger.info(f"Files in folder: {len(files_in_folder)} files")
-                logger.info(f"Sample files: {files_in_folder[:5] if files_in_folder else 'None'}")
         else:  # cover
             image_folder = os.path.join(frontend_images_dir, 'cover', genre)
             url_prefix = f'/images/cover/{genre}'
         
-        logger.info(f"Looking for images in: {image_folder}")
-        logger.info(f"Genre: {genre}, Type: {type}, Gender: {gender if type == 'character' else 'N/A'}")
         
         # Check if the folder exists
         if not os.path.exists(image_folder):
@@ -143,7 +127,6 @@ async def get_random_image(
                 # Try each fallback
                 for fallback_genre, fallback_gender, fallback_folder in fallback_attempts:
                     if os.path.exists(fallback_folder):
-                        logger.info(f"Using fallback: {fallback_folder}")
                         image_folder = fallback_folder
                         url_prefix = f'/images/characters/{fallback_genre}/{fallback_gender}'
                         genre = fallback_genre
@@ -179,8 +162,6 @@ async def get_random_image(
         
         # Construct the URL path
         image_url = f'{url_prefix}/{random_image}'
-        
-        logger.info(f"Selected random image: {image_url}")
         
         return RandomImageResponse(url=image_url)
         
