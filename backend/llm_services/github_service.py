@@ -90,6 +90,49 @@ class GitHubService(BaseLLMService):
             return {'status': 'connected', 'models': models}
         except Exception as e:
             return {'status': 'error', 'error': str(e)}
+    
+    def chat_completion(self, payload):
+        """Non-streaming chat completion."""
+        try:
+            headers = {
+                'Authorization': f'Bearer {self.github_token}',
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            }
+            
+            # GitHub Models uses Azure AI Inference format
+            messages = payload.get('messages', [])
+            
+            github_payload = {
+                'messages': messages,
+                'model': payload.get('model', 'gpt-4o-mini'),
+                'stream': False  # Disable streaming
+            }
+            
+            # Add temperature if provided
+            if 'temperature' in payload and payload['temperature'] is not None:
+                github_payload['temperature'] = float(payload['temperature'])
+                
+            # Add max_tokens if provided  
+            if 'max_tokens' in payload and payload['max_tokens'] is not None:
+                github_payload['max_tokens'] = int(payload['max_tokens'])
+
+            # Make blocking request
+            response = requests.post(self.chat_endpoint,
+                                   headers=headers,
+                                   json=github_payload,
+                                   timeout=120)
+            response.raise_for_status()
+            
+            # Parse response
+            data = response.json()
+            if 'choices' in data and len(data['choices']) > 0:
+                return data['choices'][0]['message']['content']
+            else:
+                raise Exception("No response content received")
+                
+        except Exception as e:
+            raise Exception(f"GitHub Models chat completion failed: {str(e)}")
 
     def chat_completion_stream(self, payload):
         try:

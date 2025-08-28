@@ -16,4 +16,7 @@ requests-mock>=1.9.0
 SQLAlchemy>=1.4
 psycopg2-binary # If using PostgreSQL, otherwise use the appropriate DB driver e.g. mysqlclient for MySQL
 tiktoken # Added for token counting
+langgraph>=0.6.6
+langchain>=0.3.0
+langchain-core>=0.3.0
 

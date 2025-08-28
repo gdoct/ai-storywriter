@@ -1,0 +1,216 @@
+/* Story Modal Styles */
+.story-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.story-modal {
+  background: #ffffff;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 95vw;
+  max-height: 95vh;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+}
+
+/* Dark theme support */
+[data-theme="dark"] .story-modal {
+  background: #111827;
+}
+
+/* Generation Controls Overlay */
+.story-modal__generation-overlay {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  z-index: 1001;
+  pointer-events: none;
+  /* Don't stretch across full width to avoid overlaying title */
+  width: auto;
+}
+
+.story-modal__generation-controls {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  pointer-events: auto;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(12px);
+  border-radius: 12px;
+  padding: 1rem;
+  box-shadow: 
+    0 8px 25px rgba(0, 0, 0, 0.15),
+    0 0 0 1px rgba(255, 255, 255, 0.8),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  border: 2px solid rgba(255, 255, 255, 0.9);
+  /* Ensure controls don't get too wide */
+  max-width: fit-content;
+  margin-left: auto;
+}
+
+/* Status Strip */
+.story-modal__status-strip {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  right: 20px;
+  z-index: 1001;
+  pointer-events: none;
+}
+
+.story-modal__generating-status,
+.story-modal__completed-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(12px);
+  border-radius: 8px;
+  box-shadow: 
+    0 6px 20px rgba(0, 0, 0, 0.15),
+    0 0 0 1px rgba(255, 255, 255, 0.8),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  border: 2px solid rgba(255, 255, 255, 0.9);
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin: 0 auto;
+  max-width: fit-content;
+}
+
+.story-modal__generating-status {
+  color: #3b82f6;
+}
+
+.story-modal__completed-status {
+  color: #059669;
+}
+
+/* AiStoryReader Container */
+.story-modal__reader-container {
+  width: 100%;
+  height: 100%;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+/* Keep these for legacy compatibility if needed */
+.story-modal__text {
+  line-height: 1.8;
+  color: #374151;
+  font-size: 1rem;
+}
+
+.story-modal__paragraph {
+  margin-bottom: 1.5rem;
+  text-align: justify;
+}
+
+.story-modal__paragraph:last-child {
+  margin-bottom: 0;
+}
+
+/* Remove old text controls - AiStoryReader handles this now */
+
+/* Generating Dots Animation */
+.story-modal__generating-dots {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.story-modal__generating-dots span {
+  width: 0.375rem;
+  height: 0.375rem;
+  background-color: #3b82f6;
+  border-radius: 50%;
+  animation: bounce 1.4s ease-in-out infinite;
+}
+
+.story-modal__generating-dots span:nth-child(1) {
+  animation-delay: -0.32s;
+}
+
+.story-modal__generating-dots span:nth-child(2) {
+  animation-delay: -0.16s;
+}
+
+/* Button state styles for story generation */
+.story-modal__generate-status {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 1rem 0;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.story-modal__generate-status--ready {
+  background-color: #f0f9ff;
+  color: #0369a1;
+  border: 1px solid #bae6fd;
+}
+
+.story-modal__generate-status--generating {
+  background-color: #fef3c7;
+  color: #d97706;
+  border: 1px solid #fed7aa;
+}
+
+.story-modal__generate-status--completed {
+  background-color: #dcfce7;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+}
+
+.story-modal__actions .button--primary.button--disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .story-modal {
+    max-width: 100vw;
+    max-height: 100vh;
+  }
+  
+  .story-modal__generation-overlay {
+    top: 10px;
+    left: 10px;
+    right: 10px;
+  }
+  
+  .story-modal__generation-controls {
+    padding: 0.75rem;
+    gap: 0.25rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  
+  .story-modal__status-strip {
+    top: 10px;
+    left: 10px;
+    right: 10px;
+  }
+  
+  .story-modal__reader-container {
+    border-radius: 8px;
+  }
+}

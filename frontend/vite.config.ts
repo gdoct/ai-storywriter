@@ -45,6 +45,20 @@ export default defineConfig({
             // Everything else goes to vendor
             return 'vendor';
           }
+
+          // Role-based bundle splitting using wildcards
+          if (id.includes('/src/anonymous/')) {
+            return 'anonymous-bundle';
+          }
+          if (id.includes('/src/members/')) {
+            return 'members-bundle';
+          }
+          if (id.includes('/src/admin/')) {
+            return 'admin-bundle';
+          }
+          if (id.includes('/src/shared/')) {
+            return 'shared-bundle';
+          }
         },
       },
     },

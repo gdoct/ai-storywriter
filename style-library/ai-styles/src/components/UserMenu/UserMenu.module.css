@@ -256,6 +256,15 @@
   color: var(--color-button-primary-text);
 }
 
+.customActions {
+  margin-top: var(--spacing-sm);
+  padding-top: var(--spacing-sm);
+  border-top: 1px solid var(--color-border-primary);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
 .dropdownContent {
   padding: var(--spacing-xs) 0;
 }

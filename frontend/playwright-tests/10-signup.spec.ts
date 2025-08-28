@@ -1,7 +1,7 @@
 import { expect, Page, test } from '@playwright/test';
 import dotenv from 'dotenv';
-import { generateCharacterName } from '../src/services/characterNameGenerator';
-import { generateEmailFromName } from '../src/services/emailGenerator';
+import { generateCharacterName } from '../src/shared/services/characterNameGenerator';
+import { generateEmailFromName } from '../src/shared/services/emailGenerator';
 import { TEST_BASE_URL } from '../__tests__/testsettings';
 import { deleteExistingTestUser, navigateToPage, saveTestUserToFile, TestUser } from './testutils';
 

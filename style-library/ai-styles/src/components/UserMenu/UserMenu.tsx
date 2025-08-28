@@ -22,6 +22,8 @@ export interface UserMenuProps {
   size?: 'sm' | 'md' | 'lg';
   /** Whether to show the username next to avatar */
   showUsername?: boolean;
+  /** Custom actions to show in the header (e.g., ThemeToggle) */
+  customActions?: React.ReactNode;
 }
 
 export interface UserMenuItem {
@@ -49,7 +51,8 @@ const UserMenu: React.FC<UserMenuProps> = ({
   menuItems,
   onLogout,
   size = 'md',
-  showUsername = false
+  showUsername = false,
+  customActions
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -171,6 +174,12 @@ const UserMenu: React.FC<UserMenuProps> = ({
                     {credits.toLocaleString()} credits
                   </span>
                 )}
+              </div>
+            )}
+            
+            {customActions && (
+              <div className={styles.customActions}>
+                {customActions}
               </div>
             )}
           </div>

@@ -1,11 +1,11 @@
 import { ThemeProvider } from '@drdata/ai-styles';
 import { BrowserRouter as Router, useRoutes } from 'react-router-dom';
 import './App.css';
-import AIBusyModal from './components/common/AIBusyModal';
-import TopBar from './components/TopBar/TopBar';
-import { SceneHoverProvider } from './context/SceneHoverContext';
-import { AIStatusProvider } from './contexts/AIStatusContext';
-import { AuthProvider } from './contexts/AuthContext';
+import AIBusyModal from './shared/components/common/AIBusyModal';
+import TopBar from './shared/components/TopBar/TopBar';
+import { SceneHoverProvider } from './shared/context/SceneHoverContext';
+import { AIStatusProvider } from './shared/contexts/AIStatusContext';
+import { AuthProvider } from './shared/contexts/AuthContext';
 import getRoutes from './routes';
 
 // AppContent component to use the useRoutes hook (it must be used inside Router context)

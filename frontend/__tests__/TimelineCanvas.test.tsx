@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, fireEvent } from '@testing-library/react';
-import { TimelineCanvas } from '../src/components/ScenarioEditor/tabs/TimelineTab/TimelineCanvas';
+import { TimelineCanvas } from '../src/members/components/ScenarioEditor/tabs/TimelineTab/TimelineCanvas';
 
 describe('TimelineCanvas', () => {
   it('should allow drag-and-drop to create connections', () => {

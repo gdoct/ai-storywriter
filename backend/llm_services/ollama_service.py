@@ -24,6 +24,43 @@ class OllamaService(BaseLLMService):
             return {'status': 'connected', 'models': models}
         except Exception as e:
             return {'status': 'error', 'error': str(e)}
+    
+    def chat_completion(self, payload):
+        """Non-streaming chat completion."""
+        try:
+            # Adapt the payload for Ollama API format
+            model = payload.get('model')
+            if not model:
+                # Get first available model if none specified
+                models = self.get_models()
+                model = models[0] if models else 'gemma3:4b'
+
+            ollama_payload = {
+                'model': model,
+                'messages': payload.get('messages', []),
+                'stream': False,  # Disable streaming
+                'options': {}
+            }
+            
+            # Add temperature if provided
+            if 'temperature' in payload and payload['temperature'] is not None:
+                ollama_payload['options']['temperature'] = float(payload['temperature'])
+
+            # Make blocking request
+            response = requests.post(f"{self.base_url}/api/chat",
+                                   json=ollama_payload,
+                                   timeout=120)
+            response.raise_for_status()
+            
+            # Parse response
+            data = response.json()
+            if 'message' in data and 'content' in data['message']:
+                return data['message']['content']
+            else:
+                raise Exception("No response content received")
+                
+        except Exception as e:
+            raise Exception(f"Ollama chat completion failed: {str(e)}")
 
     def chat_completion_stream(self, payload):
         try:

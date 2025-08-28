@@ -1,6 +1,6 @@
 import { test } from '@playwright/test';
 import dotenv from 'dotenv';
-import { StyleSettings } from '../src/types/ScenarioTypes';
+import { StyleSettings } from '../src/shared/types/ScenarioTypes';
 import { loginToSite, readTestUserFromFile, TestUser, waitForTextInputToSettle, waitForAiTextBoxGeneration } from './testutils';
 dotenv.config();
 

@@ -77,18 +77,15 @@ async def get_random_image(
         if type == 'character':
             # Handle gender parameter for character images
             if not gender:
-                # If no gender specified, randomly select one with weighted distribution
-                # Male 40%, Female 50%, Other 10%
-                gender_choices = ['male'] * 40 + ['female'] * 50 + ['other'] * 10
-                gender = random.choice(gender_choices)
+                # If no gender specified, default to female
+                gender = 'female'
             
-            # Validate gender parameter
+            # Validate gender parameter and default to female if invalid
             valid_genders = ['male', 'female', 'other']
-            if gender not in valid_genders:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f'Invalid gender. Must be one of: {", ".join(valid_genders)}'
-                )
+            if gender.lower() not in valid_genders:
+                gender = 'female'
+            else:
+                gender = gender.lower()
             
             image_folder = os.path.join(frontend_images_dir, 'characters', genre, gender)
             url_prefix = f'/images/characters/{genre}/{gender}'

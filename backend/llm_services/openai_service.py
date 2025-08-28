@@ -25,6 +25,47 @@ class OpenAIService(BaseLLMService):
             return {'status': 'connected', 'models': models}
         except Exception as e:
             return {'status': 'error', 'error': str(e)}
+    
+    def chat_completion(self, payload):
+        """Non-streaming chat completion."""
+        try:
+            headers = {'Authorization': f'Bearer {self.api_key}'}
+            
+            # Prepare OpenAI payload
+            openai_payload = {
+                'model': payload.get('model', 'gpt-3.5-turbo'),
+                'messages': payload.get('messages', []),
+                'stream': False  # Disable streaming
+            }
+            
+            # Add temperature if provided
+            if 'temperature' in payload and payload['temperature'] is not None:
+                openai_payload['temperature'] = float(payload['temperature'])
+                
+            # Add seed if provided
+            if 'seed' in payload and payload['seed'] is not None:
+                openai_payload['seed'] = int(payload['seed'])
+                
+            # Add max_tokens if provided
+            if 'max_tokens' in payload and payload['max_tokens'] is not None:
+                openai_payload['max_tokens'] = int(payload['max_tokens'])
+
+            # Make blocking request
+            response = requests.post(f"{self.base_url}/chat/completions",
+                                   headers=headers,
+                                   json=openai_payload,
+                                   timeout=120)
+            response.raise_for_status()
+            
+            # Parse response
+            data = response.json()
+            if 'choices' in data and len(data['choices']) > 0:
+                return data['choices'][0]['message']['content']
+            else:
+                raise Exception("No response content received")
+                
+        except Exception as e:
+            raise Exception(f"OpenAI chat completion failed: {str(e)}")
 
     def chat_completion_stream(self, payload):
         try:
@@ -56,7 +97,8 @@ class OpenAIService(BaseLLMService):
                              stream=True, 
                              timeout=60) as resp:
                 resp.raise_for_status()
-                for chunk in resp.iter_content(chunk_size=4096):
+                # Use smaller chunks for smoother streaming - 64 bytes instead of 4KB
+                for chunk in resp.iter_content(chunk_size=64):
                     if chunk:
                         yield chunk
         except Exception as e:

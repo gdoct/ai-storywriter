@@ -236,7 +236,7 @@ async def get_stories(
             preview_text += "..."
         
         result.append(StoryPreview(
-            id=s['id'],
+            id=str(s['id']),
             preview_text=preview_text,
             word_count=len(words),
             created_at=s['created_at']

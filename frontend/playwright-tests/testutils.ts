@@ -3,7 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { TEST_BASE_URL, TIMEOUT_MULTIPLIER } from '../__tests__/testsettings';
-import { getResponse } from "../src/services/request";
+import { getResponse } from "../src/shared/services/request";
 
 export interface TestUser {
     username: string;

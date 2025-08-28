@@ -23,6 +23,38 @@ class LMStudioService(BaseLLMService):
             return {'status': 'connected', 'models': models}
         except Exception as e:
             return {'status': 'error', 'error': str(e)}
+    
+    def chat_completion(self, payload):
+        """Non-streaming chat completion."""
+        try:
+            # Prepare completion parameters
+            completion_params = {'stream': False}  # Disable streaming
+            if 'messages' in payload:
+                completion_params['messages'] = payload['messages']
+            if 'temperature' in payload and payload['temperature'] is not None:
+                completion_params['temperature'] = float(payload['temperature'])
+            if 'seed' in payload and payload['seed'] is not None:
+                completion_params['seed'] = int(payload['seed'])
+            if 'max_tokens' in payload and payload['max_tokens'] is not None:
+                completion_params['max_tokens'] = int(payload['max_tokens'])
+            if 'model' in payload and payload['model'] is not None:
+                completion_params['model'] = payload['model']
+                
+            # Make blocking request
+            response = requests.post(f"{self.base_url}/v1/chat/completions", 
+                                   json=completion_params, 
+                                   timeout=120)
+            response.raise_for_status()
+            
+            # Parse response
+            data = response.json()
+            if 'choices' in data and len(data['choices']) > 0:
+                return data['choices'][0]['message']['content']
+            else:
+                raise Exception("No response content received")
+                
+        except Exception as e:
+            raise Exception(f"LMStudio chat completion failed: {str(e)}")
             
     def chat_completion_stream(self, payload):
         """Stream chat completion responses."""
@@ -46,7 +78,8 @@ class LMStudioService(BaseLLMService):
                              stream=True, 
                              timeout=60) as resp:
                 resp.raise_for_status()
-                for chunk in resp.iter_content(chunk_size=4096):
+                # Use smaller chunks for smoother streaming - 64 bytes instead of 4KB  
+                for chunk in resp.iter_content(chunk_size=64):
                     if chunk:
                         yield chunk
         except Exception as e:

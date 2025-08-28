@@ -3,7 +3,7 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App';
 import './index.css';
-import './services/http'; // Initialize HTTP interceptors
+import './shared/services/http'; // Initialize HTTP interceptors
 
 const root = createRoot(
   document.getElementById('root') as HTMLElement

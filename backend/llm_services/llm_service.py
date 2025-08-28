@@ -116,6 +116,11 @@ class BaseLLMService(abc.ABC):
         pass
     
     @abc.abstractmethod
+    def chat_completion(self, payload):
+        """Returns a complete response as a string for blocking calls."""
+        pass
+    
+    @abc.abstractmethod
     def chat_completion_stream(self, payload):
         """Returns a generator that yields response chunks for streaming."""
         pass

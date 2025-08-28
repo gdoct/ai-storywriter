@@ -12,8 +12,8 @@ fi
 BASE_URL="http://localhost:5000"
 
 # read the ADMIN_TOKEN from the .env file
-if [ -f frontend/.env ]; then
-  source frontend/.env
+if [ -f ../.env ]; then
+  source ../.env
 else
   echo "Error: .env file not found."
   exit 1
