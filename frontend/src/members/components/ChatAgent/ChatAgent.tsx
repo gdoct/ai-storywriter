@@ -144,19 +144,38 @@ export const ChatAgent: React.FC<ChatAgentProps> = ({ scenario, onScenarioUpdate
             throw new Error(message.metadata.error);
           }
           
-          setStatusUpdates(prev => [
-            ...prev,
-            {
-              content: message.content,
-              node: message.metadata?.node,
-              timestamp: Date.now()
-            }
-          ]);
-          
-          // Auto-remove status updates after 5 seconds
-          setTimeout(() => {
-            setStatusUpdates(prev => prev.slice(1));
-          }, 5000);
+          // Handle follow-up questions without overwriting message content
+          if (message.content === 'follow_up_questions' && message.metadata?.follow_up_questions) {
+            setMessages(prev => {
+              const updated = [...prev];
+              for (let i = updated.length - 1; i >= 0; i--) {
+                if (updated[i].role === 'assistant') {
+                  updated[i] = { 
+                    ...updated[i], 
+                    // Keep existing content, just add follow-up questions
+                    followUpQuestions: message.metadata.follow_up_questions
+                  };
+                  break;
+                }
+              }
+              return updated;
+            });
+          } else {
+            // Regular status update
+            setStatusUpdates(prev => [
+              ...prev,
+              {
+                content: message.content,
+                node: message.metadata?.node,
+                timestamp: Date.now()
+              }
+            ]);
+            
+            // Auto-remove status updates after 5 seconds
+            setTimeout(() => {
+              setStatusUpdates(prev => prev.slice(1));
+            }, 5000);
+          }
           
         } else if (message.type === 'tool_call') {
           // Handle tool calls (legacy support and client-side tools)
@@ -228,6 +247,155 @@ export const ChatAgent: React.FC<ChatAgentProps> = ({ scenario, onScenarioUpdate
       e.preventDefault();
       handleSend();
     }
+  };
+
+  const handleSuggestionClick = (suggestion: string) => {
+    if (isGenerating || isChatUnavailable || isChatBusy) return;
+    
+    // Set the input and trigger send immediately
+    setInput(suggestion);
+    
+    // Use setTimeout to ensure the input state is updated before sending
+    setTimeout(() => {
+      // Simulate the send action directly
+      const sendSuggestion = async () => {
+        const userMessage: Message = { role: 'user', content: suggestion };
+        setMessages(prev => [...prev, userMessage, { role: 'assistant', content: '' }]);
+        setLastUserMessage(suggestion);
+        setInput(''); // Clear input
+        setIsGenerating(true);
+        setChatStatus(CHAT_STATUS.GENERATING);
+
+        try {
+          abortControllerRef.current = new AbortController();
+          
+          const agentRequest: AgentRequest = {
+            message: suggestion,
+            scenario: scenario,
+            stream: true
+          };
+          
+          let currentContent = '';
+          let toolCalls: any[] = [];
+
+          const onAgentMessage = (message: AgentMessage) => {
+            if (message.type === 'chat') {
+              if (message.metadata?.streaming || message.streaming) {
+                currentContent += message.content;
+              } else {
+                currentContent = message.content;
+              }
+              
+              setMessages(prev => {
+                const updated = [...prev];
+                for (let i = updated.length - 1; i >= 0; i--) {
+                  if (updated[i].role === 'assistant') {
+                    updated[i] = { 
+                      ...updated[i], 
+                      content: currentContent,
+                      toolCalls: toolCalls,
+                      followUpQuestions: message.metadata?.follow_up_questions
+                    };
+                    break;
+                  }
+                }
+                return updated;
+              });
+            } else if (message.type === 'status') {
+              if (message.metadata?.error) {
+                throw new Error(message.metadata.error);
+              }
+              
+              // Handle follow-up questions without overwriting message content
+              if (message.content === 'follow_up_questions' && message.metadata?.follow_up_questions) {
+                setMessages(prev => {
+                  const updated = [...prev];
+                  for (let i = updated.length - 1; i >= 0; i--) {
+                    if (updated[i].role === 'assistant') {
+                      updated[i] = { 
+                        ...updated[i], 
+                        followUpQuestions: message.metadata.follow_up_questions
+                      };
+                      break;
+                    }
+                  }
+                  return updated;
+                });
+              } else {
+                setStatusUpdates(prev => [
+                  ...prev,
+                  {
+                    content: message.content,
+                    node: message.metadata?.node,
+                    timestamp: Date.now()
+                  }
+                ]);
+                
+                setTimeout(() => {
+                  setStatusUpdates(prev => prev.slice(1));
+                }, 5000);
+              }
+            } else if (message.type === 'tool_call') {
+              if (message.metadata?.tool_call) {
+                const toolCall = message.metadata.tool_call;
+                toolCalls.push(toolCall);
+                
+                if (toolCall.action === 'update_scenario' && onScenarioUpdate) {
+                  const updatedScenario = toolCall.parameters?.updated_scenario;
+                  if (updatedScenario) {
+                    onScenarioUpdate(updatedScenario);
+                  }
+                }
+              }
+              
+              setMessages(prev => {
+                const updated = [...prev];
+                for (let i = updated.length - 1; i >= 0; i--) {
+                  if (updated[i].role === 'assistant') {
+                    updated[i] = { 
+                      ...updated[i], 
+                      content: currentContent || message.content,
+                      toolCalls: toolCalls,
+                      followUpQuestions: message.metadata?.follow_up_questions
+                    };
+                    break;
+                  }
+                }
+                return updated;
+              });
+            }
+          };
+
+          await streamAgentResponse(agentRequest, onAgentMessage, abortControllerRef.current?.signal);
+        } catch (err) {
+          if (err instanceof Error && err.name === 'AbortError') {
+            console.log('Agent request cancelled by user');
+          } else {
+            console.error('Agent error:', err);
+            setChatStatus(CHAT_STATUS.ERROR);
+            setMessages(prev => {
+              const updated = [...prev];
+              for (let i = updated.length - 1; i >= 0; i--) {
+                if (updated[i].role === 'assistant') {
+                  updated[i] = { ...updated[i], content: 'Sorry, there was an error communicating with the agent service.' };
+                  break;
+                }
+              }
+              return updated;
+            });
+          }
+        } finally {
+          setIsGenerating(false);
+          setChatStatus(CHAT_STATUS.IDLE);
+          abortControllerRef.current = null;
+          setTimeout(() => {
+            refreshCredits();
+          }, 1000);
+        }
+      };
+      
+      sendSuggestion();
+    }, 10);
   };
 
   const handleFollowUpClick = (question: string) => {
@@ -641,6 +809,39 @@ export const ChatAgent: React.FC<ChatAgentProps> = ({ scenario, onScenarioUpdate
                 <div className="chat-agent-welcome">
                   <h3>Welcome to the AI Assistant!</h3>
                   <p>Ask questions about your scenario, characters, or story elements.</p>
+                  
+                  {/* Default suggestions */}
+                  <div className="chat-agent-default-suggestions">
+                    <div className="chat-agent-suggestions-label">Try these suggestions:</div>
+                    <button
+                      className="chat-agent-suggestion-btn"
+                      onClick={() => handleSuggestionClick("Explain the main conflict in this scenario")}
+                      disabled={isGenerating || isChatUnavailable || isChatBusy}
+                    >
+                      Explain the main conflict in this scenario
+                    </button>
+                    <button
+                      className="chat-agent-suggestion-btn"
+                      onClick={() => handleSuggestionClick("Add more depth to the main character")}
+                      disabled={isGenerating || isChatUnavailable || isChatBusy}
+                    >
+                      Add more depth to the main character
+                    </button>
+                    <button
+                      className="chat-agent-suggestion-btn"
+                      onClick={() => handleSuggestionClick("Suggest plot twists for this story")}
+                      disabled={isGenerating || isChatUnavailable || isChatBusy}
+                    >
+                      Suggest plot twists for this story
+                    </button>
+                    <button
+                      className="chat-agent-suggestion-btn"
+                      onClick={() => handleSuggestionClick("Create a new supporting character")}
+                      disabled={isGenerating || isChatUnavailable || isChatBusy}
+                    >
+                      Create a new supporting character
+                    </button>
+                  </div>
                 </div>
               ) : (
                 messages.map((msg, idx) => {
