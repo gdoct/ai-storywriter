@@ -114,3 +114,25 @@ export type Scenario = {
     // Optional tabs functionality
     visibleTabs?: string[]; // Track which tabs are visible for this scenario
 };
+
+/* 
+export type Scenario = {
+    title?: string;
+    synopsis?: string;
+    backstory?: string;
+    writingStyle?: {
+        genre?: string;
+    };  
+    storyarc?: string;
+    characters?: [{ 
+        name?: string; 
+        alias?: string; 
+        role?: string; 
+        gender?: string; 
+        appearance?: string; 
+        backstory?: string; 
+    }];
+}
+
+
+*/

@@ -7,39 +7,68 @@ logger = logging.getLogger(__name__)
 
 async def creation_node(state: AgentState) -> Dict[str, Any]:
     """
-    Create new scenarios based on user input
+    Create new scenarios based on user input using LLM tool
+    
+    The LLM should create the scenario in this format:
+    
+    export type Scenario = {
+        title?: string;
+        synopsis?: string;
+        backstory?: string;
+        writingStyle?: {
+            genre?: string;
+        };  
+        storyarc?: string;
+        characters?: [{ 
+            name?: string; 
+            alias?: string; 
+            role?: string; 
+            gender?: string; 
+            appearance?: string; 
+            backstory?: string; 
+        }];
+    }
+    
+    The LLM will generate the scenario JSON based on the user's request.
     """
     user_input = state.get("user_input", "")
+    scenario = state.get("scenario", {})
     
-    # Extract information from user input
-    user_input_lower = user_input.lower()
-    
-    creation_info = {}
-    
-    # Check for title/synopsis
-    if "title" in user_input_lower or "called" in user_input_lower:
-        state["streaming_response"] = ["using user-provided title or synopsis for new scenario.."]
-        creation_info["has_title"] = True
-        
-    # Check for genre/setting
-    elif any(word in user_input_lower for word in ["genre", "setting", "fantasy", "sci-fi", "horror", "romance"]):
-        state["streaming_response"] = ["using user-provided genre or setting for new scenario.."]
-        creation_info["has_genre"] = True
-        
-    # Check for characters
-    elif any(word in user_input_lower for word in ["character", "protagonist", "hero", "villain"]):
-        state["streaming_response"] = ["using user-provided characters for new scenario.."]
-        creation_info["has_characters"] = True
-        
-    else:
-        state["streaming_response"] = ["creating new scenario.."]
-    
-    # Create tool call for scenario creation
+    # Create tool call for scenario creation using LLM
     tool_call = ToolCall(
         action="create_scenario",
-        parameters={"user_input": user_input, "creation_info": creation_info}
+        parameters={
+            "user_input": user_input,
+            "existing_scenario": scenario,
+            "context": """You are a creative story scenario generator. Create a new scenario based on the user's request.
+
+Generate a complete scenario in valid JSON format using this structure:
+{
+  "title": "Story Title",
+  "synopsis": "Brief story summary",
+  "backstory": "Detailed background and world-building",
+  "writingStyle": {
+    "genre": "Genre (fantasy, sci-fi, horror, romance, etc.)"
+  },
+  "storyarc": "Main plot outline and story progression",
+  "characters": [
+    {
+      "name": "Character Name",
+      "alias": "Nickname or title",
+      "role": "protagonist/antagonist/supporting",
+      "gender": "Character gender",
+      "appearance": "Physical description",
+      "backstory": "Character background and motivations"
+    }
+  ]
+}
+
+Create engaging, detailed content that matches the user's vision. Include 2-3 well-developed characters minimum."""
+        }
     )
+    
     state["tool_calls"] = [tool_call.model_dump()]
+    state["streaming_response"] = ["Creating new scenario..."]
     state["next_node"] = "supervisor"
     state["streaming_action"] = "create_scenario"  # Flag for streaming execution
     

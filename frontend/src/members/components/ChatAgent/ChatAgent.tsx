@@ -190,6 +190,12 @@ export const ChatAgent: React.FC<ChatAgentProps> = ({ scenario, onScenarioUpdate
                 // Update the scenario in the parent component
                 onScenarioUpdate(updatedScenario);
               }
+            } else if (toolCall.action === 'create_scenario' && onScenarioUpdate) {
+              const newScenario = toolCall.parameters?.scenario;
+              if (newScenario) {
+                // Update the parent component with the newly created scenario
+                onScenarioUpdate(newScenario);
+              }
             }
           }
           
@@ -344,6 +350,11 @@ export const ChatAgent: React.FC<ChatAgentProps> = ({ scenario, onScenarioUpdate
                   const updatedScenario = toolCall.parameters?.updated_scenario;
                   if (updatedScenario) {
                     onScenarioUpdate(updatedScenario);
+                  }
+                } else if (toolCall.action === 'create_scenario' && onScenarioUpdate) {
+                  const newScenario = toolCall.parameters?.scenario;
+                  if (newScenario) {
+                    onScenarioUpdate(newScenario);
                   }
                 }
               }

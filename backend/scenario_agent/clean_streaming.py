@@ -62,8 +62,8 @@ def stream_agent_clean(
                         if line.startswith('data: '):
                             data_part = line[6:]
                             if data_part.strip() == '[DONE]':
-                                # LLM streaming complete, now add wrap-up
-                                yield from _generate_wrap_up(accumulated_content, user_input, scenario, user_id, byok_headers)
+                                # LLM streaming complete, check for scenario creation, then add wrap-up
+                                yield from _process_response_and_wrap_up(accumulated_content, user_input, scenario, user_id, byok_headers)
                                 return
                             elif data_part.strip():
                                 try:
@@ -93,7 +93,97 @@ def stream_agent_clean(
     return generate()
 
 
-def _generate_wrap_up(accumulated_content: str, user_input: str, scenario: Dict[str, Any], user_id: str, byok_headers: Dict[str, Any]):
+def _process_response_and_wrap_up(accumulated_content: str, user_input: str, scenario: Dict[str, Any], user_id: str, byok_headers: Dict[str, Any]):
+    """Process the LLM response for tool calls (like scenario creation/modification), then generate wrap-up"""
+    try:
+        # Check if the response contains a JSON scenario
+        if _contains_scenario_json(accumulated_content):
+            if _is_creation_request(user_input):
+                yield from _extract_and_send_scenario(accumulated_content, user_id)
+            elif _is_modification_request(user_input):
+                yield from _extract_and_send_updated_scenario(accumulated_content, scenario, user_id)
+        
+        # Always generate wrap-up questions after processing
+        yield from _generate_follow_up_questions(accumulated_content, user_input, scenario, user_id, byok_headers)
+        
+    except Exception as e:
+        logger.error(f"Response processing error: {str(e)}")
+        yield from _generate_follow_up_questions(accumulated_content, user_input, scenario, user_id, byok_headers)
+
+
+def _is_creation_request(user_input: str) -> bool:
+    """Check if the user input is requesting scenario creation"""
+    user_lower = user_input.lower()
+    creation_keywords = ["create", "make", "generate", "new scenario", "build", "design"]
+    return any(word in user_lower for word in creation_keywords)
+
+
+def _contains_scenario_json(content: str) -> bool:
+    """Check if the content contains a JSON scenario structure"""
+    try:
+        # Look for JSON-like structure with scenario fields
+        content_lower = content.lower()
+        json_indicators = ['"title":', '"synopsis":', '"characters":', '"backstory":']
+        return any(indicator in content_lower for indicator in json_indicators) and ('{' in content and '}' in content)
+    except:
+        return False
+
+
+def _extract_and_send_scenario(content: str, user_id: str):
+    """Extract scenario JSON from LLM response and send as tool_call"""
+    try:
+        # Send status
+        status_msg = 'data: {"type":"status","content":"Processing new scenario...","metadata":{"status":"processing_scenario"}}\n\n'
+        yield status_msg.encode('utf-8')
+        
+        # Extract JSON from the content
+        json_start = content.find('{')
+        json_end = content.rfind('}') + 1
+        
+        if json_start != -1 and json_end > json_start:
+            json_text = content[json_start:json_end]
+            
+            # Clean up common markdown artifacts
+            json_text = json_text.replace('```json', '').replace('```', '').strip()
+            
+            try:
+                scenario_data = json.loads(json_text)
+                
+                # Add IDs to characters and locations if they exist
+                for i, char in enumerate(scenario_data.get("characters", [])):
+                    if "id" not in char:
+                        char["id"] = f"char_{user_id}_{i}"
+                
+                for i, loc in enumerate(scenario_data.get("locations", [])):
+                    if "id" not in loc:
+                        loc["id"] = f"loc_{user_id}_{i}"
+                
+                # Send tool_call message with the new scenario
+                tool_call_msg = {
+                    "type": "tool_call",
+                    "content": "New scenario created",
+                    "metadata": {
+                        "tool_call": {
+                            "action": "create_scenario",
+                            "parameters": {
+                                "scenario": scenario_data
+                            },
+                            "status": "completed"
+                        }
+                    }
+                }
+                yield f'data: {json.dumps(tool_call_msg)}\n\n'.encode('utf-8')
+                
+                logger.info(f"Successfully extracted and sent scenario: {scenario_data.get('title', 'Untitled')}")
+                
+            except json.JSONDecodeError as e:
+                logger.warning(f"Failed to parse scenario JSON: {str(e)}")
+                
+    except Exception as e:
+        logger.error(f"Failed to extract scenario: {str(e)}")
+
+
+def _generate_follow_up_questions(accumulated_content: str, user_input: str, scenario: Dict[str, Any], user_id: str, byok_headers: Dict[str, Any]):
     """Generate follow-up questions using wrap-up logic"""
     try:
         # Send wrap-up status
@@ -212,9 +302,31 @@ Explain what changes you would make and why, then provide the updated scenario d
 
     elif any(word in user_lower for word in ["create", "make", "generate", "new"]):
         # Creation request
-        return f"""You are a creative story developer. {context}User request: "{user_input}"
+        return f"""You are a creative story scenario generator. {context}User request: "{user_input}"
 
-Create detailed story elements that fit well with the existing scenario."""
+Create a complete new scenario based on the user's request. Respond with valid JSON in this exact format:
+
+{{
+  "title": "Story Title",
+  "synopsis": "Brief story summary",
+  "backstory": "Detailed background and world-building",
+  "writingStyle": {{
+    "genre": "fantasy/sci-fi/horror/romance/etc"
+  }},
+  "storyarc": "Main plot outline and story progression",
+  "characters": [
+    {{
+      "name": "Character Name",
+      "alias": "Nickname or title",
+      "role": "protagonist/antagonist/supporting",
+      "gender": "Character gender",
+      "appearance": "Physical description",
+      "backstory": "Character background and motivations"
+    }}
+  ]
+}}
+
+Create engaging, detailed content that matches the user's vision. Include 2-3 well-developed characters minimum."""
         
     else:
         # General conversation
