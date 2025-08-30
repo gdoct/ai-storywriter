@@ -1,0 +1,93 @@
+# Node.js
+**/node_modules/
+**/npm-debug.log
+**/yarn-error.log
+**/yarn.lock
+
+# Python
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+**/*.pyd
+**/.Python
+**/env/
+**/venv/
+**/.venv/
+**/pip-log.txt
+**/pip-delete-this-directory.txt
+
+# Build outputs (except the ones we need)
+**/build/
+!frontend/build/
+**/dist/
+**/coverage/
+**/test-results/
+**/playwright-report/
+
+# IDE and editor files
+**/.vscode/
+**/.idea/
+**/*.swp
+**/*.swo
+**/*~
+
+# OS generated files
+**/.DS_Store
+**/.DS_Store?
+**/._*
+**/.Spotlight-V100
+**/.Trashes
+**/ehthumbs.db
+**/Thumbs.db
+
+# Git
+**/.git/
+**/.gitignore
+
+# Testing
+**/jest.config.js
+**/playwright.config.ts
+**/__tests__/
+**/tests/
+**/test/
+**/playwright-tests/
+
+# Development
+**/.env.local
+**/.env.development
+**/.env.test
+**/debug*.py
+**/test_*.py
+
+# Documentation
+**/README.md
+**/CLAUDE.md
+**/*.md
+**/docs/
+
+# Scripts
+**/scripts/
+**/*.sh
+
+# Database backups
+**/storywriter*.db
+!backend/storywriter.db
+
+# Uploads (will be mounted as volumes in production)
+**/uploads/
+
+# Development tools
+**/eslint.config.js
+**/prettier.config.*
+**/tsconfig*.json
+**/jest.config.js
+**/vite.config.ts
+**/rollup.config.js
+
+# Storybook
+**/storybook/
+**/.storybook/
+
+# Logs
+**/logs/
+**/*.log

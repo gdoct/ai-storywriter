@@ -13,6 +13,7 @@ from .classify_input import classify_input
 from .create_scenario import create_scenario
 from .explain_scenario import explain_scenario
 from .generate_character import generate_character
+from .generate_followup_questions import generate_followup_questions
 from .generate_location import generate_location
 from .generic_chat import generic_chat
 from .modify_scenario import modify_scenario
@@ -26,6 +27,7 @@ TOOLS: Dict[str, Callable[..., Any]] = {
 	"create_scenario": create_scenario,
 	"explain_scenario": explain_scenario,
 	"generate_character": generate_character,
+	"generate_followup_questions": generate_followup_questions,
 	"generate_location": generate_location,
 	"generic_chat": generic_chat,
 	"modify_scenario": modify_scenario,

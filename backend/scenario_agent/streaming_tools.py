@@ -183,9 +183,11 @@ class StreamingScenarioTools:
     
     @staticmethod
     def _build_explain_prompt(parameters: Dict[str, Any]) -> str:
-        """Build prompt for explain_scenario tool"""
+        """Build prompt for explain_scenario tool with enhanced targeting"""
         user_input = parameters.get("user_input", "")
         scenario = parameters.get("scenario", {})
+        target = parameters.get("target", "general")
+        focus = parameters.get("focus", "")
         
         # Build comprehensive scenario context
         scenario_details = []
@@ -243,30 +245,45 @@ class StreamingScenarioTools:
         
         scenario_context = "\n".join(scenario_details) if scenario_details else "No scenario details available."
         
-        return f"""You are an expert story analyst and scenario consultant. You have deep expertise in storytelling, character development, plot structure, and narrative techniques.
+        # Add target-specific focus guidance
+        focus_guidance = ""
+        if target == "character":
+            focus_guidance = "\n\n**PRIMARY FOCUS:** Character analysis - personality, development, motivations, relationships, and role in the story."
+        elif target == "location":
+            focus_guidance = "\n\n**PRIMARY FOCUS:** Location analysis - atmosphere, significance, world-building, and impact on the narrative."
+        elif target == "backstory":
+            focus_guidance = "\n\n**PRIMARY FOCUS:** Background and lore analysis - world history, context, and foundational elements."
+        elif target == "storyarc":
+            focus_guidance = "\n\n**PRIMARY FOCUS:** Plot and structure analysis - narrative progression, pacing, conflicts, and story flow."
+        elif target == "writingStyle":
+            focus_guidance = "\n\n**PRIMARY FOCUS:** Style and tone analysis - genre conventions, narrative voice, and stylistic elements."
+        
+        return f"""You are an expert story analyst and scenario consultant specializing in {target} analysis. You have deep expertise in storytelling, character development, plot structure, and narrative techniques.
 
 **SCENARIO DETAILS:**
 {scenario_context}
 
 **USER QUESTION:** "{user_input}"
+**ANALYSIS TARGET:** {target}{focus_guidance}
 
 Please provide a detailed, insightful explanation that addresses the user's question about this scenario. Use your expertise to:
 
-- Analyze the story elements thoroughly
-- Explain how different components work together  
-- Identify strengths, potential issues, or opportunities
+- Analyze the {target} elements thoroughly with special attention
+- Explain how the {target} components work with other story elements  
+- Identify strengths, potential issues, or opportunities in the {target} area
 - Provide specific examples from the scenario
 - Offer constructive insights and suggestions when relevant
 - Be comprehensive yet clear and engaging
 
-Focus specifically on what the user is asking about, but feel free to connect it to other relevant aspects of the scenario."""
+Focus primarily on the {target} aspects while connecting to other relevant scenario elements when helpful."""
 
     @staticmethod
     def _build_chat_prompt(parameters: Dict[str, Any]) -> str:
-        """Build prompt for generic_chat tool"""
+        """Build prompt for generic_chat tool with enhanced targeting"""
         user_input = parameters.get("user_input", "")
         scenario = parameters.get("scenario", {})
         context = parameters.get("context", "You are a helpful assistant.")
+        target = parameters.get("target", "general")
         
         # Build conversational prompt with scenario context
         if scenario:
@@ -274,23 +291,43 @@ Focus specifically on what the user is asking about, but feel free to connect it
         else:
             scenario_context = "\nNo current scenario is loaded."
         
+        # Add target-specific context if not general
+        target_context = ""
+        if target != "general":
+            target_context = f"\nConversation focus: {target} elements"
+        
         return f"""
-{context}
+{context}{target_context}
 
 {scenario_context}
 
 User message: "{user_input}"
 
-Please respond naturally and helpfully. If the user wants to work with scenarios, guide them appropriately. If they're just chatting, engage naturally while staying in your role as a scenario assistant.
+Please respond naturally and helpfully. If the user wants to work with scenarios, guide them appropriately with attention to {target} aspects. If they're just chatting, engage naturally while staying in your role as a scenario assistant.
 """
 
     @staticmethod
     def _build_modify_prompt(parameters: Dict[str, Any]) -> str:
-        """Build prompt for modify_scenario tool"""
+        """Build prompt for modify_scenario tool with enhanced targeting"""
         user_input = parameters.get("user_input", "")
         scenario = parameters.get("scenario", {})
+        target = parameters.get("target", "general")
+        focus = parameters.get("focus", "")
         
         scenario_json = json.dumps(scenario, indent=2)
+        
+        # Add target-specific guidance
+        target_guidance = ""
+        if target == "character":
+            target_guidance = "\n\n**FOCUS:** Pay special attention to character-related modifications. Ensure character changes maintain consistency with their established personality and role in the story."
+        elif target == "location":
+            target_guidance = "\n\n**FOCUS:** Pay special attention to location-related modifications. Ensure location changes enhance the story's atmosphere and are logically integrated."
+        elif target == "backstory":
+            target_guidance = "\n\n**FOCUS:** Pay special attention to backstory modifications. Ensure changes to the world history and background are consistent and enhance the overall narrative."
+        elif target == "storyarc":
+            target_guidance = "\n\n**FOCUS:** Pay special attention to story progression modifications. Ensure plot changes maintain narrative coherence and logical flow."
+        elif target == "writingStyle":
+            target_guidance = "\n\n**FOCUS:** Pay special attention to writing style modifications. Ensure genre and tone changes are consistent throughout all scenario elements."
         
         return f"""You are a professional story consultant and scenario modifier. Your task is to modify the given scenario based on the user's request and return a complete, valid JSON scenario.
 
@@ -300,10 +337,11 @@ Please respond naturally and helpfully. If the user wants to work with scenarios
 ```
 
 **USER MODIFICATION REQUEST:** "{user_input}"
+**TARGET AREA:** {target}{target_guidance}
 
 **INSTRUCTIONS:**
 1. Carefully analyze the user's request to understand what changes they want
-2. Modify the scenario appropriately while maintaining story coherence
+2. Focus primarily on the {target} aspects while maintaining overall story coherence
 3. If adding characters, give them proper names, backstories, personalities, and roles
 4. If adding locations, provide detailed descriptions and significance
 5. If changing plot elements, ensure they fit logically with existing elements
@@ -349,14 +387,81 @@ Return the complete modified scenario JSON:"""
 
     @staticmethod  
     def _build_create_prompt(parameters: Dict[str, Any]) -> str:
-        """Build prompt for create_scenario tool"""
+        """Build prompt for create_scenario tool with enhanced targeting"""
         user_input = parameters.get("user_input", "")
         creation_info = parameters.get("creation_info", {})
+        target = parameters.get("target", "scenario")
         
-        return f"""
+        # Customize prompt based on target
+        if target == "character":
+            return f"""
+Create a new character based on the user's request: "{user_input}"
+
+This character will be added to an existing scenario. Focus on creating a well-developed character with:
+
+Response format (JSON):
+{{
+    "title": "Existing Scenario Title (keep current)",
+    "synopsis": "Existing synopsis (keep current)", 
+    "writingStyle": {{
+        "genre": "existing genre",
+        "tone": "existing tone"
+    }},
+    "characters": [
+        {{
+            "name": "New Character Name",
+            "backstory": "Detailed character background",
+            "personality": "Character traits and motivations",
+            "appearance": "Physical description",
+            "role": "Character's role in the story"
+        }}
+    ],
+    "locations": [],
+    "backstory": "Existing backstory (keep current)",
+    "storyarc": "Existing story arc (keep current)",
+    "notes": "Added new character as requested"
+}}
+"""
+        elif target == "location":
+            return f"""
+Create a new location based on the user's request: "{user_input}"
+
+This location will be added to an existing scenario. Focus on creating a vivid, atmospheric location with:
+
+Response format (JSON):
+{{
+    "title": "Existing Scenario Title (keep current)",
+    "synopsis": "Existing synopsis (keep current)", 
+    "writingStyle": {{
+        "genre": "existing genre",
+        "tone": "existing tone"
+    }},
+    "characters": [],
+    "locations": [
+        {{
+            "name": "New Location Name",
+            "description": "Detailed location description",
+            "atmosphere": "Mood and feeling of the place",
+            "significance": "Importance to the story"
+        }}
+    ],
+    "backstory": "Existing backstory (keep current)",
+    "storyarc": "Existing story arc (keep current)",
+    "notes": "Added new location as requested"
+}}
+"""
+        else:
+            # Default full scenario creation
+            focus_hint = ""
+            if creation_info.get("focus") == "character_creation":
+                focus_hint = "\n\nPay special attention to creating compelling, well-developed characters."
+            elif creation_info.get("focus") == "location_creation":
+                focus_hint = "\n\nPay special attention to creating vivid, atmospheric locations."
+                
+            return f"""
 Create a complete new scenario based on the user's request: "{user_input}"
 
-Creation context: {json.dumps(creation_info, indent=2)}
+Creation context: {json.dumps(creation_info, indent=2)}{focus_hint}
 
 Generate a full scenario including all necessary components.
 
@@ -373,13 +478,16 @@ Response format (JSON):
             "name": "Character Name",
             "backstory": "Character background",
             "personality": "Character traits",
+            "appearance": "Physical description",
             "role": "Character's role"
         }}
     ],
     "locations": [
         {{
             "name": "Location Name",
-            "description": "Location description"
+            "description": "Location description",
+            "atmosphere": "Mood and feeling",
+            "significance": "Story importance"
         }}
     ],
     "backstory": "World/setting background",

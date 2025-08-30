@@ -3,7 +3,7 @@ import { llmCompletionRequestMessage } from '../types/LLMTypes';
 import { GeneratedStory, Scenario } from '../types/ScenarioTypes';
 import * as llmPromptService from './llmPromptService';
 import { createRewriteStoryArcPrompt, createStoryArcPrompt, createSummaryPrompt } from './llmPromptService';
-import { streamChatCompletionWithStatus, streamChatCompletionWithThinking } from './llmService';
+import { streamSimpleChatCompletionWithStatus, streamChatCompletionWithThinking } from './llmService';
 import { getSelectedModel } from './modelSelection';
 import { getShowThinkingSetting } from './settings';
 
@@ -32,12 +32,14 @@ export async function streamPromptCompletionWithStatus({
   const promptObj: llmCompletionRequestMessage = {
     userMessage: prompt
   };
-  await streamChatCompletionWithStatus(
+  await streamSimpleChatCompletionWithStatus(
     promptObj,
     (text, isDone) => {
       if (isDone) {
-        fullText = text;
+        // Final call - completion signal only
+        // fullText already contains the complete text from streaming
       } else {
+        // Incremental chunk during streaming
         fullText += text;
         if (onProgress) {
           onProgress(text);
@@ -72,7 +74,7 @@ export async function generateChapter(
 ): Promise<string> {
   const promptObj = llmPromptService.createChapterPrompt(scenario, chapterNumber, previousChapters);
   let fullText = '';
-  await streamChatCompletionWithStatus(
+  await streamSimpleChatCompletionWithStatus(
     promptObj,
     (text) => {
       if (options.onProgress) options.onProgress(text);
@@ -104,7 +106,7 @@ export async function generateChapterSummary(scenario: Scenario,
   // No createChapterSummaryPrompt exists, so use inline prompt
   const promptObj = createSummaryPrompt(scenario, chapterText);
   let fullText = '';
-  await streamChatCompletionWithStatus(
+  await streamSimpleChatCompletionWithStatus(
     promptObj,
     (text) => {
       if (options.onProgress) options.onProgress(text);
@@ -179,12 +181,14 @@ export async function generateStory(
           setShowAIBusyModal
         );
       } else {
-        await streamChatCompletionWithStatus(
+        await streamSimpleChatCompletionWithStatus(
           promptObj,
           (text, isDone) => {
             if (isDone) {
-              fullText = text;
+              // Final call - completion signal only
+              // fullText already contains the complete text from streaming
             } else {
+              // Incremental chunk during streaming
               fullText += text;
               if (options.onProgress) options.onProgress(text);
             }
@@ -233,13 +237,20 @@ export async function generateBackstory(
     (async () => {
       try {
         const selectedModel = getSelectedModel();
-        await streamChatCompletionWithStatus(
+        
+        // DEBUG: Log parameters being sent
+        console.log('[GENERATE BACKSTORY DEBUG]');
+        console.log('Selected model:', selectedModel);
+        console.log('Temperature:', options.temperature);
+        console.log('Scenario:', scenario);
+        console.log('Prompt object:', promptObj);
+        
+        await streamSimpleChatCompletionWithStatus(
           promptObj,
           (text, isDone) => {
             if (isDone) {
-              // Final call with complete text
-              fullText = text;
-              if (options.onProgress) options.onProgress(text);
+              // Final call - completion signal only
+              // fullText already contains the complete text from streaming
             } else {
               // Incremental chunk during streaming
               fullText += text;
@@ -279,41 +290,61 @@ export async function generateStoryTitle(scenario: Scenario,
 ): Promise<{ result: Promise<string>; cancelGeneration: () => void }> {
   const promptObj = llmPromptService.createStoryTitlePrompt(scenario);
   const selectedModel = getSelectedModel();
+  const abortController = new AbortController();
+  let cancelGeneration = () => { abortController.abort(); };
   let fullText = '';
-  await streamChatCompletionWithStatus(
-    promptObj,
-    (text, isDone) => {
-      if (isDone) {
-        fullText = text;
-      } else {
-        fullText += text;
-        if (options.onProgress) options.onProgress(text);
+  
+  const resultPromise = new Promise<string>((resolve, reject) => {
+    (async () => {
+      try {
+        await streamSimpleChatCompletionWithStatus(
+          promptObj,
+          (text, isDone) => {
+            if (isDone) {
+              // Final call - completion signal only
+              // fullText already contains the complete text from streaming
+            } else {
+              // Incremental chunk during streaming
+              fullText += text;
+              if (options.onProgress) options.onProgress(text);
+            }
+          },
+          { 
+            model: selectedModel || undefined,
+            temperature: options.temperature, 
+            max_tokens: 100,
+            signal: abortController.signal
+          },
+          setAiStatus,
+          setShowAIBusyModal
+        );
+        
+        // Remove markdown code block if present
+        if (fullText.startsWith('```')) {
+          fullText = fullText.slice(3);
+        }
+        if (fullText.endsWith('```')) {
+          fullText = fullText.slice(0, -3);
+        }
+        // Trim whitespace
+        fullText = fullText.trim();
+        // Ensure we return a non-empty string
+        if (fullText.length === 0) {
+          fullText = 'Untitled Story';
+        }
+        
+        resolve(fullText);
+      } catch (error) {
+        if (error instanceof Error && error.name === 'AbortError') {
+          reject(new Error('Generation cancelled'));
+        } else {
+          reject(error);
+        }
       }
-    },
-    { 
-      model: selectedModel || undefined,
-      temperature: options.temperature, 
-      max_tokens: 100,
-    },
-    setAiStatus,
-    setShowAIBusyModal
-  );
-  // Remove markdown code block if present
-  if (fullText.startsWith('```')) {
-    fullText = fullText.slice(3);
-  }
-  if (fullText.endsWith('```')) {
-    fullText = fullText.slice(0, -3);
-  }
-  // Trim whitespace and return
-  fullText = fullText.trim();
-  // Ensure we return a non-empty string
-  if (fullText.length === 0) {
-    fullText = 'Untitled Story';
-  }
+    })();
+  });
     
-  return { result: Promise.resolve(fullText), cancelGeneration: () => {}
-  };
+  return { result: resultPromise, cancelGeneration };
 }
 
 export async function generateScenarioSynopsis(scenario: Scenario,
@@ -327,41 +358,61 @@ export async function generateScenarioSynopsis(scenario: Scenario,
 ): Promise<{ result: Promise<string>; cancelGeneration: () => void }> {
   const promptObj = llmPromptService.createScenarioSynopsisPrompt(scenario);
   const selectedModel = getSelectedModel();
+  const abortController = new AbortController();
+  let cancelGeneration = () => { abortController.abort(); };
   let fullText = '';
-  await streamChatCompletionWithStatus(
-    promptObj,
-    (text, isDone) => {
-      if (isDone) {
-        fullText = text;
-      } else {
-        fullText += text;
-        if (options.onProgress) options.onProgress(text);
+  
+  const resultPromise = new Promise<string>((resolve, reject) => {
+    (async () => {
+      try {
+        await streamSimpleChatCompletionWithStatus(
+          promptObj,
+          (text, isDone) => {
+            if (isDone) {
+              // Final call - completion signal only
+              // fullText already contains the complete text from streaming
+            } else {
+              // Incremental chunk during streaming
+              fullText += text;
+              if (options.onProgress) options.onProgress(text);
+            }
+          },
+          { 
+            model: selectedModel || undefined,
+            temperature: options.temperature, 
+            max_tokens: 100,
+            signal: abortController.signal
+          },
+          setAiStatus,
+          setShowAIBusyModal
+        );
+        
+        // Remove markdown code block if present
+        if (fullText.startsWith('```')) {
+          fullText = fullText.slice(3);
+        }
+        if (fullText.endsWith('```')) {
+          fullText = fullText.slice(0, -3);
+        }
+        // Trim whitespace
+        fullText = fullText.trim();
+        // Ensure we return a non-empty string
+        if (fullText.length === 0) {
+          fullText = '(Synopsis unavailable)';
+        }
+        
+        resolve(fullText);
+      } catch (error) {
+        if (error instanceof Error && error.name === 'AbortError') {
+          reject(new Error('Generation cancelled'));
+        } else {
+          reject(error);
+        }
       }
-    },
-    { 
-      model: selectedModel || undefined,
-      temperature: options.temperature, 
-      max_tokens: 100,
-    },
-    setAiStatus,
-    setShowAIBusyModal
-  );
-  // Remove markdown code block if present
-  if (fullText.startsWith('```')) {
-    fullText = fullText.slice(3);
-  }
-  if (fullText.endsWith('```')) {
-    fullText = fullText.slice(0, -3);
-  }
-  // Trim whitespace and return
-  fullText = fullText.trim();
-  // Ensure we return a non-empty string
-  if (fullText.length === 0) {
-    fullText = '(Synopsis unavailable)';
-  }
+    })();
+  });
     
-  return { result: Promise.resolve(fullText), cancelGeneration: () => {}
-  };
+  return { result: resultPromise, cancelGeneration };
 }
 
 /**
@@ -385,13 +436,12 @@ export async function rewriteBackstory(
       try {
         const selectedModel = getSelectedModel();
         let fullText = '';
-        await streamChatCompletionWithStatus(
+        await streamSimpleChatCompletionWithStatus(
         promptObj,
         (text, isDone) => {
           if (isDone) {
-            // Final call with complete text
-            fullText = text;
-            if (options.onProgress) options.onProgress(text);
+            // Final call - completion signal only
+            // fullText already contains the complete text from streaming
           } else {
             // Incremental chunk during streaming
             fullText += text;
@@ -442,12 +492,14 @@ export async function rewriteStoryArc(
       const selectedModel = getSelectedModel();
       let fullText = '';
       
-      await streamChatCompletionWithStatus(
+      await streamSimpleChatCompletionWithStatus(
         prompt,
         (text, isDone) => {
           if (isDone) {
-            fullText = text;
+            // Final call - completion signal only
+            // fullText already contains the complete text from streaming
           } else {
+            // Incremental chunk during streaming
             fullText += text;
             if (options.onProgress) options.onProgress(text);
           }
@@ -494,12 +546,14 @@ export async function generateRandomWritingStyle(
       try {
         const selectedModel = getSelectedModel();
         let fullText = '';
-        await streamChatCompletionWithStatus(
+        await streamSimpleChatCompletionWithStatus(
         promptObj,
         (text, isDone) => {
           if (isDone) {
-            fullText = text;
+            // Final call - completion signal only
+            // fullText already contains the complete text from streaming
           } else {
+            // Incremental chunk during streaming
             fullText += text;
             if (options.onProgress) options.onProgress(text);
           }
@@ -552,12 +606,14 @@ export async function generateRandomCharacter(
       try {
         const selectedModel = getSelectedModel();
         let fullText = '';
-        await streamChatCompletionWithStatus(
+        await streamSimpleChatCompletionWithStatus(
         promptObj,
         (text, isDone) => {
           if (isDone) {
-            fullText = text;
+            // Final call - completion signal only
+            // fullText already contains the complete text from streaming
           } else {
+            // Incremental chunk during streaming
             fullText += text;
             if (options.onProgress) options.onProgress(text);
           }
@@ -630,12 +686,14 @@ export async function generateStoryArc(
       try {
       const selectedModel = getSelectedModel();
       let fullText = '';
-      await streamChatCompletionWithStatus(
+      await streamSimpleChatCompletionWithStatus(
         prompt,
         (text, isDone) => {
           if (isDone) {
-            fullText = text;
+            // Final call - completion signal only
+            // fullText already contains the complete text from streaming
           } else {
+            // Incremental chunk during streaming
             fullText += text;
             if (options.onProgress) options.onProgress(text);
           }
@@ -679,12 +737,12 @@ export async function generateNotes(
     (async () => {
       try {
       const selectedModel = getSelectedModel();
-      await streamChatCompletionWithStatus(
+      await streamSimpleChatCompletionWithStatus(
         promptObj,
         (text, isDone) => {
           if (isDone) {
-            fullText = text;
-            if (options.onProgress) options.onProgress(text);
+            // Final call - completion signal only
+            // fullText already contains the complete text from streaming
           } else {
             // Incremental chunk during streaming
             fullText += text;

@@ -3,11 +3,15 @@ import { getToken } from './tokenUtils';
 import { Scenario } from '../types/ScenarioTypes';
 
 export interface AgentMessage {
-  type: 'chat' | 'status' | 'tool_call';
+  type: 'chat' | 'status' | 'tool_call' | 'tool_result';
   content: string;
   // New envelope format fields
   node?: string;
   streaming?: boolean;
+  // Tool result fields (for tool_result type)
+  action?: string;
+  scenario?: any;
+  updated_scenario?: any;
   // Legacy metadata format (for backward compatibility)
   metadata?: {
     node?: string;
@@ -45,7 +49,7 @@ export async function streamAgentResponse(
   abortSignal?: AbortSignal
 ): Promise<void> {
   try {
-    const response = await fetch('/api/agent/scenario/stream', {
+    const response = await fetch('/api/streaming_agent/scenario/stream', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -146,7 +150,7 @@ export async function streamAgentResponseRealTime(
   abortSignal?: AbortSignal
 ): Promise<void> {
   try {
-    const response = await fetch('/api/agent/scenario/stream', {
+    const response = await fetch('/api/streaming_agent/scenario/stream', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -221,7 +225,7 @@ export async function streamAgentResponseRealTime(
 export async function checkAgentHealth(): Promise<{ status: string; agent?: string; features?: string[]; error?: string }> {
   try {
     // Check new streaming endpoint first
-    const streamingResponse = await axios.get('/api/agent/scenario/stream/health');
+    const streamingResponse = await axios.get('/api/streaming_agent/scenario/stream/health');
     return streamingResponse.data;
   } catch (error) {
     // Fallback to original endpoint

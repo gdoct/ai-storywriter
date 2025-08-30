@@ -112,10 +112,10 @@ export const ChatAgent: React.FC<ChatAgentProps> = ({ scenario, onScenarioUpdate
       const onAgentMessage = (message: AgentMessage) => {
         if (message.type === 'chat') {
           // Handle chat messages - display as chat bubbles
-          console.log('Received chat message:', message.content, 'streaming:', message.metadata?.streaming);
+          //console.log('Received chat message:', message.content, 'streaming:', message.metadata?.streaming);
           if (message.metadata?.streaming || message.streaming) {
             // For streaming messages, accumulate content
-            console.log('Accumulating streaming chunk:', message.content);
+            //console.log('Accumulating streaming chunk:', message.content);
             currentContent += message.content;
           } else {
             // For complete messages, replace content
@@ -214,6 +214,59 @@ export const ChatAgent: React.FC<ChatAgentProps> = ({ scenario, onScenarioUpdate
             }
             return updated;
           });
+        } else if (message.type === 'tool_result') {
+          // Handle tool_result messages from streaming tools
+          if (message.action === 'create_scenario' && onScenarioUpdate) {
+            const newScenario = message.scenario;
+            if (newScenario) {
+              // Update the parent component with the newly created scenario
+              onScenarioUpdate(newScenario);
+              
+              // Add a success message to the chat instead of showing raw JSON
+              setMessages(prev => {
+                const updated = [...prev];
+                for (let i = updated.length - 1; i >= 0; i--) {
+                  if (updated[i].role === 'assistant') {
+                    updated[i] = { 
+                      ...updated[i], 
+                      content: currentContent || "✅ New scenario created successfully! The scenario has been loaded into your editor.",
+                      toolCalls: toolCalls,
+                      followUpQuestions: message.metadata?.follow_up_questions || [
+                        "Tell me more about the main character",
+                        "Explain the story's conflict",
+                        "Suggest some plot twists"
+                      ]
+                    };
+                    break;
+                  }
+                }
+                return updated;
+              });
+            }
+          } else if (message.action === 'modify_scenario' && onScenarioUpdate) {
+            const updatedScenario = message.updated_scenario;
+            if (updatedScenario) {
+              // Update the scenario in the parent component
+              onScenarioUpdate(updatedScenario);
+              
+              // Add a success message to the chat instead of showing raw JSON
+              setMessages(prev => {
+                const updated = [...prev];
+                for (let i = updated.length - 1; i >= 0; i--) {
+                  if (updated[i].role === 'assistant') {
+                    updated[i] = { 
+                      ...updated[i], 
+                      content: currentContent || "✅ Scenario updated successfully! Your changes have been applied.",
+                      toolCalls: toolCalls,
+                      followUpQuestions: message.metadata?.follow_up_questions
+                    };
+                    break;
+                  }
+                }
+                return updated;
+              });
+            }
+          }
         }
       };
 
@@ -374,6 +427,55 @@ export const ChatAgent: React.FC<ChatAgentProps> = ({ scenario, onScenarioUpdate
                 }
                 return updated;
               });
+            } else if (message.type === 'tool_result') {
+              // Handle tool_result messages from streaming tools
+              if (message.action === 'create_scenario' && onScenarioUpdate) {
+                const newScenario = message.scenario;
+                if (newScenario) {
+                  onScenarioUpdate(newScenario);
+                  
+                  setMessages(prev => {
+                    const updated = [...prev];
+                    for (let i = updated.length - 1; i >= 0; i--) {
+                      if (updated[i].role === 'assistant') {
+                        updated[i] = { 
+                          ...updated[i], 
+                          content: currentContent || "✅ New scenario created successfully! The scenario has been loaded into your editor.",
+                          toolCalls: toolCalls,
+                          followUpQuestions: message.metadata?.follow_up_questions || [
+                            "Tell me more about the main character",
+                            "Explain the story's conflict", 
+                            "Suggest some plot twists"
+                          ]
+                        };
+                        break;
+                      }
+                    }
+                    return updated;
+                  });
+                }
+              } else if (message.action === 'modify_scenario' && onScenarioUpdate) {
+                const updatedScenario = message.updated_scenario;
+                if (updatedScenario) {
+                  onScenarioUpdate(updatedScenario);
+                  
+                  setMessages(prev => {
+                    const updated = [...prev];
+                    for (let i = updated.length - 1; i >= 0; i--) {
+                      if (updated[i].role === 'assistant') {
+                        updated[i] = { 
+                          ...updated[i], 
+                          content: currentContent || "✅ Scenario updated successfully! Your changes have been applied.",
+                          toolCalls: toolCalls,
+                          followUpQuestions: message.metadata?.follow_up_questions
+                        };
+                        break;
+                      }
+                    }
+                    return updated;
+                  });
+                }
+              }
             }
           };
 
@@ -487,6 +589,11 @@ export const ChatAgent: React.FC<ChatAgentProps> = ({ scenario, onScenarioUpdate
                     if (updatedScenario) {
                       onScenarioUpdate(updatedScenario);
                     }
+                  } else if (toolCall.action === 'create_scenario' && onScenarioUpdate) {
+                    const newScenario = toolCall.parameters?.scenario;
+                    if (newScenario) {
+                      onScenarioUpdate(newScenario);
+                    }
                   }
                 }
                 
@@ -505,6 +612,55 @@ export const ChatAgent: React.FC<ChatAgentProps> = ({ scenario, onScenarioUpdate
                   }
                   return updated;
                 });
+              } else if (message.type === 'tool_result') {
+                // Handle tool_result messages from streaming tools
+                if (message.action === 'create_scenario' && onScenarioUpdate) {
+                  const newScenario = message.scenario;
+                  if (newScenario) {
+                    onScenarioUpdate(newScenario);
+                    
+                    setMessages(prev => {
+                      const updated = [...prev];
+                      for (let i = updated.length - 1; i >= 0; i--) {
+                        if (updated[i].role === 'assistant') {
+                          updated[i] = { 
+                            ...updated[i], 
+                            content: currentContent || "✅ New scenario created successfully! The scenario has been loaded into your editor.",
+                            toolCalls: toolCalls,
+                            followUpQuestions: message.metadata?.follow_up_questions || [
+                              "Tell me more about the main character",
+                              "Explain the story's conflict", 
+                              "Suggest some plot twists"
+                            ]
+                          };
+                          break;
+                        }
+                      }
+                      return updated;
+                    });
+                  }
+                } else if (message.action === 'modify_scenario' && onScenarioUpdate) {
+                  const updatedScenario = message.updated_scenario;
+                  if (updatedScenario) {
+                    onScenarioUpdate(updatedScenario);
+                    
+                    setMessages(prev => {
+                      const updated = [...prev];
+                      for (let i = updated.length - 1; i >= 0; i--) {
+                        if (updated[i].role === 'assistant') {
+                          updated[i] = { 
+                            ...updated[i], 
+                            content: currentContent || "✅ Scenario updated successfully! Your changes have been applied.",
+                            toolCalls: toolCalls,
+                            followUpQuestions: message.metadata?.follow_up_questions
+                          };
+                          break;
+                        }
+                      }
+                      return updated;
+                    });
+                  }
+                }
               }
             };
 
@@ -691,6 +847,11 @@ export const ChatAgent: React.FC<ChatAgentProps> = ({ scenario, onScenarioUpdate
               if (updatedScenario) {
                 onScenarioUpdate(updatedScenario);
               }
+            } else if (toolCall.action === 'create_scenario' && onScenarioUpdate) {
+              const newScenario = toolCall.parameters?.scenario;
+              if (newScenario) {
+                onScenarioUpdate(newScenario);
+              }
             }
           }
           
@@ -709,6 +870,55 @@ export const ChatAgent: React.FC<ChatAgentProps> = ({ scenario, onScenarioUpdate
             }
             return updated;
           });
+        } else if (message.type === 'tool_result') {
+          // Handle tool_result messages from streaming tools
+          if (message.action === 'create_scenario' && onScenarioUpdate) {
+            const newScenario = message.scenario;
+            if (newScenario) {
+              onScenarioUpdate(newScenario);
+              
+              setMessages(prev => {
+                const updated = [...prev];
+                for (let i = updated.length - 1; i >= 0; i--) {
+                  if (updated[i].role === 'assistant') {
+                    updated[i] = { 
+                      ...updated[i], 
+                      content: currentContent || "✅ New scenario created successfully! The scenario has been loaded into your editor.",
+                      toolCalls: toolCalls,
+                      followUpQuestions: message.metadata?.follow_up_questions || [
+                        "Tell me more about the main character",
+                        "Explain the story's conflict", 
+                        "Suggest some plot twists"
+                      ]
+                    };
+                    break;
+                  }
+                }
+                return updated;
+              });
+            }
+          } else if (message.action === 'modify_scenario' && onScenarioUpdate) {
+            const updatedScenario = message.updated_scenario;
+            if (updatedScenario) {
+              onScenarioUpdate(updatedScenario);
+              
+              setMessages(prev => {
+                const updated = [...prev];
+                for (let i = updated.length - 1; i >= 0; i--) {
+                  if (updated[i].role === 'assistant') {
+                    updated[i] = { 
+                      ...updated[i], 
+                      content: currentContent || "✅ Scenario updated successfully! Your changes have been applied.",
+                      toolCalls: toolCalls,
+                      followUpQuestions: message.metadata?.follow_up_questions
+                    };
+                    break;
+                  }
+                }
+                return updated;
+              });
+            }
+          }
         }
       };
 

@@ -27,6 +27,9 @@ const isDevMode = window.location.port === '3000';
 const LLM_PROXY_ENDPOINT = isDevMode 
   ? 'http://localhost:5000/api/proxy/llm/v1/chat/completions'
   : '/api/proxy/llm/v1/chat/completions';
+const LLM_FRONTEND_ENDPOINT = isDevMode 
+  ? 'http://localhost:5000/api/proxy/llm/v1/frontend/chat/completions'
+  : '/api/proxy/llm/v1/frontend/chat/completions';
 
 /**
  * Streams chat completion from the LLM backend, calling onStream for each content chunk.
@@ -60,6 +63,112 @@ export async function handle409Error(response: Response, setAiStatus: (s: AI_STA
 }
 
 /**
+ * Simple streaming chat completion for AI buttons (synopsis, title generation)
+ * Uses the dedicated simple endpoint to avoid agent processing interference.
+ * @param prompt
+ * @param onStream
+ * @param options
+ * @param setAiStatus
+ * @param setShowAIBusyModal
+ */
+export async function streamSimpleChatCompletionWithStatus(
+  prompt: llmCompletionRequestMessage,
+  onStream: LLMStreamCallback,
+  options: LLMChatOptions = {},
+  setAiStatus: (s: AI_STATUS) => void,
+  setShowAIBusyModal: (b: boolean) => void
+): Promise<void> {
+  try {
+    const messages = buildMessagesFromRequest(prompt);
+    const payload: any = {
+      model: options.model || 'google/gemma-3-4b',
+      messages,
+      temperature: options.temperature ?? 0.8,
+      max_tokens: options.max_tokens ?? 1024,
+    };
+    
+    // Only include keep_alive if explicitly requested
+    if (options.keepAlive) {
+      payload.keep_alive = options.keepAlive;
+    }
+    
+    if (!options.model || options.model.trim() === '') {
+      throw new Error('Model must be specified');
+    }
+    
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json'
+    };
+    
+    const token = getToken();
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
+    
+    const response = await fetch(LLM_FRONTEND_ENDPOINT, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(payload),
+      signal: options.signal,
+    });
+    
+    await handle409Error(response, setAiStatus, setShowAIBusyModal);
+    
+    // Handle other error status codes
+    if (!response.ok) {
+      let errorMessage = `Request failed with status ${response.status}`;
+      try {
+        const errorData = await response.json();
+        if (response.status === 402) {
+          // Insufficient credits error
+          errorMessage = errorData.error || 'Insufficient credits to complete this request. Please purchase more credits to continue.';
+        } else {
+          errorMessage = errorData.error || errorData.message || errorMessage;
+        }
+      } catch (e) {
+        // If we can't parse the error response, use the default message
+        console.error('Error parsing simple chat service error response:', e);
+      }
+      throw new Error(errorMessage);
+    }
+    
+    if (!response.body) throw new Error('No response body');
+    const reader = response.body.getReader();
+    let done = false;
+    let assistantText = '';
+    while (!done) {
+      const { value, done: doneReading } = await reader.read();
+      done = doneReading;
+      if (value) {
+        const chunk = new TextDecoder().decode(value);
+        chunk.split('\n').forEach(line => {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6);
+            if (data === '[DONE]') return;
+            try {
+              const parsed = JSON.parse(data);
+              if (parsed.choices && parsed.choices[0] && parsed.choices[0].delta && parsed.choices[0].delta.content) {
+                const content = parsed.choices[0].delta.content;
+                assistantText += content;
+                onStream(content, false);
+              }
+            } catch (e) {
+              // Ignore malformed lines
+              console.error('Error parsing simple SSE chunk:', e);
+            }
+          }
+        });
+      }
+    }
+    onStream('', true);  // Signal completion without sending duplicate text
+  } catch (err) {
+    setAiStatus(AI_STATUS.IDLE);
+    setShowAIBusyModal(false);
+    throw err;
+  }
+}
+
+/**
  * Streaming chat completion with AI status context handling.
  * @param prompt
  * @param onStream
@@ -77,7 +186,7 @@ export async function streamChatCompletionWithStatus(
   try {
     const messages = buildMessagesFromRequest(prompt);
     const payload: any = {
-      model: options.model || '',
+      model: options.model || 'google/gemma-3-4b',
       messages,
       temperature: options.temperature ?? 0.8,
       max_tokens: options.max_tokens ?? 1024,

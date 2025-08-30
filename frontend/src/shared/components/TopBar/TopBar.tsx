@@ -152,7 +152,7 @@ const TopBar: React.FC = () => {
         >
           {!isMarketingPage && (
             <img
-              src="/storywriter-logo-48.png"
+              src="/logo-transparent.png"
               alt="StoryWriter Logo"
               style={{
                 width: '36px',

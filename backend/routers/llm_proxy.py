@@ -76,6 +76,107 @@ async def proxy_models(request: Request, current_user: dict = Depends(get_curren
             detail=str(e)
         )
 
+@router.post("/proxy/llm/v1/frontend/chat/completions")
+async def frontend_ai_chat_completions(
+    completion_request: LLMCompletionRequest,
+    request: Request,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Clean, simple streaming endpoint specifically for frontend AI buttons.
+    Bypasses complex agent processing and uses direct LM Studio communication.
+    """
+    start_time = time.time()
+    user_id = current_user.get('user_id') or current_user.get('id') or current_user.get('username')
+    
+    logger.info(f"[FRONTEND AI] Request from user: {user_id}")
+    logger.info(f"[FRONTEND AI] Model: {completion_request.model}, Temp: {completion_request.temperature}, Max tokens: {completion_request.max_tokens}")
+    
+    try:
+        # Extract BYOK headers if present
+        byok_headers = LLMProxyService.extract_byok_headers(dict(request.headers))
+        
+        # Get user's LLM mode and service
+        llm_mode = UserPreferencesRepository.get_user_llm_mode(user_id)
+        service, provider, mode = LLMProxyService.get_llm_service_for_user(user_id, byok_headers)
+        
+        # Basic credit check for member mode
+        if llm_mode == 'member':
+            request_text = " ".join([msg.content for msg in completion_request.messages if isinstance(msg.content, str)])
+            estimated_tokens = count_tokens(request_text, completion_request.model)
+            current_balance = UserRepository.get_user_credit_balance(user_id)
+            
+            if current_balance < estimated_tokens:
+                raise HTTPException(
+                    status_code=status.HTTP_402_PAYMENT_REQUIRED,
+                    detail=f'Insufficient credits. Need {estimated_tokens}, have {current_balance}.'
+                )
+
+        async def generate():
+            logger.info(f"[FRONTEND AI] Starting direct LM Studio request")
+            
+            try:
+                # Build direct request to LM Studio (bypassing the buggy service layer)
+                import aiohttp
+                
+                lm_studio_url = "http://192.168.32.1:1234/v1/chat/completions"
+                payload = {
+                    'model': completion_request.model,
+                    'messages': [{"role": msg.role, "content": msg.content} for msg in completion_request.messages],
+                    'temperature': completion_request.temperature,
+                    'max_tokens': completion_request.max_tokens,
+                    'stream': True
+                }
+                
+                logger.info(f"[FRONTEND AI] Sending to LM Studio: {lm_studio_url}")
+                
+                async with aiohttp.ClientSession() as session:
+                    async with session.post(lm_studio_url, json=payload) as response:
+                        if response.status != 200:
+                            logger.error(f"[FRONTEND AI] LM Studio error: {response.status}")
+                            yield f"data: {{\"error\": \"LM Studio error: {response.status}\"}}\n\n"
+                            return
+                        
+                        logger.info(f"[FRONTEND AI] Got response from LM Studio, streaming...")
+                        
+                        # Stream the response directly from LM Studio
+                        async for line_bytes in response.content:
+                            if line_bytes:
+                                line = line_bytes.decode('utf-8').strip()
+                                if line.startswith('data: '):
+                                    # logger.info(f"[FRONTEND AI] Forwarding chunk: {line[:100]}")
+                                    yield f"{line}\n\n"
+                                elif line == 'data: [DONE]':
+                                    logger.info(f"[FRONTEND AI] Stream completed")
+                                    yield f"{line}\n\n"
+                                    break
+                        
+                logger.info(f"[FRONTEND AI] Stream finished successfully")
+                
+            except Exception as e:
+                logger.error(f"[FRONTEND AI] Stream error: {str(e)}")
+                logger.error(traceback.format_exc())
+                yield f"data: {{\"error\": \"Stream error: {str(e)}\"}}\n\n"
+
+        return StreamingResponse(
+            generate(), 
+            media_type="text/plain",
+            headers={
+                'Cache-Control': 'no-cache',
+                'Connection': 'keep-alive',
+            }
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"[FRONTEND AI] Setup error: {str(e)}")
+        logger.error(traceback.format_exc())
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"Frontend AI error: {str(e)}"
+        )
+
 @router.post("/proxy/llm/v1/chat/completions")
 async def proxy_chat_completions(
     completion_request: LLMCompletionRequest,

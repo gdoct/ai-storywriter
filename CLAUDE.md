@@ -18,16 +18,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Key Technologies
 - **Frontend**: React 19, TypeScript, Vite, React Router v6, Axios
-- **Backend**: FastAPI, SQLAlchemy, JWT authentication, Pydantic validation
+- **Backend**: FastAPI, SQLAlchemy, JWT authentication, Pydantic validation, LangGraph agents
 - **Database**: SQLite (with PostgreSQL support via SQLAlchemy)
 - **Testing**: Jest (frontend), Playwright (E2E), pytest (backend)
 - **UI Library**: Custom @drdata/ai-styles component library
-- **AI Integration**: OpenAI-compatible APIs (LM Studio, Ollama)
+- **AI Integration**: OpenAI-compatible APIs (LM Studio, Ollama), LangGraph multi-agent workflows
 
 ## TESTING and AUTHENTICATION
 if authentication is needed, use these credentials
 * frontend/playwright-tests/.testuser
 for a regular user that was created with the playwright test
+the file .env in the root of the solution may contain a bearer token with more access to the site.
 
 ## Common Development Commands
 
@@ -36,40 +37,8 @@ for a regular user that was created with the playwright test
 # Build frontend and install backend dependencies
 npm run build
 
-# Start frontend in development mode
-npm run dev:frontend
-
-# Start backend in development mode  
-npm run dev:backend
-
-# Start both frontend and backend concurrently
-npm run dev
-
 # Type checking
 npm run typecheck
-```
-
-### Frontend Commands (in frontend/)
-```bash
-# Development server
-npm start  # or npm run dev
-
-# Build for production
-npm run build
-
-# Type checking
-npm run typecheck
-
-# Linting and formatting
-npm run lint
-npm run lint:fix
-npm run prettier
-npm run format
-
-# Testing
-npm test                    # Jest unit tests
-npm run test:playwright     # Playwright E2E tests
-npm run test:playwright:ui  # Playwright with UI
 ```
 
 ### Backend Commands (in backend/)
@@ -111,57 +80,47 @@ npm run dev
 npm run build
 ```
 
-## Project-Specific Architecture Details
+## Component-Specific Documentation
 
-### Frontend Application Structure
-- **Route Management**: React Router v6 with role-based access control
-- **State Management**: React Context (AuthContext, AIStatusContext)
-- **Component Organization**: Feature-based folders under `src/components/`
-- **API Communication**: Axios with proxy to backend at `/api/*`
-- **Authentication**: JWT tokens with role-based permissions (admin, moderator, user)
+For detailed information about each component of the system, see:
+- **Frontend**: `frontend/CLAUDE.md` - React application architecture, routing, testing, component organization
+- **Backend**: `backend/CLAUDE.md` - FastAPI structure, LangGraph agents, authentication, database models
+- **Style Library**: `style-library/ai-styles/` - Custom component library with theme system and Storybook documentation
 
-### Backend API Structure
-- **Router Organization**: Feature-based routers in `routers/` directory
-- **Database**: SQLAlchemy ORM with SQLite default, PostgreSQL support
-- **Authentication**: JWT with FastAPI dependency injection and role-based access control
-- **Validation**: Pydantic models for request/response type safety
-- **Documentation**: Automatic OpenAPI/Swagger docs at `/api/docs`
-- **AI Integration**: Router for LLM services (OpenAI-compatible APIs)
+## High-Level Architecture Overview
 
-### Key Backend Routers
-- `auth` - User authentication and registration
-- `scenario` - Scenario CRUD operations
-- `chat` - AI chat interactions
-- `marketplace` - Story marketplace features
-- `settings` - LLM and application settings
-- `dashboard` - User dashboard and analytics
-- `payment` - Credit packages and transactions
-- `moderation` - Content moderation tools
-- `role` - Role and user management
-- `llm_proxy` - AI model communication
+### Frontend (React 19 + TypeScript)
+- Role-based component organization (anonymous/members/admin/shared)
+- React Router v6 with comprehensive RBAC
+- Context-based state management (AuthContext, AIStatusContext)
+- Custom @drdata/ai-styles component library integration
 
-### Database Models (SQLAlchemy)
-- Credit transaction system with usage tracking
-- Policy-based configuration management
-- User roles and permissions (admin, moderator, user)
-- Story and scenario management
+### Backend (FastAPI + LangGraph)
+- Feature-based router organization with 15+ specialized endpoints
+- SQLAlchemy ORM with comprehensive role-based access control
+- Advanced LangGraph multi-agent system for AI scenario generation
+- Multi-provider AI integration (LM Studio, Ollama, OpenAI-compatible)
 
-### Custom Component Library (@drdata/ai-styles)
-- **Theme System**: Dark/light theme support with ThemeProvider
-- **Component Architecture**: Modular components with CSS modules
-- **Key Components**: AiTextBox, IconButton, AiStoryReader, Dialog, etc.
-- **Testing**: Jest with React Testing Library
-- **Documentation**: Storybook for component demos
+### Database & Authentication
+- SQLite with PostgreSQL support via SQLAlchemy
+- JWT-based authentication with 365-day token expiration
+- Comprehensive RBAC (user/moderator/admin roles)
+- Credit transaction system with audit trails
 
 ## Development Workflow
 
 ### Running the Full Stack
 1. Install dependencies: `cd frontend && npm install && cd ../backend && pip install -r requirements.txt`
-2. The user is always running the backend server in a terminal window. Ask the user for feedback if required, and do not attempt to start the backend server.
-3. The user is always running the frontend server in a terminal window. Ask the user for feedback if required, and do not attempt to start the frontend server.
-To test a full e2e flow, run the playwright tests with
- `cd frontend && ./scripts/e2e-flow.sh`
-4. The user can run the Storybook server to view and test components: `cd style-library/storybook && npm run dev`
+
+**IMPORTANT**: The user typically has both frontend and backend development servers running in separate terminal windows:
+- **Backend server**: Running on port 5000 via `python app.py` or `uvicorn app:app --host 0.0.0.0 --port 5000 --reload`
+- **Frontend server**: Running on port 3000 via `npm start` or `npm run dev`
+
+**DO NOT** start or restart these servers without explicit user permission. Always ask the user first if you need to modify or restart development servers.
+
+Additional testing and development:
+- To test a full e2e flow, run the playwright tests with `cd frontend && ./scripts/e2e-flow.sh`
+- The user can run the Storybook server to view and test components: `cd style-library/storybook && npm run dev`
 
 ### Testing Strategy
 - **Frontend Unit Tests**: Jest with React Testing Library
@@ -175,14 +134,16 @@ To test a full e2e flow, run the playwright tests with
 - **Prettier**: Automatic code formatting
 - **Git Hooks**: Pre-commit formatting and linting
 
-## AI Integration
+## AI Integration Overview
 
-The application connects to OpenAI-compatible APIs without requiring API keys, designed for local AI models like:
-- **LM Studio**: Local OpenAI-compatible server
-- **Ollama**: Local model hosting
-- **Custom OpenAI-compatible endpoints**
+The application features a sophisticated multi-layered AI integration system:
 
-API communication flows through the `llm_proxy` controller for centralized model management.
+- **LangGraph Multi-Agent System**: Advanced stateful workflows with specialized nodes for scenario creation, modification, and conversation (see `backend/CLAUDE.md` for details)
+- **Real-time Streaming**: Token-by-token response delivery with status updates
+- **Multi-Provider Support**: LM Studio, Ollama, and OpenAI-compatible APIs without requiring API keys
+- **Centralized Management**: LLM proxy controller for unified AI communication
+
+For detailed AI integration architecture, see `backend/CLAUDE.md`.
 
 ## Authentication & Authorization
 

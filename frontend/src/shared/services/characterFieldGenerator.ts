@@ -1,6 +1,6 @@
 // Service for generating individual character field values
 import { AI_STATUS } from '../contexts/AIStatusContext';
-import { streamChatCompletionWithStatus } from '../services/llmService';
+import { streamSimpleChatCompletionWithStatus } from '../services/llmService';
 import { Character, Scenario } from '../types/ScenarioTypes';
 import { createCharacterFieldPrompt } from './llmPromptService';
 import { getSelectedModel } from './modelSelection';
@@ -35,22 +35,25 @@ export async function generateCharacterField(
       try {
         const selectedModel = getSelectedModel();
         let fullText = '';
-        await streamChatCompletionWithStatus(
+        
+        await streamSimpleChatCompletionWithStatus(
           promptObj,
           (text: string, isDone: boolean) => {
             if (!cancelled) {
               if (isDone) {
-                fullText = text;
+                // Final call - completion signal only
+                // fullText already contains the complete text from streaming
               } else {
+                // Incremental chunk during streaming
                 fullText += text;
-              }
-              if (options.onProgress) {
-                options.onProgress(fullText);
+                if (options.onProgress) {
+                  options.onProgress(fullText);
+                }
               }
             }
           },
           {
-            model: selectedModel || undefined,
+            model: selectedModel || 'google/gemma-3-4b',
             temperature: options.temperature || 0.8,
             max_tokens: 200
           },

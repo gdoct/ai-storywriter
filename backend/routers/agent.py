@@ -200,6 +200,9 @@ async def stream_agent_response(
         # For now, let's keep the existing LangGraph approach since streaming is working
         # but with smaller chunks from the LLM services
         
+        # Track scenario changes for client-side updates
+        previous_scenario = initial_state.get("scenario")
+        
         async for step in agent_graph.astream(initial_state):
             # step is a dict with node_name -> state
             for node_name, state in step.items():
@@ -318,6 +321,9 @@ async def stream_agent_response(
                         if "updated_scenario" in tool_result:
                             # This would update the scenario in the state for subsequent nodes
                             state["scenario"] = tool_result["updated_scenario"]
+                        elif "scenario" in tool_result:
+                            # New scenario created, update the agent state
+                            state["scenario"] = tool_result["scenario"]
                         
                         # If this was a classification tool, store the result for routing
                         if tool_call.get("action") == "classify_input" and tool_result.get("status") == "completed":
@@ -340,6 +346,27 @@ async def stream_agent_response(
                                     metadata={"node": node_name, "tool_result": True}
                                 )
                                 yield f"data: {info_message.model_dump_json()}\n\n"
+                            elif "scenario" in tool_result:
+                                # Handle new scenario creation (create_scenario tool)
+                                scenario_title = tool_result["scenario"].get("title", "New Scenario")
+                                chat_message = StreamingMessage(
+                                    type="chat",
+                                    content=f"✅ New scenario '{scenario_title}' has been created successfully!",
+                                    metadata={"node": node_name, "tool_result": True}
+                                )
+                                yield f"data: {chat_message.model_dump_json()}\n\n"
+                                
+                                # Create client-side tool call for frontend scenario creation
+                                client_tool_call = {
+                                    "action": "create_scenario",
+                                    "parameters": {"scenario": tool_result["scenario"]}
+                                }
+                                client_tool_message = StreamingMessage(
+                                    type="tool_call",
+                                    content="Creating new scenario",
+                                    metadata={"tool_call": client_tool_call, "status": "completed"}
+                                )
+                                yield f"data: {client_tool_message.model_dump_json()}\n\n"
                             elif "updated_scenario" in tool_result:
                                 # Stream the success message as a chat message
                                 changes_summary = tool_result.get("changes_summary", "Scenario updated successfully.")
@@ -386,6 +413,24 @@ async def stream_agent_response(
                         metadata=metadata
                     )
                     yield f"data: {message.model_dump_json()}\n\n"
+                
+                # Check if scenario was updated by this node (for specialized nodes like modify_character)
+                current_scenario = state.get("scenario")
+                if current_scenario and current_scenario != previous_scenario:
+                    # Scenario was updated, send client-side tool call to update frontend
+                    client_tool_call = {
+                        "action": "update_scenario",
+                        "parameters": {"updated_scenario": current_scenario}
+                    }
+                    client_tool_message = StreamingMessage(
+                        type="tool_call",
+                        content="Updating scenario",
+                        metadata={"tool_call": client_tool_call, "status": "completed"}
+                    )
+                    yield f"data: {client_tool_message.model_dump_json()}\n\n"
+                    
+                    # Update previous_scenario for next iteration
+                    previous_scenario = current_scenario
         
         # Send completion message
         completion_message = StreamingMessage(

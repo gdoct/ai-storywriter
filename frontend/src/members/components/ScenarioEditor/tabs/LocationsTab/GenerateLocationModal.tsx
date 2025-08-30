@@ -6,11 +6,10 @@ import { FaLocationDot } from 'react-icons/fa6';
 import { AI_STATUS, useAIStatus } from '../../../../../shared/contexts/AIStatusContext';
 import { useAuth } from '../../../../../shared/contexts/AuthContext';
 import { getToken } from '../../../../../shared/services/security';
-import { streamChatCompletionWithStatus } from '../../../../../shared/services/llmService';
+import { streamSimpleChatCompletionWithStatus } from '../../../../../shared/services/llmService';
 import { getSelectedModel } from '../../../../../shared/services/modelSelection';
 import { llmCompletionRequestMessage } from '../../../../../shared/types/LLMTypes';
 import { Location } from '../../../../../shared/types/ScenarioTypes';
-import { showUserFriendlyError } from '../../../../../shared/utils/errorHandling';
 import { LocationMapPicker } from './LocationMapPicker';
 import './GenerateLocationModal.css';
 
@@ -57,7 +56,6 @@ export const GenerateLocationModal: React.FC<GenerateLocationModalProps> = ({
   
   // AI Status context
   const { setAiStatus, setShowAIBusyModal } = useAIStatus();
-  const { refreshCredits } = useAuth();
 
   // Helper function to start progress tracking
   const startProgressTracking = useCallback((stage: string) => {
@@ -220,7 +218,7 @@ export const GenerateLocationModal: React.FC<GenerateLocationModalProps> = ({
 
   const handleGenerateFromImage = useCallback(async () => {
     if (!selectedFile) {
-      showUserFriendlyError(new Error('Please select an image first.'));
+      console.error('Please select an image first.');
       return;
     }
 
@@ -273,7 +271,7 @@ export const GenerateLocationModal: React.FC<GenerateLocationModalProps> = ({
 
     } catch (error: any) {
       console.error('Location generation error:', error);
-      showUserFriendlyError(error.message || 'Failed to generate location. Please try again.');
+      console.error('Location generation error:', error.message || 'Failed to generate location. Please try again.');
       stopProgressTracking();
     } finally {
       setIsGenerating(false);
@@ -282,7 +280,7 @@ export const GenerateLocationModal: React.FC<GenerateLocationModalProps> = ({
 
   const handleGenerateFromText = useCallback(async () => {
     if (!textDescription.trim()) {
-      showUserFriendlyError(new Error('Please provide a text description first.'));
+      console.error('Please provide a text description first.');
       return;
     }
 
@@ -300,18 +298,22 @@ export const GenerateLocationModal: React.FC<GenerateLocationModalProps> = ({
 
       const selectedModel = getSelectedModel();
       let accumulatedText = '';
-      await streamChatCompletionWithStatus(
+      
+      await streamSimpleChatCompletionWithStatus(
         prompt,
-        (chunk: string, isDone: boolean) => {
-          accumulatedText += chunk;
+        (text, isDone) => {
           if (isDone) {
+            // Final call - completion signal only
+            // accumulatedText already contains the complete text from streaming
             updateProgressStage('Finalizing response...', 80);
           } else {
+            // Incremental chunk during streaming
+            accumulatedText += text;
             updateProgressStage('Receiving response...', 50);
           }
         },
         {
-          model: selectedModel || undefined,
+          model: selectedModel || 'google/gemma-3-4b',
           temperature: 0.7,
           max_tokens: 2000
         },
@@ -361,7 +363,6 @@ export const GenerateLocationModal: React.FC<GenerateLocationModalProps> = ({
       }
 
       onLocationGenerated(locationData);
-      await refreshCredits();
       stopProgressTracking();
       
       // Auto-close modal on successful generation
@@ -369,17 +370,17 @@ export const GenerateLocationModal: React.FC<GenerateLocationModalProps> = ({
 
     } catch (error: any) {
       console.error('Location generation error:', error);
-      showUserFriendlyError(error.message || 'Failed to generate location. Please try again.');
+      console.error('Location generation error:', error.message || 'Failed to generate location. Please try again.');
       stopProgressTracking();
       setAiStatus(AI_STATUS.IDLE);
     } finally {
       setIsGenerating(false);
     }
-  }, [textDescription, createTextLocationPrompt, textLocationName, onLocationGenerated, startProgressTracking, updateProgressStage, stopProgressTracking, setAiStatus, setShowAIBusyModal, refreshCredits, handleClose]);
+  }, [textDescription, createTextLocationPrompt, textLocationName, onLocationGenerated, startProgressTracking, updateProgressStage, stopProgressTracking, setAiStatus, setShowAIBusyModal, handleClose]);
 
   const handleGenerateFromMaps = useCallback(async () => {
     if (!selectedMapLocation) {
-      showUserFriendlyError(new Error('Please select a location on the map first.'));
+      console.error('Please select a location on the map first.');
       return;
     }
 
@@ -397,18 +398,22 @@ export const GenerateLocationModal: React.FC<GenerateLocationModalProps> = ({
 
       const selectedModel = getSelectedModel();
       let accumulatedText = '';
-      await streamChatCompletionWithStatus(
+      
+      await streamSimpleChatCompletionWithStatus(
         prompt,
-        (chunk: string, isDone: boolean) => {
-          accumulatedText += chunk;
+        (text, isDone) => {
           if (isDone) {
+            // Final call - completion signal only
+            // accumulatedText already contains the complete text from streaming
             updateProgressStage('Finalizing response...', 80);
           } else {
-          updateProgressStage('Receiving response...', 50);
+            // Incremental chunk during streaming
+            accumulatedText += text;
+            updateProgressStage('Receiving response...', 50);
           }
         },
         {
-          model: selectedModel || undefined,
+          model: selectedModel || 'google/gemma-3-4b',
           temperature: 0.7,
           max_tokens: 2000
         },
@@ -458,7 +463,6 @@ export const GenerateLocationModal: React.FC<GenerateLocationModalProps> = ({
       }
 
       onLocationGenerated(locationData);
-      await refreshCredits();
       stopProgressTracking();
       
       // Auto-close modal on successful generation
@@ -466,13 +470,13 @@ export const GenerateLocationModal: React.FC<GenerateLocationModalProps> = ({
 
     } catch (error: any) {
       console.error('Location generation error:', error);
-      showUserFriendlyError(error.message || 'Failed to generate location. Please try again.');
+      console.error('Location generation error:', error.message || 'Failed to generate location. Please try again.');
       stopProgressTracking();
       setAiStatus(AI_STATUS.IDLE);
     } finally {
       setIsGenerating(false);
     }
-  }, [selectedMapLocation, createMapsLocationPrompt, mapsLocationName, onLocationGenerated, startProgressTracking, updateProgressStage, stopProgressTracking, setAiStatus, setShowAIBusyModal, refreshCredits, handleClose]);
+  }, [selectedMapLocation, createMapsLocationPrompt, mapsLocationName, onLocationGenerated, startProgressTracking, updateProgressStage, stopProgressTracking, setAiStatus, setShowAIBusyModal, handleClose]);
 
   const handleGenerate = useCallback(() => {
     switch (activeTab) {

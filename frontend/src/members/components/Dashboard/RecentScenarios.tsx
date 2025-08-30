@@ -44,7 +44,7 @@ const RecentScenarios: React.FC<RecentScenariosProps> = ({
         ) : (
           <div>
             {recentScenarios.map((scenario) => (
-                <div key={scenario.id} className="recent-item">
+                <div key={scenario.id} className="recent-item" onClick={() => handleEditScenario(scenario.id)}>
                 <div className="recent-item-image">
                   <img
                   src={scenario.imageUrl || '/placeholder-image.png'}
@@ -59,20 +59,16 @@ const RecentScenarios: React.FC<RecentScenariosProps> = ({
                   📝 {scenario.generatedStoryCount} generated stories
                   </p>
                   <div style={{ marginTop: 'var(--spacing-sm)', display: 'flex', gap: 'var(--spacing-sm)' }}>
-                  <Button
-                    variant="primary"
-                    size="sm"
-                    onClick={() => handleEditScenario(scenario.id)}
-                  >
-                    Edit
-                  </Button>
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => handleGenerateSimilar(scenario.id)}
-                  >
-                    Generate Similar...
-                  </Button>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
+                        e.stopPropagation();
+                        handleGenerateSimilar(scenario.id);
+                      }}
+                    >
+                      Generate Similar...
+                    </Button>
                   </div>
                 </div>
                 </div>

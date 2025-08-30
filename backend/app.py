@@ -67,7 +67,7 @@ app.include_router(moderation.router, prefix="/api", tags=["moderation"])
 app.include_router(role.router, prefix="/api", tags=["roles"])
 app.include_router(user_settings.router, prefix="/api", tags=["user_settings"])
 app.include_router(agent.router, prefix="/api/agent", tags=["agent"])
-app.include_router(streaming_agent.router, prefix="/api/agent", tags=["streaming_agent"])
+app.include_router(streaming_agent.router, prefix="/api/streaming_agent", tags=["streaming_agent"])
 
 # Serve React frontend static files (after API routes are registered)
 frontend_build_path = Path(__file__).parent.parent / "frontend" / "build"

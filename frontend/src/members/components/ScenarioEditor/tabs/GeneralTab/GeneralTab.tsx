@@ -9,6 +9,7 @@ import { TabProps } from '../../types';
 import './GeneralTab.css';
 import { ScenarioImage } from '../ScenarioImage';
 import { StyleFields } from '../StyleFields';
+import { useAIStatus } from '../../../../../shared/contexts/AIStatusContext';
 
 export const GeneralTab: React.FC<TabProps> = ({
   scenario,
@@ -21,41 +22,13 @@ export const GeneralTab: React.FC<TabProps> = ({
   const [showImportModal, setShowImportModal] = useState(false);
   const [isGeneratingTitle, setIsGeneratingTitle] = useState(false);
   const [isGeneratingSynopsis, setIsGeneratingSynopsis] = useState(false);
+  const { setAiStatus, setShowAIBusyModal } = useAIStatus();
 
   const handleBasicFieldChange = useCallback((field: string, value: string) => {
     onScenarioChange({ [field]: value });
   }, [onScenarioChange]);
 
-  const simulateTyping = useCallback((text: string, field: string, setGenerating: (val: boolean) => void) => {
-    // Clear the field and start generation
-    onScenarioChange({ [field]: '' });
-    setGenerating(true);
 
-    let currentIndex = 0;
-    const typeNextLetter = () => {
-      if (currentIndex < text.length) {
-        const partialText = text.substring(0, currentIndex + 1);
-        onScenarioChange({ [field]: partialText });
-        currentIndex++;
-        setTimeout(typeNextLetter, 50); // 50ms delay between letters
-      } else {
-        // Generation complete
-        setGenerating(false);
-      }
-    };
-
-    // Start typing after a short delay
-    setTimeout(typeNextLetter, 500);
-  }, [onScenarioChange]);
-
-  const handleDynamicFieldChange = useCallback((field: string, value: Promise<string>, setGenerating: (val: boolean) => void) => {
-    value.then((resolvedValue) => {
-      simulateTyping(resolvedValue, field, setGenerating);
-    }).catch((error) => {
-      console.error(`Error resolving ${field}:`, error);
-      setGenerating(false);
-    });
-  }, [simulateTyping]);
 
 
   const handleStyleChange = useCallback((field: keyof StyleSettings, value: string) => {
@@ -68,17 +41,69 @@ export const GeneralTab: React.FC<TabProps> = ({
     handleStyleChange(field, randomOption);
   }, [handleStyleChange]);
 
-  const randomizeTitle = useCallback(() => {
-    setIsGeneratingTitle(true);
-    const titlePromise = generateStoryTitle(scenario).then((title) => title.result);
-    handleDynamicFieldChange('title', titlePromise, setIsGeneratingTitle);
-  }, [handleDynamicFieldChange, scenario]);
+  const randomizeTitle = useCallback(async () => {
+    try {
+      setIsGeneratingTitle(true);
+      onScenarioChange({ title: '' }); // Clear existing content
+      
+      let accumulated = '';
+      const generationResult = await generateStoryTitle(
+        scenario,
+        {
+          onProgress: (generatedText) => {
+            accumulated += generatedText;
+            onScenarioChange({ title: accumulated });
+          }
+        },
+        setAiStatus,
+        setShowAIBusyModal
+      );
+      
+      try {
+        const finalTitle = await generationResult.result;
+        onScenarioChange({ title: finalTitle });
+      } catch (error) {
+        console.error('Title generation failed:', error);
+      } finally {
+        setIsGeneratingTitle(false);
+      }
+    } catch (error) {
+      console.error('Title generation setup failed:', error);
+      setIsGeneratingTitle(false);
+    }
+  }, [scenario, onScenarioChange, setAiStatus, setShowAIBusyModal]);
 
-  const randomizeSynopsis = useCallback(() => {
-    setIsGeneratingSynopsis(true);
-    const synopsisPromise = generateScenarioSynopsis(scenario).then((synopsis) => synopsis.result);
-    handleDynamicFieldChange('synopsis', synopsisPromise, setIsGeneratingSynopsis);
-  }, [scenario, handleDynamicFieldChange]);
+  const randomizeSynopsis = useCallback(async () => {
+    try {
+      setIsGeneratingSynopsis(true);
+      onScenarioChange({ synopsis: '' }); // Clear existing content
+      
+      let accumulated = '';
+      const generationResult = await generateScenarioSynopsis(
+        scenario,
+        {
+          onProgress: (generatedText) => {
+            accumulated += generatedText;
+            onScenarioChange({ synopsis: accumulated });
+          }
+        },
+        setAiStatus,
+        setShowAIBusyModal
+      );
+      
+      try {
+        const finalSynopsis = await generationResult.result;
+        onScenarioChange({ synopsis: finalSynopsis });
+      } catch (error) {
+        console.error('Synopsis generation failed:', error);
+      } finally {
+        setIsGeneratingSynopsis(false);
+      }
+    } catch (error) {
+      console.error('Synopsis generation setup failed:', error);
+      setIsGeneratingSynopsis(false);
+    }
+  }, [scenario, onScenarioChange, setAiStatus, setShowAIBusyModal]);
 
   const randomizeAllStyle = useCallback(() => {
     const randomStyle: StyleSettings = {
