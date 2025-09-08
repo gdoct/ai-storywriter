@@ -4,10 +4,13 @@ Test script to verify dashboard endpoints are working correctly
 """
 import json
 import sys
+from pathlib import Path
+sys.path.append(str(Path(__file__).parent.parent))
+from test_config import get_backend_url
 
 import requests
 
-BASE_URL = "http://localhost:5000"
+BASE_URL = get_backend_url()
 
 def test_dashboard_endpoints():
     """Test all dashboard endpoints with sample data"""

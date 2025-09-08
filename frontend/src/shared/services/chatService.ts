@@ -26,8 +26,12 @@ export interface ChatThinkingContent {
 
 export type ChatThinkingStreamCallback = (content: ChatThinkingContent) => void;
 
-const BACKEND_URL = 'http://localhost:5000';
-const CHAT_ENDPOINT = `${BACKEND_URL}/api/chat/completions`;
+// Auto-detect if we're running in dev mode or production
+const isDevMode = window.location.port === '3000';
+const backendUrl = import.meta.env.VITE_API_URL;
+const CHAT_ENDPOINT = isDevMode && backendUrl
+  ? `${backendUrl}/api/llm_proxy/proxy/llm/v1/frontend/chat/completions`
+  : '/api/llm_proxy/proxy/llm/v1/frontend/chat/completions';
 
 /**
  * Dedicated chat service for the ChatAgent component.
@@ -352,7 +356,10 @@ export class ChatService {
    */
   async isAvailable(): Promise<boolean> {
     try {
-      const response = await fetch(`${BACKEND_URL}/api/chat/health`, {
+      const healthEndpoint = isDevMode && backendUrl
+        ? `${backendUrl}/api/llm_proxy/health`
+        : '/api/llm_proxy/health';
+      const response = await fetch(healthEndpoint, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json'

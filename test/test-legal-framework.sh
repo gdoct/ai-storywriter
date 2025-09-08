@@ -1,6 +1,9 @@
 #!/bin/bash
 
 # Test Legal Framework Implementation
+# Configuration
+FRONTEND_URL="${VITE_FRONTEND_URL:-http://localhost:3000}"
+
 echo "🔍 Testing Legal Framework Feature Implementation"
 echo "================================================="
 
@@ -8,7 +11,7 @@ echo "================================================="
 echo "1. Testing legal document pages..."
 
 echo "   📄 Testing Privacy Policy page..."
-curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/privacy
+curl -s -o /dev/null -w "%{http_code}" ${FRONTEND_URL}/privacy
 if [ $? -eq 0 ]; then
     echo "   ✅ Privacy Policy page accessible"
 else
@@ -16,7 +19,7 @@ else
 fi
 
 echo "   📄 Testing Terms of Service page..."
-curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/terms
+curl -s -o /dev/null -w "%{http_code}" ${FRONTEND_URL}/terms
 if [ $? -eq 0 ]; then
     echo "   ✅ Terms of Service page accessible"
 else
@@ -28,7 +31,7 @@ echo ""
 echo "2. Testing marketing footer on public pages..."
 
 echo "   🏠 Testing home page footer..."
-curl -s http://localhost:3000/ | grep -q "Privacy Policy\|Terms of Service"
+curl -s ${FRONTEND_URL}/ | grep -q "Privacy Policy\|Terms of Service"
 if [ $? -eq 0 ]; then
     echo "   ✅ Marketing footer present on home page"
 else
@@ -36,7 +39,7 @@ else
 fi
 
 echo "   📊 Testing features page footer..."
-curl -s http://localhost:3000/features | grep -q "Privacy Policy\|Terms of Service"
+curl -s ${FRONTEND_URL}/features | grep -q "Privacy Policy\|Terms of Service"
 if [ $? -eq 0 ]; then
     echo "   ✅ Marketing footer present on features page"
 else
@@ -44,7 +47,7 @@ else
 fi
 
 echo "   💰 Testing pricing page footer..."
-curl -s http://localhost:3000/pricing | grep -q "Privacy Policy\|Terms of Service"
+curl -s ${FRONTEND_URL}/pricing | grep -q "Privacy Policy\|Terms of Service"
 if [ $? -eq 0 ]; then
     echo "   ✅ Marketing footer present on pricing page"
 else
@@ -56,7 +59,7 @@ echo ""
 echo "3. Testing signup page legal agreement..."
 
 echo "   📝 Testing signup page has legal checkbox..."
-curl -s http://localhost:3000/signup | grep -q "I agree to the"
+curl -s ${FRONTEND_URL}/signup | grep -q "I agree to the"
 if [ $? -eq 0 ]; then
     echo "   ✅ Legal agreement checkbox present on signup"
 else
@@ -110,9 +113,9 @@ echo "- ✅ Database schema updated with legal tracking columns"
 echo "- ✅ Backend API updated to handle legal agreements"
 echo ""
 echo "🔗 Test the feature manually:"
-echo "   • Visit: http://localhost:3000/signup"
+echo "   • Visit: ${FRONTEND_URL}/signup"
 echo "   • Try to submit without checking legal agreement"
 echo "   • Check legal agreement and submit"
-echo "   • Visit: http://localhost:3000/privacy"
-echo "   • Visit: http://localhost:3000/terms"
+echo "   • Visit: ${FRONTEND_URL}/privacy"
+echo "   • Visit: ${FRONTEND_URL}/terms"
 echo ""

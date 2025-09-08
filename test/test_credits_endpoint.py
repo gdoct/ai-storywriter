@@ -10,9 +10,13 @@ import uuid
 from datetime import datetime, timezone
 
 import requests
+import sys
+from pathlib import Path
+sys.path.append(str(Path(__file__).parent.parent))
+from test_config import get_backend_url
 
 # Configuration
-BASE_URL = "http://localhost:5000"
+BASE_URL = get_backend_url()
 TEST_USERNAME = "testuser"
 TEST_PASSWORD = "testpassword"
 

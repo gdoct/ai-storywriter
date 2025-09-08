@@ -9,7 +9,8 @@ from data.repositories import ScenarioRepository
 from PIL import Image
 
 # Configuration
-UPLOAD_FOLDER = 'uploads/scenario_images'
+# upload folder is provided by environment variable or defaults to 'uploads/scenario_images'
+UPLOAD_FOLDER = os.environ.get("UPLOAD_FOLDER", "uploads") + "/scenario_images"
 MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
 
 class ScenarioImageService:

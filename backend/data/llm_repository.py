@@ -60,6 +60,38 @@ class LLMRepository:
         return row['encrypted_value'] if row else None
 
     @staticmethod
+    def create_provider_preset(preset_data: Dict[str, Any]) -> Optional[int]:
+        """Create a new provider preset and return its ID"""
+        conn = get_db_connection()
+        c = conn.cursor()
+        
+        try:
+            c.execute('''
+                INSERT INTO llm_provider_presets 
+                (provider_name, display_name, base_url, is_enabled, credit_multiplier, config_json, has_api_key, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+            ''', (
+                preset_data.get('provider_name'),
+                preset_data.get('display_name'),
+                preset_data.get('base_url', ''),
+                preset_data.get('is_enabled', True),
+                preset_data.get('credit_multiplier', 1.0),
+                preset_data.get('config_json', '{}'),
+                preset_data.get('has_api_key', False)
+            ))
+            
+            preset_id = c.lastrowid
+            conn.commit()
+            conn.close()
+            return preset_id
+            
+        except Exception as e:
+            conn.rollback()
+            conn.close()
+            print(f"Error creating provider preset: {e}")
+            return None
+
+    @staticmethod
     def update_provider_preset(provider_id: int, updates: Dict[str, Any]) -> bool:
         """Update a provider preset"""
         conn = get_db_connection()

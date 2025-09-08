@@ -41,8 +41,6 @@ def get_current_settings():
     if row:
         # Convert provider preset to old settings format for compatibility
         provider = dict(row)
-        # print(f"[DEBUG] Selected provider: {provider['provider_name']} (updated: {provider['updated_at']})")  # Debug log
-        
         config = {}
         if provider.get('config_json'):
             try:
@@ -75,7 +73,6 @@ async def debug_get_all_providers():
         conn.close()
         
         providers = [dict(row) for row in rows]
-        # print(f"[DEBUG] All providers in database: {providers}")
         return {"providers": providers}
         
     except Exception as e:
@@ -90,7 +87,6 @@ async def get_llm_settings():
         config = json.loads(settings['config_json']) if settings['config_json'] else {}
         settings['config'] = config
 
-        # print(f"[DEBUG] LLM Settings - backend_type: {settings['backend_type']}, config: {config}")  # Debug log
 
         # Extract showThinking from config and put it at top level for frontend
         if 'showThinking' in config:
@@ -119,10 +115,8 @@ async def save_llm_settings(data: LLMSettingsRequest, current_user: dict = Depen
     # Update the provider preset instead of the old settings table
     config_json = json.dumps(config)
     
-    # Find the provider preset and update it
-    # print(f"[DEBUG] Looking for provider preset: {data.backend_type}")  # Debug log
+    # Find the provider preset and update it, or create if it doesn't exist
     provider_preset = LLMRepository.get_provider_preset(data.backend_type)
-    # print(f"[DEBUG] Found provider preset: {provider_preset}")  # Debug log
     if provider_preset:
         # Update existing provider preset
         update_data = {
@@ -137,10 +131,30 @@ async def save_llm_settings(data: LLMSettingsRequest, current_user: dict = Depen
                 detail="Failed to update provider preset"
             )
     else:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Provider preset '{data.backend_type}' not found"
-        )
+        # Create new provider preset if it doesn't exist
+        display_name_map = {
+            'lmstudio': 'LM Studio',
+            'ollama': 'Ollama', 
+            'chatgpt': 'OpenAI',
+            'github': 'GitHub Models'
+        }
+        
+        preset_data = {
+            'provider_name': data.backend_type,
+            'display_name': display_name_map.get(data.backend_type, data.backend_type.title()),
+            'base_url': config.get('url', ''),
+            'is_enabled': True,
+            'credit_multiplier': 1.0,
+            'config_json': config_json,
+            'has_api_key': bool(config.get('api_key') or config.get('apiKey') or config.get('githubToken'))
+        }
+        
+        preset_id = LLMRepository.create_provider_preset(preset_data)
+        if not preset_id:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to create provider preset"
+            )
     
     # Include showThinking in the response
     response_data = {

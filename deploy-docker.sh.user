@@ -1,0 +1,11 @@
+REMOTE_SERVER="guido@nuc-guido"
+JWT_SECRET_KEY=zomg-this0is-a-secretz0r-keyz0r
+STORYWRITER_DB_PATH=/home/guido/storywriter/backend/storywriter.db
+BACKEND_HOST=0.0.0.0
+BACKEND_PORT=5600
+VITE_API_URL=
+# Admin user configuration (required for Docker deployment)
+ADMIN_DEFAULT_USERNAME=guido
+ADMIN_DEFAULT_EMAIL=guido.docter@gmail.com
+ADMIN_DEFAULT_PASSWORD=koelkast
+UPLOAD_FOLDER=/data/uploads

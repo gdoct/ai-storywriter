@@ -29,10 +29,11 @@ test.describe('Generate and edit scenario workflows', () => {
     //   await page.getByRole('button', { name: 'LLM Settings' }).click({ delay: DELAY });
     const defaultmodel = process.env.TEST_MODEL || 'google/gemma3-4b';
     console.log('Using model:', defaultmodel);
-    await page.getByRole('button', { name: 'LLM Settings' }).click({ delay: DELAY });
-    await page.getByLabel('Model:').selectOption('google/gemma-3-4b');
-    await page.getByRole('slider', { name: 'Temperature:' }).fill('0.82');
-    await page.getByTestId('story-title-input').click(); await page.getByTestId('story-title-input').click();
+    await page.getByTestId('model-selector-button').click({ delay: DELAY });
+    await page.getByTestId('modal-model-select').selectOption('google/gemma-3-4b');
+    await page.getByTestId('modal-temperature-slider').fill('0.82');
+    await page.getByTestId('button-close-llm-settings-modal').click(); 
+    await page.getByTestId('story-title-input').click();
     // //  await page.getByLabel('Model:').selectOption(defaultmodel);
 
     //   await page.getByRole('slider', { name: 'Temperature:' }).fill('0.85');
@@ -66,7 +67,9 @@ test.describe('Generate and edit scenario workflows', () => {
 
     console.log('generating scenario title and synopsis');
 
-    await page.locator('div').filter({ hasText: /^Scenario Title$/ }).getByRole('button').click();
+    // Click the AI generate button for the title field
+    // The button has its own data-testid
+    await page.getByTestId('ai-textbox-generate-button').click();
     await waitForAiTextBoxGeneration(page);
    
     await page.getByRole('button', { name: 'Add tab' }).click({ delay: DELAY });

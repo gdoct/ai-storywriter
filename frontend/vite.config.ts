@@ -1,19 +1,26 @@
 import react from '@vitejs/plugin-react';
 import { visualizer } from 'rollup-plugin-visualizer';
-import { defineConfig } from 'vite';
+import { defineConfig, loadEnv } from 'vite';
 
 // https://vitejs.dev/config/
-export default defineConfig({
-  plugins: [react(), visualizer()],
-  server: {
-    port: 3000,
-    proxy: {
-      '/api': {
-        target: 'http://localhost:5000',
-        changeOrigin: true,
-        secure: false,
+export default defineConfig(({ mode }) => {
+  // Load env vars from the root directory (parent of frontend/)
+  const env = loadEnv(mode, '../', '');
+  const apiUrl = env.VITE_API_URL || 'http://localhost:5600';
+  
+  console.log(`[DEBUG] Vite proxy target: ${apiUrl}`);
+  
+  return {
+    plugins: [react(), visualizer()],
+    server: {
+      port: 3000,
+      proxy: {
+        '/api': {
+          target: apiUrl,
+          changeOrigin: true,
+          secure: false,
+        },
       },
-    },
     watch: {
       // Watch for changes in the docomo library
       ignored: ['!**/node_modules/@drdata/ai-styles/**']
@@ -62,10 +69,10 @@ export default defineConfig({
         },
       },
     },
-  },
+  }
 
   // Enable better HMR for linked packages
   // optimizeDeps: {
   //   exclude: ['@drdata/ai-styles']
   // }
-})
+}});

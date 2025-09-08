@@ -18,6 +18,10 @@ class LLMProxyService:
             if not byok_headers:
                 raise ValueError("BYOK mode requires API credentials in request headers")
             
+            # Safety check: ensure byok_headers is a dict
+            if not isinstance(byok_headers, dict):
+                raise ValueError(f"Internal error: BYOK headers should be dict, got {type(byok_headers)}")
+            
             # Get user's preferred BYOK provider
             byok_provider = UserPreferencesRepository.get_user_byok_provider(user_id)
             if not byok_provider:
@@ -28,6 +32,7 @@ class LLMProxyService:
             base_url = byok_headers.get('X-BYOK-Base-URL')
             
             if not api_key:
+                print(f"[DEBUG] ERROR: No API key in headers")
                 raise ValueError("BYOK mode requires X-BYOK-API-Key header")
             
             # Create config for BYOK service
@@ -35,6 +40,12 @@ class LLMProxyService:
                 'api_key': api_key,
                 'base_url': base_url or LLMProxyService._get_default_base_url(byok_provider)
             }
+            
+            # Map api_key to provider-specific field names
+            if byok_provider == 'github':
+                config['githubToken'] = api_key
+            elif byok_provider == 'openai':
+                config['api_key'] = api_key
             
             return get_llm_service(byok_provider, config), byok_provider, 'byok'
         
@@ -133,16 +144,26 @@ class LLMProxyService:
     @staticmethod
     def extract_byok_headers(headers: Dict[str, str]) -> Optional[Dict[str, str]]:
         """Extract BYOK-related headers from request headers"""
+        # print(f"[DEBUG] extract_byok_headers called with headers type: {type(headers)}")
+        # print(f"[DEBUG] headers: {dict(headers) if hasattr(headers, 'items') else headers}")
+        
         byok_headers = {}
         
-        # Look for BYOK headers (case-insensitive)
-        for key, value in headers.items():
-            lower_key = key.lower()
-            if lower_key == 'x-byok-api-key':
-                byok_headers['X-BYOK-API-Key'] = value
-            elif lower_key == 'x-byok-base-url':
-                byok_headers['X-BYOK-Base-URL'] = value
-            elif lower_key == 'x-byok-provider':
-                byok_headers['X-BYOK-Provider'] = value
+        try:
+            # Look for BYOK headers (case-insensitive)
+            for key, value in headers.items():
+                lower_key = key.lower()
+                if lower_key == 'x-byok-api-key':
+                    byok_headers['X-BYOK-API-Key'] = value
+                elif lower_key == 'x-byok-base-url':
+                    byok_headers['X-BYOK-Base-URL'] = value
+                elif lower_key == 'x-byok-provider':
+                    byok_headers['X-BYOK-Provider'] = value
+        except Exception as e:
+            print(f"[DEBUG] ERROR in extract_byok_headers: {e}")
+            print(f"[DEBUG] headers type: {type(headers)}, headers: {headers}")
+            raise
         
-        return byok_headers if byok_headers else None
+        result = byok_headers if byok_headers else None
+        # print(f"[DEBUG] extract_byok_headers returning: {result}")
+        return result

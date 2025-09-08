@@ -18,6 +18,12 @@ export interface StyleSettings {
     language?: string; 
 }
 
+export interface PromptSettings {
+    systemPromptPrefix?: string;
+    userPromptPrefix?: string;
+    keywords?: string;
+}
+
 export interface StoryChapter {
   chapterNumber: number;
   content: string;
@@ -97,6 +103,7 @@ export type Scenario = {
     
     // Tab content fields
     writingStyle?: StyleSettings;
+    promptSettings?: PromptSettings;
     storyarc?: string;
     characters?: Character[];
     locations?: Location[];

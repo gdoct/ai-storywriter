@@ -2,6 +2,7 @@
 import { AI_STATUS } from '../contexts/AIStatusContext';
 import { llmCompletionRequestMessage, LLMMessage } from '../types/LLMTypes';
 import { getToken } from './security';
+import { getBYOKHeaders, isUserInBYOKMode } from './settings';
 
 export interface LLMChatOptions {
   model?: string;
@@ -22,13 +23,14 @@ export interface ThinkingContent {
 
 export type LLMThinkingStreamCallback = (content: ThinkingContent) => void;
 
-// Auto-detect if we're running in dev mode (localhost:3000) or production (localhost:5000)
+// Auto-detect if we're running in dev mode (localhost:3000) or production 
 const isDevMode = window.location.port === '3000';
-const LLM_PROXY_ENDPOINT = isDevMode 
-  ? 'http://localhost:5000/api/proxy/llm/v1/chat/completions'
+const backendUrl = import.meta.env.VITE_API_URL;
+const LLM_PROXY_ENDPOINT = isDevMode && backendUrl
+  ? `${backendUrl}/api/proxy/llm/v1/chat/completions`
   : '/api/proxy/llm/v1/chat/completions';
-const LLM_FRONTEND_ENDPOINT = isDevMode 
-  ? 'http://localhost:5000/api/proxy/llm/v1/frontend/chat/completions'
+const LLM_FRONTEND_ENDPOINT = isDevMode && backendUrl
+  ? `${backendUrl}/api/proxy/llm/v1/frontend/chat/completions`
   : '/api/proxy/llm/v1/frontend/chat/completions';
 
 /**
@@ -103,6 +105,13 @@ export async function streamSimpleChatCompletionWithStatus(
     const token = getToken();
     if (token) {
       headers.Authorization = `Bearer ${token}`;
+    }
+    
+    // Add BYOK headers if user is in BYOK mode
+    const isInBYOKMode = await isUserInBYOKMode();
+    if (isInBYOKMode) {
+      const byokHeaders = getBYOKHeaders();
+      Object.assign(headers, byokHeaders);
     }
     
     const response = await fetch(LLM_FRONTEND_ENDPOINT, {
@@ -210,6 +219,13 @@ export async function streamChatCompletionWithStatus(
       headers.Authorization = `Bearer ${token}`;
     }
     
+    // Add BYOK headers if user is in BYOK mode
+    const isInBYOKMode = await isUserInBYOKMode();
+    if (isInBYOKMode) {
+      const byokHeaders = getBYOKHeaders();
+      Object.assign(headers, byokHeaders);
+    }
+    
     const response = await fetch(LLM_PROXY_ENDPOINT, {
       method: 'POST',
       headers,
@@ -313,6 +329,13 @@ export async function streamChatCompletionWithThinking(
     const token = getToken();
     if (token) {
       headers.Authorization = `Bearer ${token}`;
+    }
+    
+    // Add BYOK headers if user is in BYOK mode
+    const isInBYOKMode = await isUserInBYOKMode();
+    if (isInBYOKMode) {
+      const byokHeaders = getBYOKHeaders();
+      Object.assign(headers, byokHeaders);
     }
     
     const response = await fetch(LLM_PROXY_ENDPOINT, {

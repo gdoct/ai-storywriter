@@ -3,6 +3,10 @@
 # Test script to verify dirty state bug fixes
 # This script will start the application and run basic tests
 
+# Configuration
+FRONTEND_URL="${VITE_FRONTEND_URL:-http://localhost:3000}"
+BACKEND_URL="${VITE_API_URL:-http://localhost:5000}"
+
 echo "Starting backend..."
 cd /home/guido/storywriter
 ./start-backend.sh &
@@ -19,8 +23,8 @@ echo "Waiting for frontend to start..."
 sleep 10
 
 echo "Application should now be running at:"
-echo "Frontend: http://localhost:3000"
-echo "Backend: http://localhost:5000"
+echo "Frontend: ${FRONTEND_URL}"
+echo "Backend: ${BACKEND_URL}"
 
 echo ""
 echo "Manual testing checklist for dirty state fixes:"

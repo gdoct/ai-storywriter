@@ -5,7 +5,14 @@ This module defines schemas and field requirements for character generation
 from vision and text prompts.
 """
 
-# Required fields for character generation
+# Core required fields for simplified character generation
+CHARACTER_CORE_FIELDS = [
+    'name',
+    'appearance', 
+    'backstory'
+]
+
+# All fields for backward compatibility
 CHARACTER_REQUIRED_FIELDS = [
     'name',
     'alias',
@@ -16,7 +23,14 @@ CHARACTER_REQUIRED_FIELDS = [
     'extraInfo'
 ]
 
-# Sample schema for validation and documentation
+# Simplified schema for focused character generation
+CHARACTER_SIMPLIFIED_SCHEMA = {
+    "name": "Character Name",
+    "appearance": "Physical description",
+    "backstory": "Character background"
+}
+
+# Full schema for validation and documentation
 CHARACTER_SCHEMA_SAMPLE = {
     "name": "Character Name",
     "alias": "Character Alias", 

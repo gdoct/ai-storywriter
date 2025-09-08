@@ -1,7 +1,5 @@
 .character-badge {
-  position: absolute;
-  bottom: var(--spacing-lg);
-  right: var(--spacing-lg);
+  position: static;
   z-index: 10;
 }
 
@@ -110,8 +108,7 @@
 /* Responsive styles */
 @media (max-width: 768px) {
   .character-badge {
-    bottom: var(--spacing-md);
-    right: var(--spacing-md);
+    /* positioning removed - now uses static positioning */
   }
   
   .character-badge__grid {
@@ -151,8 +148,7 @@
 
 @media (max-width: 480px) {
   .character-badge {
-    bottom: var(--spacing-sm);
-    right: var(--spacing-sm);
+    /* positioning removed - now uses static positioning */
   }
   
   .character-badge__grid {

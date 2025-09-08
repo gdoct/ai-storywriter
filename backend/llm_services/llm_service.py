@@ -90,6 +90,7 @@ class BaseLLMService(abc.ABC):
     
     def get_models(self, use_cache: bool = True):
         """Get models with optional caching."""
+        
         if not use_cache:
             return self._fetch_models()
         
@@ -108,7 +109,7 @@ class BaseLLMService(abc.ABC):
             return models
         except Exception as e:
             # If fetch fails, return empty list and don't cache
-            print(f"Failed to fetch models: {e}")
+            print(f"[DEBUG] ERROR: Failed to fetch models: {e}")
             return []
 
     @abc.abstractmethod
@@ -146,7 +147,7 @@ def get_llm_service(backend_type, config):
     elif backend_type == 'ollama':
         from llm_services.ollama_service import OllamaService
         return OllamaService(config)
-    elif backend_type == 'chatgpt':
+    elif backend_type == 'chatgpt' or backend_type == 'openai':
         from llm_services.openai_service import OpenAIService
         return OpenAIService(config)
     elif backend_type == 'github':
@@ -167,7 +168,7 @@ def get_active_llm_service():
     config = json.loads(row['config_json']) if row['config_json'] else {}
     return get_llm_service(backend_type, config)
 
-def generate_character_from_image(image_data, user_prompt=""):
+def generate_character_from_image(image_data, user_prompt="", user_id=None, byok_headers=None):
     """High-level function to generate character data from image using the active LLM service.
     
     This function provides a convenient interface for the character photo controller
@@ -177,8 +178,13 @@ def generate_character_from_image(image_data, user_prompt=""):
         if not user_prompt.strip():
             raise ValueError("Prompt is required for character generation")
         
-        # Get the active LLM service
-        llm_service = get_active_llm_service()
+        # Get the LLM service using the new proxy service
+        if user_id:
+            from services.llm_proxy_service import LLMProxyService
+            llm_service, provider, mode = LLMProxyService.get_llm_service_for_user(user_id, byok_headers)
+        else:
+            # Fallback to old method if user_id not provided
+            llm_service = get_active_llm_service()
         
         # Use the vision completion method
         raw_response = llm_service.vision_completion(image_data, user_prompt)
@@ -200,10 +206,11 @@ def generate_character_from_image(image_data, user_prompt=""):
         return character_data
     
     except Exception as e:
-        # Fallback to a template if vision fails
-        character_data = CHARACTER_FALLBACK_TEMPLATE.copy()
-        
-        return character_data
+        # Log the error and re-raise it - no fallbacks
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Vision processing failed: {e}")
+        raise Exception(f"Failed to generate character from image: {str(e)}")
 
 def generate_field_from_image(image_data, field_name, character_context="", user_prompt=""):
     """Generate a specific field value for a character from an image.

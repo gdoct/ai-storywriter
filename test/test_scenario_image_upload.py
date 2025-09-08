@@ -7,12 +7,16 @@ This script tests the basic functionality without requiring a full frontend.
 import json
 import os
 from io import BytesIO
+import sys
+from pathlib import Path
+sys.path.append(str(Path(__file__).parent.parent))
+from test_config import get_backend_url
 
 import requests
 from PIL import Image
 
 # Test configuration
-BASE_URL = "http://localhost:5000"
+BASE_URL = get_backend_url()
 TEST_USER_EMAIL = "test@example.com"
 TEST_USER_PASSWORD = "password123"
 

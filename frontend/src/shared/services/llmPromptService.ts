@@ -2,6 +2,7 @@
 import { llmCompletionRequestMessage } from '../types/LLMTypes';
 import { Character, Scenario, StyleSettings } from '../types/ScenarioTypes';
 import { formatScenarioAsMarkdown, formatScenarioAsMarkdownWithoutBackStory, formatScenarioAsMarkdownWithoutStoryArc } from '../utils/scenarioToMarkdown';
+import { createSystemPrompt, createUserPrompt } from '../utils/promptCustomization';
 
 export function createWritingStylePrompt(): llmCompletionRequestMessage {
   // Add variation to prevent repetitive style combinations
@@ -67,9 +68,13 @@ export function createBackstoryPrompt(scenario: Scenario): llmCompletionRequestM
   prompt += "• Include only the most important background details needed for story context\n\n";
   
   prompt += "OUTPUT: Provide only the backstory text - no formatting, headers, or commentary.\n";
+  
+  const baseSystemMessage = `You are an expert storyteller specializing in ${genreContext} fiction. Create compelling backstories that establish story foundations without overwhelming detail.`;
+  const baseUserMessage = prompt;
+  
   return {
-    systemMessage: `You are an expert storyteller specializing in ${genreContext} fiction. Create compelling backstories that establish story foundations without overwhelming detail.`,
-    userMessage: prompt
+    systemMessage: createSystemPrompt(baseSystemMessage, scenario.promptSettings),
+    userMessage: createUserPrompt(baseUserMessage, scenario.promptSettings)
   };
 }
 
@@ -94,9 +99,13 @@ export function createRewriteBackstoryPrompt(scenario: Scenario): llmCompletionR
   prompt += "- Preserving all key plot points and character relationships\n";
   prompt += "- Write in a neutral tone, only a few paragraphs, as if it's the back cover of a book. \n\n";
   prompt += "Do not include any markdown, formatting, or meta-commentary - only the rewritten backstory itself.\n";
+  
+  const baseSystemMessage = 'You are a masterful storyteller specializing in improving existing content.';
+  const baseUserMessage = prompt;
+  
   return {
-    systemMessage: 'You are a masterful storyteller specializing in improving existing content.',
-    userMessage: prompt
+    systemMessage: createSystemPrompt(baseSystemMessage, scenario.promptSettings),
+    userMessage: createUserPrompt(baseUserMessage, scenario.promptSettings)
   };
 }
 
@@ -143,13 +152,36 @@ export function createStoryTitlePrompt(scenario: Scenario): llmCompletionRequest
   prompt += `\nAVOID these overused words: ${avoidWords.join(', ')}\n\n`;
   
   prompt += "SCENARIO DETAILS:\n";
-  prompt += formatScenarioAsMarkdown(scenario) + "\n\n";
+  
+  // Only include relevant context for title generation
+  if (scenario.title) {
+    prompt += `Current title: ${scenario.title}\n`;
+  }
+  if (scenario.synopsis) {
+    prompt += `Synopsis: ${scenario.synopsis}\n`;
+  }
+  if (scenario.writingStyle?.genre) {
+    prompt += `Genre: ${scenario.writingStyle.genre}\n`;
+  }
+  if (scenario.writingStyle?.tone) {
+    prompt += `Tone: ${scenario.writingStyle.tone}\n`;
+  }
+  if (scenario.writingStyle?.theme) {
+    prompt += `Theme: ${scenario.writingStyle.theme}\n`;
+  }
+  if (scenario.characters && scenario.characters.length > 0) {
+    prompt += `Main characters: ${scenario.characters.map(c => c.name || c.alias).filter(Boolean).join(', ')}\n`;
+  }
+  prompt += "\n";
   
   prompt += "OUTPUT: Provide ONLY the title as a single string - no quotes, explanations, or additional text.";
   
+  const baseSystemMessage = `You are an expert title creator specializing in ${genre} fiction with a talent for original, evocative titles.`;
+  const baseUserMessage = prompt;
+  
   return {
-    systemMessage: `You are an expert title creator specializing in ${genre} fiction with a talent for original, evocative titles.`,
-    userMessage: prompt
+    systemMessage: createSystemPrompt(baseSystemMessage, scenario.promptSettings),
+    userMessage: createUserPrompt(baseUserMessage, scenario.promptSettings)
   };
 }
 
@@ -163,7 +195,31 @@ export function createScenarioSynopsisPrompt(scenario: Scenario) {
   prompt += "The synopsis should resemble what you read on the back cover of a book, summarizing the backstory, hinting at the story arc, but without revealing any major plot points.\n\n";
   prompt += "The synopsis should be concise, memorable, and capture the reader's interest.\n";
   prompt += "IMPORTANT: return ONLY the synopsis as a single string without any additional text or formatting.\n\n";
-  prompt += formatScenarioAsMarkdown(scenario) + "\n\n";
+  
+  // Only include relevant context for synopsis generation
+  prompt += "SCENARIO DETAILS:\n";
+  if (scenario.title) {
+    prompt += `Title: ${scenario.title}\n`;
+  }
+  if (scenario.synopsis) {
+    prompt += `Current synopsis: ${scenario.synopsis}\n`;
+  }
+  if (scenario.writingStyle?.genre) {
+    prompt += `Genre: ${scenario.writingStyle.genre}\n`;
+  }
+  if (scenario.writingStyle?.tone) {
+    prompt += `Tone: ${scenario.writingStyle.tone}\n`;
+  }
+  if (scenario.writingStyle?.theme) {
+    prompt += `Theme: ${scenario.writingStyle.theme}\n`;
+  }
+  if (scenario.characters && scenario.characters.length > 0) {
+    prompt += `Main characters: ${scenario.characters.map(c => c.name || c.alias).filter(Boolean).join(', ')}\n`;
+  }
+  if (scenario.backstory) {
+    prompt += `Backstory context: ${scenario.backstory.substring(0, 200)}${scenario.backstory.length > 200 ? '...' : ''}\n`;
+  }
+  prompt += "\n";
   return {
     systemMessage: 'You are a creative synopsis generator for stories.',
     userMessage: prompt
@@ -271,9 +327,12 @@ export function createFinalStoryPrompt(scenario: Scenario): llmCompletionRequest
   prompt += "SCENARIO DETAILS:\n";
   prompt += markdown;
   
+  const baseSystemMessage = 'You are an exceptional storyteller.';
+  const baseUserMessage = prompt;
+  
   return {
-    systemMessage: 'You are an exceptional storyteller.',
-    userMessage: prompt
+    systemMessage: createSystemPrompt(baseSystemMessage, scenario.promptSettings),
+    userMessage: createUserPrompt(baseUserMessage, scenario.promptSettings)
   };
 }
 
@@ -312,9 +371,13 @@ export function createContinueStoryPrompt(scenario: Scenario, summaryOfPreviousC
 
   prompt += "Here is the summary of previous written chapters:\n\n";
   prompt += summaryOfPreviousChapters + "\n\n";
+  
+  const baseSystemMessage = 'You are an exceptional storyteller.';
+  const baseUserMessage = prompt;
+  
   return {
-    systemMessage: 'You are an exceptional storyteller.',
-    userMessage: prompt
+    systemMessage: createSystemPrompt(baseSystemMessage, scenario.promptSettings),
+    userMessage: createUserPrompt(baseUserMessage, scenario.promptSettings)
   };
 }
 
@@ -1059,8 +1122,12 @@ Generate creative and useful notes for this story. Include a mix of the followin
 
 Format the notes in a clear, organized way with headers. Be creative and think outside the box. Provide practical ideas that would help a writer develop and enrich their story.`;
 
+  const baseSystemMessage = 'You are a creative writing assistant specializing in story development and brainstorming.';
+  const baseUserMessage = prompt;
+
   return {
-    userMessage: prompt
+    systemMessage: createSystemPrompt(baseSystemMessage, scenario.promptSettings),
+    userMessage: createUserPrompt(baseUserMessage, scenario.promptSettings)
   };
 }
 

@@ -3,8 +3,41 @@
 
 import { LLMConfig } from '../types/LLMTypes';
 import { getSelectedModel } from './modelSelection';
+import { getToken } from './security';
 
 const API_BASE = '/api/settings/llm';
+
+// Helper function to get BYOK headers
+function getBYOKHeaders(): Record<string, string> {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json'
+  };
+  
+  // Add authentication token
+  const token = getToken();
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  
+  // Add BYOK credentials if available
+  const byokCredentials = localStorage.getItem('storywriter_byok_credentials');
+  if (byokCredentials) {
+    try {
+      const credentials = JSON.parse(byokCredentials);
+      if (credentials.apiKey) {
+        headers['X-BYOK-API-Key'] = credentials.apiKey;
+        headers['X-BYOK-Provider'] = credentials.provider;
+        if (credentials.baseUrl) {
+          headers['X-BYOK-Base-URL'] = credentials.baseUrl;
+        }
+      }
+    } catch (error) {
+      console.error('Error parsing BYOK credentials:', error);
+    }
+  }
+  
+  return headers;
+}
 
 export async function fetchLLMSettings(): Promise<LLMConfig | null> {
   const res = await fetch(API_BASE);
@@ -77,9 +110,17 @@ export async function saveLLMSettings(config: LLMConfig): Promise<LLMConfig | nu
 
   // console.log('[DEBUG] Saving LLM settings:', saveData); // Debug log
 
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  
+  // Add authentication token
+  const token = getToken();
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
   const res = await fetch(API_BASE, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers,
     body: JSON.stringify(saveData),
   });
   
@@ -122,16 +163,29 @@ export async function testLLMConnection(config: LLMConfig): Promise<any> {
 }
 
 export async function fetchLLMModels(): Promise<string[]> {
-  const res = await fetch(`${API_BASE}/models`);
+  // Use the newer proxy endpoint that respects BYOK mode
+  const headers = getBYOKHeaders();
+  
+  // Use the same base URL logic as llmService.ts
+  const isDevMode = window.location.port === '3000';
+  const backendUrl = import.meta.env.VITE_API_URL;
+  const modelsEndpoint = isDevMode && backendUrl
+    ? `${backendUrl}/api/proxy/llm/v1/models`
+    : '/api/proxy/llm/v1/models';
+  
+  const res = await fetch(modelsEndpoint, {
+    headers
+  });
   if (!res.ok) return [];
   const data = await res.json();
-  return data.models || [];
+  return data.data ? data.data.map((model: any) => model.id) : [];
 }
 
 export async function getLLMStatus(): Promise<{isConnected: boolean, modelName: string, backendType?: string}> {
   try {
-    // Use the new status endpoint
-    const res = await fetch(`${API_BASE}/status`);
+    // Use the new status endpoint with BYOK headers
+    const headers = getBYOKHeaders();
+    const res = await fetch(`${API_BASE}/status`, { headers });
     if (!res.ok) {
       return { isConnected: false, modelName: '' };
     }

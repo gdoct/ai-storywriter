@@ -22,6 +22,7 @@ export const GeneralTab: React.FC<TabProps> = ({
   const [showImportModal, setShowImportModal] = useState(false);
   const [isGeneratingTitle, setIsGeneratingTitle] = useState(false);
   const [isGeneratingSynopsis, setIsGeneratingSynopsis] = useState(false);
+  const [cancelGeneration, setCancelGeneration] = useState<(() => void) | null>(null);
   const { setAiStatus, setShowAIBusyModal } = useAIStatus();
 
   const handleBasicFieldChange = useCallback((field: string, value: string) => {
@@ -59,13 +60,17 @@ export const GeneralTab: React.FC<TabProps> = ({
         setShowAIBusyModal
       );
       
+      setCancelGeneration(() => generationResult.cancelGeneration);
+      
       try {
         const finalTitle = await generationResult.result;
         onScenarioChange({ title: finalTitle });
       } catch (error) {
         console.error('Title generation failed:', error);
+        // Keep the accumulated text
       } finally {
         setIsGeneratingTitle(false);
+        setCancelGeneration(null);
       }
     } catch (error) {
       console.error('Title generation setup failed:', error);
@@ -91,13 +96,17 @@ export const GeneralTab: React.FC<TabProps> = ({
         setShowAIBusyModal
       );
       
+      setCancelGeneration(() => generationResult.cancelGeneration);
+      
       try {
         const finalSynopsis = await generationResult.result;
         onScenarioChange({ synopsis: finalSynopsis });
       } catch (error) {
         console.error('Synopsis generation failed:', error);
+        // Keep the accumulated text
       } finally {
         setIsGeneratingSynopsis(false);
+        setCancelGeneration(null);
       }
     } catch (error) {
       console.error('Synopsis generation setup failed:', error);

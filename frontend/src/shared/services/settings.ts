@@ -131,3 +131,30 @@ export function clearBYOKCredentials(): void {
 export function hasBYOKCredentials(): boolean {
   return getBYOKCredentials() !== null;
 }
+
+export async function isUserInBYOKMode(): Promise<boolean> {
+  try {
+    const userSettings = await getUserSettings();
+    return userSettings.llmMode === 'byok';
+  } catch (error) {
+    console.error('Error checking user BYOK mode:', error);
+    return false;
+  }
+}
+
+export function getBYOKHeaders(): Record<string, string> {
+  const credentials = getBYOKCredentials();
+  if (!credentials || !credentials.apiKey) {
+    return {};
+  }
+  
+  const headers: Record<string, string> = {
+    'X-BYOK-API-Key': credentials.apiKey
+  };
+  
+  if (credentials.baseUrl) {
+    headers['X-BYOK-Base-URL'] = credentials.baseUrl;
+  }
+  
+  return headers;
+}

@@ -2,17 +2,24 @@ import React, { useState, useEffect } from 'react';
 import { getSelectedModel } from '../../services/modelSelection';
 import { getLLMStatus } from '../../services/llmBackend';
 import { LLMSettingsModal } from '../LLMSettingsModal';
+import { getUserSettings } from '../../services/settings';
 
 const ModelSelector: React.FC = () => {
   const [selectedModelId, setSelectedModelId] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
+  const [llmMode, setLLMMode] = useState<'member' | 'byok'>('member');
 
   // Load connection status and selected model on mount
   useEffect(() => {
     const loadStatus = async () => {
       try {
+        // Check current user settings for BYOK mode
+        const userSettings = await getUserSettings();
+        const currentLLMMode = userSettings.llmMode;
+        setLLMMode(currentLLMMode);
+        
         // Check LLM connection status
         const status = await getLLMStatus();
         setIsConnected(status.isConnected);
@@ -32,11 +39,26 @@ const ModelSelector: React.FC = () => {
 
     loadStatus();
 
-    // Set up interval to periodically check status
-    const intervalId = setInterval(loadStatus, 30000); // Every 30 seconds
+    // Set up interval to periodically check status and mode changes
+    const intervalId = setInterval(loadStatus, 30000); // Every 30 seconds to detect BYOK mode changes
     
-    return () => clearInterval(intervalId);
-  }, []);
+    // Listen for settings changes
+    const handleSettingsChange = (event: CustomEvent) => {
+      const { llmMode: newMode } = event.detail;
+      if (newMode !== llmMode) {
+        setLLMMode(newMode);
+        // Force reload status to get new models
+        loadStatus();
+      }
+    };
+
+    window.addEventListener('storywriter-settings-changed', handleSettingsChange as EventListener);
+    
+    return () => {
+      clearInterval(intervalId);
+      window.removeEventListener('storywriter-settings-changed', handleSettingsChange as EventListener);
+    };
+  }, [llmMode]);
 
   // Update selected model when modal changes it
   useEffect(() => {
@@ -45,6 +67,13 @@ const ModelSelector: React.FC = () => {
       setSelectedModelId(savedModel);
     }
   }, [selectedModelId]);
+
+  // Clear model selection when LLM mode changes (member <-> BYOK)
+  useEffect(() => {
+    // When mode changes, clear the selected model since the available models are different
+    setSelectedModelId('');
+    localStorage.removeItem('storywriter_selected_model'); // Clear from storage too
+  }, [llmMode]);
 
   const handleOpenModal = () => {
     setIsModalOpen(true);
@@ -60,11 +89,15 @@ const ModelSelector: React.FC = () => {
   };
 
   const getDisplayName = () => {
-    if (!selectedModelId) return 'No Model';
+    if (!selectedModelId) {
+      return llmMode === 'byok' ? 'BYOK - No Model' : 'No Model';
+    }
     // Truncate long model names for display
-    return selectedModelId.length > 30
-      ? `${selectedModelId.substring(0, 30)}...`
+    const truncatedName = selectedModelId.length > 25
+      ? `${selectedModelId.substring(0, 25)}...`
       : selectedModelId;
+    
+    return llmMode === 'byok' ? `BYOK: ${truncatedName}` : truncatedName;
   };
 
   if (loading) {
@@ -93,6 +126,7 @@ const ModelSelector: React.FC = () => {
       <button
         onClick={handleOpenModal}
         title={`Current model: ${selectedModelId || 'None selected'}${!isConnected ? ' (Disconnected)' : ''}`}
+        data-testid="model-selector-button"
         style={{
           padding: '6px 12px',
           fontSize: '0.75rem',

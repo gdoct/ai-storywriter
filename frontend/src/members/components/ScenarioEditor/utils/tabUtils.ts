@@ -1,4 +1,5 @@
 import { Scenario } from '../../../../shared/types/ScenarioTypes';
+import { hasPromptCustomizations } from '../../../../shared/utils/promptCustomization';
 import { TabId } from '../types';
 
 /**
@@ -62,6 +63,11 @@ export function getTabsWithData(scenario: Scenario): TabId[] {
   // Check if notes tab has data
   if (scenario.notes?.trim()) {
     tabsWithData.push('notes');
+  }
+
+  // Check if custom prompt tab has data
+  if (hasPromptCustomizations(scenario.promptSettings)) {
+    tabsWithData.push('customprompt');
   }
 
   // Check if timeline tab has data
@@ -159,6 +165,9 @@ export function tabHasData(scenario: Scenario, tabId: TabId): boolean {
     
     case 'notes':
       return !!scenario.notes?.trim();
+    
+    case 'customprompt':
+      return hasPromptCustomizations(scenario.promptSettings);
     
     case 'timeline':
       if (!scenario.timeline || scenario.timeline.length === 0) return false;

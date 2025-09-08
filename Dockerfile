@@ -25,29 +25,53 @@ RUN pip install --no-cache-dir -r backend/requirements.txt
 # Copy backend application code
 COPY backend/ ./backend/
 
+# Copy and set up entrypoint script
+COPY docker-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh \
+    && chown storywriter:storywriter /usr/local/bin/docker-entrypoint.sh
+
 # Create frontend directory structure and copy pre-built frontend
 RUN mkdir -p ./frontend/build/
 COPY frontend/build/ ./frontend/build/
 
+# Declare external volume for the SQLite DB
+RUN mkdir -p /data \
+    && chown -R storywriter:storywriter /app /data \
+    && chmod 775 /data
+VOLUME ["/data"]
+
+
+
 # Create necessary directories and set permissions
 RUN mkdir -p ./backend/uploads/character_photos ./backend/uploads/photos ./backend/uploads/scenario_images \
-    && chown -R storywriter:storywriter /app
+    && mkdir -p /data \
+    && chown -R storywriter:storywriter /app /data \
+    && chmod 775 /data
 
-# Switch to non-root user
+    # Switch to non-root user
 USER storywriter
+
+# Build-time arguments for configuration
+ARG BACKEND_HOST=0.0.0.0
+ARG BACKEND_PORT=5000
+# Note: Admin credentials should be passed as runtime environment variables for security
 
 # Set environment variables
 ENV PYTHONPATH=/app/backend
 ENV PYTHONUNBUFFERED=1
 ENV NODE_ENV=production
+ENV STORYWRITER_DB_PATH=/data/storywriter.db
+ENV BACKEND_HOST=${BACKEND_HOST}
+ENV BACKEND_PORT=${BACKEND_PORT}
+# Admin credentials will be set at runtime via docker run -e
 
-# Expose the port that the app runs on
-EXPOSE 5000
+# Expose the port that the app runs on (configurable via build arg)
+EXPOSE ${BACKEND_PORT}
 
-# Health check
+# Health check (uses environment variable for port)
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:5000/api/health || exit 1
+    CMD curl -f http://localhost:${BACKEND_PORT:-5000}/api/health || exit 1
 
-# Command to run the application
+# Set working directory and entrypoint
 WORKDIR /app/backend
-CMD ["python", "app.py"]
+ENTRYPOINT ["docker-entrypoint.sh"]

@@ -4,6 +4,7 @@ import { FaPlus, FaRandom, FaTimes, FaUser } from 'react-icons/fa';
 import { getRandomCharacterPhoto } from '../../../../../shared/services/characterPhotoService';
 import { createCharacterFromPhotoPrompt } from '../../../../../shared/services/llmPromptService';
 import { getToken } from '../../../../../shared/services/security';
+import { generateRandomCharacter } from '../../../../../shared/services/storyGenerator';
 import { Character, Scenario } from '../../../../../shared/types/ScenarioTypes';
 import { showUserFriendlyError } from '../../../../../shared/utils/errorHandling';
 import './PhotoUploadModal.css';
@@ -31,6 +32,7 @@ export const PhotoUploadModal: React.FC<PhotoUploadModalProps> = ({
   const [selectedGenre, setSelectedGenre] = useState<string>('');
   const [isLoadingRandomPhoto, setIsLoadingRandomPhoto] = useState(false);
   const [isUsingRandomPhoto, setIsUsingRandomPhoto] = useState(false);
+  const [isGeneratingName, setIsGeneratingName] = useState(false);
   // Progress tracking states
   const [generationProgress, setGenerationProgress] = useState<{
     stage: string;
@@ -100,6 +102,56 @@ export const PhotoUploadModal: React.FC<PhotoUploadModalProps> = ({
       }, tokenInterval);
     });
   }, [updateProgressStage]);
+
+  const generateCharacterName = useCallback(async () => {
+    if (isGeneratingName) return;
+    
+    try {
+      setIsGeneratingName(true);
+      setCharacterName(''); // Clear existing name
+      
+      let accumulated = '';
+      const generationResult = await generateRandomCharacter(
+        scenario,
+        'supporting', // character type for name generation
+        {
+          additionalInstructions: `Generate only a character name (first and last name) for a ${selectedGender || 'person'}. Do not include any other character details like appearance, backstory, or role. Just return the name in the format "FirstName LastName".`,
+          onProgress: (generatedText) => {
+            accumulated += generatedText;
+            setCharacterName(accumulated);
+          }
+        }
+      );
+      
+      try {
+        const result = await generationResult.result;
+        // Extract just the name from the generated character data
+        let finalName = result;
+        try {
+          const parsedResult = JSON.parse(result);
+          finalName = parsedResult.name || parsedResult.fullName || result;
+        } catch {
+          // If not JSON, try to extract name from text
+          const nameMatch = result.match(/(?:Name|name):\s*([^\n\r,]+)/);
+          if (nameMatch) {
+            finalName = nameMatch[1].trim();
+          } else {
+            // Just use first line or clean up the result
+            finalName = result.split('\n')[0].trim();
+          }
+        }
+        setCharacterName(finalName);
+      } catch (error) {
+        console.error('Name generation failed:', error);
+        // Keep the accumulated text if generation fails
+      }
+    } catch (error) {
+      console.error('Error generating character name:', error);
+      showUserFriendlyError(error instanceof Error ? error : new Error('Failed to generate name'), 'Name Generation');
+    } finally {
+      setIsGeneratingName(false);
+    }
+  }, [scenario, selectedGender, isGeneratingName]);
 
   const loadRandomPhoto = useCallback(async (gender?: string, genre?: string) => {
     setIsLoadingRandomPhoto(true);
@@ -485,13 +537,10 @@ export const PhotoUploadModal: React.FC<PhotoUploadModalProps> = ({
                 value={characterName}
                 onChange={(value) => setCharacterName(value)}
                 placeholder="e.g., Alice Johnson, John Smith, etc."
-                disabled={isUploading}
+                disabled={isUploading || isGeneratingName}
                 aiIcon={<FaRandom />}
-                onAiClick={async () => {
-                  const { generateFullName } = await import('../../../../../shared/services/characterNameGenerator');
-                  const fullName = await generateFullName(selectedGender as any);
-                  setCharacterName(fullName);
-                }}
+                aiGenerating={isGeneratingName}
+                onAiClick={generateCharacterName}
               />
             </div>
             

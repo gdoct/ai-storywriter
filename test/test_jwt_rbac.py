@@ -5,13 +5,16 @@ Test script to check JWT token processing and role-based access control
 import json
 import os
 import sys
+from pathlib import Path
+sys.path.append(str(Path(__file__).parent.parent))
+from test_config import get_backend_url
 
 import requests
 
 # Add backend to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'backend'))
 
-BASE_URL = 'http://localhost:5000'
+BASE_URL = get_backend_url()
 
 def test_login_and_roles():
     """Test login and role-based endpoints"""

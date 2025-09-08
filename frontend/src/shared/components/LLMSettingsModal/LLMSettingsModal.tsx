@@ -143,6 +143,7 @@ export const LLMSettingsModal: React.FC<LLMSettingsModalProps> = ({
             className="llm-settings-modal__close"
             onClick={onClose}
             aria-label="Close modal"
+            data-testid="button-close-llm-settings-modal"
           >
             <FaTimes />
           </button>
@@ -164,6 +165,7 @@ export const LLMSettingsModal: React.FC<LLMSettingsModalProps> = ({
             </label>
             <select
               id="modal-model-select"
+              data-testid="modal-model-select"
               value={selectedModelState}
               onChange={handleModelChange}
               disabled={!isLLMConnected || availableModels.length === 0}
@@ -186,6 +188,7 @@ export const LLMSettingsModal: React.FC<LLMSettingsModalProps> = ({
             </label>
             <input
               id="modal-temperature-slider"
+              data-testid="modal-temperature-slider"
               type="range"
               min="0.60"
               max="1.20"

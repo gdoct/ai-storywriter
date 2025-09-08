@@ -13,7 +13,7 @@ body, html {
   margin-top: 0; /* Remove margin since TopBar is sticky */
   background-color: var(--color-background-secondary, #f9fafb);
   width: 100%;
-  min-height: calc(100vh - 64px); /* Minimum height minus actual topbar height */
+  min-height: calc(100vh - 56px); /* Minimum height minus actual topbar height */
   overflow-y: auto; /* Enable vertical scrolling */
   overflow-x: hidden; /* Hide horizontal scrollbar */
   box-sizing: border-box;
@@ -66,4 +66,17 @@ body, html {
 .submit-btn:disabled {
   background: #888;
   cursor: not-allowed;
+}
+
+/* TopBar Responsive Design */
+@media (max-width: 768px) {
+  .topbar-main-nav {
+    display: none !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .topbar-main-nav {
+    display: none !important;
+  }
 }

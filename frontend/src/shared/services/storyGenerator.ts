@@ -3,7 +3,7 @@ import { llmCompletionRequestMessage } from '../types/LLMTypes';
 import { GeneratedStory, Scenario } from '../types/ScenarioTypes';
 import * as llmPromptService from './llmPromptService';
 import { createRewriteStoryArcPrompt, createStoryArcPrompt, createSummaryPrompt } from './llmPromptService';
-import { streamSimpleChatCompletionWithStatus, streamChatCompletionWithThinking } from './llmService';
+import { streamSimpleChatCompletionWithStatus, streamChatCompletionWithStatus, streamChatCompletionWithThinking } from './llmService';
 import { getSelectedModel } from './modelSelection';
 import { getShowThinkingSetting } from './settings';
 
@@ -174,7 +174,7 @@ export async function generateStory(
           { 
             model: selectedModel || undefined,
             temperature: options.temperature, 
-            max_tokens: 6000,
+            max_tokens: 32000,
             signal: abortController.signal
           },
           setAiStatus,
@@ -196,7 +196,7 @@ export async function generateStory(
           { 
             model: selectedModel || undefined,
             temperature: options.temperature, 
-            max_tokens: 6000,
+            max_tokens: 32000,
             signal: abortController.signal
           },
           setAiStatus,
@@ -297,7 +297,7 @@ export async function generateStoryTitle(scenario: Scenario,
   const resultPromise = new Promise<string>((resolve, reject) => {
     (async () => {
       try {
-        await streamSimpleChatCompletionWithStatus(
+        await streamChatCompletionWithStatus(
           promptObj,
           (text, isDone) => {
             if (isDone) {
@@ -365,7 +365,7 @@ export async function generateScenarioSynopsis(scenario: Scenario,
   const resultPromise = new Promise<string>((resolve, reject) => {
     (async () => {
       try {
-        await streamSimpleChatCompletionWithStatus(
+        await streamChatCompletionWithStatus(
           promptObj,
           (text, isDone) => {
             if (isDone) {
@@ -380,7 +380,7 @@ export async function generateScenarioSynopsis(scenario: Scenario,
           { 
             model: selectedModel || undefined,
             temperature: options.temperature, 
-            max_tokens: 100,
+            max_tokens: 300,
             signal: abortController.signal
           },
           setAiStatus,

@@ -1,9 +1,14 @@
 import json
 import sys
+from pathlib import Path
 
 import requests
 
-BACKEND_URL = "http://localhost:5000"
+# Import test configuration
+sys.path.append(str(Path(__file__).parent.parent.parent))
+from test_config import get_backend_url
+
+BACKEND_URL = get_backend_url()
 LOGIN_ENDPOINT = f"{BACKEND_URL}/api/login"
 LLM_PROXY_ENDPOINT = f"{BACKEND_URL}/proxy/llm/v1/chat/completions"
 
@@ -35,8 +40,9 @@ def stream_chat_completion(jwt_token: str, user_message: str):
     with requests.post(LLM_PROXY_ENDPOINT, headers=headers, json=payload, stream=True, timeout=120) as resp:
         resp.raise_for_status()
         print("\n--- AI Response ---")
-        for line in resp.iter_lines(decode_unicode=True):
+        for line in resp.iter_lines(decode_unicode=False):
             if line:
+                line = line.decode('utf-8', errors='ignore')
                 # LM Studio streams as SSE: lines start with 'data: '
                 if line.startswith('data: '):
                     data = line[6:]

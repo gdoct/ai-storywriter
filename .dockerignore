@@ -65,9 +65,10 @@
 **/*.md
 **/docs/
 
-# Scripts
+# Scripts (but keep docker-entrypoint.sh)
 **/scripts/
 **/*.sh
+!docker-entrypoint.sh
 
 # Database backups
 **/storywriter*.db

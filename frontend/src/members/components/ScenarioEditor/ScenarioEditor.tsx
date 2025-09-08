@@ -1,6 +1,6 @@
 import { ExpandableTabs } from '@drdata/ai-styles';
 import React, { useCallback, useEffect, useRef } from 'react';
-import { FaBook, FaEye, FaRedo, FaSave, FaStickyNote, FaTrash, FaUser, FaUsers } from 'react-icons/fa';
+import { FaBook, FaCog, FaEye, FaRedo, FaSave, FaStickyNote, FaTrash, FaUser, FaUsers, FaCopy } from 'react-icons/fa';
 import { FaLocationDot } from 'react-icons/fa6';
 import { MdSchedule } from 'react-icons/md';
 import { useNavigate } from 'react-router-dom';
@@ -20,6 +20,7 @@ import { StoryModal } from './modals/StoryModal';
 import './ScenarioEditor.css';
 import { BackstoryTab } from './tabs/BackstoryTab';
 import { CharactersTab } from './tabs/CharactersTab';
+import { CustomPromptTab } from './tabs/CustomPromptTab';
 import { FillInTab } from './tabs/FillInTab';
 import { GeneralTab } from './tabs/GeneralTab';
 import { LocationsTab } from './tabs/LocationsTab';
@@ -80,6 +81,13 @@ const tabs: TabConfig[] = [
     label: 'Notes',
     icon: FaStickyNote,
     component: NotesTab,
+    optional: true,
+  },
+  {
+    id: 'customprompt',
+    label: 'Custom Prompts',
+    icon: FaCog,
+    component: CustomPromptTab,
     optional: true,
   },
   {
@@ -432,7 +440,7 @@ export const ScenarioEditor: React.FC<ScenarioEditorProps> = ({
     {
       id: 'save-as',
       label: 'Save As',
-      icon: <FaSave />,
+      icon: <FaCopy />,
       onClick: handleSaveAs,
       disabled: state.isSaving || state.isLoading,
       loading: state.isSaving
@@ -453,40 +461,10 @@ export const ScenarioEditor: React.FC<ScenarioEditorProps> = ({
     <div className="scenario-editor">
       <div className="scenario-editor__header">
         <div className="scenario-editor__header-content">
-          <div className="scenario-editor__header-left">
-            <div className="scenario-editor__app-title">SCENARIO EDITOR</div>
-            <div className="scenario-editor__content-row">
-              <div className="scenario-editor__image-container">
-                {state.scenario.imageUrl ? (
-                  <img
-                    src={state.scenario.imageUrl}
-                    alt={state.scenario.title || 'Scenario'}
-                    className="scenario-editor__scenario-image"
-                    onError={(e) => {
-                      // Fallback to placeholder if image fails to load
-                      e.currentTarget.style.display = 'none';
-                      const placeholder = e.currentTarget.nextElementSibling as HTMLElement;
-                      if (placeholder) placeholder.style.display = 'flex';
-                    }}
-                  />
-                ) : null}
-                <div 
-                  className="scenario-editor__image-placeholder"
-                  style={{ display: state.scenario.imageUrl ? 'none' : 'flex' }}
-                >
-                  <div className="scenario-editor__placeholder-content">
-                    No Image
-                  </div>
-                </div>
-              </div>
-              <h1 className="scenario-editor__story-title">
-                {state.scenario.title || 'Untitled Story'}
-                {state.isDirty && <span className="scenario-editor__dirty-indicator"> *</span>}
-              </h1>
-            </div>
-          </div>
-          <div className="scenario-editor__header-right">
-            <div className="scenario-editor__menu-controls">
+          {/* Row 1: App Title */}
+          <div className="scenario-editor__header-title-row">
+            <div className="scenario-editor__app-title" data-testid="scenarioeditor-title">SCENARIO EDITOR</div>
+            <div className="scenario-editor__header-actions">
               <ActionButtons
                 items={actionButtonItems}
                 className="scenario-editor__action-buttons"
@@ -498,8 +476,43 @@ export const ScenarioEditor: React.FC<ScenarioEditorProps> = ({
               />
             </div>
           </div>
+
+          {/* Row 2: Image and Story Title */}
+          <div className="scenario-editor__header-main-row">
+            <div className="scenario-editor__image-container">
+              {state.scenario.imageUrl ? (
+                <img
+                  src={state.scenario.imageUrl}
+                  alt={state.scenario.title || 'Scenario'}
+                  className="scenario-editor__scenario-image"
+                  onError={(e) => {
+                    // Fallback to placeholder if image fails to load
+                    e.currentTarget.style.display = 'none';
+                    const placeholder = e.currentTarget.nextElementSibling as HTMLElement;
+                    if (placeholder) placeholder.style.display = 'flex';
+                  }}
+                />
+              ) : null}
+              <div 
+                className="scenario-editor__image-placeholder"
+                style={{ display: state.scenario.imageUrl ? 'none' : 'flex' }}
+              >
+                <div className="scenario-editor__placeholder-content">
+                  No Image
+                </div>
+              </div>
+            </div>
+            <h1 className="scenario-editor__story-title">
+              {state.scenario.title || 'Untitled Story'}
+              {state.isDirty && <span className="scenario-editor__dirty-indicator"> *</span>}
+            </h1>
+          </div>
+
+          {/* Row 3: Character Badges (if any) */}
           {state.scenario.characters && state.scenario.characters.length > 0 && (
-            <CharacterBadge characters={state.scenario.characters} />
+            <div className="scenario-editor__header-characters-row">
+              <CharacterBadge characters={state.scenario.characters} />
+            </div>
           )}
         </div>
       </div>

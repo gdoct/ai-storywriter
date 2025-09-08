@@ -1,7 +1,10 @@
 import { Scenario } from '../types/ScenarioTypes';
 import { getToken } from './security';
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+// Auto-detect if we're running in dev mode or production
+const isDevMode = window.location.port === '3000';
+const backendUrl = import.meta.env.VITE_API_URL;
+const API_BASE = isDevMode && backendUrl ? backendUrl : '';
 
 export interface Story {
   id: string;

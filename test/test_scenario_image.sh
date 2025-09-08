@@ -6,7 +6,7 @@
 set -e  # Exit on any error
 
 # Configuration
-BASE_URL="http://localhost:5000"
+BASE_URL="${VITE_API_URL:-http://localhost:5000}"
 TEST_EMAIL="test@example.com"
 TEST_PASSWORD="password123"
 TEST_IMAGE="./test/test_images/test_scenario_cover.jpg"

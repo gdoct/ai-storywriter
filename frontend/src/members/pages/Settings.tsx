@@ -27,7 +27,8 @@ const Settings: React.FC = () => {
       email: true,
       marketing: false
     },
-    llmMode: 'member'
+    llmMode: 'member',
+    byokProvider: 'openai'
   });
 
   const [byokCredentials, setBYOKCredentials] = useState<BYOKCredentials>({
@@ -60,6 +61,23 @@ const Settings: React.FC = () => {
       if (savedCredentials) {
         setBYOKCredentials(savedCredentials);
         setHasSavedKeys(true);
+        
+        // Ensure settings.byokProvider matches the saved credentials
+        if (userSettings.byokProvider !== savedCredentials.provider) {
+          setSettings(prev => ({
+            ...prev,
+            byokProvider: savedCredentials.provider
+          }));
+        }
+      } else {
+        // Reset BYOK credentials to defaults if none exist
+        const defaultProvider = userSettings.byokProvider || 'openai';
+        setBYOKCredentials({
+          provider: defaultProvider,
+          apiKey: '',
+          baseUrl: ''
+        });
+        setHasSavedKeys(false);
       }
     } catch (error) {
       console.error('Error loading settings:', error);
@@ -69,7 +87,7 @@ const Settings: React.FC = () => {
 
   useEffect(() => {
     loadSettings();
-  }, [loadSettings]);
+  }, [userProfile?.username, userProfile?.email]); // Only reload when user profile changes
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
@@ -133,11 +151,27 @@ const Settings: React.FC = () => {
     // Clear BYOK errors when switching to member mode
     if (mode === 'member') {
       setErrors(prev => ({ ...prev, apiKey: '', baseUrl: '' }));
+    } else {
+      // When switching to BYOK, load any existing credentials
+      const savedCredentials = getBYOKCredentials();
+      if (savedCredentials) {
+        setBYOKCredentials(savedCredentials);
+        setHasSavedKeys(true);
+      }
     }
   };
 
   const handleBYOKChange = (field: keyof BYOKCredentials, value: string) => {
     setBYOKCredentials(prev => ({ ...prev, [field]: value }));
+    
+    // If provider changed, also update the settings.byokProvider field
+    if (field === 'provider') {
+      setSettings(prev => ({ 
+        ...prev, 
+        byokProvider: value as 'github' | 'openai'
+      }));
+    }
+    
     setHasChanges(true);
 
     // Clear error for this field
@@ -172,8 +206,13 @@ const Settings: React.FC = () => {
       customAlert('Settings saved successfully!', 'Success');
       setHasChanges(false);
 
-      // Reload settings to ensure form stays populated
-      await loadSettings();
+      // Don't reload settings to avoid resetting form values
+      // The form already has the correct values in state
+      
+      // Notify other components that BYOK mode may have changed
+      window.dispatchEvent(new CustomEvent('storywriter-settings-changed', {
+        detail: { llmMode: settings.llmMode }
+      }));
     } catch (error) {
       console.error('Error saving settings:', error);
       customAlert('Failed to save settings. Please try again.', 'Error');

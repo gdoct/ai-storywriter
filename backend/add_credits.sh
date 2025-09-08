@@ -9,15 +9,15 @@ if [ -z "$EMAIL" ] || [ -z "$CREDITS" ]; then
   exit 1
 fi
 
-BASE_URL="http://localhost:5000"
-
-# read the ADMIN_TOKEN from the .env file
+# Read configuration from .env file
 if [ -f ../.env ]; then
   source ../.env
 else
   echo "Error: .env file not found."
   exit 1
 fi
+
+BASE_URL="${VITE_API_URL:-http://localhost:5000}"
 
 if [ "$ADMIN_TOKEN" == "null" ] || [ -z "$ADMIN_TOKEN" ]; then
   echo "Login failed. Check your email."

@@ -25,7 +25,7 @@ class ModelCache:
             return f"{backend_type}:{config.get('url', 'default')}"
         elif backend_type == 'ollama':
             return f"{backend_type}:{config.get('url', 'default')}"
-        elif backend_type == 'chatgpt':
+        elif backend_type == 'chatgpt' or backend_type == 'openai':
             # Don't include the full API key in cache key for security
             api_key_hash = hash(config.get('api_key', '')) if config.get('api_key') else 'none'
             return f"{backend_type}:{api_key_hash}"

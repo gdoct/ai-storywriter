@@ -4,7 +4,7 @@
 set -e
 
 # Configuration
-BASE_URL="http://localhost:5000"
+BASE_URL="${VITE_API_URL:-http://localhost:5000}"
 TEST_EMAIL="test@example.com"
 TEST_PASSWORD="password123"
 UPLOAD_DIR="./backend/uploads/character_photos"

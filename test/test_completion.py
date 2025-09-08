@@ -1,11 +1,14 @@
 import json
 import sys
+from pathlib import Path
+sys.path.append(str(Path(__file__).parent.parent))
+from test_config import get_backend_url
 
 import requests
 
 
 def test_chat_completion():
-    url = "http://localhost:5000/proxy/llm/v1/chat/completions"
+    url = f"{get_backend_url()}/proxy/llm/v1/chat/completions"
     payload = {
         "messages": [{"role": "user", "content": "Hello, test message"}],
         "temperature": 0.7

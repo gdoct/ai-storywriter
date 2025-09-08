@@ -170,6 +170,7 @@ export const AiTextBox: React.FC<AiTextBoxProps> = ({
           <IconButton
             icon={aiIcon}
             onClick={handleAiClick}
+            data-testid="ai-textbox-generate-button"
             active={aiActive}
             busy={aiGenerating}
             disabled={disabled}

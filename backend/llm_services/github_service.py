@@ -25,13 +25,11 @@ class GitHubService(BaseLLMService):
         
         # Use the official GitHub Models catalog endpoint
         try:
-            print(f"Trying catalog endpoint: {self.catalog_endpoint}")
             resp = requests.get(self.catalog_endpoint, headers=headers, timeout=10)
-            print(f"Catalog response status: {resp.status_code}")
+            if resp.status_code != 200:
+                print(f"[DEBUG] Error response text: {resp.text}")
             resp.raise_for_status()
             data = resp.json()
-            print(f"Catalog response data type: {type(data)}")
-            print(f"Catalog response (first 3 items): {data[:3] if isinstance(data, list) else data}")
             
             # GitHub Models catalog returns a direct list of model objects
             if isinstance(data, list):
@@ -41,8 +39,6 @@ class GitHubService(BaseLLMService):
             else:
                 models = []
             
-            print(f"Found {len(models)} models in catalog")
-            
             # Extract model IDs from the model objects
             model_ids = []
             for model in models:
@@ -50,39 +46,40 @@ class GitHubService(BaseLLMService):
                     # GitHub Models returns objects with 'id' field
                     if 'id' in model:
                         model_ids.append(model['id'])
-                        print(f"Found model: {model['id']}")
                 elif isinstance(model, str):
                     model_ids.append(model)
             
             if model_ids:
-                print(f"Successfully extracted {len(model_ids)} model IDs")
                 return model_ids
             else:
                 raise Exception("No valid model IDs found in catalog response")
                 
         except Exception as e:
-            print(f"Catalog endpoint failed: {e}")
+            print(f"[DEBUG] Catalog endpoint failed: {e}")
             
             # Try OpenAI-compatible models endpoint
             try:
-                print(f"Trying OpenAI-compatible endpoint: {self.base_url}/v1/models")
                 resp = requests.get(f"{self.base_url}/v1/models", headers=headers, timeout=10)
-                print(f"OpenAI endpoint response status: {resp.status_code}")
+                if resp.status_code != 200:
+                    print(f"[DEBUG] OpenAI endpoint error response: {resp.text}")
                 resp.raise_for_status()
                 data = resp.json()
-                return [m['id'] for m in data.get('data', [])]
+                models = [m['id'] for m in data.get('data', [])]
+                return models
             except Exception as e2:
-                print(f"OpenAI endpoint also failed: {e2}")
+                print(f"[DEBUG] OpenAI endpoint also failed: {e2}")
                 
                 # Return some common GitHub Models as fallback
-                print("Returning fallback model list")
-                return [
+                print("[DEBUG] Returning fallback model list")
+                fallback_models = [
                     'openai/gpt-4o-mini',
                     'openai/gpt-4o', 
                     'meta-llama/llama-3.3-70b-instruct',
                     'microsoft/phi-3.5-mini-instruct',
                     'mistralai/mistral-7b-instruct-v0.3'
                 ]
+                print(f"[DEBUG] Fallback models: {fallback_models}")
+                return fallback_models
 
     def test_connection(self):
         try:
@@ -127,7 +124,8 @@ class GitHubService(BaseLLMService):
             # Parse response
             data = response.json()
             if 'choices' in data and len(data['choices']) > 0:
-                return data['choices'][0]['message']['content']
+                # Return the full response object, not just the content
+                return data
             else:
                 raise Exception("No response content received")
                 
@@ -163,25 +161,27 @@ class GitHubService(BaseLLMService):
             if 'top_p' in payload and payload['top_p'] is not None:
                 github_payload['top_p'] = float(payload['top_p'])
             
-            # Debug logging
-            print(f"GitHub Models API call to: {self.chat_endpoint}")
-            print(f"Model: {github_payload['model']}")
-            print(f"Messages count: {len(messages)}")
-            
             # Use the OpenAI-compatible chat completions endpoint
             with requests.post(self.chat_endpoint, 
                              json=github_payload, 
                              headers=headers, 
                              stream=True, 
                              timeout=60) as resp:
-                print(f"Response status: {resp.status_code}")
                 if resp.status_code != 200:
                     print(f"Error response: {resp.text}")
                 resp.raise_for_status()
                 
-                for chunk in resp.iter_content(chunk_size=4096):
-                    if chunk:
-                        yield chunk
+                # Process Server-Sent Events with minimal buffering for real-time streaming
+                for line in resp.iter_lines(decode_unicode=False, chunk_size=1):
+                    if line:
+                        # Decode the line to check its content
+                        line_str = line.decode('utf-8', errors='ignore')
+                        # GitHub Models returns SSE format: "data: {...}"
+                        if line_str.startswith('data: '):
+                            yield f"{line_str}\n\n".encode('utf-8')
+                        elif line_str == 'data: [DONE]':
+                            yield f"{line_str}\n\n".encode('utf-8')
+                            break
                         
         except Exception as e:
             import traceback

@@ -20,7 +20,7 @@ const AppContent = () => {
         <TopBar />
         <div className="main-content" style={{ 
           marginBottom: '0',
-          minHeight: 'calc(100vh - 64px)'
+          minHeight: 'calc(100vh - 56px)'
         }}>
           {routeElements}
         </div>

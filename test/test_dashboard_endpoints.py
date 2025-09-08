@@ -5,13 +5,16 @@ Test script for dashboard endpoints
 import json
 import os
 import sys
+from pathlib import Path
+sys.path.append(str(Path(__file__).parent.parent))
+from test_config import get_backend_url
 
 import requests
 
 # Add the backend directory to the path so we can import from it
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'backend'))
 
-BASE_URL = "http://localhost:5000"
+BASE_URL = get_backend_url()
 
 def test_dashboard_endpoints():
     """Test all dashboard endpoints with a test user"""
@@ -30,7 +33,7 @@ def test_dashboard_endpoints():
             print("✗ Backend is not responding correctly")
             return
     except requests.exceptions.ConnectionError:
-        print("✗ Cannot connect to backend. Make sure it's running on port 5000")
+        print(f"✗ Cannot connect to backend. Make sure it's running on {BASE_URL}")
         return
     
     # For testing purposes, we'll need a valid JWT token

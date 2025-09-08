@@ -16,6 +16,7 @@ load_dotenv()
 # Configure logging
 if not os.getenv("DEBUG"):
     logging.getLogger('uvicorn.access').setLevel(logging.ERROR)
+    # log the environment variables except sensitive ones
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -48,13 +49,12 @@ async def health_check():
 
 # Import and register routers
 from routers import (
-    auth, scenario, chat, llm_proxy, settings, dashboard, marketplace, 
-    image, character_photo, scenario_image, payment, moderation, role, user_settings, agent
+    auth, scenario, llm_proxy, settings, dashboard, marketplace, 
+    image, character_photo, scenario_image, payment, moderation, role, user_settings
 )
 from scenario_agent import streaming_agent
 app.include_router(auth.router, prefix="/api", tags=["auth"])
 app.include_router(scenario.router, prefix="/api", tags=["scenarios"])
-app.include_router(chat.router, prefix="/api", tags=["chat"])
 app.include_router(llm_proxy.router, prefix="/api", tags=["llm"])
 app.include_router(settings.router, prefix="/api", tags=["settings"])
 app.include_router(dashboard.router, prefix="/api", tags=["dashboard"])
@@ -66,7 +66,6 @@ app.include_router(payment.router, prefix="/api", tags=["payment"])
 app.include_router(moderation.router, prefix="/api", tags=["moderation"])
 app.include_router(role.router, prefix="/api", tags=["roles"])
 app.include_router(user_settings.router, prefix="/api", tags=["user_settings"])
-app.include_router(agent.router, prefix="/api/agent", tags=["agent"])
 app.include_router(streaming_agent.router, prefix="/api/streaming_agent", tags=["streaming_agent"])
 
 # Serve React frontend static files (after API routes are registered)
@@ -85,7 +84,8 @@ if frontend_build_path.exists():
             app.mount(f"/{url_path}", StaticFiles(directory=str(static_path)), name=f"static_{dir_name}")
     
     # Mount uploads directory for user-provided content
-    uploads_path = Path(__file__).parent / "uploads"
+    # upload path is provided through $UPLOAD_FOLDER. if not, use folder 'uploads'
+    uploads_path = Path(os.environ.get("UPLOAD_FOLDER", "uploads"))
     if uploads_path.exists():
         app.mount("/uploads", StaticFiles(directory=str(uploads_path)), name="uploads")
     
@@ -154,6 +154,13 @@ if frontend_build_path.exists():
             return FileResponse(str(file_path), media_type="image/png")
         raise HTTPException(status_code=404)
     
+    @app.get("/logo-transparent.png")
+    async def serve_logo_transparent():
+        file_path = frontend_build_path / "logo-transparent.png"
+        if file_path.exists():
+            return FileResponse(str(file_path), media_type="image/png")
+        raise HTTPException(status_code=404)
+    
     # Serve React app at root
     @app.get("/")
     async def serve_frontend():
@@ -182,10 +189,15 @@ if frontend_build_path.exists():
 
 if __name__ == "__main__":
     import uvicorn
+    
+    # Get host and port from environment variables with defaults
+    host = os.getenv("BACKEND_HOST", "0.0.0.0")
+    port = int(os.getenv("BACKEND_PORT", "5000"))
+    
     uvicorn.run(
         "app:app",
-        host="0.0.0.0",
-        port=5000,
+        host=host,
+        port=port,
         reload=True,
         log_level="info"
     )

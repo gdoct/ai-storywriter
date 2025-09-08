@@ -31,11 +31,6 @@ export interface AgentRequest {
   stream?: boolean;
 }
 
-export interface AgentResponse {
-  response: string;
-  scenario?: any;
-  tool_calls?: any[];
-}
 
 export type AgentStreamCallback = (message: AgentMessage) => void;
 
@@ -118,27 +113,6 @@ export async function streamAgentResponse(
   }
 }
 
-/**
- * Send a non-streaming request to the agent endpoint
- */
-export async function sendAgentMessage(request: AgentRequest): Promise<AgentResponse> {
-  try {
-    const response = await axios.post('/api/agent/scenario', {
-      message: request.message,
-      scenario: request.scenario,
-      stream: false
-    });
-
-    if (response.status < 200 || response.status >= 300) {
-      throw new Error(`Agent request failed: ${response.status} ${response.statusText}`);
-    }
-
-    return response.data as AgentResponse;
-  } catch (error) {
-    console.error('Agent request error:', error);
-    throw error;
-  }
-}
 
 /**
  * Stream responses from the new real-time streaming agent endpoint
@@ -224,17 +198,10 @@ export async function streamAgentResponseRealTime(
  */
 export async function checkAgentHealth(): Promise<{ status: string; agent?: string; features?: string[]; error?: string }> {
   try {
-    // Check new streaming endpoint first
     const streamingResponse = await axios.get('/api/streaming_agent/scenario/stream/health');
     return streamingResponse.data;
   } catch (error) {
-    // Fallback to original endpoint
-    try {
-      const response = await axios.get('/api/agent/scenario/health');
-      return response.data;
-    } catch (fallbackError) {
-      console.error('Agent health check failed:', error);
-      return { status: 'unhealthy', error: error instanceof Error ? error.message : 'Unknown error' };
-    }
+    console.error('Agent health check failed:', error);
+    return { status: 'unhealthy', error: error instanceof Error ? error.message : 'Unknown error' };
   }
 }

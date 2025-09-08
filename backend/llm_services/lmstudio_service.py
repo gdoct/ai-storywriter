@@ -46,10 +46,10 @@ class LMStudioService(BaseLLMService):
                                    timeout=120)
             response.raise_for_status()
             
-            # Parse response
+            # Parse response and return full data (including usage information)
             data = response.json()
             if 'choices' in data and len(data['choices']) > 0:
-                return data['choices'][0]['message']['content']
+                return data  # Return full response including usage info
             else:
                 raise Exception("No response content received")
                 
@@ -78,10 +78,18 @@ class LMStudioService(BaseLLMService):
                              stream=True, 
                              timeout=60) as resp:
                 resp.raise_for_status()
-                # Use smaller chunks for smoother streaming - 64 bytes instead of 4KB  
-                for chunk in resp.iter_content(chunk_size=64):
-                    if chunk:
-                        yield chunk
+                # Use minimal buffering for real-time streaming  
+                # Process Server-Sent Events line by line for real-time streaming
+                for line in resp.iter_lines(decode_unicode=False, chunk_size=1):
+                    if line:
+                        # Decode the line to check its content
+                        line_str = line.decode('utf-8', errors='ignore')
+                        # LM Studio returns SSE format: "data: {...}"
+                        if line_str.startswith('data: '):
+                            yield f"{line_str}\n\n".encode('utf-8')
+                        elif line_str == 'data: [DONE]':
+                            yield f"{line_str}\n\n".encode('utf-8')
+                            break
         except Exception as e:
             import traceback
 
@@ -113,7 +121,26 @@ class LMStudioService(BaseLLMService):
             # Check if this is an appearance-only prompt
             is_appearance_prompt = "appearance" in prompt.lower() and "physical" in prompt.lower()
             
-            # Prepare the vision request payload
+            # Create a focused character generation prompt
+            focused_prompt = f"""
+Look at this image and create a character based on what you see. Generate ONLY the following information in JSON format:
+
+{prompt}
+
+Return a JSON object with exactly these 3 fields:
+- "name": A fitting name for this character
+- "appearance": Detailed physical description based on the image
+- "backstory": A short, interesting backstory (2-3 sentences)
+
+Example format:
+{{
+  "name": "Character Name",
+  "appearance": "Detailed physical description...",
+  "backstory": "Short backstory..."
+}}
+"""
+            
+            # Prepare the vision request payload (no streaming for vision)
             payload = {
                 "model": vision_model,
                 "messages": [
@@ -122,7 +149,7 @@ class LMStudioService(BaseLLMService):
                         "content": [
                             {
                                 "type": "text",
-                                "text": prompt
+                                "text": focused_prompt
                             },
                             {
                                 "type": "image_url",
@@ -133,24 +160,33 @@ class LMStudioService(BaseLLMService):
                         ]
                     }
                 ],
-                "max_tokens": 1000
+                "max_tokens": 300,
+                "temperature": 0.3,
+                "stream": False
             }
             
-            # Send vision request to LM Studio
+            # Send vision request to LM Studio (non-streaming)
             headers = {"Content-Type": "application/json"}
             response = requests.post(
                 f"{self.base_url}/v1/chat/completions",
                 headers=headers,
                 json=payload,
-                timeout=30
+                timeout=120
             )
             
             if response.status_code != 200:
-                raise Exception(f"Vision API error: {response.status_code}")
+                raise Exception(f"Vision API error: {response.status_code} - {response.text}")
             
-            # Parse the response
-            response_data = response.json()
-            vision_response = response_data.get('choices', [{}])[0].get('message', {}).get('content', '')
+            # Process non-streaming response
+            result = response.json()
+            if 'choices' not in result or len(result['choices']) == 0:
+                raise Exception(f"No choices in vision response: {result}")
+            
+            message = result['choices'][0].get('message', {})
+            vision_response = message.get('content', '')
+            
+            if not vision_response:
+                raise Exception(f"Empty content in vision response: {result}")
             
             # If this is an appearance prompt or parse_as_json is False, return raw text
             if is_appearance_prompt or not parse_as_json:
@@ -160,25 +196,35 @@ class LMStudioService(BaseLLMService):
             return self._parse_vision_response(vision_response)
             
         except Exception as e:
-            print(f"LMStudio vision error: {str(e)}")
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"LMStudio vision error: {str(e)}")
+            logger.error(f"Response status: {response.status_code if 'response' in locals() else 'No response'}")
+            if 'response' in locals():
+                logger.error(f"Response body: {response.text}")
             raise
 
     def _parse_vision_response(self, vision_response):
-        """Parse the vision response to extract structured data."""
+        """Parse the vision response to extract simplified character data."""
         from llm_services.llm_service import parse_json_response
 
-        # Define required fields for character generation
-        required_fields = ['name', 'alias', 'role', 'gender', 'appearance', 'backstory', 'extraInfo']
+        # Define required fields for simplified character generation
+        required_fields = ['name', 'appearance', 'backstory']
         
         # Define schema sample for validation
         schema_sample = {
             "name": "Character Name",
-            "alias": "Character Alias", 
-            "role": "Main/Supporting/Antagonist",
-            "gender": "Male/Female/Other",
             "appearance": "Physical description",
-            "backstory": "Character background",
-            "extraInfo": "Additional details"
+            "backstory": "Character background"
         }
         
-        return parse_json_response(vision_response, required_fields, schema_sample)
+        # Parse the simplified response
+        parsed_data = parse_json_response(vision_response, required_fields, schema_sample)
+        
+        # Add default values for fields expected by the frontend but not generated
+        parsed_data['alias'] = parsed_data.get('alias', '')
+        parsed_data['role'] = parsed_data.get('role', 'Character')
+        parsed_data['gender'] = parsed_data.get('gender', '')
+        parsed_data['extraInfo'] = parsed_data.get('extraInfo', 'Generated from photo')
+        
+        return parsed_data

@@ -3,10 +3,14 @@
 Test script to verify the LM Studio connection test fix
 """
 import json
+import sys
+from pathlib import Path
+sys.path.append(str(Path(__file__).parent.parent))
+from test_config import get_backend_url
 
 import requests
 
-BASE_URL = "http://localhost:5000"
+BASE_URL = get_backend_url()
 JWT_TOKEN = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTc0ODczMDcwNiwianRpIjoiY2UzMzJjODktZGIzYy00NDFhLTk0YzItYTM1NTFiOGZkZTM3IiwidHlwZSI6ImFjY2VzcyIsInN1YiI6Imd1aWRvLmRvY3RlckBnbWFpbC5jb20iLCJuYmYiOjE3NDg3MzA3MDYsImNzcmYiOiI3M2MwZjZhNS1mZjdmLTRjYmYtODUwNS04NzY2MDE2ZjFiZjIiLCJleHAiOjE3ODAyNjY3MDZ9.f9Yx-lg6jxoOdKkoxnw7cvMU3S6eH3LKNKrDAvtGePQ"
 
 headers = {

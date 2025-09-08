@@ -16,5 +16,8 @@
     "playwright": "^1.53.1",
     "typescript": "^5.8.3",
     "vitest": "^3.2.4"
+  },
+  "dependencies": {
+    "@testing-library/jest-dom": "^6.8.0"
   }
 }

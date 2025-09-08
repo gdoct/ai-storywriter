@@ -60,7 +60,8 @@ class OpenAIService(BaseLLMService):
             # Parse response
             data = response.json()
             if 'choices' in data and len(data['choices']) > 0:
-                return data['choices'][0]['message']['content']
+                # Return the full response object, not just the content
+                return data
             else:
                 raise Exception("No response content received")
                 
@@ -97,10 +98,18 @@ class OpenAIService(BaseLLMService):
                              stream=True, 
                              timeout=60) as resp:
                 resp.raise_for_status()
-                # Use smaller chunks for smoother streaming - 64 bytes instead of 4KB
-                for chunk in resp.iter_content(chunk_size=64):
-                    if chunk:
-                        yield chunk
+                # Use minimal buffering for real-time streaming
+                # Process Server-Sent Events line by line for real-time streaming  
+                for line in resp.iter_lines(decode_unicode=False, chunk_size=1):
+                    if line:
+                        # Decode the line to check its content
+                        line_str = line.decode('utf-8', errors='ignore')
+                        # OpenAI returns SSE format: "data: {...}"
+                        if line_str.startswith('data: '):
+                            yield f"{line_str}\n\n".encode('utf-8')
+                        elif line_str == 'data: [DONE]':
+                            yield f"{line_str}\n\n".encode('utf-8')
+                            break
         except Exception as e:
             import traceback
 

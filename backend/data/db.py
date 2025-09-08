@@ -1,5 +1,3 @@
-import getpass
-import hashlib
 import os
 import sqlite3
 import uuid
@@ -7,13 +5,18 @@ from datetime import datetime
 
 from services.security_utils import hash_password
 
-from .db_config import DB_PATH, get_db_path
+from .db_config import DB_PATH
 
 
 def get_db_connection():
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    return conn
+    
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        conn.row_factory = sqlite3.Row
+        return conn
+    except Exception as e:
+        print(f"❌ Failed to connect to database: {e}")
+        raise
 
 def init_db():
     conn = get_db_connection()
@@ -22,12 +25,12 @@ def init_db():
     # Check if the database is already initialized
     c.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='users'")
     if c.fetchone():
-        print("Database is already initialized.")
         conn.close()
         return
 
-    # Load schema from dbschema.sql
     schema_path = os.path.join(os.path.dirname(__file__), '../dbschema.sql')
+    print(f"Initializing database with schema from {schema_path}.")
+    # Load schema from dbschema.sql
     with open(schema_path, 'r') as schema_file:
         schema_sql = schema_file.read()
 
@@ -42,14 +45,22 @@ def init_db():
     conn.commit()
     conn.close()
     
-    # ask for the admin username and email
-    print("Database initialized successfully.")  
-    print("Username for admin:")
-    admin_username = input().strip()
-    print("Email for admin:")
-    admin_email = input().strip()
-    print("Password for admin (will mask):")
-    admin_password = getpass.getpass().strip()
+    # Get admin credentials from environment variables
+    print("Database initialized successfully.")
+    print("Creating admin user from environment variables...")
+    
+    admin_username = os.getenv('ADMIN_DEFAULT_USERNAME')
+    admin_email = os.getenv('ADMIN_DEFAULT_EMAIL') 
+    admin_password = os.getenv('ADMIN_DEFAULT_PASSWORD')
+    
+    if not admin_username:
+        raise ValueError("ADMIN_DEFAULT_USERNAME environment variable is required for Docker deployment")
+    if not admin_email:
+        raise ValueError("ADMIN_DEFAULT_EMAIL environment variable is required for Docker deployment")
+    if not admin_password:
+        raise ValueError("ADMIN_DEFAULT_PASSWORD environment variable is required for Docker deployment")
+        
+    print(f"Creating admin user: {admin_username} ({admin_email})")
 
     # insert the admin user into the database using all fields in the schema
 

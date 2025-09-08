@@ -23,8 +23,9 @@ logger = logging.getLogger(__name__)
 # Configuration
 MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB max file size
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
-UPLOAD_FOLDER = 'uploads/photos'
-
+# upload folder is provided by environment variable or defaults to 'uploads/photos'
+UPLOAD_FOLDER = os.environ.get("UPLOAD_FOLDER", "uploads") + "/photos"
+    
 def allowed_file(filename: str) -> bool:
     """Check if the file extension is allowed."""
     return '.' in filename and \
@@ -34,8 +35,8 @@ def validate_image_size(file_data: bytes) -> bool:
     """Validate that the image file size is within limits."""
     return len(file_data) <= MAX_FILE_SIZE
 
-def compress_image_if_needed(image_data: bytes, max_size_kb: int = 300) -> bytes:
-    """Compress image if it exceeds the max size."""
+def compress_image_if_needed(image_data: bytes, max_size_kb: int = 50, max_dimension: int = 768) -> bytes:
+    """Compress image if it exceeds the max size or dimensions."""
     try:
         # Open the image
         img = Image.open(BytesIO(image_data))
@@ -44,34 +45,26 @@ def compress_image_if_needed(image_data: bytes, max_size_kb: int = 300) -> bytes
         if img.mode in ('RGBA', 'LA', 'P'):
             img = img.convert('RGB')
         
-        # Calculate current size
-        current_size = len(image_data) / 1024  # KB
+        # First, resize dimensions if too large (this is often more important than file size)
+        width, height = img.size
+        if width > max_dimension or height > max_dimension:
+            # Calculate scale factor to fit within max_dimension
+            scale_factor = min(max_dimension / width, max_dimension / height)
+            new_width = int(width * scale_factor)
+            new_height = int(height * scale_factor)
+            img = img.resize((new_width, new_height), Image.Resampling.LANCZOS)
         
-        if current_size <= max_size_kb:
-            return image_data
-        
-        # Calculate compression ratio needed
-        compression_ratio = max_size_kb / current_size
-        
-        # Reduce quality based on compression ratio
-        quality = max(20, int(85 * compression_ratio))
-        
-        # Compress the image
+        # Start with good quality and compress if needed
+        quality = 85
         output = BytesIO()
         img.save(output, format='JPEG', quality=quality, optimize=True)
         compressed_data = output.getvalue()
         
-        # If still too big, resize the image
-        if len(compressed_data) / 1024 > max_size_kb:
-            # Reduce dimensions
-            width, height = img.size
-            scale_factor = (max_size_kb / (len(compressed_data) / 1024)) ** 0.5
-            new_width = int(width * scale_factor)
-            new_height = int(height * scale_factor)
-            
-            img_resized = img.resize((new_width, new_height), Image.Resampling.LANCZOS)
+        # If still too big, reduce quality incrementally
+        while len(compressed_data) / 1024 > max_size_kb and quality > 20:
+            quality -= 10
             output = BytesIO()
-            img_resized.save(output, format='JPEG', quality=quality, optimize=True)
+            img.save(output, format='JPEG', quality=quality, optimize=True)
             compressed_data = output.getvalue()
         
         return compressed_data
@@ -104,14 +97,20 @@ def save_uploaded_file(file_data: bytes, original_filename: str, user_id: str, p
         logger.error(f"Error saving file: {e}")
         raise
 
-def generate_character_from_image(image_data: bytes, user_prompt: str) -> Dict[str, Any]:
+def generate_character_from_image(image_data: bytes, user_prompt: str, user_id: str = None, byok_headers = None) -> Dict[str, Any]:
     """Generate character data from image using LLM service."""
     try:
         # Import here to avoid circular imports
         from llm_services.llm_service import generate_character_from_image as llm_generate_character
-        return llm_generate_character(image_data, user_prompt)
+        logger.info(f"Calling LLM service with prompt: {user_prompt[:100]}...")
+        result = llm_generate_character(image_data, user_prompt, user_id, byok_headers)
+        logger.info(f"LLM service returned: {result}")
+        return result
     except Exception as e:
         logger.error(f"Error generating character from image: {e}")
+        logger.error(f"Exception type: {type(e).__name__}")
+        import traceback
+        logger.error(f"Traceback: {traceback.format_exc()}")
         # Return a default character if LLM fails
         return {
             'name': 'Generated Character',
@@ -172,9 +171,14 @@ async def create_character_from_photo(
         compressed_data = compress_image_if_needed(file_data)
         logger.info(f"Compressed size: {len(compressed_data)} bytes")
         
-        # Generate character from image
+        # Generate character from image using new proxy service
         logger.info("Generating character from image...")
-        character_data = generate_character_from_image(compressed_data, prompt)
+        character_data = generate_character_from_image(
+            compressed_data, 
+            prompt, 
+            user_id=user_id,
+            byok_headers=None  # Character photo doesn't currently support BYOK
+        )
         
         logger.info(f"Generated character: {character_data.get('name', 'Unknown')}")
         

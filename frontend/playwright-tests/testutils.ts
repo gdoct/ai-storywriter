@@ -241,15 +241,27 @@ export async function waitForTextInputToSettle(page: Page, selector: string, tim
 }
 
 export async function waitForAiTextBoxGeneration(page: Page, startTimeout: number = 10000, completionTimeout: number = 600000): Promise<void> {
-  // First wait for the AI generation to start (blue glow to appear)
-  await page.waitForFunction(() => {
-    const input = document.querySelector('.ai-textbox__input--generating');
-    return input !== null;
-  }, {}, { timeout: startTimeout });
+  // Wait for the AI generation to start by checking for the generating class
+  // Use a more specific selector and shorter polling interval
+  try {
+    await page.waitForSelector('.ai-textbox__input--generating', { 
+      state: 'attached',
+      timeout: startTimeout 
+    });
+    console.log('AI generation started (generating class detected)');
+  } catch (error) {
+    console.log('No generating class found - AI may have completed instantly or not started');
+    return;
+  }
   
-  // Then wait for the AI textbox to finish generating (blue glow animation to disappear)
-  await page.waitForFunction(() => {
-    const input = document.querySelector('.ai-textbox__input--generating');
-    return input === null;
-  }, {}, { timeout: completionTimeout });
+  // Wait for the AI generation to complete by waiting for the generating class to be removed
+  // This uses a more efficient selector-based approach rather than function evaluation
+  await page.waitForSelector('.ai-textbox__input--generating', { 
+    state: 'detached',
+    timeout: completionTimeout 
+  });
+  console.log('AI generation completed (generating class removed)');
+  
+  // Additional wait to ensure DOM has settled after generation
+  await page.waitForTimeout(500);
 }

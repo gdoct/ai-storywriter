@@ -127,8 +127,8 @@ const TopBar: React.FC = () => {
         alignItems: 'center',
         maxWidth: '1400px',
         margin: '0 auto',
-        padding: '0 var(--spacing-xl)',
-        height: '64px'
+        padding: '0 var(--spacing-lg)',
+        height: '56px'
       }}>
         <Link
           to={authenticated ? "/dashboard" : "/"}
@@ -170,52 +170,63 @@ const TopBar: React.FC = () => {
         <div style={{
           display: 'flex',
           alignItems: 'center',
-          gap: 'var(--spacing-lg)',
+          gap: 'var(--spacing-md)',
           height: '100%'
         }}>
-          <div style={{
+          {/* Main navigation - hidden on small screens */}
+          <div className="topbar-main-nav" style={{
             display: 'flex',
             alignItems: 'center',
-            paddingRight: 'var(--spacing-md)',
             padding: 'var(--spacing-xs) var(--spacing-sm)',
-            borderRadius: '8px',
+            borderRadius: '6px',
             backgroundColor: 'var(--color-surface-variant)',
             border: '1px solid var(--color-border)',
-            gap: 'var(--spacing-md)'
+            gap: 'var(--spacing-sm)'
           }}>
             {authenticated ? (
               <>
-                <Link to="/dashboard"><Button variant='ghost'>Dashboard</Button></Link>
-                <Link to="/marketplace"><Button variant='ghost'>Marketplace</Button></Link>
-                <CreditsBadge />
-                <ModelSelector />
+                <Link to="/dashboard"><Button variant='ghost' size='sm'>Dashboard</Button></Link>
+                <Link to="/marketplace"><Button variant='ghost' size='sm'>Marketplace</Button></Link>
               </>
             ) : (
               <>
                 <Link to="/buy-credits" style={{ textDecoration: 'none', color: 'var(--color-text-primary)' }}>
-                  <span style={{ fontSize: '0.875rem' }}>Buy Credits</span>
+                  <span style={{ fontSize: '0.75rem' }}>Buy Credits</span>
                 </Link>
               </>
             )}
-
           </div>
 
-          {authenticated ? (
-            <UserMenu
-              username={userProfile?.username || 'User'}
-              email={userProfile?.email}
-              tier={userProfile?.tier}
-              roles={userProfile?.roles || []}
-              credits={userProfile?.credits}
-              menuItems={menuItems}
-              onLogout={handleLogout}
-              avatarUrl=''
-              size="md"
-              customActions={<ThemeToggle size="xs" />}
-            />
-          ) : (
-            <AnonymousNav />
-          )}
+          {/* Compact info - always visible */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 'var(--spacing-xs)'
+          }}>
+            {authenticated && (
+              <>
+                <CreditsBadge />
+                <ModelSelector />
+              </>
+            )}
+            
+            {authenticated ? (
+              <UserMenu
+                username={userProfile?.username || 'User'}
+                email={userProfile?.email}
+                tier={userProfile?.tier}
+                roles={userProfile?.roles || []}
+                credits={userProfile?.credits}
+                menuItems={menuItems}
+                onLogout={handleLogout}
+                avatarUrl=''
+                size="sm"
+                customActions={<ThemeToggle size="xs" />}
+              />
+            ) : (
+              <AnonymousNav />
+            )}
+          </div>
         </div>
       </nav>
     </header>

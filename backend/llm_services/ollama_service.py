@@ -55,7 +55,25 @@ class OllamaService(BaseLLMService):
             # Parse response
             data = response.json()
             if 'message' in data and 'content' in data['message']:
-                return data['message']['content']
+                # Convert Ollama format to OpenAI-compatible format for consistency
+                openai_format = {
+                    "choices": [
+                        {
+                            "message": {
+                                "role": "assistant",
+                                "content": data['message']['content']
+                            },
+                            "index": 0,
+                            "finish_reason": "stop"
+                        }
+                    ],
+                    "usage": {
+                        "prompt_tokens": 0,  # Ollama doesn't provide token counts
+                        "completion_tokens": 0,
+                        "total_tokens": 0
+                    }
+                }
+                return openai_format
             else:
                 raise Exception("No response content received")
                 
@@ -112,11 +130,13 @@ class OllamaService(BaseLLMService):
                 resp.raise_for_status()
                 
                 # Process streaming response and convert to OpenAI format
-                for line in resp.iter_lines(decode_unicode=True):
+                for line in resp.iter_lines(decode_unicode=False):
                     if line.strip():
+                        # Decode the line properly
+                        line_str = line.decode('utf-8', errors='ignore')
                         try:
                             # Parse each JSON line from Ollama
-                            ollama_response = json.loads(line)
+                            ollama_response = json.loads(line_str)
                             
                             # Convert Ollama chat response to OpenAI format
                             if 'message' in ollama_response:

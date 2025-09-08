@@ -1,10 +1,11 @@
 import { AI_STATUS } from '../contexts/AIStatusContext';
 import { getToken } from './tokenUtils';
 
-// Auto-detect if we're running in dev mode (localhost:3000) or production (localhost:5000)
+// Auto-detect if we're running in dev mode or production
 const isDevMode = window.location.port === '3000';
-const STATUS_ENDPOINT = isDevMode 
-  ? 'http://localhost:5000/api/proxy/llm/v1/status'
+const backendUrl = import.meta.env.VITE_API_URL;
+const STATUS_ENDPOINT = isDevMode && backendUrl
+  ? `${backendUrl}/api/proxy/llm/v1/status`
   : '/api/proxy/llm/v1/status';
 
 export async function fetchAIBackendStatus(): Promise<AI_STATUS> {
