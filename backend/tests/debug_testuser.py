@@ -2,8 +2,8 @@
 """Debug script for testuser dashboard issues"""
 
 import json
-from data.db import get_db_connection
-from data.repositories import UserRepository
+from infrastructure.database.db import get_db_connection
+from infrastructure.database.repositories import UserRepository
 
 def test_testuser():
     """Test the testuser dashboard query"""

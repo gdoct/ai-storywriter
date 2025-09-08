@@ -8,8 +8,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 
-from scenario_agent.graph import create_scenario_agent_graph
-from scenario_agent.state import AgentState
+from agents.scenario_agent.graph import create_scenario_agent_graph
+from agents.scenario_agent.state import AgentState
 
 
 async def debug_graph_flow():

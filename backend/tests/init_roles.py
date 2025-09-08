@@ -11,8 +11,8 @@ import sys
 backend_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, backend_dir)
 
-from data.repositories import UserRepository
-from services.role_manager import RoleManager
+from infrastructure.database.repositories import UserRepository
+from domain.services.role_manager import RoleManager
 
 
 def initialize_admin_user():

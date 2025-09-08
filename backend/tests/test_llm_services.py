@@ -2,7 +2,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 import requests_mock
-from llm_services.llm_service import (LMStudioService, OllamaService,
+from infrastructure.llm_services.llm_service import (LMStudioService, OllamaService,
                                       OpenAIService)
 
 

@@ -2,9 +2,9 @@
 """Debug script for dashboard endpoint issues"""
 
 import json
-from data.db import get_db_connection
-from data.repositories import UserRepository
-from services.role_manager import RoleManager
+from infrastructure.database.db import get_db_connection
+from infrastructure.database.repositories import UserRepository
+from domain.services.role_manager import RoleManager
 
 def test_dashboard_query():
     """Test the dashboard query that's failing"""

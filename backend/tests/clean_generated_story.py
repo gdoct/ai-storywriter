@@ -6,7 +6,7 @@ import json
 import sqlite3
 from pathlib import Path
 
-from data.db_config import get_db_path
+from infrastructure.database.db_config import get_db_path
 
 
 def clean_generated_story_from_scenarios():

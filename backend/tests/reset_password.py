@@ -14,8 +14,8 @@ from pathlib import Path
 backend_dir = Path(__file__).parent
 sys.path.insert(0, str(backend_dir))
 
-from data.repositories import UserRepository
-from services.security_utils import hash_password
+from infrastructure.database.repositories import UserRepository
+from domain.services.security_utils import hash_password
 
 
 def reset_password(email: str, new_password: str) -> bool:

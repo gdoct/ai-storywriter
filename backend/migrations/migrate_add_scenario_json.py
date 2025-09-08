@@ -8,10 +8,10 @@ import os
 import sqlite3
 import sys
 
-# Add the backend directory to the path so we can import from data.db
+# Add the backend directory to the path so we can import from infrastructure.database.db
 sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/..')
 
-from data.db import get_db_connection
+from infrastructure.database.db import get_db_connection
 
 
 def migrate_add_scenario_json():
