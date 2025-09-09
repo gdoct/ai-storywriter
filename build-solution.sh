@@ -28,7 +28,7 @@ cd ../.. || error_exit $LINENO
 announceStep "# Building storybook..."
 cd style-library/storybook || error_exit $LINENO
 npm install || error_exit $LINENO
-npm run build || error_exit $LINENO
+npm run build-storybook || error_exit $LINENO
 cd ../.. || error_exit $LINENO
 
 if [ ! -f .env ]; then
@@ -46,6 +46,16 @@ fi
 # 4. build the backend in ./backend
 
 announceStep "Building backend..."
+# if the virtual environment isn't available, run `. venv/bin/activate`
+if [ ! -d "venv" ]; then
+  echo "Virtual environment not found. Creating one..."
+  python -m venv venv
+  source venv/bin/activate
+  pip install -r backend/requirements.txt
+else
+  source venv/bin/activate
+fi
+
 cd backend || error_exit $LINENO
 pip install -r requirements.txt || error_exit $LINENO
 python -m compileall -q . || error_exit $LINENO

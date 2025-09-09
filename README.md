@@ -29,7 +29,7 @@ The backend is built with Python and Flask, offering a REST API for handling req
 - `backend/` — Python/Flask backend API
 
 ## Prerequisites
-- Node.js (for frontend)
+- Node.js 24+ (for frontend)
 - Python 3.10+ (for backend)
 - pip (Python package manager)
 

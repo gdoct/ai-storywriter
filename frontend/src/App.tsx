@@ -32,12 +32,7 @@ const AppContent = () => {
 function App() {
   return (
     <ThemeProvider>
-      <Router
-        future={{
-          v7_startTransition: true,
-          v7_relativeSplatPath: true,
-        }}
-      >
+      <Router>
         <AIStatusProvider>
           <SceneHoverProvider>
             <AppContent />
