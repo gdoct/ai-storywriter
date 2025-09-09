@@ -145,6 +145,8 @@ elif [[ "$last_line" == "INFO:watchfiles.main:3 changes detected." ]]; then
     echo "[OK] Container running"
 elif [[ "$last_line" == "INFO:     Application startup complete." ]]; then
     echo "[OK] Container running"
+elif [[ "$last_line" == "INFO:     Uvicorn running on http://0.0.0.0:5600 (Press CTRL+C to quit)" ]]; then
+    echo "[OK] Container running"
 else
     echo "[WARN] $last_line"
 fi

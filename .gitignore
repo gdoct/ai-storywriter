@@ -116,6 +116,7 @@ venv.bak/
 # Node
 node_modules/
 build/
+build-debug/
 dist/
 .env
 .envrc

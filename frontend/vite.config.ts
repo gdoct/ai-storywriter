@@ -27,48 +27,27 @@ export default defineConfig(({ mode }) => {
     }
   },
   build: {
-    outDir: 'build',
+    outDir: mode === 'debug' ? 'build-debug' : 'build',
     chunkSizeWarningLimit: 1000,
+    minify: mode === 'debug' ? false : 'esbuild',
+    sourcemap: mode === 'debug' ? true : false,
+    target: 'es2020', // Ensure compatibility with Node.js v24
     rollupOptions: {
+      external: [],
       output: {
-        manualChunks(id) {
-          if (id.includes('node_modules')) {
-            // React-related libraries
-            if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) {
-              return 'react-vendor';
-            }
-            // Icons library (large)
-            if (id.includes('react-icons')) {
-              return 'icons-vendor';
-            }
-            // Markdown rendering libraries
-            if (id.includes('react-markdown') || id.includes('remark-gfm')) {
-              return 'markdown-vendor';
-            }
-            // HTTP and small utility libraries
-            if (id.includes('axios') || id.includes('uuid') || id.includes('web-vitals')) {
-              return 'utils-vendor';
-            }
-            // Everything else goes to vendor
-            return 'vendor';
-          }
-
-          // Role-based bundle splitting using wildcards
-          if (id.includes('/src/anonymous/')) {
-            return 'anonymous-bundle';
-          }
-          if (id.includes('/src/members/')) {
-            return 'members-bundle';
-          }
-          if (id.includes('/src/admin/')) {
-            return 'admin-bundle';
-          }
-          if (id.includes('/src/shared/')) {
-            return 'shared-bundle';
-          }
-        },
+        format: 'es',
+        // No code splitting - single bundle approach for Node.js v24 compatibility
+        manualChunks: mode === 'debug' ? undefined : undefined,
       },
     },
+  },
+  // Optimize dependencies and ensure proper resolution
+  optimizeDeps: {
+    include: ['react', 'react-dom', 'react/jsx-runtime'],
+    force: true
+  },
+  resolve: {
+    dedupe: ['react', 'react-dom']
   }
 
   // Enable better HMR for linked packages

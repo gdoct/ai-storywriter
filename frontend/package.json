@@ -29,6 +29,7 @@
     "start": "vite",
     "dev": "vite",
     "build": "tsc && vite build",
+    "build:debug": "tsc && vite build --mode debug",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",

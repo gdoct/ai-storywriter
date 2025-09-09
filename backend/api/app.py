@@ -70,7 +70,10 @@ app.include_router(streaming_agent.router, prefix="/api/streaming_agent", tags=[
 
 # Serve React frontend static files (after API routes are registered)
 # Navigate from backend/api/app.py back to project root, then to frontend/build
-frontend_build_path = Path(__file__).parent.parent.parent / "frontend" / "build"
+# Use debug build if DEBUG_BUILD environment variable is set, otherwise use production build
+build_dir = "build-debug" if os.getenv("DEBUG_BUILD") else "build"
+frontend_build_path = Path(__file__).parent.parent.parent / "frontend" / build_dir
+print(f"[DEBUG] Using frontend build directory: {frontend_build_path}")
 if frontend_build_path.exists():
     # Mount ALL static directories that React uses
     static_dirs = [
