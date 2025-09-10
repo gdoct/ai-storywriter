@@ -57,7 +57,7 @@ def get_current_settings():
     return None
 
 @router.get("/settings/llm/debug/providers")
-async def debug_get_all_providers():
+async def debug_get_all_providers(current_user: dict = Depends(get_current_user)):
     """Debug endpoint to list all provider presets"""
     try:
         conn = get_db_connection()
@@ -80,7 +80,7 @@ async def debug_get_all_providers():
         return {"error": str(e)}
 
 @router.get("/settings/llm", response_model=LLMSettingsResponse)
-async def get_llm_settings():
+async def get_llm_settings(current_user: dict = Depends(get_current_user)):
     """Get current LLM settings"""
     settings = get_current_settings()
     if settings:
@@ -168,7 +168,7 @@ async def save_llm_settings(data: LLMSettingsRequest, current_user: dict = Depen
     return response_data
 
 @router.post("/settings/llm/test", response_model=LLMTestResponse)
-async def test_llm_connection(data: LLMTestRequest):
+async def test_llm_connection(data: LLMTestRequest, current_user: dict = Depends(get_current_user)):
     """Test LLM connection"""
     try:
         service = get_llm_service(data.backend_type, data.config)
@@ -178,7 +178,7 @@ async def test_llm_connection(data: LLMTestRequest):
         return LLMTestResponse(status='error', error=str(e))
 
 @router.get("/settings/llm/models", response_model=LLMModelsResponse)
-async def get_llm_models():
+async def get_llm_models(current_user: dict = Depends(get_current_user)):
     """Get available LLM models"""
     settings = get_current_settings()
     if not settings:
@@ -194,7 +194,7 @@ async def get_llm_models():
         return LLMModelsResponse(models=[], error=str(e))
 
 @router.post("/settings/llm/models/refresh", response_model=LLMModelsResponse)
-async def refresh_llm_models():
+async def refresh_llm_models(current_user: dict = Depends(get_current_user)):
     """Force refresh the model list cache"""
     settings = get_current_settings()
     if not settings:
@@ -212,7 +212,7 @@ async def refresh_llm_models():
         return LLMModelsResponse(models=[], error=str(e), refreshed=False)
 
 @router.get("/settings/llm/cache/info", response_model=CacheInfoResponse)
-async def get_cache_info():
+async def get_cache_info(current_user: dict = Depends(get_current_user)):
     """Get information about the model cache"""
     from infrastructure.llm_services.model_cache import get_model_cache
     cache = get_model_cache()
@@ -220,7 +220,7 @@ async def get_cache_info():
     return CacheInfoResponse(**cache_info)
 
 @router.post("/settings/llm/cache/clear", response_model=ClearCacheResponse)
-async def clear_cache():
+async def clear_cache(current_user: dict = Depends(get_current_user)):
     """Clear all cached models"""
     from infrastructure.llm_services.model_cache import get_model_cache
     cache = get_model_cache()
@@ -228,7 +228,7 @@ async def clear_cache():
     return ClearCacheResponse(cleared=True)
 
 @router.get("/settings/llm/status", response_model=LLMStatusResponse)
-async def get_llm_status():
+async def get_llm_status(current_user: dict = Depends(get_current_user)):
     """Get LLM connection status"""
     settings = get_current_settings()
     if not settings:
@@ -251,7 +251,7 @@ async def get_llm_status():
         )
 
 @router.get("/settings/vision", response_model=VisionSettingsResponse)
-async def get_vision_settings():
+async def get_vision_settings(current_user: dict = Depends(get_current_user)):
     """Get vision model settings"""
     try:
         # Get active backend type
@@ -281,7 +281,7 @@ async def get_vision_settings():
         )
 
 @router.post("/settings/vision", response_model=VisionSettingsResponse)
-async def update_vision_settings(data: VisionSettingsRequest):
+async def update_vision_settings(data: VisionSettingsRequest, current_user: dict = Depends(get_current_user)):
     """Update vision model settings"""
     try:
         backend_type = data.backend_type

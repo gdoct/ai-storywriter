@@ -158,7 +158,10 @@ const LLMSettings: React.FC = () => {
       // Then refresh models
       const response = await fetch('/api/settings/llm/models/refresh', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        }
       });
       const result = await response.json();
       

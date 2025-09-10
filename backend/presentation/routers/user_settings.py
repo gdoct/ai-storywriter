@@ -259,7 +259,7 @@ async def get_user_llm_usage(
 # Credit and Pricing Endpoints
 
 @router.get("/pricing/providers")
-async def get_provider_pricing():
+async def get_provider_pricing(current_user: dict = Depends(get_current_user)):
     """Get pricing information for all LLM providers"""
     try:
         rates = CreditService.get_provider_credit_rates()
