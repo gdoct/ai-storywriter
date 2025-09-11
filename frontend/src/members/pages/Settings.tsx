@@ -2,8 +2,10 @@ import { Button, ThemeToggle } from '@drdata/ai-styles';
 import React, { useCallback, useEffect, useState } from 'react';
 import MarketingFooter from '../../anonymous/components/marketing/MarketingFooter';
 import { AlertModal, ConfirmModal } from '../../shared/components/Modal';
+import GoogleLinkButton from '../../shared/components/GoogleLinkButton';
 import { useAuth } from '../../shared/contexts/AuthContext';
 import { useModals } from '../../shared/hooks/useModals';
+import http from '../../shared/services/http';
 import {
   UserSettings,
   BYOKCredentials,
@@ -42,6 +44,8 @@ const Settings: React.FC = () => {
   const [hasSavedKeys, setHasSavedKeys] = useState(false);
   const [showApiKey, setShowApiKey] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isGoogleLinked, setIsGoogleLinked] = useState(false);
+  const [isLinkingGoogle, setIsLinkingGoogle] = useState(false);
 
   const loadSettings = useCallback(async () => {
     try {
@@ -79,11 +83,59 @@ const Settings: React.FC = () => {
         });
         setHasSavedKeys(false);
       }
+
+  // Use backend-provided flag to determine whether Google is linked
+  setIsGoogleLinked(Boolean(userSettings.isGoogleLinked));
     } catch (error) {
       console.error('Error loading settings:', error);
       customAlert('Failed to load settings. Using defaults.', 'Warning');
     }
   }, [userProfile, customAlert]);
+
+  const handleGoogleLinkSuccess = async () => {
+    setIsLinkingGoogle(false);
+    setIsGoogleLinked(true);
+    customAlert('Google account linked successfully!', 'Success');
+  };
+
+  const handleGoogleLinkError = (errorMessage: string) => {
+    setIsLinkingGoogle(false);
+    customAlert(`Failed to link Google account: ${errorMessage}`, 'Error');
+  };
+
+  const handleUnlinkGoogle = async () => {
+    const confirmed = await customConfirm(
+      'Are you sure you want to unlink your Google account? You will need to use your username and password to log in.',
+      {
+        title: 'Unlink Google Account',
+        confirmText: 'Unlink',
+        cancelText: 'Cancel',
+        variant: 'danger'
+      }
+    );
+
+    if (confirmed) {
+      try {
+        await http.post('/api/unlink-google');
+        setIsGoogleLinked(false);
+        customAlert('Google account unlinked successfully.', 'Success');
+      } catch (error) {
+        console.error('Error unlinking Google account:', error);
+        customAlert('Failed to unlink Google account. Please try again.', 'Error');
+      }
+    }
+  };
+
+  const handleGoogleCredential = async (googleToken: string) => {
+    setIsLinkingGoogle(true);
+    try {
+      await http.post('/api/link-google', { token: googleToken });
+      handleGoogleLinkSuccess();
+    } catch (error) {
+      console.error('Error linking Google account:', error);
+      handleGoogleLinkError(error instanceof Error ? error.message : 'Unknown error');
+    }
+  };
 
   useEffect(() => {
     loadSettings();
@@ -698,6 +750,115 @@ const Settings: React.FC = () => {
                 </div>
               </div>
             </div>
+          </div>
+
+          {/* Google Account */}
+          <div style={{
+            background: 'var(--color-surface)',
+            border: '1px solid var(--color-border)',
+            borderRadius: 'var(--border-radius-lg)',
+            padding: 'var(--spacing-xl)',
+            marginBottom: 'var(--spacing-xl)'
+          }}>
+            <h2 style={{
+              fontSize: 'var(--font-size-xl)',
+              fontWeight: 'var(--font-weight-semibold)',
+              color: 'var(--color-text-primary)',
+              marginBottom: 'var(--spacing-lg)'
+            }}>
+              Google Account
+            </h2>
+
+            <p style={{
+              color: 'var(--color-text-secondary)',
+              marginBottom: 'var(--spacing-lg)',
+              lineHeight: '1.5'
+            }}>
+              Link your Google account to enable quick sign-in with Google in addition to your username and password.
+            </p>
+
+            {isGoogleLinked ? (
+              <div style={{
+                padding: 'var(--spacing-lg)',
+                background: 'var(--color-success-subtle)',
+                border: '1px solid var(--color-success)',
+                borderRadius: 'var(--border-radius-md)',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center'
+              }}>
+                <div>
+                  <div style={{
+                    color: 'var(--color-success)',
+                    fontSize: 'var(--font-size-md)',
+                    fontWeight: 'var(--font-weight-medium)',
+                    marginBottom: 'var(--spacing-xs)'
+                  }}>
+                    ✓ Google account linked
+                  </div>
+                  <div style={{
+                    color: 'var(--color-text-secondary)',
+                    fontSize: 'var(--font-size-sm)'
+                  }}>
+                    You can now sign in with Google or your regular credentials.
+                  </div>
+                </div>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={handleUnlinkGoogle}
+                >
+                  Unlink
+                </Button>
+              </div>
+            ) : (
+              <div>
+                <div style={{
+                  padding: 'var(--spacing-lg)',
+                  background: 'var(--color-background)',
+                  border: '1px solid var(--color-border)',
+                  borderRadius: 'var(--border-radius-md)',
+                  marginBottom: 'var(--spacing-md)'
+                }}>
+                  <div style={{
+                    color: 'var(--color-text-primary)',
+                    fontSize: 'var(--font-size-md)',
+                    fontWeight: 'var(--font-weight-medium)',
+                    marginBottom: 'var(--spacing-xs)'
+                  }}>
+                    No Google account linked
+                  </div>
+                  <div style={{
+                    color: 'var(--color-text-secondary)',
+                    fontSize: 'var(--font-size-sm)',
+                    marginBottom: 'var(--spacing-lg)'
+                  }}>
+                    Link your Google account to enable quick sign-in. Your Google email must match your account email ({settings.email}).
+                  </div>
+                  
+                  {/* Custom Google Sign-In for linking */}
+                  <div style={{ maxWidth: '300px' }}>
+                    <GoogleLinkButton
+                      theme="outline"
+                      onSuccess={handleGoogleLinkSuccess}
+                      onError={handleGoogleLinkError}
+                      onCredential={handleGoogleCredential}
+                      disabled={isLinkingGoogle}
+                    />
+                  </div>
+                  
+                  {isLinkingGoogle && (
+                    <div style={{
+                      color: 'var(--color-text-secondary)',
+                      fontSize: 'var(--font-size-sm)',
+                      marginTop: 'var(--spacing-md)'
+                    }}>
+                      Linking your Google account...
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Notifications */}

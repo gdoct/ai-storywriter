@@ -7,6 +7,8 @@ by importing and running the main FastAPI application from the new api/ director
 import os
 from api.app import app
 
+IS_DEBUG = os.getenv("IS_DEBUG", "False").lower() in ("true", "1", "t")
+
 if __name__ == "__main__":
     import uvicorn
     from dotenv import load_dotenv
@@ -19,4 +21,10 @@ if __name__ == "__main__":
     port = int(os.getenv("BACKEND_PORT", "5000"))
     
     print(f"Starting server on {host}:{port}")
-    uvicorn.run(app, host=host, port=port)
+    uvicorn.run(
+        "app:app",
+        host=host,
+        port=port,
+        reload=IS_DEBUG,
+        log_level="info"
+    )

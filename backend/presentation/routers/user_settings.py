@@ -14,18 +14,123 @@ router = APIRouter()
 
 # User Settings Endpoints
 
+@router.get("/user/llm", response_model=Dict[str, Any])
+async def get_user_llm_settings(current_user: dict = Depends(get_current_user)):
+    """Get user's LLM settings and available providers"""
+    try:
+        user_id = current_user.get('user_id')
+        preferences = UserPreferencesRepository.get_user_preferences(user_id)
+        
+        if not preferences:
+            # Return default settings if user preferences don't exist
+            preferences = {
+                'llm_mode': 'member',
+                'byok_provider': None
+            }
+        
+        # Get available BYOK providers for user selection
+        byok_providers = [
+            {'value': 'openai', 'label': 'OpenAI'},
+            {'value': 'github', 'label': 'GitHub Models'}
+        ]
+        
+        # Get enabled providers for member mode
+        enabled_providers = LLMRepository.get_enabled_providers()
+        
+        return {
+            'llm_mode': preferences.get('llm_mode', 'member'),
+            'byok_provider': preferences.get('byok_provider'),
+            'show_thinking': preferences.get('show_thinking', False),
+            'available_byok_providers': byok_providers,
+            'member_mode_providers': enabled_providers
+        }
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to retrieve user LLM settings: {str(e)}"
+        )
+
+@router.put("/user/llm")
+async def update_user_llm_settings(
+    settings: Dict[str, Any],
+    current_user: dict = Depends(get_current_user)
+):
+    """Update user's LLM mode and provider preferences"""
+    try:
+        user_id = current_user.get('user_id')
+        
+        # Validate and extract LLM settings
+        update_data = {}
+        
+        if 'llm_mode' in settings:
+            llm_mode = settings['llm_mode']
+            if llm_mode not in ['member', 'byok']:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="llm_mode must be 'member' or 'byok'"
+                )
+            update_data['llm_mode'] = llm_mode
+        
+        if 'byok_provider' in settings:
+            byok_provider = settings['byok_provider']
+            if byok_provider not in [None, 'openai', 'github']:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="byok_provider must be 'openai', 'github', or null"
+                )
+            update_data['byok_provider'] = byok_provider
+        
+        if 'show_thinking' in settings:
+            show_thinking = settings['show_thinking']
+            if not isinstance(show_thinking, bool):
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="show_thinking must be boolean"
+                )
+            update_data['show_thinking'] = show_thinking
+        
+        success = UserPreferencesRepository.create_or_update_user_preferences(user_id, update_data)
+        
+        if success:
+            return {"message": "LLM settings updated successfully"}
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to update LLM settings"
+            )
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to update user LLM settings: {str(e)}"
+        )
+
 @router.get("/user/settings", response_model=UserSettingsResponse)
 async def get_user_settings(current_user: dict = Depends(get_current_user)):
     """Get current user's settings and preferences"""
     try:
-        user_id = current_user.get('user_id') or current_user.get('username')
+        user_id = current_user.get('user_id')
         preferences = UserPreferencesRepository.get_user_preferences(user_id)
         
         if not preferences:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="User not found"
-            )
+            # Return default settings for users who don't have preferences yet
+            preferences = {
+                'username': current_user.get('username'),
+                'email': current_user.get('email'),
+                'first_name': None,
+                'last_name': None,
+                'llm_mode': 'member',
+                'byok_provider': None,
+                'google_id': None,
+                'auth_provider': None,
+                'notifications': {
+                    'email': True,
+                    'marketing': False
+                }
+            }
         
         return UserSettingsResponse(**preferences)
         
@@ -44,7 +149,7 @@ async def update_user_settings(
 ):
     """Update current user's settings and preferences"""
     try:
-        user_id = current_user.get('user_id') or current_user.get('username')
+        user_id = current_user.get('user_id')
         
         # Convert Pydantic model to dict, excluding None values
         update_data = {}
@@ -207,7 +312,7 @@ async def log_llm_request(
 ):
     """Log an LLM request for usage tracking"""
     try:
-        user_id = current_user.get('user_id') or current_user.get('username')
+        user_id = current_user.get('user_id')
         
         success = LLMRepository.log_llm_request(
             user_id=user_id,
@@ -245,7 +350,7 @@ async def get_user_llm_usage(
 ):
     """Get user's LLM usage history"""
     try:
-        user_id = current_user.get('user_id') or current_user.get('username')
+        user_id = current_user.get('user_id')
         usage = LLMRepository.get_user_llm_usage(user_id, limit)
         
         return {"usage": usage}

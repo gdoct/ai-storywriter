@@ -11,6 +11,7 @@ import GeneratingModal from '../components/Dashboard/GeneratingModal';
 import GenerateSimilarModal, { ScenarioSelections } from '../components/Dashboard/GenerateSimilarModal';
 import MarketingFooter from '../../anonymous/components/marketing/MarketingFooter';
 import { AlertModal, ConfirmModal } from '../../shared/components/Modal';
+import { WelcomeWizard } from '../../shared/components/WelcomeWizard';
 import PublishStoryModal from '../components/Story/PublishStoryModal';
 import { useAuth } from '../../shared/contexts/AuthContext';
 import { useModals } from '../../shared/hooks/useModals';
@@ -22,6 +23,7 @@ import {
     RecentScenario,
     RecentStory
 } from '../../shared/services/dashboardService';
+import { isUserInBYOKMode } from '../../shared/services/settings';
 import { fetchScenarioById } from '../../shared/services/scenario';
 import { generateSimilarScenarios, ScenarioSelections as ServiceScenarioSelections, GenerationProgress } from '../../shared/services/similarScenarioService';
 import { Scenario } from '../../shared/types/ScenarioTypes';
@@ -60,6 +62,9 @@ const Dashboard: React.FC<DashboardProps> = () => {
   const [isRetrying, setIsRetrying] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
   const [abortController, setAbortController] = useState<AbortController | null>(null);
+  
+  // Welcome wizard state
+  const [showWelcomeWizard, setShowWelcomeWizard] = useState(false);
 
   // Load dashboard data
   useEffect(() => {
@@ -78,6 +83,15 @@ const Dashboard: React.FC<DashboardProps> = () => {
         setRecentScenarios(scenariosData.scenarios);
         setRecentStories(storiesData.stories);
         setError(null);
+        
+        // Show welcome wizard if user has 0 credits, doesn't use BYOK, and has 0 scenarios
+        const userCredits = userProfile?.credits || 0;
+        const hasNoScenarios = statsData.scenariosCreated === 0;
+        const isInBYOKMode = await isUserInBYOKMode();
+        
+        if (userCredits === 0 && !isInBYOKMode && hasNoScenarios) {
+          setShowWelcomeWizard(true);
+        }
       } catch (err) {
         console.error('Error loading dashboard data:', err);
         setError('Failed to load dashboard data. Please try refreshing the page.');
@@ -221,6 +235,16 @@ const Dashboard: React.FC<DashboardProps> = () => {
     setFullScenarioForModal(null);
   };
 
+  const handleCloseWelcomeWizard = () => {
+    setShowWelcomeWizard(false);
+  };
+
+  const handleCompleteWelcomeWizard = () => {
+    setShowWelcomeWizard(false);
+    // Could potentially track that the user has completed the wizard
+    // This might be useful for analytics or to prevent showing it again
+  };
+
   // Show loading state
   if (loading) {
     return (
@@ -300,29 +324,35 @@ const Dashboard: React.FC<DashboardProps> = () => {
         margin: '0 auto',
         padding: 'var(--spacing-xl)'
       }}>
-        <DashboardHeader username={username} email={email} />
+        <DashboardHeader
+          username={username}
+          email={email}
+          // isFirstVisit should be true when there is no last activity
+          isFirstVisit={!stats?.lastActivity?.length}
+        />
 
         <div style={{ marginTop: 'var(--spacing-2xl)' }}>
           <WritingStats stats={stats} />
 
           <div style={{ 
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(500px, 1fr))',
-            gap: 'var(--spacing-xl)',
-            marginTop: 'var(--spacing-2xl)'
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(500px, 1fr))',
+        gap: 'var(--spacing-xl)',
+        marginTop: 'var(--spacing-2xl)'
           }}>
-            <RecentScenarios 
-              recentScenarios={recentScenarios} 
-              handleEditScenario={handleEditScenario} 
-              handleGenerateSimilar={handleGenerateSimilar}
-            />
-            <RecentGeneratedStories 
-              recentStories={recentStories} 
-              handlePublishStory={handlePublishStory} 
-              handleReadStory={handleReadStory} 
-            />
+        <RecentScenarios 
+          recentScenarios={recentScenarios} 
+          handleEditScenario={handleEditScenario} 
+          handleGenerateSimilar={handleGenerateSimilar}
+        />
+        <RecentGeneratedStories 
+          recentStories={recentStories} 
+          handlePublishStory={handlePublishStory} 
+          handleReadStory={handleReadStory} 
+        />
           </div>
         </div>
+
         <div style={{ marginTop: 'var(--spacing-5xl)' }}>
           <MarketingFooter />
         </div>
@@ -330,25 +360,22 @@ const Dashboard: React.FC<DashboardProps> = () => {
         {/* Publish Story Modal */}
         {storyToPublish && (
           <PublishStoryModal
-            isOpen={showPublishModal}
-            onClose={handleClosePublishModal}
-            storyId={storyToPublish.id}
-            storyTitle={storyToPublish.scenarioTitle}
-            onSuccess={handlePublishSuccess}
+        isOpen={showPublishModal}
+        onClose={handleClosePublishModal}
+        storyId={storyToPublish.id}
+        storyTitle={storyToPublish.scenarioTitle}
+        onSuccess={handlePublishSuccess}
           />
         )}
 
         {/* Generate Similar Scenario Modals */}
-        {(() => {
-          return null;
-        })()}
         <GenerateSimilarModal
           isOpen={showGenerateSimilarModal}
           onClose={handleCloseSimilarModal}
           onGenerate={handleGenerateSimilarConfirm}
           scenarioTitle={scenarioToSimilar?.title || ''}
-          characters={fullScenarioForModal?.characters?.map(c => ({ name: c.name || 'Unnamed', id: c.id })) || []}
-          locations={fullScenarioForModal?.locations?.map(l => ({ name: l.name || 'Unnamed', id: l.id || '' })) || []}
+          characters={(fullScenarioForModal?.characters ?? []).map(c => ({ name: c.name ?? 'Unnamed', id: c.id ?? '' }))}
+          locations={(fullScenarioForModal?.locations ?? []).map(l => ({ name: l.name ?? 'Unnamed', id: l.id ?? '' }))}
         />
         
         <GeneratingModal
@@ -358,6 +385,13 @@ const Dashboard: React.FC<DashboardProps> = () => {
           isRetrying={isRetrying}
           retryCount={retryCount}
           onAbort={handleAbortGeneration}
+        />
+
+        {/* Welcome Wizard */}
+        <WelcomeWizard
+          isOpen={showWelcomeWizard}
+          onClose={handleCloseWelcomeWizard}
+          onComplete={handleCompleteWelcomeWizard}
         />
 
         {/* Custom Modal Components */}

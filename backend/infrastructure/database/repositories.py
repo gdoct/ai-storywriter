@@ -45,6 +45,38 @@ class UserRepository:
         return user
 
     @staticmethod
+    def get_user_by_google_id(google_id):
+        """Get user by Google ID"""
+        conn = get_db_connection()
+        user = conn.execute('SELECT * FROM users WHERE google_id = ? AND is_deleted = 0', (google_id,)).fetchone()
+        conn.close()
+        return user
+
+    @staticmethod
+    def create_google_user(username, email, google_id, profile_picture=None, agreed_to_terms=False):
+        """Create new user from Google OAuth"""
+        conn = get_db_connection()
+        user_id = str(uuid.uuid4())
+        now = datetime.now(timezone.utc).isoformat()
+        
+        # If user agreed to terms, record the timestamp and version
+        terms_agreed_at = now if agreed_to_terms else None
+        privacy_agreed_at = now if agreed_to_terms else None
+        terms_version = '1.0' if agreed_to_terms else None
+        privacy_version = '1.0' if agreed_to_terms else None
+        
+        conn.execute('''INSERT INTO users 
+                        (id, username, email, auth_provider, google_id, profile_picture, created_at, 
+                         terms_agreed_at, privacy_agreed_at, terms_version, privacy_version) 
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''', 
+                    (user_id, username, email, 'google', google_id, profile_picture, now, 
+                     terms_agreed_at, privacy_agreed_at, terms_version, privacy_version))
+        conn.commit()
+        user = conn.execute('SELECT * FROM users WHERE google_id = ?', (google_id,)).fetchone()
+        conn.close()
+        return user
+
+    @staticmethod
     def update_user(user_id, email=None):
         conn = get_db_connection()
         conn.execute('UPDATE users SET email = ? WHERE id = ?', (email, user_id))

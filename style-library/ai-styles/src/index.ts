@@ -43,6 +43,9 @@ export type { ThemeToggleProps } from './components/ThemeToggle/ThemeToggle';
 export { UserMenu } from './components/UserMenu';
 export type { UserMenuItem, UserMenuProps } from './components/UserMenu';
 
+export { Wizard } from './components/Wizard';
+export type { WizardProps, WizardStep } from './components/Wizard';
+
 export { AiTextArea } from './components/AiTextArea/AiTextArea';
 export type { AiTextAreaProps } from './components/AiTextArea/AiTextArea';
 

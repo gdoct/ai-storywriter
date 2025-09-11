@@ -5,13 +5,14 @@ import './Dashboard.css';
 interface DashboardHeaderProps {
   username?: string;
   email?: string;
+  isFirstVisit?: boolean;
 }
 
-const DashboardHeader: React.FC<DashboardHeaderProps> = ({ username, email }) => {
+const DashboardHeader: React.FC<DashboardHeaderProps> = ({ username, email, isFirstVisit }) => {
   return (
     <header className="dashboard-header">
       <div className="welcome-section">
-        <h1>Welcome back, {username || email || 'User'}!</h1>
+        <h1>Welcome{isFirstVisit ? '' : ' back'}, {username || email || 'User'}!</h1>
         <p>Ready to create some amazing stories today?</p>
       </div>
       <Link to="/app" className="btn btn-primary btn-large" data-testid="start-writing-link">

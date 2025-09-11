@@ -31,6 +31,9 @@ class UserSettingsResponse(BaseModel):
     notifications: NotificationPreferences
     llm_mode: LLMMode
     byok_provider: Optional[BYOKProvider] = None
+    # Google linking info
+    google_id: Optional[str] = None
+    auth_provider: Optional[str] = None
 
 class LLMProviderPresetRequest(BaseModel):
     provider_name: str = Field(..., min_length=1)

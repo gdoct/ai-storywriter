@@ -68,9 +68,8 @@ async def get_random_image(
         
         # Construct the path to the frontend images folder
         # Controller is in /backend/routers/, so we need to go up 3 levels to get to project root
-        project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
         frontend_images_dir = os.path.join(project_root, 'frontend', 'build', 'images')
-        
         # Map image types to actual folder structure
         # Characters are in images/characters/genre/gender/
         # Backgrounds are in images/cover/genre/
@@ -159,7 +158,6 @@ async def get_random_image(
         
         # Construct the URL path
         image_url = f'{url_prefix}/{random_image}'
-        
         return RandomImageResponse(url=image_url)
         
     except HTTPException:

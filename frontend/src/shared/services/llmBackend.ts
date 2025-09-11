@@ -40,7 +40,17 @@ function getBYOKHeaders(): Record<string, string> {
 }
 
 export async function fetchLLMSettings(): Promise<LLMConfig | null> {
-  const res = await fetch(API_BASE);
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json'
+  };
+  
+  // Add authentication token
+  const token = getToken();
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  const res = await fetch(API_BASE, { headers });
   if (!res.ok) return null;
   
   const backendData = await res.json();

@@ -161,6 +161,65 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  const loginWithGoogle = async (googleToken: string): Promise<boolean> => {
+    try {
+      setLoading(true);
+      const response = await http.post<LoginResponse & { is_new_user?: boolean }>('/api/google', { 
+        token: googleToken 
+      });
+      
+      // Check if response contains email conflict data
+      console.log('Google OAuth response:', response.data); // Debug log
+      if ((response.data as any).error === 'email_conflict') {
+        // Throw the conflict data so it can be caught and handled
+        const conflictError = new Error('Email conflict');
+        (conflictError as any).response = { data: response.data };
+        throw conflictError;
+      }
+      
+      if (response.data.access_token) {
+        const { access_token, username, email: userEmail, tier, roles, permissions, is_new_user } = response.data;
+        
+        // Store token and basic info in localStorage
+        localStorage.setItem('token', access_token);
+        localStorage.setItem('username', username);
+        localStorage.setItem('email', userEmail || '');
+        localStorage.setItem('tier', tier);
+        
+        // Set user profile
+        const profile: UserProfile = {
+          user_id: '', // Will be populated by refreshProfile
+          username,
+          email: userEmail,
+          tier,
+          roles,
+          permissions,
+          credits: 0 // Will be updated by refreshProfile
+        };
+        
+        setUserProfile(profile);
+        setAuthenticated(true);
+        
+        // Refresh full profile
+        await refreshProfile();
+        
+        // Show welcome message for new users
+        if (is_new_user) {
+          console.log('Welcome to StoryWriter! Your account has been created successfully.');
+        }
+        
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Google login error:', error);
+      // Re-throw so the component can handle it
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Utility functions
   const hasRole = (role: UserRole): boolean => {
     return userProfile?.roles.includes(role) || false;
@@ -194,6 +253,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     
     // Actions
     login,
+    loginWithGoogle,
     logout,
     refreshProfile,
     refreshCredits,

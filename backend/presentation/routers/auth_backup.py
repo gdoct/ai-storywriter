@@ -1,13 +1,11 @@
 from datetime import timedelta
-from fastapi import APIRouter, HTTPException, status, Depends
-from typing import Union
+from fastapi import APIRouter, HTTPException, status
 from domain.models.auth import LoginRequest, SignupRequest, AuthResponse, ErrorResponse, GoogleOAuthRequest, GoogleOAuthResponse, EmailConflictResponse
 from infrastructure.database.repositories import UserRepository
-from infrastructure.database.db import get_db_connection
 from domain.services.role_manager import RoleManager
 from domain.services.security_utils import hash_password
 from domain.services.google_oauth_service import GoogleOAuthService
-from api.middleware.fastapi_auth import create_access_token, verify_token
+from api.middleware.fastapi_auth import create_access_token
 
 router = APIRouter()
 
@@ -46,6 +44,85 @@ async def login(credentials: LoginRequest):
         roles=user_roles,
         permissions=user_permissions,
         message="Login successful"
+    )
+
+@router.post("/google", response_model=GoogleOAuthResponse)
+async def google_oauth_login(oauth_data: GoogleOAuthRequest):
+    """
+    Authenticate user with Google OAuth token
+    """
+    google_service = GoogleOAuthService()
+    
+    # Verify Google token and get user info
+    google_info = google_service.verify_google_token(oauth_data.token)
+    
+    if not google_info.get('email_verified'):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Google email not verified"
+        )
+    
+    google_id = google_info['google_id']
+    email = google_info['email']
+    
+    # Check if user exists by Google ID
+    user = UserRepository.get_user_by_google_id(google_id)
+    is_new_user = False
+    
+    if not user:
+        # Check if user exists by email (might be a local account)
+        existing_user = UserRepository.get_user_by_email(email)
+        if existing_user and existing_user['auth_provider'] == 'local':
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="An account with this email already exists. Please use regular login."
+            )
+        
+        # Create new Google user
+        username = google_service.generate_username_from_email(email, google_info)
+        
+        # Ensure username is unique
+        counter = 1
+        original_username = username
+        while UserRepository.get_user_by_username(username):
+            username = f"{original_username}{counter}"
+            counter += 1
+        
+        user = UserRepository.create_google_user(
+            username=username,
+            email=email,
+            google_id=google_id,
+            profile_picture=google_info.get('picture'),
+            agreed_to_terms=True  # Assume consent through Google OAuth
+        )
+        is_new_user = True
+        
+        if not user or not user['id']:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to create user account"
+            )
+    
+    # Create JWT token with 1-year expiration
+    token_expiry = timedelta(days=365)
+    access_token = create_access_token(
+        data={"sub": user['username'], "identity": user['username']}, 
+        expires_delta=token_expiry
+    )
+    
+    # Get user roles and permissions
+    user_roles = RoleManager.get_user_roles(user['id'])
+    user_permissions = RoleManager.get_user_permissions(user['id'])
+    
+    return GoogleOAuthResponse(
+        access_token=access_token,
+        username=user['username'],
+        email=user['email'],
+        tier=user['tier'] if user['tier'] else 'free',
+        roles=user_roles,
+        permissions=user_permissions,
+        message="Google login successful",
+        is_new_user=is_new_user
     )
 
 @router.post("/signup", response_model=AuthResponse)
@@ -98,7 +175,7 @@ async def signup(user_data: SignupRequest):
         message="Login successful"
     )
 
-@router.post("/google")
+@router.post("/google", response_model=GoogleOAuthResponse)
 async def google_oauth_login(oauth_data: GoogleOAuthRequest):
     """
     Authenticate user with Google OAuth token
@@ -125,15 +202,9 @@ async def google_oauth_login(oauth_data: GoogleOAuthRequest):
         # Check if user exists by email (might be a local account)
         existing_user = UserRepository.get_user_by_email(email)
         if existing_user and existing_user['auth_provider'] == 'local':
-            # Return conflict information for frontend to handle
-            return EmailConflictResponse(
-                email=email,
-                message="An account with this email already exists. Choose how to proceed.",
-                existing_user_info={
-                    "username": existing_user['username'],
-                    "created_at": existing_user['created_at'],
-                    "tier": existing_user['tier']
-                }
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="An account with this email already exists. Please use regular login."
             )
         
         # Create new Google user
@@ -182,74 +253,3 @@ async def google_oauth_login(oauth_data: GoogleOAuthRequest):
         message="Google login successful",
         is_new_user=is_new_user
     )
-
-@router.post("/link-google")
-async def link_google_account(oauth_data: GoogleOAuthRequest, current_user=Depends(verify_token)):
-    """
-    Link Google account to existing logged-in user
-    """
-    
-    google_service = GoogleOAuthService()
-    
-    # Verify Google token and get user info
-    google_info = google_service.verify_google_token(oauth_data.token)
-    
-    if not google_info.get('email_verified'):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Google email not verified"
-        )
-    
-    google_id = google_info['google_id']
-    email = google_info['email']
-    
-    # Check if this Google account is already linked to another user
-    existing_google_user = UserRepository.get_user_by_google_id(google_id)
-    if existing_google_user and existing_google_user['id'] != current_user['id']:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="This Google account is already linked to another user"
-        )
-    
-    # Check if the email matches the current user's email
-    if current_user['email'] != email:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Google account email must match your current account email"
-        )
-    
-    # Update the user to add Google linking
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute(
-        "UPDATE users SET google_id = ?, profile_picture = ? WHERE id = ?",
-        (google_id, google_info.get('picture'), current_user['id'])
-    )
-    conn.commit()
-    conn.close()
-    
-    return {
-        "success": True,
-        "message": "Google account successfully linked to your account"
-    }
-
-@router.post("/unlink-google")
-async def unlink_google_account(current_user=Depends(verify_token)):
-    """
-    Unlink Google account from existing logged-in user
-    """
-    
-    # Update the user to remove Google linking
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute(
-        "UPDATE users SET google_id = NULL, profile_picture = NULL WHERE id = ?",
-        (current_user['id'],)
-    )
-    conn.commit()
-    conn.close()
-    
-    return {
-        "success": True,
-        "message": "Google account successfully unlinked from your account"
-    }

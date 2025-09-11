@@ -57,6 +57,7 @@ export interface AuthContextType {
   
   // Actions
   login: (email: string, password: string) => Promise<boolean>;
+  loginWithGoogle: (googleToken: string) => Promise<boolean>;
   logout: () => void;
   refreshProfile: () => Promise<void>;
   refreshCredits: () => Promise<void>; // Added credit refresh function

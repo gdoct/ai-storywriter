@@ -1,0 +1,238 @@
+/* Wizard Overlay */
+.wizard-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+/* Wizard Dialog */
+.wizard-dialog {
+  background: var(--color-bg, #fff);
+  color: var(--color-text, #222);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  min-width: 500px;
+  max-width: 90vw;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Wizard Header */
+.wizard-header {
+  display: flex;
+  justify-content: flex-end;
+  padding: 1rem 1.5rem 0 1.5rem;
+}
+
+.wizard-close-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-secondary, #666);
+  transition: all 0.15s ease;
+}
+
+.wizard-close-btn:hover {
+  background: var(--color-bg-hover, #f0f0f0);
+  color: var(--color-text, #222);
+}
+
+.wizard-close-btn svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* Progress Bar */
+.wizard-progress-container {
+  padding: 1rem 1.5rem;
+}
+
+.wizard-progress-bar {
+  width: 100%;
+  height: 6px;
+  background: var(--color-bg-secondary, #e5e5e5);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 0.5rem;
+}
+
+.wizard-progress-fill {
+  height: 100%;
+  background: var(--color-primary, #007bff);
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.wizard-progress-text {
+  font-size: 0.875rem;
+  color: var(--color-text-secondary, #666);
+  text-align: center;
+}
+
+/* Step Title */
+.wizard-step-title {
+  padding: 0 1.5rem 1rem 1.5rem;
+  border-bottom: 1px solid var(--color-border, #e0e0e0);
+}
+
+.wizard-step-title h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--color-text, #222);
+}
+
+/* Content Area */
+.wizard-content {
+  padding: 1.5rem;
+  flex: 1;
+  overflow-y: auto;
+  min-height: 200px;
+}
+
+/* Actions */
+.wizard-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem 1.5rem 1.5rem;
+  border-top: 1px solid var(--color-border, #e0e0e0);
+  background: var(--color-bg-secondary, #f8f9fa);
+}
+
+.wizard-actions-left {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.wizard-actions-right {
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .wizard-dialog {
+    min-width: 0;
+    width: 95vw;
+    margin: 1rem;
+  }
+  
+  .wizard-header,
+  .wizard-progress-container,
+  .wizard-step-title,
+  .wizard-content,
+  .wizard-actions {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  
+  .wizard-actions {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  
+  .wizard-actions-left,
+  .wizard-actions-right {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .wizard-actions-right {
+    flex-direction: column-reverse;
+  }
+}
+
+/* Theme Variants */
+
+/* Light Theme */
+.wizard-overlay--light {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.wizard-dialog--light {
+  background: #ffffff;
+  color: #000000;
+}
+
+.wizard-dialog--light .wizard-close-btn:hover {
+  background: #f5f5f5;
+  color: #000000;
+}
+
+.wizard-dialog--light .wizard-progress-bar {
+  background: #e9ecef;
+}
+
+.wizard-dialog--light .wizard-progress-text {
+  color: #6c757d;
+}
+
+.wizard-dialog--light .wizard-step-title {
+  border-bottom-color: #dee2e6;
+}
+
+.wizard-dialog--light .wizard-actions {
+  border-top-color: #dee2e6;
+  background: #f8f9fa;
+}
+
+/* Dark Theme */
+.wizard-overlay--dark {
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.wizard-dialog--dark {
+  background: #2d3748;
+  color: #ffffff;
+}
+
+.wizard-dialog--dark .wizard-close-btn {
+  color: #a0aec0;
+}
+
+.wizard-dialog--dark .wizard-close-btn:hover {
+  background: #4a5568;
+  color: #ffffff;
+}
+
+.wizard-dialog--dark .wizard-progress-bar {
+  background: #4a5568;
+}
+
+.wizard-dialog--dark .wizard-progress-text {
+  color: #a0aec0;
+}
+
+.wizard-dialog--dark .wizard-step-title {
+  border-bottom-color: #4a5568;
+}
+
+.wizard-dialog--dark .wizard-step-title h2 {
+  color: #ffffff;
+}
+
+.wizard-dialog--dark .wizard-actions {
+  border-top-color: #4a5568;
+  background: #1a202c;
+}
+
+/* Focus states for accessibility */
+.wizard-close-btn:focus-visible {
+  outline: 2px solid var(--color-primary, #007bff);
+  outline-offset: 2px;
+}

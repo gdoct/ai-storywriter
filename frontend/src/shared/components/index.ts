@@ -7,3 +7,4 @@ export * from './Rating/StarRating';
 export * from './common';
 export * from './navigation/Navigation';
 export * from './MarketPlace';
+export * from './WelcomeWizard';

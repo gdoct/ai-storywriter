@@ -96,3 +96,34 @@
 .signup-link a:hover {
   text-decoration: underline;
 }
+
+.google-signin-section {
+  margin-bottom: 20px;
+}
+
+.login-divider {
+  margin: 20px 0;
+  text-align: center;
+  position: relative;
+}
+
+.login-divider::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background-color: #ddd;
+}
+
+.login-divider span {
+  background-color: white;
+  padding: 0 15px;
+  color: #666;
+  font-size: 14px;
+}
+
+.google-signin-container {
+  position: relative;
+}

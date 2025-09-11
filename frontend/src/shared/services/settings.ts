@@ -1,4 +1,4 @@
-import { LLMConfig } from '../types/LLMTypes';
+import { LLMConfig, BackendType } from '../types/LLMTypes';
 import { fetchLLMSettings, saveLLMSettings } from './llmBackend';
 import apiRequest from './http';
 
@@ -13,6 +13,8 @@ export interface UserSettings {
   };
   llmMode: 'member' | 'byok';
   byokProvider?: 'github' | 'openai';
+  // client-side convenience flag indicating if Google is linked
+  isGoogleLinked?: boolean;
 }
 
 export interface BYOKCredentials {
@@ -21,9 +23,71 @@ export interface BYOKCredentials {
   baseUrl?: string;
 }
 
-// LLM Settings (existing functionality)
+// User LLM Settings - NEW APPROACH using user endpoints
+export async function getUserLLMSettings(): Promise<any> {
+  try {
+    const response = await apiRequest('/api/user/llm', { method: 'GET' });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching user LLM settings:', error);
+    return {
+      llm_mode: 'member',
+      byok_provider: null,
+      available_byok_providers: [],
+      member_mode_providers: []
+    };
+  }
+}
+
+// LLM Settings (DEPRECATED - keeping for admin usage only)
 export async function getSavedSettings(): Promise<LLMConfig | null> {
-  return await fetchLLMSettings();
+  // For regular users, we should get user settings instead
+  try {
+    const userLLMSettings = await getUserLLMSettings();
+    
+    // For member mode users, we need to check what provider is actually available
+    let backendType: BackendType = 'lmstudio'; // Default fallback
+    
+    if (userLLMSettings.llm_mode === 'byok' && userLLMSettings.byok_provider) {
+      if (userLLMSettings.byok_provider === 'openai') {
+        backendType = 'chatgpt';
+      } else if (userLLMSettings.byok_provider === 'github') {
+        backendType = 'github';
+      }
+    } else if (userLLMSettings.member_mode_providers?.length > 0) {
+      // Use the first available provider
+      const provider = userLLMSettings.member_mode_providers[0];
+      if (provider.provider_name === 'lmstudio') {
+        backendType = 'lmstudio';
+      } else if (provider.provider_name === 'ollama') {
+        backendType = 'ollama';
+      } else if (provider.provider_name === 'openai') {
+        backendType = 'chatgpt';
+      } else if (provider.provider_name === 'github') {
+        backendType = 'github';
+      }
+    }
+    
+    // Convert to LLMConfig format for backward compatibility
+    const config: LLMConfig = {
+      backendType: backendType,
+      lmstudio: { url: 'http://localhost:1234' },
+      ollama: { url: 'http://localhost:11434' },
+      chatgpt: { apiKey: '' },
+      github: { githubToken: '' },
+      showThinking: userLLMSettings.show_thinking || false,
+    };
+    
+    return config;
+  } catch (error) {
+    // Fallback to admin endpoint for admin users
+    try {
+      return await fetchLLMSettings();
+    } catch (adminError) {
+      console.error('Error fetching settings (admin fallback also failed):', adminError);
+      return null;
+    }
+  }
 }
 
 export async function saveSettings(config: LLMConfig): Promise<LLMConfig | null> {
@@ -31,8 +95,20 @@ export async function saveSettings(config: LLMConfig): Promise<LLMConfig | null>
 }
 
 export async function getShowThinkingSetting(): Promise<boolean> {
-  const config = await getSavedSettings();
-  return config?.showThinking || false;
+  try {
+    // Try to get user's show thinking preference first
+    const userLLMSettings = await getUserLLMSettings();
+    return userLLMSettings?.show_thinking || false;
+  } catch (error) {
+    // Fallback to admin settings for backward compatibility
+    try {
+      const config = await fetchLLMSettings();
+      return config?.showThinking || false;
+    } catch (adminError) {
+      console.error('Error getting show thinking setting:', adminError);
+      return false;
+    }
+  }
 }
 
 // User Settings
@@ -53,6 +129,8 @@ export async function getUserSettings(): Promise<UserSettings> {
       },
       llmMode: backendData.llm_mode || 'member',
       byokProvider: backendData.byok_provider
+      ,
+      isGoogleLinked: !!backendData.google_id || (backendData.auth_provider === 'google')
     };
     
     return frontendSettings;
