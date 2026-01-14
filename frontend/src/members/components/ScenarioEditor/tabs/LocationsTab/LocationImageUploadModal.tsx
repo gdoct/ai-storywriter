@@ -2,9 +2,9 @@ import { AiTextBox, Button } from '@drdata/ai-styles';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { FaPlus, FaTimes } from 'react-icons/fa';
 import { FaLocationDot } from 'react-icons/fa6';
-import { getToken } from '../../../../../shared/services/security';
-import { Location } from '../../../../../shared/types/ScenarioTypes';
-import { showUserFriendlyError } from '../../../../../shared/utils/errorHandling';
+import { getToken } from '@shared/services/security';
+import { Location } from '@shared/types/ScenarioTypes';
+import { showUserFriendlyError } from '@shared/utils/errorHandling';
 import './LocationImageUploadModal.css';
 
 interface LocationImageUploadModalProps {

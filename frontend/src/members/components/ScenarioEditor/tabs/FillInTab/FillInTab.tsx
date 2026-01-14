@@ -1,7 +1,7 @@
 import { AiTextArea } from '@drdata/ai-styles';
 import React, { useCallback, useMemo } from 'react';
 import { FaBook, FaUser } from 'react-icons/fa';
-import { FillIn } from '../../../../../shared/types/ScenarioTypes';
+import { FillIn } from '@shared/types/ScenarioTypes';
 import { TabProps } from '../../types';
 import './FillInTab.css';
 

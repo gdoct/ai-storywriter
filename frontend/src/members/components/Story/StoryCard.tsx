@@ -1,6 +1,6 @@
 import { Card } from '@drdata/ai-styles';
 import React from 'react';
-import { MarketStoryCard } from '../../../shared/types/marketplace';
+import { MarketStoryCard } from '@shared/types/marketplace';
 import './StoryCard.css';
 
 interface StoryCardProps {

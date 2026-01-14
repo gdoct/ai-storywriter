@@ -2,12 +2,12 @@ import { Button } from '@drdata/ai-styles';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { FaDice, FaPlus, FaTrash, FaUser } from 'react-icons/fa';
 import { FaWandMagicSparkles } from 'react-icons/fa6';
-import { deleteScenarioImage, getRandomScenarioImage, uploadScenarioImage } from '../../../../../shared/services/scenarioImageService';
-import { Scenario } from '../../../../../shared/types/ScenarioTypes';
-import { showUserFriendlyError } from '../../../../../shared/utils/errorHandling';
-import { isImageGenerationAvailable } from '../../../../../shared/services/featureDetection';
-import { getSavedSettings } from '../../../../../shared/services/settings';
-import { generateImage, createScenarioImagePrompt } from '../../../../../shared/services/imageGenerationService';
+import { deleteScenarioImage, getRandomScenarioImage, uploadScenarioImage } from '@shared/services/scenarioImageService';
+import { Scenario } from '@shared/types/ScenarioTypes';
+import { showUserFriendlyError } from '@shared/utils/errorHandling';
+import { isImageGenerationAvailable } from '@shared/services/featureDetection';
+import { getSavedSettings } from '@shared/services/settings';
+import { generateImage, createScenarioImagePrompt } from '@shared/services/imageGenerationService';
 import { ImageGenerationModal } from '../../modals/ImageGenerationModal';
 import './ScenarioImage.css';
 
@@ -77,17 +77,16 @@ export const ScenarioImage: React.FC<ScenarioImageProps> = ({
     try {
       // Create prompt for scenario image
       const prompt = createScenarioImagePrompt(scenario);
-      
+
       // Generate image
-      const result = await generateImage({
-        prompt,
+      const result = await generateImage(prompt, {
         model: 'dall-e-3', // Default model, could be configurable
         n: 1,
         size: '1024x1024'
       });
 
-      if (result.data && result.data.length > 0) {
-        const generatedImage = result.data[0];
+      if (result.images && result.images.length > 0) {
+        const generatedImage = result.images[0];
         onScenarioChange({
           imageUrl: generatedImage.url,
           imageId: undefined // This is a generated image, not an uploaded one

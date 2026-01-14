@@ -6,6 +6,19 @@ import { createRewriteStoryArcPrompt, createStoryArcPrompt, createSummaryPrompt 
 import { streamSimpleChatCompletionWithStatus, streamChatCompletionWithStatus, streamChatCompletionWithThinking } from './llmService';
 import { getSelectedModel } from './modelSelection';
 import { getShowThinkingSetting } from './settings';
+// Import the new agent service for main story generation
+import { generateStoryWithAgent } from './storyGeneratorAgentService';
+
+/*
+ * MIGRATION NOTE: The main story generation now uses the backend story generator agent.
+ * Client-side prompt functions (like llmPromptService.createFinalStoryPrompt) are being
+ * replaced by the backend LangGraph agent which handles all prompt engineering server-side.
+ *
+ * Legacy functions are kept for backward compatibility with other features like:
+ * - Individual element generation (backstory, story arc, etc.)
+ * - Chapter-based generation (if still needed)
+ * - Rewrite operations
+ */
 
 
 // Helper for prompt-based streaming using llmService, with AI status context
@@ -124,11 +137,12 @@ export async function generateChapterSummary(scenario: Scenario,
 }
 
 /**
- * Generate a story from a scenario using the backend LLM proxy (single call, no chapters)
+ * Generate a story from a scenario using the backend story generator agent
+ * This replaces the old client-side prompt approach with the new backend agent
  */
 export async function generateStory(
-  scenario: Scenario, 
-  options: { 
+  scenario: Scenario,
+  options: {
     onProgress?: (text: string) => void,
     onThinking?: (thinking: string) => void,
     temperature?: number,
@@ -138,82 +152,20 @@ export async function generateStory(
   setAiStatus = () => {},
   setShowAIBusyModal = () => {}
 ): Promise<{ result: Promise<GeneratedStory>; cancelGeneration: () => void }> {
-  const promptObj = llmPromptService.createFinalStoryPrompt(scenario);
-  const abortController = new AbortController();
-  let cancelGeneration = () => { abortController.abort(); };
-  const resultPromise = new Promise<GeneratedStory>((resolve, reject) => {
-    (async () => {
-      try {
-      const selectedModel = getSelectedModel();
-      const showThinking = await getShowThinkingSetting();
-      let fullText = '';
-      
-      if (showThinking) {
-        // console.log('Using thinking-enabled streaming'); // Debug log
-        let lastResponseLength = 0;
-        await streamChatCompletionWithThinking(
-          promptObj,
-          (thinkingContent) => {
-            // console.log('Thinking callback:', thinkingContent); // Debug log
-            if (thinkingContent.isDone) {
-              fullText = thinkingContent.response;
-            } else {
-              fullText = thinkingContent.response;
-              // Only pass the new chunk, not the full accumulated response
-              if (options.onProgress && thinkingContent.response.length > lastResponseLength) {
-                const newChunk = thinkingContent.response.slice(lastResponseLength);
-                options.onProgress(newChunk);
-                lastResponseLength = thinkingContent.response.length;
-              }
-              if (options.onThinking) {
-                // console.log('Calling onThinking with:', thinkingContent.thinking); // Debug log
-                options.onThinking(thinkingContent.thinking);
-              }
-            }
-          },
-          { 
-            model: selectedModel || undefined,
-            temperature: options.temperature, 
-            max_tokens: 32000,
-            signal: abortController.signal
-          },
-          setAiStatus,
-          setShowAIBusyModal
-        );
-      } else {
-        await streamSimpleChatCompletionWithStatus(
-          promptObj,
-          (text, isDone) => {
-            if (isDone) {
-              // Final call - completion signal only
-              // fullText already contains the complete text from streaming
-            } else {
-              // Incremental chunk during streaming
-              fullText += text;
-              if (options.onProgress) options.onProgress(text);
-            }
-          },
-          { 
-            model: selectedModel || undefined,
-            temperature: options.temperature, 
-            max_tokens: 32000,
-            signal: abortController.signal
-          },
-          setAiStatus,
-          setShowAIBusyModal
-        );
-      }
-      resolve({ completeText: fullText, chapters: [] });
-      } catch (error) {
-        if (error instanceof Error && error.name === 'AbortError') {
-          reject(new Error('Generation was cancelled'));
-        } else {
-          reject(error);
-        }
-      }
-    })();
-  });
-  return { result: resultPromise, cancelGeneration };
+
+  // Use the new backend story generator agent
+  return generateStoryWithAgent(
+    scenario,
+    {
+      onContent: options.onProgress, // Map onProgress to onContent for the agent
+      onThinking: options.onThinking,
+      temperature: options.temperature,
+      seed: options.seed,
+      target_length: 2000 // Default target length
+    },
+    setAiStatus,
+    setShowAIBusyModal
+  );
 }
 
 /**

@@ -1,17 +1,17 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { CharacterBadge } from '../components/ScenarioEditor/common/CharacterBadge';
-import { ConfirmModal } from '../../shared/components/Modal';
-import { useModals } from '../../shared/hooks/useModals';
+import { ConfirmModal } from '@shared/components/Modal';
+import { useModals } from '@shared/hooks/useModals';
 
-import { deleteScenario, fetchRecentScenarios, formatRelativeTime, RecentScenario } from '../../shared/services/dashboardService';
+import { deleteScenario, fetchRecentScenarios, formatRelativeTime, RecentScenario } from '@shared/services/dashboardService';
 import './Scenarios.css';
 import { Button } from '@drdata/ai-styles';
 import GenerateSimilarModal, { ScenarioSelections } from '../components/Dashboard/GenerateSimilarModal';
-import { Scenario } from '../../shared/types/ScenarioTypes';
-import { fetchScenarioById } from '../../shared/services/scenario';
+import { Scenario } from '@shared/types/ScenarioTypes';
+import { fetchScenarioById } from '@shared/services/scenario';
 import GeneratingModal from '../components/Dashboard/GeneratingModal';
-import { generateSimilarScenarios, ScenarioSelections as ServiceScenarioSelections, GenerationProgress } from '../../shared/services/similarScenarioService';
+import { generateSimilarScenarios, ScenarioSelections as ServiceScenarioSelections, GenerationProgress } from '@shared/services/similarScenarioService';
 
 const Scenarios: React.FC = () => {
   const navigate = useNavigate();

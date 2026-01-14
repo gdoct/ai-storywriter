@@ -4,9 +4,9 @@
  */
 
 import React, { useCallback, useEffect, useState } from 'react';
-import type { AdminUser } from '../../../shared/services/rbacApi';
-import { adminApi } from '../../../shared/services/rbacApi';
-import { UserRole, UserTier } from '../../../shared/types/auth';
+import type { AdminUser } from '@shared/services/rbacApi';
+import { adminApi } from '@shared/services/rbacApi';
+import { UserRole, UserTier } from '@shared/types/auth';
 import './AdminPanel.css';
 
 interface UserManagementProps {

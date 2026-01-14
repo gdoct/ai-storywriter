@@ -4,17 +4,16 @@ import { FaBook, FaCog, FaEye, FaRedo, FaSave, FaStickyNote, FaTrash, FaUser, Fa
 import { FaLocationDot } from 'react-icons/fa6';
 import { MdSchedule } from 'react-icons/md';
 import { useNavigate } from 'react-router-dom';
-import { useModals } from '../../../shared/hooks/useModals';
-import { createScenario, deleteScenario, updateScenario } from '../../../shared/services/scenario';
-import { generateStory } from '../../../shared/services/storyGenerator';
-import { getStoriesByScenario, saveStory } from '../../../shared/services/storyService';
-import { Scenario } from '../../../shared/types/ScenarioTypes';
-import { isInsufficientCreditsError, showUserFriendlyErrorWithModals } from '../../../shared/utils/errorHandling';
-import { AlertModal, ConfirmModal } from '../../../shared/components/Modal';
+import { useModals } from '@shared/hooks/useModals';
+import { createScenario, deleteScenario, updateScenario } from '@shared/services/scenario';
+import { generateStory } from '@shared/services/storyGenerator';
+import { getStoriesByScenario, saveStory } from '@shared/services/storyService';
+import { Scenario } from '@shared/types/ScenarioTypes';
+import { isInsufficientCreditsError, showUserFriendlyErrorWithModals } from '@shared/utils/errorHandling';
+import { AlertModal, ConfirmModal } from '@shared/components/Modal';
 import { ActionButtonItem, ActionButtons } from './common/ActionButtons';
 import { CharacterBadge } from './common/CharacterBadge';
 import { ChatAgent } from '../ChatAgent/ChatAgent';
-import { LlmSettingsMenu } from './common/LlmSettingsMenu';
 import { useScenarioEditor } from './context';
 import { StoryModal } from './modals/StoryModal';
 import './ScenarioEditor.css';
@@ -422,7 +421,7 @@ export const ScenarioEditor: React.FC<ScenarioEditorProps> = ({
     },
     {
       id: 'reload',
-      label: 'Reload',
+      title: 'Reload Scenario',
       icon: <FaRedo />,
       onClick: handleReloadScenario,
       disabled: state.isSaving || state.isLoading,
@@ -430,7 +429,7 @@ export const ScenarioEditor: React.FC<ScenarioEditorProps> = ({
     },
     {
       id: 'delete',
-      label: 'Delete',
+      title: 'Delete',
       icon: <FaTrash />,
       onClick: handleDeleteScenario,
       disabled: state.isSaving || state.isLoading,
@@ -439,7 +438,7 @@ export const ScenarioEditor: React.FC<ScenarioEditorProps> = ({
     },
     {
       id: 'save-as',
-      label: 'Save As',
+      title: 'Save As',
       icon: <FaCopy />,
       onClick: handleSaveAs,
       disabled: state.isSaving || state.isLoading,
@@ -447,7 +446,7 @@ export const ScenarioEditor: React.FC<ScenarioEditorProps> = ({
     },
     {
       id: 'save',
-      label: 'Save',
+      title: 'Save',
       icon: <FaSave />,
       onClick: () => handleSave(),
       disabled: state.isSaving || state.isLoading,
@@ -468,10 +467,6 @@ export const ScenarioEditor: React.FC<ScenarioEditorProps> = ({
               <ActionButtons
                 items={actionButtonItems}
                 className="scenario-editor__action-buttons"
-                disabled={state.isLoading}
-              />
-              <LlmSettingsMenu
-                className="scenario-editor__llm-settings"
                 disabled={state.isLoading}
               />
             </div>

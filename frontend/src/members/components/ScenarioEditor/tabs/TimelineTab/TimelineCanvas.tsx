@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
-import { TimelineEvent } from '../../../../../shared/types/ScenarioTypes';
+import { TimelineEvent } from '@shared/types/ScenarioTypes';
 
 interface TimelineCanvasProps {
   events: TimelineEvent[];

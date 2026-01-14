@@ -1,8 +1,8 @@
 import { AiTextArea, Button } from '@drdata/ai-styles';
 import React, { useCallback, useMemo, useState } from 'react';
 import { FaDownload, FaCog } from 'react-icons/fa';
-import { PromptSettings } from '../../../../../shared/types/ScenarioTypes';
-import ImportModal from '../../../../../shared/components/common/ImportModal';
+import { PromptSettings } from '@shared/types/ScenarioTypes';
+import ImportModal from '@shared/components/common/ImportModal';
 import { TabProps } from '../../types';
 import './CustomPromptTab.css';
 

@@ -270,6 +270,162 @@
   }
 }
 
+/* Tab System */
+.llm-settings-modal__tabs {
+  display: flex;
+  border-bottom: 1px solid var(--color-border-primary, #e5e7eb);
+  margin-bottom: 0;
+}
+
+.llm-settings-modal__tab {
+  background: none;
+  border: none;
+  padding: var(--spacing-md, 1rem) var(--spacing-lg, 1.5rem);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-text-secondary, #6b7280);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.15s ease;
+  flex: 1;
+  text-align: center;
+  position: relative;
+}
+
+.llm-settings-modal__tab:hover {
+  color: var(--color-text-primary, #1f2937);
+  background: var(--color-surface-secondary, #f9fafb);
+}
+
+.llm-settings-modal__tab.active {
+  color: var(--color-primary-600, #2563eb);
+  border-bottom-color: var(--color-primary-500, #3b82f6);
+}
+
+.llm-settings-modal__tab-icon {
+  margin-right: var(--spacing-xs, 0.5rem);
+  font-size: 1rem;
+}
+
+/* Tab Content */
+.llm-tab-content {
+  padding: var(--spacing-lg, 1.5rem);
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+/* Description text */
+.llm-settings-description {
+  font-size: 0.75rem;
+  color: var(--color-text-secondary, #6b7280);
+  margin-top: var(--spacing-xs, 0.5rem);
+  margin-bottom: 0;
+  line-height: 1.4;
+}
+
+/* Info boxes */
+.llm-settings-info-box {
+  background: var(--color-info-50, #eff6ff);
+  border: 1px solid var(--color-info-200, #bfdbfe);
+  border-radius: 8px;
+  padding: var(--spacing-md, 1rem);
+  margin-top: var(--spacing-sm, 0.75rem);
+}
+
+.llm-settings-info-box h4 {
+  margin: 0 0 var(--spacing-sm, 0.75rem) 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-info-800, #1e40af);
+}
+
+.llm-settings-info-box ul {
+  margin: 0;
+  padding-left: var(--spacing-lg, 1.5rem);
+  font-size: 0.75rem;
+  color: var(--color-info-700, #1d4ed8);
+  line-height: 1.4;
+}
+
+.llm-settings-info-box li {
+  margin-bottom: var(--spacing-xs, 0.5rem);
+}
+
+.llm-settings-info-box li:last-child {
+  margin-bottom: 0;
+}
+
+/* Warning box variant */
+.llm-settings-warning-box {
+  background: var(--color-warning-50, #fffbeb);
+  border: 1px solid var(--color-warning-200, #fcd34d);
+  border-radius: 8px;
+  padding: var(--spacing-md, 1rem);
+  margin-top: var(--spacing-sm, 0.75rem);
+}
+
+.llm-settings-warning-box h4 {
+  margin: 0 0 var(--spacing-sm, 0.75rem) 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-warning-800, #92400e);
+}
+
+.llm-settings-warning-box p {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--color-warning-700, #b45309);
+  line-height: 1.4;
+}
+
+/* Disabled state improvements */
+.llm-tab-content .llm-settings-modal__section.disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* Update body padding for tabbed version */
+.llm-settings-modal__body.tabbed {
+  padding: 0;
+  max-height: none;
+}
+
+/* Responsive adjustments for tabs */
+@media (max-width: 768px) {
+  .llm-settings-modal__tab {
+    padding: var(--spacing-sm, 0.75rem) var(--spacing-md, 1rem);
+    font-size: 0.8rem;
+  }
+  
+  .llm-settings-modal__tab-icon {
+    display: none; /* Hide icons on mobile */
+  }
+  
+  .llm-tab-content {
+    padding: var(--spacing-md, 1rem);
+  }
+}
+
+/* Smaller screens - stack tabs vertically */
+@media (max-width: 480px) {
+  .llm-settings-modal__tabs {
+    flex-direction: column;
+    border-bottom: none;
+    border-right: 1px solid var(--color-border-primary, #e5e7eb);
+  }
+  
+  .llm-settings-modal__tab {
+    text-align: left;
+    border-bottom: none;
+    border-right: 2px solid transparent;
+  }
+  
+  .llm-settings-modal__tab.active {
+    border-bottom-color: transparent;
+    border-right-color: var(--color-primary-500, #3b82f6);
+  }
+}
+
 /* Reduced motion support */
 @media (prefers-reduced-motion: reduce) {
   .llm-settings-modal__overlay,
@@ -281,7 +437,8 @@
   .llm-settings-modal__select,
   .llm-settings-modal__input,
   .llm-settings-modal__slider::-webkit-slider-thumb,
-  .llm-settings-modal__slider::-moz-range-thumb {
+  .llm-settings-modal__slider::-moz-range-thumb,
+  .llm-settings-modal__tab {
     transition: none;
   }
 }

@@ -1,8 +1,8 @@
 export { HamburgerMenu } from './components/HamburgerMenu/HamburgerMenu';
 export { Label } from './components/Label/Label';
 // export * from './components/Modal';
-export { Button } from './components/Button';
-export type { ButtonProps } from './components/Button/Button';
+export { Button, ButtonGroup } from './components/Button';
+export type { ButtonProps, ButtonGroupProps } from './components/Button';
 export { Card } from './components/Card';
 export type { CardProps } from './components/Card/Card';
 export { CharacterCard } from './components/CharacterCard';

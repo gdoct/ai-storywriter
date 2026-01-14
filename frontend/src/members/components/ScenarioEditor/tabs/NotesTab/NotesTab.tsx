@@ -1,10 +1,10 @@
 import { AiTextArea, Button } from '@drdata/ai-styles';
 import React, { useCallback, useState } from 'react';
 import { FaDownload, FaStickyNote, FaTimes } from 'react-icons/fa';
-import { useAuth } from '../../../../../shared/contexts/AuthContext';
-import { generateNotes } from '../../../../../shared/services/storyGenerator';
-import { showUserFriendlyError } from '../../../../../shared/utils/errorHandling';
-import ImportModal from '../../../../../shared/components/common/ImportModal';
+import { useAuth } from '@shared/contexts/AuthContext';
+import { generateNotes } from '@shared/services/storyGenerator';
+import { showUserFriendlyError } from '@shared/utils/errorHandling';
+import ImportModal from '@shared/components/common/ImportModal';
 import { TabProps } from '../../types';
 import './NotesTab.css';
 

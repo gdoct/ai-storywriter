@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../../shared/contexts/AuthContext';
-import GoogleSignInButton from '../../shared/components/GoogleSignInButton';
-import EmailConflictModal from '../../shared/components/EmailConflictModal';
+import { useAuth } from '@shared/contexts/AuthContext';
+import GoogleSignInButton from '@shared/components/GoogleSignInButton';
+import EmailConflictModal from '@shared/components/EmailConflictModal';
 import './Login.css';
 
 interface EmailConflictData {

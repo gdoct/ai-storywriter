@@ -3,12 +3,12 @@
  * Includes additional controls for moderators and admins
  */
 import React, { useState } from 'react';
-import { useAuth } from '../../../shared/contexts/AuthContext';
-import { useModals } from '../../../shared/hooks/useModals';
-import http from '../../../shared/services/http';
-import { MarketStoryCard } from '../../../shared/types/marketplace';
-import { ConfirmModal } from '../../../shared/components/Modal';
-import { ModeratorOnly } from '../../../shared/components/PermissionGate';
+import { useAuth } from '@shared/contexts/AuthContext';
+import { useModals } from '@shared/hooks/useModals';
+import http from '@shared/services/http';
+import { MarketStoryCard } from '@shared/types/marketplace';
+import { ConfirmModal } from '@shared/components/Modal';
+import { ModeratorOnly } from '@shared/components/PermissionGate';
 import './EnhancedStoryCard.css';
 
 interface EnhancedStoryCardProps {

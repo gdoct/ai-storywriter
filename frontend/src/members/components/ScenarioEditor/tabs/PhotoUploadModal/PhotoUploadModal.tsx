@@ -1,12 +1,16 @@
 import { AiTextBox, Button } from '@drdata/ai-styles';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { FaPlus, FaRandom, FaTimes, FaUser } from 'react-icons/fa';
-import { getRandomCharacterPhoto } from '../../../../../shared/services/characterPhotoService';
-import { createCharacterFromPhotoPrompt } from '../../../../../shared/services/llmPromptService';
-import { getToken } from '../../../../../shared/services/security';
-import { generateRandomCharacter } from '../../../../../shared/services/storyGenerator';
-import { Character, Scenario } from '../../../../../shared/types/ScenarioTypes';
-import { showUserFriendlyError } from '../../../../../shared/utils/errorHandling';
+import { getRandomCharacterPhoto } from '@shared/services/characterPhotoService';
+import { generateRandomCharacter } from '@shared/services/storyGenerator';
+import { Character, Scenario } from '@shared/types/ScenarioTypes';
+import { showUserFriendlyError } from '@shared/utils/errorHandling';
+import {
+  generateCharacterWithAgent,
+  buildCharacterFromFields,
+  CharacterStreamingEvent,
+  CharacterField
+} from '@shared/services/characterAgentService';
 import './PhotoUploadModal.css';
 
 interface PhotoUploadModalProps {
@@ -40,6 +44,10 @@ export const PhotoUploadModal: React.FC<PhotoUploadModalProps> = ({
     tokensReceived?: number;
   }>({ stage: '', elapsedTime: 0 });
   const progressIntervalRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Character agent state
+  const [characterFields, setCharacterFields] = useState<CharacterField[]>([]);
+  const [currentCharacterId, setCurrentCharacterId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Helper function to start progress tracking
@@ -234,128 +242,146 @@ export const PhotoUploadModal: React.FC<PhotoUploadModalProps> = ({
       return;
     }
 
-    const token = getToken();
-    if (!token) {
-      showUserFriendlyError(new Error('Please log in to upload photos'), 'Authentication');
-      return;
-    }
-
     setIsUploading(true);
-    startProgressTracking('Preparing image...');
+    startProgressTracking('Preparing character generation...');
+    setCharacterFields([]);
+    setCurrentCharacterId(null);
 
     try {
-      // Generate the prompt using the service
-      updateProgressStage('Generating prompt...');
-      const prompt = createCharacterFromPhotoPrompt(scenario,
-        characterName.trim() || undefined,
-        characterRole.trim() || undefined,
-        additionalPrompt.trim() || undefined
-      );
-
       updateProgressStage('Preparing image data...');
-      const formData = new FormData();
-      
+
+      // Prepare image file for character agent
+      let imageFile: File | undefined;
+
       if (isUsingRandomPhoto && previewUrl) {
-        // For random photos, we need to fetch the image and convert it to a file
+        // For random photos, fetch the image and convert it to a file
         const response = await fetch(previewUrl);
         const blob = await response.blob();
-        const file = new File([blob], 'random-character.png', { type: blob.type });
-        formData.append('photo', file);
+        imageFile = new File([blob], 'random-character.png', { type: blob.type });
       } else if (selectedFile) {
         // For uploaded files, use the file directly
-        formData.append('photo', selectedFile);
+        imageFile = selectedFile;
       }
-      
-      formData.append('prompt', prompt);
 
-      updateProgressStage('Uploading to server...');
-      
-      // Add a small delay to show the upload stage
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      // Start AI processing simulation alongside the actual request
-      const processingPromise = simulateTokenProgress('Analyzing image with AI...', 3000);
+      updateProgressStage('Starting character generation...');
 
-      const responsePromise = fetch('/api/characters/create-from-photo', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-        body: formData,
-      });
-
-      // Wait for either the response or the simulation to complete (whichever takes longer)
-      const [response] = await Promise.all([responsePromise, processingPromise]);
-
-      if (!response.ok) {
-        // Try to get error data, but handle cases where response isn't JSON
-        let errorMessage = 'Failed to create character from photo';
-        try {
-          const errorData = await response.json();
-          errorMessage = errorData.error || errorMessage;
-        } catch (jsonError) {
-          // If response isn't JSON, try to get it as text
-          console.error(jsonError);
-          try {
-            const errorText = await response.text();
-            console.error('Non-JSON error response:', errorText);
-            errorMessage = `Server error: ${response.status} ${response.statusText}`;
-          } catch (textError) {
-            console.error('Failed to read error response:', textError);
-          }
+      // Build scenario with user hints
+      const enhancedScenario = {
+        ...scenario,
+        characterHints: {
+          name: characterName.trim() || undefined,
+          role: characterRole.trim() || undefined,
+          gender: selectedGender || undefined,
+          additionalPrompt: additionalPrompt.trim() || undefined,
         }
-        throw new Error(errorMessage);
-      }
-
-      updateProgressStage('Processing AI response...');
-
-      let result;
-      try {
-        result = await response.json();
-      } catch (jsonError) {
-        console.error('Failed to parse JSON response:', jsonError);
-        const responseText = await response.text();
-        console.error('Response was:', responseText);
-        throw new Error('Server returned invalid response format');
-      }
-      
-      updateProgressStage('Creating character...');
-      
-      // Create character object with the response data
-      const newCharacter: Character = {
-        id: result.character.id || Date.now().toString(), // Fallback ID if not provided
-        name: result.character.name,
-        alias: result.character.alias,
-        role: result.character.role,
-        gender: result.character.gender,
-        appearance: result.character.appearance,
-        backstory: result.character.backstory,
-        extraInfo: result.character.extraInfo,
-        photoId: result.photoId,
-        photoUrl: result.photoUrl,
       };
 
-      onCharacterCreated(newCharacter);
-      onClose();
-      
-      // Reset form
-      setSelectedFile(null);
-      setPreviewUrl(null);
-      setCharacterName('');
-      setCharacterRole('');
-      setAdditionalPrompt('');
-      setSelectedGender('');
-      setSelectedGenre('');
-      setIsUsingRandomPhoto(false);
-      
+      // Track generated fields for progress
+      const receivedFields = new Set<string>();
+      let finalCharacter: Character | null = null;
+      let generatedImageUri: string | null = null;
+
+      // Use character agent to generate character
+      await generateCharacterWithAgent(
+        {
+          scenario: enhancedScenario,
+          imageFile,
+          generateImage: true, // Generate character portrait
+          imageGenerationOptions: {
+            size: '1024x1024',
+            style: 'natural'
+          }
+        },
+        (event: CharacterStreamingEvent) => {
+          console.log('Character agent event:', event);
+
+          if (event.event_type === 'field_update' && event.field) {
+            // Update character fields
+            setCharacterFields(prev => {
+              const updated = [...prev];
+              const existingIndex = updated.findIndex(f => f.field_name === event.field!.field_name);
+
+              if (existingIndex >= 0) {
+                updated[existingIndex] = event.field!;
+              } else {
+                updated.push(event.field!);
+              }
+
+              return updated;
+            });
+
+            // Track character ID
+            if (event.character_id && !currentCharacterId) {
+              setCurrentCharacterId(event.character_id);
+            }
+
+            // Update progress based on field completion
+            if (event.field.status === 'completed') {
+              receivedFields.add(event.field.field_name);
+              updateProgressStage(`Generated ${event.field.field_name} (${receivedFields.size}/6 fields)`);
+            } else if (event.field.status === 'generating') {
+              updateProgressStage(`Generating ${event.field.field_name}...`);
+            }
+          } else if (event.event_type === 'image_generated' && event.image_uri) {
+            generatedImageUri = event.image_uri;
+            updateProgressStage('Character portrait generated!');
+          } else if (event.event_type === 'complete') {
+            updateProgressStage('Finalizing character...');
+          } else if (event.event_type === 'error') {
+            throw new Error(event.error || 'Character generation failed');
+          }
+        }
+      );
+
+      // Build final character from generated fields
+      if (currentCharacterId && characterFields.length > 0) {
+        finalCharacter = buildCharacterFromFields(currentCharacterId, characterFields);
+
+        // Add any user-provided hints that weren't generated
+        if (characterName.trim() && !finalCharacter.name) {
+          finalCharacter.name = characterName.trim();
+        }
+        if (characterRole.trim() && !finalCharacter.role) {
+          finalCharacter.role = characterRole.trim();
+        }
+
+        // Add generated image if available
+        if (generatedImageUri) {
+          finalCharacter.photoUrl = generatedImageUri;
+        }
+
+        updateProgressStage('Character created successfully!');
+
+        // Notify parent component
+        onCharacterCreated(finalCharacter);
+        onClose();
+
+        // Reset form
+        setSelectedFile(null);
+        setPreviewUrl(null);
+        setCharacterName('');
+        setCharacterRole('');
+        setAdditionalPrompt('');
+        setSelectedGender('');
+        setSelectedGenre('');
+        setIsUsingRandomPhoto(false);
+        setCharacterFields([]);
+        setCurrentCharacterId(null);
+      } else {
+        throw new Error('No character data received from generation');
+      }
+
     } catch (error) {
-      console.error('Error uploading photo:', error);
-      showUserFriendlyError(error instanceof Error ? error : new Error('Failed to create character from photo'), 'Photo Upload');
+      console.error('Error generating character:', error);
+      showUserFriendlyError(
+        error instanceof Error ? error : new Error('Failed to generate character'),
+        'Character Generation'
+      );
     } finally {
       setIsUploading(false);
       stopProgressTracking();
     }
-  }, [selectedFile, isUsingRandomPhoto, previewUrl, scenario, characterName, characterRole, additionalPrompt, onCharacterCreated, onClose, startProgressTracking, updateProgressStage, stopProgressTracking, simulateTokenProgress]);
+  }, [selectedFile, isUsingRandomPhoto, previewUrl, scenario, characterName, characterRole, additionalPrompt, selectedGender, onCharacterCreated, onClose, startProgressTracking, updateProgressStage, stopProgressTracking, characterFields, currentCharacterId]);
 
   const handleDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault();

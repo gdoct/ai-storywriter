@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import MarketingFooter from '../components/marketing/MarketingFooter';
-import { useAuth } from '../../shared/contexts/AuthContext';
-import { signup } from '../../shared/services/security';
+import { useAuth } from '@shared/contexts/AuthContext';
+import { signup } from '@shared/services/security';
 import './Signup.css';
 
 const Signup: React.FC = () => {

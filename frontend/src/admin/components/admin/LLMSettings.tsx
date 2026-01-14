@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { fetchLLMSettings, saveLLMSettings, testLLMConnection } from '../../../shared/services/llmBackend';
-import { BackendType, LLMConfig } from '../../../shared/types/LLMTypes';
+import { fetchLLMSettings, saveLLMSettings, testLLMConnection } from '@shared/services/llmBackend';
+import { BackendType, LLMConfig } from '@shared/types/LLMTypes';
 import '../admin/AdminPanel.css';
 
 interface ProviderPreset {

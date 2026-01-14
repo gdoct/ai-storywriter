@@ -3,8 +3,8 @@ import { AiStoryReader } from '@drdata/ai-styles';
 import { downloadStory, getMarketStory } from '../../services/marketPlaceApi';
 import { MarketStory, MarketStoryCard } from '../../types/marketplace';
 import { createPortal } from 'react-dom';
-import EnhancedStoryCard from '../../../members/components/Story/EnhancedStoryCard';
-import StoryCard from '../../../members/components/Story/StoryCard';
+import EnhancedStoryCard from '@members/components/Story/EnhancedStoryCard';
+import StoryCard from '@members/components/Story/StoryCard';
 import './StorySections.css';
 import StoryTooltip from './StoryTooltip';
 

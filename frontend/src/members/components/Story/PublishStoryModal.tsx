@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { publishStory } from '../../../shared/services/marketPlaceApi';
+import { publishStory } from '@shared/services/marketPlaceApi';
 import './PublishStoryModal.css';
 
 interface PublishStoryModalProps {

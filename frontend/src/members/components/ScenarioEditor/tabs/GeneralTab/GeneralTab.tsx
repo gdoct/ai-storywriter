@@ -1,15 +1,15 @@
 import { AiTextArea, AiTextBox, Button } from '@drdata/ai-styles';
 import React, { useCallback, useMemo, useState } from 'react';
 import { FaDice, FaDownload, FaRandom } from 'react-icons/fa';
-import { generateScenarioSynopsis, generateStoryTitle } from '../../../../../shared/services/storyGenerator';
-import { StyleSettings } from '../../../../../shared/types/ScenarioTypes';
-import { GENRE_OPTIONS, STYLE_OPTIONS, THEME_OPTIONS, TONE_OPTIONS, WRITING_STYLE_VARIATIONS } from '../../../../../shared/types/styleoptions';
-import ImportModal from '../../../../../shared/components/common/ImportModal';
+import { generateScenarioSynopsis, generateStoryTitle } from '@shared/services/storyGenerator';
+import { StyleSettings } from '@shared/types/ScenarioTypes';
+import { GENRE_OPTIONS, STYLE_OPTIONS, THEME_OPTIONS, TONE_OPTIONS, WRITING_STYLE_VARIATIONS } from '@shared/types/styleoptions';
+import ImportModal from '@shared/components/common/ImportModal';
 import { TabProps } from '../../types';
 import './GeneralTab.css';
 import { ScenarioImage } from '../ScenarioImage';
 import { StyleFields } from '../StyleFields';
-import { useAIStatus } from '../../../../../shared/contexts/AIStatusContext';
+import { useAIStatus } from '@shared/contexts/AIStatusContext';
 
 export const GeneralTab: React.FC<TabProps> = ({
   scenario,

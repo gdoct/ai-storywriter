@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Scenario } from '../../../shared/types/ScenarioTypes';
+import { Scenario } from '@shared/types/ScenarioTypes';
 import { ScenarioEditorProvider } from './context';
 import { ScenarioEditor } from './ScenarioEditor';
 

@@ -2,14 +2,19 @@ import { AiTextArea, AiTextBox, Button } from '@drdata/ai-styles';
 import React, { useCallback, useMemo, useState } from 'react';
 import { FaDownload, FaPlus, FaTrash, FaUser } from 'react-icons/fa';
 import { v4 as uuidv4 } from 'uuid';
-import { AI_STATUS, useAIStatus } from '../../../../../shared/contexts/AIStatusContext';
-import { useAuth } from '../../../../../shared/contexts/AuthContext';
-import { generateCharacterField } from '../../../../../shared/services/characterFieldGenerator';
-import { generateAppearanceFromPhoto } from '../../../../../shared/services/characterPhotoService';
-import { createPhotoBasedAppearancePrompt } from '../../../../../shared/services/llmPromptService';
-import { Character } from '../../../../../shared/types/ScenarioTypes';
-import { showUserFriendlyError } from '../../../../../shared/utils/errorHandling';
-import ImportModal from '../../../../../shared/components/common/ImportModal';
+import { AI_STATUS, useAIStatus } from '@shared/contexts/AIStatusContext';
+import { useAuth } from '@shared/contexts/AuthContext';
+import { generateCharacterField } from '@shared/services/characterFieldGenerator';
+import { generateAppearanceFromPhoto } from '@shared/services/characterPhotoService';
+import { createPhotoBasedAppearancePrompt } from '@shared/services/llmPromptService';
+import {
+  modifyCharacterWithAgent,
+  CharacterStreamingEvent,
+  buildCharacterFromFields
+} from '@shared/services/characterAgentService';
+import { Character } from '@shared/types/ScenarioTypes';
+import { showUserFriendlyError } from '@shared/utils/errorHandling';
+import ImportModal from '@shared/components/common/ImportModal';
 import { TabProps } from '../../types';
 import { CharacterPhoto } from '../CharacterPhoto';
 import './CharactersTab.css';
@@ -31,6 +36,9 @@ export const CharactersTab: React.FC<TabProps> = ({
   const [fieldCancelGeneration, setFieldCancelGeneration] = useState<(() => void) | null>(null);
   const { setAiStatus, setShowAIBusyModal } = useAIStatus();
   const { refreshCredits } = useAuth();
+
+  // Flag to use character agent for field generation (can be made configurable)
+  const useCharacterAgent = true;
 
   const handleAddCharacter = useCallback(() => {
     const newCharacter: Character = {
@@ -112,6 +120,93 @@ export const CharactersTab: React.FC<TabProps> = ({
     }, 1000);
   }, [characters, onScenarioChange, refreshCredits]);
 
+  // New function for character agent field generation
+  const handleGenerateFieldWithAgent = useCallback(async (characterId: string, fieldName: string, fieldDisplayName: string) => {
+    const character = characters.find(c => c.id === characterId);
+    if (!character) return;
+
+    setFieldGenerationInProgress({ characterId, fieldName });
+    setFieldStreamedText('');
+    setAiStatus(AI_STATUS.BUSY);
+    setShowAIBusyModal(true);
+
+    try {
+      // Map our field names to character agent field names
+      const fieldMapping: Record<string, string> = {
+        'name': 'name',
+        'alias': 'alias',
+        'role': 'role',
+        'gender': 'gender',
+        'appearance': 'appearance',
+        'backstory': 'background',
+        'extraInfo': 'personality'
+      };
+
+      const agentFieldName = fieldMapping[fieldName] || fieldName;
+      let generatedValue = '';
+
+      await modifyCharacterWithAgent(
+        {
+          scenario,
+          characterId: character.id,
+          fieldsToModify: [agentFieldName],
+          generateImage: false
+        },
+        (event: CharacterStreamingEvent) => {
+          if (event.event_type === 'field_update' && event.field?.field_name === agentFieldName) {
+            if (event.field.status === 'streaming' && event.field.value) {
+              // Show incremental streaming text and hide busy modal
+              setFieldStreamedText(event.field.value);
+              setShowAIBusyModal(false);
+            } else if (event.field.status === 'completed' && event.field.value) {
+              generatedValue = event.field.value;
+              setFieldStreamedText(generatedValue);
+            } else if (event.field.status === 'error') {
+              throw new Error(event.field.error || 'Field generation failed');
+            }
+          } else if (event.event_type === 'error') {
+            throw new Error(event.error || 'Character agent failed');
+          }
+        }
+      );
+
+      if (generatedValue) {
+        // Update the character with the generated value
+        const updatedCharacters = characters.map(char =>
+          char.id === characterId
+            ? { ...char, [fieldName]: generatedValue }
+            : char
+        );
+        onScenarioChange({ characters: updatedCharacters });
+      }
+
+      setFieldStreamedText('');
+      setFieldGenerationInProgress(null);
+      setFieldCancelGeneration(null);
+      setAiStatus(AI_STATUS.IDLE);
+      setShowAIBusyModal(false);
+
+      // Refresh credits
+      setTimeout(() => { refreshCredits(); }, 1000);
+    } catch (error) {
+      console.error('Character agent field generation failed:', error);
+
+      setFieldStreamedText('');
+      setFieldGenerationInProgress(null);
+      setFieldCancelGeneration(null);
+      setAiStatus(AI_STATUS.IDLE);
+      setShowAIBusyModal(false);
+
+      // Show error
+      if (error instanceof Error) {
+        showUserFriendlyError(error, `${fieldDisplayName} Generation`);
+      }
+
+      // Refresh credits anyway
+      setTimeout(() => { refreshCredits(); }, 1000);
+    }
+  }, [scenario, characters, onScenarioChange, setAiStatus, setShowAIBusyModal, refreshCredits]);
+
   const handleGenerateField = useCallback(async (characterId: string, fieldName: string, fieldDisplayName: string) => {
     // If already generating this field, cancel it
     if (fieldGenerationInProgress?.characterId === characterId && fieldGenerationInProgress?.fieldName === fieldName) {
@@ -124,23 +219,29 @@ export const CharactersTab: React.FC<TabProps> = ({
       return;
     }
 
+    // Route to appropriate generation method
+    if (useCharacterAgent && fieldName !== 'name') {
+      // Use character agent for all fields except name (which uses Faker.js)
+      return handleGenerateFieldWithAgent(characterId, fieldName, fieldDisplayName);
+    }
+
     const character = characters.find(c => c.id === characterId);
     if (!character) return;
 
     setFieldGenerationInProgress({ characterId, fieldName });
     setFieldStreamedText('');
-    
+
     try {
       // Special handling for name field - use Faker.js instead of AI
       if (fieldName === 'name') {
         setAiStatus(AI_STATUS.BUSY);
         setShowAIBusyModal(true);
-        
+
         try {
           // Use the character name generation service
           const { generateFullName } = await import('../../../../../shared/services/characterNameGenerator');
           const generatedName = await generateFullName(character.gender as any);
-          
+
           // Update the character with the generated name
           const updatedCharacters = characters.map(char =>
             char.id === characterId
@@ -148,48 +249,48 @@ export const CharactersTab: React.FC<TabProps> = ({
               : char
           );
           onScenarioChange({ characters: updatedCharacters });
-          
+
           // Reset states
           setFieldStreamedText('');
           setFieldGenerationInProgress(null);
           setFieldCancelGeneration(null);
           setAiStatus(AI_STATUS.IDLE);
           setShowAIBusyModal(false);
-          
+
           return;
         } catch (error) {
           console.error('Name generation failed:', error);
-          
+
           // Reset states
           setFieldStreamedText('');
           setFieldGenerationInProgress(null);
           setAiStatus(AI_STATUS.IDLE);
           setShowAIBusyModal(false);
-          
+
           // Show error
           if (error instanceof Error) {
             showUserFriendlyError(error, 'Name Generation');
           }
-          
+
           return;
         }
       }
-      
+
       // Special handling for appearance field when a photo is available
       if (fieldName === 'appearance' && character.photoId) {
         setAiStatus(AI_STATUS.BUSY);
         setShowAIBusyModal(true);
-        
+
         try {
           // Create a proper prompt for appearance generation
           const prompt = createPhotoBasedAppearancePrompt(character, scenario);
-          
+
           // Generate appearance based on the photo with the proper prompt
           const { appearance } = await generateAppearanceFromPhoto(
             character.photoId,
             prompt
           );
-          
+
           // Update the character with the generated appearance
           const updatedCharacters = characters.map(char =>
             char.id === characterId
@@ -197,36 +298,36 @@ export const CharactersTab: React.FC<TabProps> = ({
               : char
           );
           onScenarioChange({ characters: updatedCharacters });
-          
+
           // Reset states and refresh credits
           setFieldStreamedText('');
           setFieldGenerationInProgress(null);
           setFieldCancelGeneration(null);
           setAiStatus(AI_STATUS.IDLE);
           setShowAIBusyModal(false);
-          
+
           setTimeout(() => { refreshCredits(); }, 1000);
           return;
         } catch (error) {
           console.error('Photo-based appearance generation failed:', error);
-          
+
           // Reset states
           setFieldStreamedText('');
           setFieldGenerationInProgress(null);
           setAiStatus(AI_STATUS.IDLE);
           setShowAIBusyModal(false);
-          
+
           // Show error and refresh credits
           if (error instanceof Error) {
             showUserFriendlyError(error, 'Photo-based Appearance Generation');
           }
-          
+
           setTimeout(() => { refreshCredits(); }, 1000);
           return;
         }
       }
-      
-      // Regular field generation using LLM
+
+      // Regular field generation using LLM (fallback)
       const generationResult = await generateCharacterField(
         scenario,
         character,
@@ -240,12 +341,12 @@ export const CharactersTab: React.FC<TabProps> = ({
           setShowAIBusyModal
         }
       );
-      
+
       setFieldCancelGeneration(() => generationResult.cancelGeneration);
-      
+
       try {
         const generatedValue = await generationResult.result;
-        
+
         // Update the character with the generated value
         const updatedCharacters = characters.map(char =>
           char.id === characterId
@@ -253,11 +354,11 @@ export const CharactersTab: React.FC<TabProps> = ({
             : char
         );
         onScenarioChange({ characters: updatedCharacters });
-        
+
         setFieldStreamedText('');
         setFieldGenerationInProgress(null);
         setFieldCancelGeneration(null);
-        
+
         // Refresh credits
         setTimeout(() => { refreshCredits(); }, 1000);
       } catch (error) {
@@ -265,22 +366,22 @@ export const CharactersTab: React.FC<TabProps> = ({
         setFieldStreamedText('');
         setFieldGenerationInProgress(null);
         setFieldCancelGeneration(null);
-        
+
         // Refresh credits anyway
         setTimeout(() => { refreshCredits(); }, 1000);
       }
     } catch (error) {
       console.error('Error starting field generation:', error);
-      
+
       // Show user-friendly error
       if (error instanceof Error) {
         showUserFriendlyError(error, `${fieldDisplayName} Generation`);
       }
-      
+
       setFieldGenerationInProgress(null);
       setFieldCancelGeneration(null);
     }
-  }, [scenario, characters, onScenarioChange, setAiStatus, setShowAIBusyModal, refreshCredits, fieldGenerationInProgress, fieldCancelGeneration]);
+  }, [scenario, characters, onScenarioChange, setAiStatus, setShowAIBusyModal, refreshCredits, fieldGenerationInProgress, fieldCancelGeneration, useCharacterAgent, handleGenerateFieldWithAgent]);
 
 
   const handleCharacterPhotoUpdate = useCallback((updatedCharacter: Character) => {

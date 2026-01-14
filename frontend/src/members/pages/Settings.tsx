@@ -1,11 +1,11 @@
 import { Button, ThemeToggle } from '@drdata/ai-styles';
 import React, { useCallback, useEffect, useState } from 'react';
-import MarketingFooter from '../../anonymous/components/marketing/MarketingFooter';
-import { AlertModal, ConfirmModal } from '../../shared/components/Modal';
-import GoogleLinkButton from '../../shared/components/GoogleLinkButton';
-import { useAuth } from '../../shared/contexts/AuthContext';
-import { useModals } from '../../shared/hooks/useModals';
-import http from '../../shared/services/http';
+import MarketingFooter from '@anonymous/components/marketing/MarketingFooter';
+import { AlertModal, ConfirmModal } from '@shared/components/Modal';
+import GoogleLinkButton from '@shared/components/GoogleLinkButton';
+import { useAuth } from '@shared/contexts/AuthContext';
+import { useModals } from '@shared/hooks/useModals';
+import http from '@shared/services/http';
 import {
   UserSettings,
   BYOKCredentials,
@@ -14,7 +14,7 @@ import {
   saveBYOKCredentials,
   getBYOKCredentials,
   clearBYOKCredentials,
-} from '../../shared/services/settings';
+} from '@shared/services/settings';
 
 const Settings: React.FC = () => {
   const { userProfile, logout } = useAuth();

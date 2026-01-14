@@ -1,7 +1,7 @@
 import { Button } from '@drdata/ai-styles';
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { formatRelativeTime, RecentScenario } from '../../../shared/services/dashboardService';
+import { formatRelativeTime, RecentScenario } from '@shared/services/dashboardService';
 import './Dashboard.css';
 
 interface RecentScenariosProps {

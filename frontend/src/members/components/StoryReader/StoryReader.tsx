@@ -1,6 +1,6 @@
 import { AiStoryReader } from '@drdata/ai-styles';
 import React from 'react';
-import StarRating from '../../../shared/components/Rating/StarRating';
+import StarRating from '@shared/components/Rating/StarRating';
 import TTSPlayer from '../TTS/TTSPlayer';
 import './StoryReader.css';
 

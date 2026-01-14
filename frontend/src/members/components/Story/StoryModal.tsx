@@ -1,8 +1,8 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { useAuth } from '../../../shared/contexts/AuthContext';
-import { downloadStory, getMarketStory, rateStory } from '../../../shared/services/marketPlaceApi';
-import { MarketStory } from '../../../shared/types/marketplace';
-import Modal from '../../../shared/components/common/Modal';
+import { useAuth } from '@shared/contexts/AuthContext';
+import { downloadStory, getMarketStory, rateStory } from '@shared/services/marketPlaceApi';
+import { MarketStory } from '@shared/types/marketplace';
+import Modal from '@shared/components/common/Modal';
 import './StoryModal.css';
 
 interface StoryModalProps {

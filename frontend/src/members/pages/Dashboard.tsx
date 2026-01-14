@@ -9,12 +9,12 @@ import {
 } from '../components/Dashboard';
 import GeneratingModal from '../components/Dashboard/GeneratingModal';
 import GenerateSimilarModal, { ScenarioSelections } from '../components/Dashboard/GenerateSimilarModal';
-import MarketingFooter from '../../anonymous/components/marketing/MarketingFooter';
-import { AlertModal, ConfirmModal } from '../../shared/components/Modal';
-import { WelcomeWizard } from '../../shared/components/WelcomeWizard';
+import MarketingFooter from '@anonymous/components/marketing/MarketingFooter';
+import { AlertModal, ConfirmModal } from '@shared/components/Modal';
+import { WelcomeWizard } from '@shared/components/WelcomeWizard';
 import PublishStoryModal from '../components/Story/PublishStoryModal';
-import { useAuth } from '../../shared/contexts/AuthContext';
-import { useModals } from '../../shared/hooks/useModals';
+import { useAuth } from '@shared/contexts/AuthContext';
+import { useModals } from '@shared/hooks/useModals';
 import {
     DashboardStats,
     fetchDashboardStats,
@@ -22,11 +22,11 @@ import {
     fetchRecentStories,
     RecentScenario,
     RecentStory
-} from '../../shared/services/dashboardService';
-import { isUserInBYOKMode } from '../../shared/services/settings';
-import { fetchScenarioById } from '../../shared/services/scenario';
-import { generateSimilarScenarios, ScenarioSelections as ServiceScenarioSelections, GenerationProgress } from '../../shared/services/similarScenarioService';
-import { Scenario } from '../../shared/types/ScenarioTypes';
+} from '@shared/services/dashboardService';
+import { isUserInBYOKMode } from '@shared/services/settings';
+import { fetchScenarioById } from '@shared/services/scenario';
+import { generateSimilarScenarios, ScenarioSelections as ServiceScenarioSelections, GenerationProgress } from '@shared/services/similarScenarioService';
+import { Scenario } from '@shared/types/ScenarioTypes';
 
 interface DashboardProps {
   // No props needed anymore

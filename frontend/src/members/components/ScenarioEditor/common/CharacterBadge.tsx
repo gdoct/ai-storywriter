@@ -1,5 +1,5 @@
 import React from 'react';
-import { Character } from '../../../../shared/types/ScenarioTypes';
+import { Character } from '@shared/types/ScenarioTypes';
 import './CharacterBadge.css';
 
 interface CharacterBadgeProps {

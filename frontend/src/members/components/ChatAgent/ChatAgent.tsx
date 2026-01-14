@@ -1,9 +1,9 @@
 import { Button } from '@drdata/ai-styles';
 import React, { useEffect, useRef, useState } from 'react';
 import { FaComment, FaCopy, FaRedo, FaTimes } from 'react-icons/fa';
-import { useAuth } from '../../../shared/contexts/AuthContext';
-import { streamAgentResponse, checkAgentHealth, AgentMessage, AgentRequest } from '../../../shared/services/agentService';
-import { Scenario } from '../../../shared/types/ScenarioTypes';
+import { useAuth } from '@shared/contexts/AuthContext';
+import { streamAgentResponse, checkAgentHealth, AgentMessage, AgentRequest } from '@shared/services/agentService';
+import { Scenario } from '@shared/types/ScenarioTypes';
 import './ChatAgent.css';
 
 interface Message {

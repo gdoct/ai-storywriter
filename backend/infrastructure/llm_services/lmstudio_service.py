@@ -9,7 +9,7 @@ from infrastructure.llm_services.llm_service import BaseLLMService  # type: igno
 class LMStudioService(BaseLLMService):
     def __init__(self, config):
         super().__init__(config)
-        self.base_url = config.get('url', 'http://localhost:1234')
+        self.base_url = config.get('base_url') or config.get('url', 'http://localhost:1234')
 
     def _fetch_models(self):
         resp = requests.get(f"{self.base_url}/v1/models", timeout=10)

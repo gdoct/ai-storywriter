@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../shared/contexts/AuthContext';
-import { logout } from '../../shared/services/security';
-import { AdminOnly, ModeratorOnly } from '../../shared/components/PermissionGate';
-import CreditsBadge from '../../shared/components/TopBar/CreditsBadge';
+import { useAuth } from '@shared/contexts/AuthContext';
+import { logout } from '@shared/services/security';
+import { AdminOnly, ModeratorOnly } from '@shared/components/PermissionGate';
+import CreditsBadge from '@shared/components/TopBar/CreditsBadge';
 
 interface AuthenticatedNavProps {
   username: string | null;

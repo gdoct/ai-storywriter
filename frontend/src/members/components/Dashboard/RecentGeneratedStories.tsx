@@ -1,7 +1,7 @@
 import { Button } from '@drdata/ai-styles';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { formatRelativeTime, RecentStory } from '../../../shared/services/dashboardService';
+import { formatRelativeTime, RecentStory } from '@shared/services/dashboardService';
 import './Dashboard.css';
 
 interface RecentGeneratedStoriesProps {

@@ -1,5 +1,5 @@
 import React from 'react';
-import { DashboardStats, formatRelativeTime } from '../../../shared/services/dashboardService';
+import { DashboardStats, formatRelativeTime } from '@shared/services/dashboardService';
 import './Dashboard.css';
 
 interface WritingStatsProps {

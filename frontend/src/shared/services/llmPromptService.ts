@@ -252,6 +252,11 @@ export function createSummaryPrompt(scenario: Scenario, story: string): llmCompl
   };
 }
 
+/**
+ * @deprecated This function is being replaced by the backend story generator agent.
+ * Main story generation now uses /api/agent/story/stream endpoint which handles
+ * all prompt engineering server-side. This function is kept for legacy compatibility.
+ */
 export function createFinalStoryPrompt(scenario: Scenario): llmCompletionRequestMessage {
   if (!scenario) {
     console.error("Error: scenario is null or undefined");

@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { getSelectedModel } from '../../services/modelSelection';
+import { getSelectedModel, getModelSettings, ModelSettings } from '../../services/modelSelection';
 import { getLLMStatus } from '../../services/llmBackend';
 import { LLMSettingsModal } from '../LLMSettingsModal';
 import { getUserSettings } from '../../services/settings';
 
 const ModelSelector: React.FC = () => {
   const [selectedModelId, setSelectedModelId] = useState<string>('');
+  const [modelSettings, setModelSettings] = useState<ModelSettings>({});
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
@@ -29,6 +30,10 @@ const ModelSelector: React.FC = () => {
         if (savedModel) {
           setSelectedModelId(savedModel);
         }
+
+        // Load all model settings
+        const allSettings = getModelSettings();
+        setModelSettings(allSettings);
       } catch (error) {
         console.error('Failed to load status:', error);
         setIsConnected(false);
@@ -53,10 +58,27 @@ const ModelSelector: React.FC = () => {
     };
 
     window.addEventListener('storywriter-settings-changed', handleSettingsChange as EventListener);
-    
+
+    // Listen for model changes from tabs
+    const handleModelChange = (event: CustomEvent) => {
+      const { type, model } = event.detail;
+
+      // Update selected model for primary display (prioritize text models)
+      if (type === 'text') {
+        setSelectedModelId(model);
+      }
+
+      // Refresh all model settings
+      const allSettings = getModelSettings();
+      setModelSettings(allSettings);
+    };
+
+    window.addEventListener('storywriter-model-changed', handleModelChange as EventListener);
+
     return () => {
       clearInterval(intervalId);
       window.removeEventListener('storywriter-settings-changed', handleSettingsChange as EventListener);
+      window.removeEventListener('storywriter-model-changed', handleModelChange as EventListener);
     };
   }, [llmMode]);
 
@@ -81,23 +103,49 @@ const ModelSelector: React.FC = () => {
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
-    // Refresh selected model after modal closes
+    // Refresh all model settings after modal closes
     const savedModel = getSelectedModel();
     if (savedModel) {
       setSelectedModelId(savedModel);
     }
+
+    const allSettings = getModelSettings();
+    setModelSettings(allSettings);
   };
 
   const getDisplayName = () => {
-    if (!selectedModelId) {
-      return llmMode === 'byok' ? 'BYOK - No Model' : 'No Model';
+    // Count active models across all types
+    const activeModels = [];
+
+    if (modelSettings.text?.model) {
+      activeModels.push('Text');
     }
-    // Truncate long model names for display
-    const truncatedName = selectedModelId.length > 25
-      ? `${selectedModelId.substring(0, 25)}...`
-      : selectedModelId;
-    
-    return llmMode === 'byok' ? `BYOK: ${truncatedName}` : truncatedName;
+    if (modelSettings.multimodal?.enabled && modelSettings.multimodal?.model) {
+      activeModels.push('Vision');
+    }
+    if (modelSettings.image?.enabled && modelSettings.image?.model) {
+      activeModels.push('Image');
+    }
+
+    if (activeModels.length === 0) {
+      return llmMode === 'byok' ? 'BYOK - No Models' : 'No Models';
+    }
+
+    // Show primary text model if available, otherwise show count of active models
+    if (selectedModelId) {
+      const truncatedName = selectedModelId.length > 20
+        ? `${selectedModelId.substring(0, 20)}...`
+        : selectedModelId;
+
+      const prefix = llmMode === 'byok' ? 'BYOK: ' : '';
+      const suffix = activeModels.length > 1 ? ` +${activeModels.length - 1}` : '';
+      return `${prefix}${truncatedName}${suffix}`;
+    }
+
+    // Fallback to showing active model types
+    const modelList = activeModels.join(', ');
+    const prefix = llmMode === 'byok' ? 'BYOK: ' : '';
+    return `${prefix}${modelList}`;
   };
 
   if (loading) {

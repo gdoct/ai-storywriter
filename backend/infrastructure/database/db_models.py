@@ -72,6 +72,7 @@ class LLMProviderPreset(Base):
     provider_name = Column(String, nullable=False, unique=True)
     display_name = Column(String, nullable=False)
     base_url = Column(String)
+    backend_type = Column(String, nullable=False, default='text')  # 'text', 'multimodal', 'image'
     is_enabled = Column(Boolean, default=True)
     credit_multiplier = Column(Float, default=1.0)
     config_json = Column(String)  # JSON as string for SQLite compatibility
@@ -101,6 +102,12 @@ class UserPreference(Base):
     user_id = Column(String, nullable=False, unique=True)  # TEXT for SQLite compatibility
     llm_mode = Column(String, default='member')  # 'member' or 'byok'
     byok_provider = Column(String)  # 'openai' or 'github'
+    
+    # Multi-backend LLM configurations stored as JSON
+    text_llm_config = Column(String)  # JSON config for text generation
+    multimodal_llm_config = Column(String)  # JSON config for multimodal
+    image_llm_config = Column(String)  # JSON config for image generation
+    
     email_notifications = Column(Boolean, default=True)
     marketing_emails = Column(Boolean, default=False)
     first_name = Column(String)

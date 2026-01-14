@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { useModals } from '../../../shared/hooks/useModals';
-import http from '../../../shared/services/http';
-import { AlertModal } from '../../../shared/components/Modal';
+import { useModals } from '@shared/hooks/useModals';
+import http from '@shared/services/http';
+import { AlertModal } from '@shared/components/Modal';
 import './RoleManagement.css';
 
 interface User {

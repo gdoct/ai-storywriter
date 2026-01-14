@@ -2,8 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { ScenarioEditorWrapper } from '../components/ScenarioEditor/ScenarioEditorWrapper';
-import { fetchScenarioById, createContinuationScenario } from '../../shared/services/scenario';
-import { Scenario } from '../../shared/types/ScenarioTypes';
+import { fetchScenarioById, createContinuationScenario } from '@shared/services/scenario';
+import { Scenario } from '@shared/types/ScenarioTypes';
 import './Home.css';
 
 interface HomeProps {

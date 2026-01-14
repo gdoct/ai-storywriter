@@ -49,13 +49,16 @@ async def health_check():
 
 # Import and register routers
 from presentation.routers import (
-    auth, scenario, llm_proxy, settings, dashboard, marketplace, 
-    image, character_photo, scenario_image, payment, moderation, role, user_settings
+    auth, scenario, llm_proxy, multimodal_proxy, image_proxy, settings, dashboard, marketplace,
+    image, character_photo, scenario_image, payment, moderation, role, user_settings, character_agent,
+    story_generator
 )
 from agents.scenario_agent import streaming_agent
 app.include_router(auth.router, prefix="/api", tags=["auth"])
 app.include_router(scenario.router, prefix="/api", tags=["scenarios"])
 app.include_router(llm_proxy.router, prefix="/api", tags=["llm"])
+app.include_router(multimodal_proxy.router, prefix="/api", tags=["multimodal"])
+app.include_router(image_proxy.router, prefix="/api", tags=["image-generation"])
 app.include_router(settings.router, prefix="/api", tags=["settings"])
 app.include_router(dashboard.router, prefix="/api", tags=["dashboard"])
 app.include_router(marketplace.router, prefix="/api", tags=["marketplace"])
@@ -66,6 +69,8 @@ app.include_router(payment.router, prefix="/api", tags=["payment"])
 app.include_router(moderation.router, prefix="/api", tags=["moderation"])
 app.include_router(role.router, prefix="/api", tags=["roles"])
 app.include_router(user_settings.router, prefix="/api", tags=["user_settings"])
+app.include_router(character_agent.router, prefix="/api/agent/character", tags=["character_agent"])
+app.include_router(story_generator.router, prefix="/api", tags=["story_generator"])
 app.include_router(streaming_agent.router, prefix="/api/streaming_agent", tags=["streaming_agent"])
 
 # Serve React frontend static files (after API routes are registered)

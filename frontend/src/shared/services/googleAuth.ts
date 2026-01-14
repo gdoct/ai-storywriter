@@ -1,6 +1,6 @@
 import { GoogleCredentialResponse, GoogleIdentityConfig, GoogleButtonConfig } from '../types/google';
 
-const GOOGLE_CLIENT_ID = 'YOUR_GOOGLE_CLIENT_ID_HERE'; // Replace with your actual client ID
+const GOOGLE_CLIENT_ID = (import.meta.env.VITE_GOOGLE_CLIENT_ID ?? '') as string;
 
 export class GoogleAuthService {
   private static instance: GoogleAuthService;
@@ -14,6 +14,7 @@ export class GoogleAuthService {
   }
 
   public async initialize(): Promise<void> {
+    console.log("google client id: " + GOOGLE_CLIENT_ID);
     return new Promise((resolve, reject) => {
       if (this.isInitialized) {
         resolve();
@@ -50,6 +51,10 @@ export class GoogleAuthService {
 
   public async initializeGoogleAuth(callback: (response: GoogleCredentialResponse) => void): Promise<void> {
     await this.initialize();
+
+    if (!GOOGLE_CLIENT_ID) {
+      throw new Error('VITE_GOOGLE_CLIENT_ID is not set; add VITE_GOOGLE_CLIENT_ID to your .env and restart the dev server.');
+    }
 
     const config: GoogleIdentityConfig = {
       client_id: GOOGLE_CLIENT_ID,

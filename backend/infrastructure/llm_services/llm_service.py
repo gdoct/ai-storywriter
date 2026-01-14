@@ -141,6 +141,7 @@ class BaseLLMService(abc.ABC):
         pass
 
 def get_llm_service(backend_type, config):
+    # Text generation backends
     if backend_type == 'lmstudio':
         from infrastructure.llm_services.lmstudio_service import LMStudioService
         return LMStudioService(config)
@@ -153,6 +154,24 @@ def get_llm_service(backend_type, config):
     elif backend_type == 'github':
         from infrastructure.llm_services.github_service import GitHubService
         return GitHubService(config)
+    
+    # Multimodal backends
+    elif backend_type in ['openai_multimodal', 'lmstudio_multimodal', 'multimodal']:
+        from infrastructure.llm_services.multimodal_service import MultimodalService
+        # Add provider_type to config for the service to know which underlying provider to use
+        config = dict(config)  # Create a copy to avoid modifying the original
+        if 'provider_type' not in config:
+            config['provider_type'] = backend_type
+        return MultimodalService(config)
+    
+    # Image generation backends
+    elif backend_type in ['openai_dalle', 'stability_ai', 'stable_diffusion', 'comfyui', 'image']:
+        from infrastructure.llm_services.image_generation_service import ImageGenerationService
+        config = dict(config)  # Create a copy to avoid modifying the original
+        if 'provider_type' not in config:
+            config['provider_type'] = backend_type
+        return ImageGenerationService(config)
+    
     else:
         raise ValueError(f"Unknown backend_type: {backend_type}")
 

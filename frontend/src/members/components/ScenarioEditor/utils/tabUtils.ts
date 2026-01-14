@@ -1,5 +1,5 @@
-import { Scenario } from '../../../../shared/types/ScenarioTypes';
-import { hasPromptCustomizations } from '../../../../shared/utils/promptCustomization';
+import { Scenario } from '@shared/types/ScenarioTypes';
+import { hasPromptCustomizations } from '@shared/utils/promptCustomization';
 import { TabId } from '../types';
 
 /**

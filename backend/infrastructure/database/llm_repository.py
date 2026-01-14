@@ -11,12 +11,31 @@ class LLMRepository:
         c = conn.cursor()
         
         c.execute('''
-            SELECT id, provider_name, display_name, base_url, is_enabled, 
+            SELECT id, provider_name, display_name, base_url, backend_type, is_enabled, 
                    credit_multiplier, config_json, created_at, updated_at
             FROM llm_provider_presets 
             WHERE is_enabled = 1
             ORDER BY updated_at DESC
         ''')
+        
+        rows = c.fetchall()
+        conn.close()
+        
+        return [dict(row) for row in rows]
+
+    @staticmethod
+    def get_enabled_providers_by_backend_type(backend_type: str) -> List[Dict[str, Any]]:
+        """Get enabled LLM provider presets filtered by backend type"""
+        conn = get_db_connection()
+        c = conn.cursor()
+        
+        c.execute('''
+            SELECT id, provider_name, display_name, base_url, backend_type, is_enabled, 
+                   credit_multiplier, config_json, created_at, updated_at
+            FROM llm_provider_presets 
+            WHERE is_enabled = 1 AND backend_type = ?
+            ORDER BY updated_at DESC
+        ''', (backend_type,))
         
         rows = c.fetchall()
         conn.close()

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Scenario } from '../../../shared/types/ScenarioTypes';
+import { Scenario } from '@shared/types/ScenarioTypes';
 
 // Tab identifiers
 export type TabId = 'general' | 'characters' | 'locations' | 'backstory' | 'storyarc' | 'fillin' | 'notes' | 'customprompt' | 'worldbuilding' | 'timeline' | 'objectsactions' | 'themessymbols' | 'characterrelationships' | 'multiplechapters' | 'randomizers';

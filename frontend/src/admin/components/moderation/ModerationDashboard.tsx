@@ -5,12 +5,12 @@
 
 import { Hero } from '@drdata/ai-styles';
 import React, { useEffect, useState } from 'react';
-import { useAuth } from '../../../shared/contexts/AuthContext';
-import { useModals } from '../../../shared/hooks/useModals';
-import http from '../../../shared/services/http';
-import { ModerationDashboard as ModerationDashboardData } from '../../../shared/types/auth';
-import { AlertModal, ConfirmModal } from '../../../shared/components/Modal';
-import { ModeratorOnly } from '../../../shared/components/PermissionGate';
+import { useAuth } from '@shared/contexts/AuthContext';
+import { useModals } from '@shared/hooks/useModals';
+import http from '@shared/services/http';
+import { ModerationDashboard as ModerationDashboardData } from '@shared/types/auth';
+import { AlertModal, ConfirmModal } from '@shared/components/Modal';
+import { ModeratorOnly } from '@shared/components/PermissionGate';
 import './ModerationDashboard.css';
 
 export const ModerationDashboard: React.FC = () => {

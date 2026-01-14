@@ -1436,9 +1436,9 @@ index 90be4f5..4069934 100644
 @@ -1,13 +1,27 @@
  import React, { useEffect, useState } from 'react';
  import { Link, useNavigate, useLocation } from 'react-router-dom';
- import { useAuth } from '../../shared/contexts/AuthContext';
-+import GoogleSignInButton from '../../shared/components/GoogleSignInButton';
-+import EmailConflictModal from '../../shared/components/EmailConflictModal';
+ import { useAuth } from '@shared/contexts/AuthContext';
++import GoogleSignInButton from '@shared/components/GoogleSignInButton';
++import EmailConflictModal from '@shared/components/EmailConflictModal';
  import './Login.css';
  
 +interface EmailConflictData {
@@ -1568,20 +1568,20 @@ index f658d22..451514b 100644
 +++ b/frontend/src/members/pages/Dashboard.tsx
 @@ -11,6 +11,7 @@ import GeneratingModal from '../components/Dashboard/GeneratingModal';
  import GenerateSimilarModal, { ScenarioSelections } from '../components/Dashboard/GenerateSimilarModal';
- import MarketingFooter from '../../anonymous/components/marketing/MarketingFooter';
- import { AlertModal, ConfirmModal } from '../../shared/components/Modal';
-+import { WelcomeWizard } from '../../shared/components/WelcomeWizard';
+ import MarketingFooter from '@anonymous/components/marketing/MarketingFooter';
+ import { AlertModal, ConfirmModal } from '@shared/components/Modal';
++import { WelcomeWizard } from '@shared/components/WelcomeWizard';
  import PublishStoryModal from '../components/Story/PublishStoryModal';
- import { useAuth } from '../../shared/contexts/AuthContext';
- import { useModals } from '../../shared/hooks/useModals';
+ import { useAuth } from '@shared/contexts/AuthContext';
+ import { useModals } from '@shared/hooks/useModals';
 @@ -22,6 +23,7 @@ import {
      RecentScenario,
      RecentStory
- } from '../../shared/services/dashboardService';
-+import { isUserInBYOKMode } from '../../shared/services/settings';
- import { fetchScenarioById } from '../../shared/services/scenario';
- import { generateSimilarScenarios, ScenarioSelections as ServiceScenarioSelections, GenerationProgress } from '../../shared/services/similarScenarioService';
- import { Scenario } from '../../shared/types/ScenarioTypes';
+ } from '@shared/services/dashboardService';
++import { isUserInBYOKMode } from '@shared/services/settings';
+ import { fetchScenarioById } from '@shared/services/scenario';
+ import { generateSimilarScenarios, ScenarioSelections as ServiceScenarioSelections, GenerationProgress } from '@shared/services/similarScenarioService';
+ import { Scenario } from '@shared/types/ScenarioTypes';
 @@ -60,6 +62,9 @@ const Dashboard: React.FC<DashboardProps> = () => {
    const [isRetrying, setIsRetrying] = useState(false);
    const [retryCount, setRetryCount] = useState(0);
@@ -1729,12 +1729,12 @@ index 72f674c..968309c 100644
 +++ b/frontend/src/members/pages/Settings.tsx
 @@ -2,8 +2,10 @@ import { Button, ThemeToggle } from '@drdata/ai-styles';
  import React, { useCallback, useEffect, useState } from 'react';
- import MarketingFooter from '../../anonymous/components/marketing/MarketingFooter';
- import { AlertModal, ConfirmModal } from '../../shared/components/Modal';
-+import GoogleLinkButton from '../../shared/components/GoogleLinkButton';
- import { useAuth } from '../../shared/contexts/AuthContext';
- import { useModals } from '../../shared/hooks/useModals';
-+import http from '../../shared/services/http';
+ import MarketingFooter from '@anonymous/components/marketing/MarketingFooter';
+ import { AlertModal, ConfirmModal } from '@shared/components/Modal';
++import GoogleLinkButton from '@shared/components/GoogleLinkButton';
+ import { useAuth } from '@shared/contexts/AuthContext';
+ import { useModals } from '@shared/hooks/useModals';
++import http from '@shared/services/http';
  import {
    UserSettings,
    BYOKCredentials,

@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { AiTextBox, AiTextArea, Button } from '@drdata/ai-styles';
-import { TimelineEvent, Scenario } from '../../../../../shared/types/ScenarioTypes';
+import { TimelineEvent, Scenario } from '@shared/types/ScenarioTypes';
 import './EventModal.css';
 
 interface EventModalProps {

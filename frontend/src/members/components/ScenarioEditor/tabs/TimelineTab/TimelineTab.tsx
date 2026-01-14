@@ -27,7 +27,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 // import { FaPlus, FaTimes } from 'react-icons/fa'; // Unused imports
 import { MdSchedule } from 'react-icons/md';
 import { TabProps } from '../../types';
-import { TimelineEvent } from '../../../../../shared/types/ScenarioTypes';
+import { TimelineEvent } from '@shared/types/ScenarioTypes';
 import { v4 as uuidv4 } from 'uuid';
 import './TimelineTab.css';
 import { TimelineCanvas } from './TimelineCanvas';

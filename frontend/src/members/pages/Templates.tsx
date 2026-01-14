@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import MarketingFooter from '../../anonymous/components/marketing/MarketingFooter';
+import MarketingFooter from '@anonymous/components/marketing/MarketingFooter';
 import './Templates.css';
 
 const Templates: React.FC = () => {

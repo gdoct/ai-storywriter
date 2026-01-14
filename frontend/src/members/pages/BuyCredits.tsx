@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import CreditPackageCard from '../components/payments/CreditPackageCard';
 import MockPaymentModal from '../components/payments/MockPaymentModal';
-import { useAuth } from '../../shared/contexts/AuthContext';
+import { useAuth } from '@shared/contexts/AuthContext';
 import './BuyCredits.css';
 
 export interface CreditPackage {

@@ -102,7 +102,28 @@ class CreditService:
             }
         
         return rates
-    
+
+    @staticmethod
+    async def check_sufficient_credits(user_id: str, required_credits: int) -> bool:
+        """Check if user has sufficient credits for a request"""
+        current_balance = UserRepository.get_user_credit_balance(user_id)
+        return current_balance >= required_credits
+
+    @staticmethod
+    async def deduct_credits(user_id: str, amount: int, transaction_type: str, description: str) -> bool:
+        """Deduct credits from user account with transaction record"""
+        try:
+            UserRepository.add_credit_transaction(
+                user_id=user_id,
+                transaction_type=transaction_type,
+                amount=-amount,  # Negative for deduction
+                description=description,
+                related_entity_id=None
+            )
+            return True
+        except Exception:
+            return False
+
     @staticmethod
     def estimate_cost(message_text: str, provider: str, model: str = "gpt-3.5-turbo") -> Dict[str, Any]:
         """Estimate the cost of a request in credits"""

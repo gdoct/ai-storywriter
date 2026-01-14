@@ -1,5 +1,5 @@
 import React from 'react';
-import StoryModal from '../../../members/components/Story/StoryModal';
+import StoryModal from '@members/components/Story/StoryModal';
 
 interface StoryTooltipProps {
   storyId: number | null;

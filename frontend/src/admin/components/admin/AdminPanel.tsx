@@ -4,10 +4,10 @@
  */
 
 import React, { useState } from 'react';
-import { useAuth } from '../../../shared/contexts/AuthContext';
-import { useModals } from '../../../shared/hooks/useModals';
-import { AlertModal, ConfirmModal } from '../../../shared/components/Modal';
-import { AdminOnly } from '../../../shared/components/PermissionGate';
+import { useAuth } from '@shared/contexts/AuthContext';
+import { useModals } from '@shared/hooks/useModals';
+import { AlertModal, ConfirmModal } from '@shared/components/Modal';
+import { AdminOnly } from '@shared/components/PermissionGate';
 import './AdminPanel.css';
 import LLMSettings from './LLMSettings';
 import { UserManagement } from './UserManagement';

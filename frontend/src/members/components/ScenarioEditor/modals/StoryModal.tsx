@@ -2,8 +2,8 @@ import { Button, AiStoryReader } from '@drdata/ai-styles';
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { FaRedo, FaSave, FaTimes } from 'react-icons/fa';
-import { Scenario } from '../../../../shared/types/ScenarioTypes';
-import { getShowThinkingSetting } from '../../../../shared/services/settings';
+import { Scenario } from '@shared/types/ScenarioTypes';
+import { getShowThinkingSetting } from '@shared/services/settings';
 import './StoryModal.css';
 
 export interface StoryModalProps {

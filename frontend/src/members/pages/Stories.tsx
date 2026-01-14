@@ -1,14 +1,14 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { AlertModal, ConfirmModal } from '../../shared/components/Modal';
+import { AlertModal, ConfirmModal } from '@shared/components/Modal';
 import PublishStoryModal from '../components/Story/PublishStoryModal';
 import StoryPageCard from '../components/Story/StoryPageCard';
 import { AiStoryReader } from '@drdata/ai-styles';
-import { useModals } from '../../shared/hooks/useModals';
-import { fetchRecentStories, formatRelativeTime, RecentStory } from '../../shared/services/dashboardService';
-import { deleteDBStory, fetchSingleDBStory, fetchScenarioById } from '../../shared/services/scenario';
-import { Scenario } from '../../shared/types/ScenarioTypes';
+import { useModals } from '@shared/hooks/useModals';
+import { fetchRecentStories, formatRelativeTime, RecentStory } from '@shared/services/dashboardService';
+import { deleteDBStory, fetchSingleDBStory, fetchScenarioById } from '@shared/services/scenario';
+import { Scenario } from '@shared/types/ScenarioTypes';
 import './Stories.css';
 
 // Extended story interface for character data

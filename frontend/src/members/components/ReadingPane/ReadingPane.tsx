@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { useAIStatus } from '../../../shared/contexts/AIStatusContext';
-import { createContinueStoryPrompt } from '../../../shared/services/llmPromptService';
-import { generateChapterSummary, generateStory } from '../../../shared/services/storyGenerator';
-import { Scenario } from '../../../shared/types/ScenarioTypes';
-import { isInsufficientCreditsError } from '../../../shared/utils/errorHandling';
+import { useAIStatus } from '@shared/contexts/AIStatusContext';
+import { createContinueStoryPrompt } from '@shared/services/llmPromptService';
+import { generateChapterSummary, generateStory } from '@shared/services/storyGenerator';
+import { Scenario } from '@shared/types/ScenarioTypes';
+import { isInsufficientCreditsError } from '@shared/utils/errorHandling';
 import MarkdownViewer from './MarkDownViewer';
 import './ReadingPane.css';
 import ReadingPaneHeader from './ReadingPaneHeader';

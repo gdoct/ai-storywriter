@@ -1,12 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { FaPlus, FaRandom, FaTimes, FaUser } from 'react-icons/fa';
 import { FaWandMagicSparkles } from 'react-icons/fa6';
-import { getRandomCharacterPhoto, uploadCharacterPhoto } from '../../../../../shared/services/characterPhotoService';
-import { Character, Scenario } from '../../../../../shared/types/ScenarioTypes';
-import { showUserFriendlyError } from '../../../../../shared/utils/errorHandling';
-import { isImageGenerationAvailable } from '../../../../../shared/services/featureDetection';
-import { getSavedSettings } from '../../../../../shared/services/settings';
-import { generateImage, createCharacterImagePrompt } from '../../../../../shared/services/imageGenerationService';
+import { getRandomCharacterPhoto, uploadCharacterPhoto } from '@shared/services/characterPhotoService';
+import { Character, Scenario } from '@shared/types/ScenarioTypes';
+import { showUserFriendlyError } from '@shared/utils/errorHandling';
+import { isImageGenerationAvailable } from '@shared/services/featureDetection';
+import { getSavedSettings } from '@shared/services/settings';
+import { generateImage, createCharacterImagePrompt } from '@shared/services/imageGenerationService';
 import { ImageGenerationModal } from '../../modals/ImageGenerationModal';
 import './CharacterPhoto.css';
 
@@ -186,17 +186,16 @@ export const CharacterPhoto: React.FC<CharacterPhotoProps> = ({
     try {
       // Create prompt for character image
       const prompt = createCharacterImagePrompt(character, scenario);
-      
+
       // Generate image
-      const result = await generateImage({
-        prompt,
+      const result = await generateImage(prompt, {
         model: 'dall-e-3', // Default model, could be configurable
         n: 1,
         size: '1024x1024'
       });
 
-      if (result.data && result.data.length > 0) {
-        const generatedImage = result.data[0];
+      if (result.images && result.images.length > 0) {
+        const generatedImage = result.images[0];
         
         // Update character with the generated image
         const updatedCharacter = {

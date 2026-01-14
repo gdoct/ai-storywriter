@@ -1,6 +1,7 @@
 import react from '@vitejs/plugin-react';
 import { visualizer } from 'rollup-plugin-visualizer';
 import { defineConfig, loadEnv } from 'vite';
+import path from 'path';
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
@@ -47,6 +48,13 @@ export default defineConfig(({ mode }) => {
     force: true
   },
   resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+      '@shared': path.resolve(__dirname, './src/shared'),
+      '@members': path.resolve(__dirname, './src/members'),
+      '@admin': path.resolve(__dirname, './src/admin'),
+      '@anonymous': path.resolve(__dirname, './src/anonymous')
+    },
     dedupe: ['react', 'react-dom']
   }
 

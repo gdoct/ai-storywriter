@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import LLMSettings from '../components/admin/LLMSettings';
 import { UserManagement } from '../components/admin/UserManagement';
-import { AlertModal, ConfirmModal } from '../../shared/components/Modal';
+import { AlertModal, ConfirmModal } from '@shared/components/Modal';
 
 type AdminTab = 'users' | 'llm';
 

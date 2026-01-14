@@ -1,9 +1,10 @@
-import { IconButton, IconButtonGroup } from '@drdata/ai-styles';
+import { Button, ButtonGroup, IconButton } from '@drdata/ai-styles';
+import { Icon } from 'leaflet';
 import React from 'react';
 
 export interface ActionButtonItem {
   id: string;
-  label: string;
+  label?: string;
   icon: React.ReactNode;
   onClick: () => void;
   disabled?: boolean;
@@ -37,7 +38,8 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
   // };
 
   const iconButtons = items.map((item) => (
-    <IconButton
+    item.label ? (
+    <Button
       key={item.id}
       variant={item.variant}
       icon={item.icon}
@@ -56,12 +58,34 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
         border: '1px solid var(--color-border)',
         color: 'var(--color-text-secondary)'
       } : undefined}
-    />
-  ));
+    >
+      {item.label}
+    </Button >) : (
+      <IconButton
+      key={item.id}
+      variant={item.variant}
+      icon={item.icon}
+      disabled={disabled || item.disabled}
+      busy={item.loading}
+      title={item.title || item.label}
+      onClick={item.onClick}
+      className={item.className}
+      data-testid={item['data-testid']}
+      data-action-id={item.id}
+      style={item.variant === 'success' ? { 
+        background: 'var(--color-success)', 
+        borderColor: 'var(--color-success)' 
+      } : item.variant === 'ghost' ? {
+        background: 'transparent',
+        border: '1px solid var(--color-border)',
+        color: 'var(--color-text-secondary)'
+      } : undefined}
+     />
+  )));
 
   return (
-    <IconButtonGroup className={className}>
+    <ButtonGroup className={className}>
       {iconButtons}
-    </IconButtonGroup>
+    </ButtonGroup>
   );
 };

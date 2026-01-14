@@ -1,8 +1,8 @@
 import React, { useEffect, useImperativeHandle, useState } from 'react';
-import { useModals } from '../../../shared/hooks/useModals';
-import { deleteDBStory, fetchDBStories, saveDBStory } from '../../../shared/services/scenario';
-import ActionButton from '../../../shared/components/common/ActionButton';
-import { AlertModal, ConfirmModal } from '../../../shared/components/Modal';
+import { useModals } from '@shared/hooks/useModals';
+import { deleteDBStory, fetchDBStories, saveDBStory } from '@shared/services/scenario';
+import ActionButton from '@shared/components/common/ActionButton';
+import { AlertModal, ConfirmModal } from '@shared/components/Modal';
 import './ReadingPane.css';
 import SavedStoriesDropdown from './SavedStoriesDropdown';
 

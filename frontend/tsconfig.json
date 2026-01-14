@@ -19,7 +19,15 @@
     "allowJs": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
-    "forceConsistentCasingInFileNames": true
+    "forceConsistentCasingInFileNames": true,
+    "baseUrl": "src",
+    "paths": {
+      "@/*": ["*"],
+      "@shared/*": ["shared/*"],
+      "@members/*": ["members/*"],
+      "@admin/*": ["admin/*"],
+      "@anonymous/*": ["anonymous/*"]
+    }
   },
   "include": ["src", "__tests__", "playwright-tests"]
 }
