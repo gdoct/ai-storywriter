@@ -5,6 +5,7 @@
 
 import { Scenario, GeneratedStory } from '../types/ScenarioTypes';
 import { getToken } from './security';
+import { MaxTokensService, TokenContext } from './maxTokensService';
 import { AI_STATUS } from '../contexts/AIStatusContext';
 
 // Auto-detect if we're running in dev mode or production
@@ -55,6 +56,8 @@ export interface StoryGenerationOptions {
   seed?: number | null;
   target_length?: number;
   writing_style_override?: string;
+  /** Maximum tokens for story generation. Defaults to STORY_GENERATION context limit (2000). */
+  max_tokens?: number;
 }
 
 /**
@@ -77,14 +80,15 @@ export async function generateStoryWithAgent(
     abortController.abort();
   };
 
+  const maxTokens = MaxTokensService.getMaxTokens(TokenContext.STORY_GENERATION, options.max_tokens);
   const request: StoryGenerationRequest = {
     scenario,
     generation_options: {
-      target_length: options.target_length || 2000,
+      target_length: options.target_length || maxTokens,
       writing_style_override: options.writing_style_override,
       temperature: options.temperature || 0.7,
       seed: options.seed,
-      max_tokens: 32000
+      max_tokens: maxTokens
     }
   };
 
@@ -218,14 +222,15 @@ export async function generateStoryWithAgentNonStreaming(
     throw new Error('Authentication required');
   }
 
+  const maxTokens = MaxTokensService.getMaxTokens(TokenContext.STORY_GENERATION, options.max_tokens);
   const request: StoryGenerationRequest = {
     scenario,
     generation_options: {
-      target_length: options.target_length || 2000,
+      target_length: options.target_length || maxTokens,
       writing_style_override: options.writing_style_override,
       temperature: options.temperature || 0.7,
       seed: options.seed,
-      max_tokens: 32000
+      max_tokens: maxTokens
     }
   };
 

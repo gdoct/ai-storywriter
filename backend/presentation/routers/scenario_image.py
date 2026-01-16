@@ -28,7 +28,7 @@ async def upload_scenario_image(
 ):
     """Upload an image for a scenario."""
     try:
-        logger.info(f"Starting scenario image upload for scenario {scenario_id}")
+        # logger.info(f"Starting scenario image upload for scenario {scenario_id}")
         
         user_id = current_user['id']
         
@@ -102,7 +102,7 @@ async def delete_scenario_image(
 ):
     """Delete the image for a scenario."""
     try:
-        logger.info(f"Deleting image for scenario {scenario_id}")
+        # logger.info(f"Deleting image for scenario {scenario_id}")
         
         user_id = current_user['id']
         
@@ -137,7 +137,7 @@ async def upload_image_with_scenario_data(
 ):
     """Upload an image along with scenario data - saves/updates the scenario with image."""
     try:
-        logger.info("Starting image upload with scenario data")
+        # logger.info("Starting image upload with scenario data")
         
         user_id = current_user['id']
         

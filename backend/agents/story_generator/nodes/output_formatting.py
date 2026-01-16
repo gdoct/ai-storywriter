@@ -25,8 +25,6 @@ async def output_formatting_node(state: Dict[str, Any]) -> Dict[str, Any]:
         processing_summary = state.get("processing_summary", {})
         processing_summary["nodes_processed"] = processing_summary.get("nodes_processed", 0) + 1
         
-        logger.info(f"Output formatting complete. Final story length: {len(formatted_story)} characters")
-        
         return {
             **state,
             "formatted_story": formatted_story,

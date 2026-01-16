@@ -73,7 +73,7 @@ async def grant_role(
         success = RoleManager.grant_role(request_data.user_id, request_data.role, granted_by)
         
         if success:
-            logger.info(f"Role {request_data.role} granted to user {request_data.user_id} by {current_user['username']}")
+            # logger.info(f"Role {request_data.role} granted to user {request_data.user_id} by {current_user['username']}")
             return GrantRoleResponse(
                 message=f"Role {request_data.role} granted successfully",
                 user_id=request_data.user_id,
@@ -123,7 +123,7 @@ async def revoke_role(
         success = RoleManager.revoke_role(request_data.user_id, request_data.role, revoked_by)
         
         if success:
-            logger.info(f"Role {request_data.role} revoked from user {request_data.user_id} by {current_user['username']}")
+            # logger.info(f"Role {request_data.role} revoked from user {request_data.user_id} by {current_user['username']}")
             return RevokeRoleResponse(
                 message=f"Role {request_data.role} revoked successfully",
                 user_id=request_data.user_id,
@@ -237,7 +237,7 @@ async def update_user_tier(
         # Update tier
         UserRepository.update_user_tier(user_id, request_data.tier)
         
-        logger.info(f"User {user_id} tier updated to {request_data.tier} by {current_user['username']}")
+        # logger.info(f"User {user_id} tier updated to {request_data.tier} by {current_user['username']}")
         
         return UpdateUserTierResponse(
             message="User tier updated successfully",
@@ -267,7 +267,7 @@ async def find_user(
 ):
     """Find a user by email"""
     try:
-        logger.info(f"Searching for user with email: {email}")
+        # logger.info(f"Searching for user with email: {email}")
         user = UserRepository.get_user_by_email_with_roles(email)
         if not user:
             logger.warning(f"User not found with email: {email}")
@@ -276,7 +276,7 @@ async def find_user(
                 detail=f'User not found : {email}'
             )
         
-        logger.info(f"Found user: {user.get('username', 'unknown')} with ID: {user.get('user_id', 'unknown')}")
+        # logger.info(f"Found user: {user.get('username', 'unknown')} with ID: {user.get('user_id', 'unknown')}")
         
         # Safely access keys with fallback
         return FindUserResponse(
@@ -334,7 +334,7 @@ async def delete_user(
                 detail=f'User {user_id} could not be deleted or already deleted'
             )
 
-        logger.info(f"User {user_id} deleted by {current_user['username']}")
+        # logger.info(f"User {user_id} deleted by {current_user['username']}")
         
         return DeleteUserResponse(
             message="User deleted successfully",

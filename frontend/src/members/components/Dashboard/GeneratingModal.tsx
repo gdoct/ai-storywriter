@@ -2,22 +2,35 @@ import React from 'react';
 import { createPortal } from 'react-dom';
 import { Button } from '@drdata/ai-styles';
 
+interface CompletedScenarioPreview {
+  id: string;
+  title?: string;
+  synopsis?: string;
+  writingStyle?: {
+    genre?: string;
+    tone?: string;
+  };
+  characters?: Array<{ name?: string }>;
+}
+
 interface GeneratingModalProps {
   isOpen: boolean;
   currentIndex?: number;
   totalCount?: number;
   isRetrying?: boolean;
   retryCount?: number;
+  completedScenarios?: CompletedScenarioPreview[];
   onAbort?: () => void;
 }
 
-const GeneratingModal: React.FC<GeneratingModalProps> = ({ 
-  isOpen, 
-  currentIndex = 1, 
-  totalCount = 1, 
+const GeneratingModal: React.FC<GeneratingModalProps> = ({
+  isOpen,
+  currentIndex = 1,
+  totalCount = 1,
   isRetrying = false,
   retryCount = 0,
-  onAbort 
+  completedScenarios = [],
+  onAbort
 }) => {
   if (!isOpen) return null;
 
@@ -116,11 +129,121 @@ const GeneratingModal: React.FC<GeneratingModalProps> = ({
           </div>
         )}
 
+        {/* Completed scenarios preview */}
+        {completedScenarios.length > 0 && (
+          <div style={{
+            marginTop: 'var(--spacing-lg)',
+            textAlign: 'left',
+            maxHeight: '250px',
+            overflowY: 'auto',
+            borderTop: '1px solid var(--color-border-secondary)',
+            paddingTop: 'var(--spacing-md)',
+          }}>
+            <p style={{
+              margin: '0 0 var(--spacing-sm) 0',
+              color: 'var(--color-text-tertiary)',
+              fontSize: 'var(--font-size-sm)',
+              fontWeight: 'var(--font-weight-medium)',
+              textTransform: 'uppercase',
+              letterSpacing: '0.05em',
+            }}>
+              Created ({completedScenarios.length})
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-md)' }}>
+              {completedScenarios.map((scenario, index) => {
+                const firstSentence = scenario.synopsis
+                  ? scenario.synopsis.split(/[.!?]/)[0] + (scenario.synopsis.match(/[.!?]/) ? scenario.synopsis.match(/[.!?]/)?.[0] : '...')
+                  : 'No synopsis';
+                const characterCount = scenario.characters?.length || 0;
+                const genre = scenario.writingStyle?.genre;
+                const tone = scenario.writingStyle?.tone;
+
+                return (
+                  <div
+                    key={scenario.id || index}
+                    style={{
+                      padding: 'var(--spacing-md)',
+                      backgroundColor: 'var(--color-surface-secondary)',
+                      borderRadius: 'var(--radius-md)',
+                      border: '1px solid var(--color-border-tertiary)',
+                    }}
+                  >
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 'var(--spacing-sm)',
+                      marginBottom: 'var(--spacing-xs)',
+                    }}>
+                      <span style={{
+                        color: 'var(--color-success-500)',
+                        fontSize: 'var(--font-size-sm)',
+                      }}>✓</span>
+                      <h4 style={{
+                        margin: 0,
+                        color: 'var(--color-text-primary)',
+                        fontSize: 'var(--font-size-md)',
+                        fontWeight: 'var(--font-weight-semibold)',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}>
+                        {scenario.title || 'Untitled Scenario'}
+                      </h4>
+                    </div>
+                    <p style={{
+                      margin: '0 0 var(--spacing-xs) 0',
+                      color: 'var(--color-text-secondary)',
+                      fontSize: 'var(--font-size-sm)',
+                      lineHeight: 'var(--line-height-relaxed)',
+                      display: '-webkit-box',
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: 'vertical',
+                      overflow: 'hidden',
+                    }}>
+                      {firstSentence}
+                    </p>
+                    <div style={{
+                      display: 'flex',
+                      gap: 'var(--spacing-md)',
+                      flexWrap: 'wrap',
+                    }}>
+                      {genre && (
+                        <span style={{
+                          color: 'var(--color-text-tertiary)',
+                          fontSize: 'var(--font-size-xs)',
+                        }}>
+                          📚 {genre}
+                        </span>
+                      )}
+                      {tone && (
+                        <span style={{
+                          color: 'var(--color-text-tertiary)',
+                          fontSize: 'var(--font-size-xs)',
+                        }}>
+                          🎭 {tone}
+                        </span>
+                      )}
+                      {characterCount > 0 && (
+                        <span style={{
+                          color: 'var(--color-text-tertiary)',
+                          fontSize: 'var(--font-size-xs)',
+                        }}>
+                          👥 {characterCount} character{characterCount !== 1 ? 's' : ''}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {/* Abort button */}
         {onAbort && (
           <div style={{ marginTop: 'var(--spacing-lg)' }}>
-            <Button 
-              variant="secondary" 
+            <Button
+              variant="secondary"
               onClick={onAbort}
               style={{ fontSize: 'var(--font-size-sm)' }}
             >

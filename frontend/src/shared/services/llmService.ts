@@ -1,6 +1,7 @@
 // frontend/src/services/llmService.ts
 import { AI_STATUS } from '../contexts/AIStatusContext';
 import { llmCompletionRequestMessage, LLMMessage } from '../types/LLMTypes';
+import { MaxTokensService, TokenContext } from './maxTokensService';
 import { getToken } from './security';
 import { getBYOKHeaders, isUserInBYOKMode } from './settings';
 
@@ -86,7 +87,7 @@ export async function streamSimpleChatCompletionWithStatus(
       model: options.model || 'google/gemma-3-4b',
       messages,
       temperature: options.temperature ?? 0.8,
-      max_tokens: options.max_tokens ?? 1024,
+      max_tokens: MaxTokensService.getMaxTokens(TokenContext.LLM_COMPLETION_DEFAULT, options.max_tokens),
     };
     
     // Only include keep_alive if explicitly requested
@@ -198,7 +199,7 @@ export async function streamChatCompletionWithStatus(
       model: options.model || 'google/gemma-3-4b',
       messages,
       temperature: options.temperature ?? 0.8,
-      max_tokens: options.max_tokens ?? 1024,
+      max_tokens: MaxTokensService.getMaxTokens(TokenContext.LLM_COMPLETION_DEFAULT, options.max_tokens),
     };
     
     // Only include keep_alive if explicitly requested
@@ -310,7 +311,7 @@ export async function streamChatCompletionWithThinking(
       model: options.model || '',
       messages,
       temperature: options.temperature ?? 0.8,
-      max_tokens: options.max_tokens ?? 1024,
+      max_tokens: MaxTokensService.getMaxTokens(TokenContext.LLM_COMPLETION_DEFAULT, options.max_tokens),
     };
     
     // Only include keep_alive if explicitly requested
@@ -489,7 +490,7 @@ export async function chatCompletionWithStatus(
     model: options.model || '',
     messages,
     temperature: options.temperature ?? 0.8,
-    max_tokens: options.max_tokens ?? 1024,
+    max_tokens: MaxTokensService.getMaxTokens(TokenContext.LLM_COMPLETION_DEFAULT, options.max_tokens),
     stream: false,
   };
   
@@ -561,7 +562,7 @@ export async function chatCompletion(
     model: options.model || '',
     messages,
     temperature: options.temperature ?? 0.8,
-    max_tokens: options.max_tokens ?? 1024,
+    max_tokens: MaxTokensService.getMaxTokens(TokenContext.LLM_COMPLETION_DEFAULT, options.max_tokens),
     stream: false,
   };
   

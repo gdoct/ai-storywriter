@@ -49,7 +49,11 @@ export interface AiStoryReaderProps {
   displayMode?: DisplayMode;
   isModal?: boolean;
   theme?: ThemeSettings;
-  
+
+  // Streaming/auto-scroll props
+  /** When true, auto-scrolls to bottom as new content arrives */
+  isStreaming?: boolean;
+
   // Feature flags
   enableTTS?: boolean;
   enableBookmark?: boolean;

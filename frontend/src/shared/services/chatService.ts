@@ -1,5 +1,6 @@
 // frontend/src/shared/services/chatService.ts
 import { llmCompletionRequestMessage } from '../types/LLMTypes';
+import { MaxTokensService, TokenContext } from './maxTokensService';
 import { getToken } from './security';
 
 export interface LlmChatMessage {
@@ -61,7 +62,7 @@ export class ChatService {
       model: options.model || 'default',
       messages,
       temperature: options.temperature ?? 0.8,
-      max_tokens: options.max_tokens ?? 1024,
+      max_tokens: MaxTokensService.getMaxTokens(TokenContext.CHAT_DEFAULT, options.max_tokens),
       stream: true,
     };
 
@@ -153,7 +154,7 @@ export class ChatService {
       model: options.model || 'default',
       messages,
       temperature: options.temperature ?? 0.8,
-      max_tokens: options.max_tokens ?? 1024,
+      max_tokens: MaxTokensService.getMaxTokens(TokenContext.CHAT_DEFAULT, options.max_tokens),
       stream: true,
     };
 
@@ -308,7 +309,7 @@ export class ChatService {
       model: options.model || 'default',
       messages,
       temperature: options.temperature ?? 0.8,
-      max_tokens: options.max_tokens ?? 1024,
+      max_tokens: MaxTokensService.getMaxTokens(TokenContext.CHAT_DEFAULT, options.max_tokens),
       stream: false,
     };
 

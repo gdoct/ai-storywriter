@@ -97,9 +97,8 @@ class ScenarioImageService:
             try:
                 os.remove(image_file)
                 deleted_files.append(image_file)
-                current_app.logger.info(f"Deleted image file: {image_file}")
             except OSError as e:
-                current_app.logger.warning(f"Could not delete image file {image_file}: {e}")
+                print(f"Could not delete image file {image_file}: {e}")
         
         return deleted_files
     

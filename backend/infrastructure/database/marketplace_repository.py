@@ -124,7 +124,6 @@ class MarketplaceRepository:
     def flag_story(story_id: int, flagged_by: str, reason: str) -> bool:
         """Flag a story for review (placeholder for future implementation)"""
         # TODO: Implement story flagging system with dedicated table
-        logger.info(f"Story {story_id} flagged by {flagged_by}: {reason}")
         return True
     
     @staticmethod

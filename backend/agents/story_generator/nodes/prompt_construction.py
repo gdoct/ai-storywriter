@@ -34,22 +34,18 @@ async def prompt_construction_node(state: Dict[str, Any]) -> Dict[str, Any]:
         # Build context from all processed components
         scenario_data = _build_scenario_context(state)
         context = prompt_repo.build_context_from_scenario(scenario_data)
-        
+
+        # Add max_tokens to context for length guidance in prompts
+        generation_options = state.get("generation_options", {})
+        context["max_tokens"] = generation_options.get("max_tokens", 2000)
+
         # Generate system and user prompts
-        logger.info(f"Context keys: {list(context.keys())}")
         system_prompt = prompt_repo.get_system_prompt(context)
         user_prompt = prompt_repo.get_story_generation_prompt(context)
-
-        logger.info(f"System prompt length: {len(system_prompt)}")
-        logger.info(f"User prompt length: {len(user_prompt)}")
 
         # Combine prompts
         final_prompt = f"System: {system_prompt}\n\nUser: {user_prompt}"
 
-        logger.info(f"Prompt construction complete. Final prompt length: {len(final_prompt)} characters")
-        logger.info(f"System prompt: {system_prompt[:200]}...")
-        logger.info(f"User prompt: {user_prompt[:200]}...")
-        
         # Update processing summary
         processing_summary = state.get("processing_summary", {})
         processing_summary["nodes_processed"] = processing_summary.get("nodes_processed", 0) + 1
@@ -64,10 +60,6 @@ async def prompt_construction_node(state: Dict[str, Any]) -> Dict[str, Any]:
             "streaming_events": streaming_events,
             "processing_summary": processing_summary
         }
-
-        logger.info(f"Prompt construction returning state with keys: {list(result_state.keys())}")
-        logger.info(f"Returning system_prompt length: {len(result_state['system_prompt'])}")
-        logger.info(f"Returning user_prompt length: {len(result_state['user_prompt'])}")
 
         return result_state
         
@@ -86,7 +78,7 @@ async def prompt_construction_node(state: Dict[str, Any]) -> Dict[str, Any]:
 def _build_scenario_context(state: Dict[str, Any]) -> Dict[str, Any]:
     """Build scenario context from all processed state components"""
     scenario = state.get("scenario", {})
-    
+
     # Start with original scenario
     context = dict(scenario)
     
@@ -105,16 +97,34 @@ def _build_scenario_context(state: Dict[str, Any]) -> Dict[str, Any]:
     if "processed_locations" in state:
         context["locations"] = state["processed_locations"]
     
-    # Add processed backstory, storyarc, etc.
+    # Add processed backstory, storyarc, notes (extract content from dict if needed)
     for key, state_key in [
         ("backstory", "processed_backstory"),
         ("storyarc", "processed_storyarc"),
-        ("timeline", "processed_timeline"),
         ("notes", "processed_notes"),
-        ("prompt_settings", "processed_custom_prompts"),
-        ("fill_in", "processed_fillin")
     ]:
-        if state_key in state:
-            context[key] = state[state_key]
+        processed_value = state.get(state_key)
+        if processed_value is not None:
+            # These processed nodes return {"content": ..., "word_count": ...}
+            if isinstance(processed_value, dict) and "content" in processed_value:
+                context[key] = processed_value["content"]
+            else:
+                context[key] = processed_value
+
+    # Timeline needs special handling - extract story_events list
+    if state.get("processed_timeline") is not None:
+        processed_timeline = state["processed_timeline"]
+        if isinstance(processed_timeline, dict) and "story_events" in processed_timeline:
+            context["timeline"] = processed_timeline["story_events"]
+        else:
+            context["timeline"] = processed_timeline
+
+    # Custom prompts - extract the relevant fields
+    if state.get("processed_custom_prompts") is not None:
+        context["prompt_settings"] = state["processed_custom_prompts"]
+
+    # Fill-in - this already has the right structure (beginning, ending)
+    if state.get("processed_fillin") is not None:
+        context["fill_in"] = state["processed_fillin"]
     
     return context

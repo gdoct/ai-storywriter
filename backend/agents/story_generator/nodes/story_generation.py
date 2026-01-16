@@ -9,6 +9,7 @@ from typing import Dict, Any
 from infrastructure.llm_services.llm_service import get_llm_service
 from infrastructure.database.llm_repository import LLMRepository
 from infrastructure.database.user_preferences_repository import UserPreferencesRepository
+from domain.services.max_tokens_service import MaxTokensService, TokenContext
 from ..models.response_models import StoryStreamingEvent
 
 logger = logging.getLogger(__name__)
@@ -20,8 +21,6 @@ async def story_generation_node(state: Dict[str, Any]) -> Dict[str, Any]:
     This node sets up the LLM config and payload - actual streaming happens at graph level.
     """
     try:
-        logger.info(f"Story generation node - preparing LLM config")
-
         user_id = state.get("user_id")
         generation_options = state.get("generation_options", {})
         final_prompt = state.get("final_prompt", "")
@@ -35,8 +34,6 @@ async def story_generation_node(state: Dict[str, Any]) -> Dict[str, Any]:
             # Fallback
             system_prompt = "You are a creative writer. Write engaging stories based on the provided scenario."
             user_prompt = f"Write a story based on this scenario: {state.get('scenario', {}).get('synopsis', 'No synopsis provided')}"
-
-        logger.info(f"Parsed prompts - system_prompt length: {len(system_prompt)}, user_prompt length: {len(user_prompt)}")
 
         streaming_events = []
         current_step = state.get("current_step", 0) + 1
@@ -83,7 +80,6 @@ async def story_generation_node(state: Dict[str, Any]) -> Dict[str, Any]:
                 available_models = service_temp.get_models()
                 if available_models:
                     model_name = available_models[0]
-                    logger.info(f"Auto-selected model: {model_name}")
                 else:
                     model_name = "gpt-3.5-turbo"
             except Exception as e:
@@ -98,11 +94,12 @@ async def story_generation_node(state: Dict[str, Any]) -> Dict[str, Any]:
                 {'role': 'user', 'content': user_prompt}
             ],
             'temperature': generation_options.get('temperature', 0.8),
-            'max_tokens': generation_options.get('max_tokens', 2000),
+            'max_tokens': MaxTokensService.get_max_tokens(
+                TokenContext.STORY_GENERATION,
+                override=generation_options.get('max_tokens')
+            ),
             'stream': True
         }
-
-        logger.info(f"Using model: {model_name}")
 
         if generation_options.get('seed'):
             payload['seed'] = generation_options['seed']

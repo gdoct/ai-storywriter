@@ -154,9 +154,6 @@ async def multimodal_chat_completions(
     if completion_request.seed is None:
         completion_request.seed = random.randint(1, 2147483647)
     
-    logger.info(f"[MULTIMODAL AI] Request from user: {user_id}")
-    logger.info(f"[MULTIMODAL AI] Model: {completion_request.model}, Temp: {completion_request.temperature}")
-    
     try:
         # Get user's multimodal LLM configuration
         user_prefs = UserPreferencesRepository.get_user_preferences(user_id)
@@ -221,7 +218,6 @@ async def multimodal_chat_completions(
                 )
 
         async def generate():
-            logger.info(f"[MULTIMODAL AI] Starting {provider} request (mode: {mode})")
             
             try:
                 # Get multimodal service
@@ -246,7 +242,6 @@ async def multimodal_chat_completions(
                 if completion_request.seed is not None:
                     payload['seed'] = completion_request.seed
                 
-                logger.info(f"[MULTIMODAL AI] Using {provider} service for streaming")
                 
                 # Use the service's streaming method
                 import asyncio
@@ -255,7 +250,6 @@ async def multimodal_chat_completions(
                         yield chunk
                         await asyncio.sleep(0)
                         
-                logger.info(f"[MULTIMODAL AI] Stream finished successfully")
                 
                 # TODO: Implement proper token counting and credit deduction for multimodal
                 

@@ -113,6 +113,11 @@ Continue from here...
 **Important Keywords/Concepts:** {{ keywords | clean_text }}
 {% endif %}
 
+{% if max_tokens and max_tokens > 2000 %}
+**Length Requirement:** Write a story of approximately {{ (max_tokens * 0.75)|int }} words.{% if max_tokens >= 8000 %} This is a long-form story - take your time to fully develop scenes, dialogue, descriptions, and character interactions. Do not rush or summarize. Explore each scene in detail.{% endif %}
+
+{% endif %}
+
 Generate a compelling story that incorporates all the above elements naturally and engagingly. The story should feel cohesive and well-paced, with vivid descriptions and authentic character interactions."""
 
         return self.template_engine.render_template(template, context)

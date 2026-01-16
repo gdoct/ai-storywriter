@@ -46,9 +46,6 @@ async def general_processing_node(state: Dict[str, Any]) -> Dict[str, Any]:
             "target_length": _determine_target_length(scenario)
         }
 
-        logger.info(f"General processing complete. Genre: {narrative_context['genre']}, "
-                   f"Tone: {narrative_context['tone']}, Language: {narrative_context['language']}")
-
         # Update processing summary
         processing_summary = state.get("processing_summary", {})
         processing_summary["nodes_processed"] = processing_summary.get("nodes_processed", 0) + 1

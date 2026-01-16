@@ -2,8 +2,10 @@ import { Button, AiStoryReader } from '@drdata/ai-styles';
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { FaRedo, FaSave, FaTimes } from 'react-icons/fa';
+import { FaArrowRight } from 'react-icons/fa6';
 import { Scenario } from '@shared/types/ScenarioTypes';
 import { getShowThinkingSetting } from '@shared/services/settings';
+import { GenerationSettingsModal, GenerationSettings } from './GenerationSettingsModal';
 import './StoryModal.css';
 
 export interface StoryModalProps {
@@ -11,11 +13,13 @@ export interface StoryModalProps {
   onClose: () => void;
   story: string | null;
   thinking?: string | null;
-  onRegenerate: () => void;
+  onRegenerate: (maxTokens?: number) => void;
   onSaveStory?: () => void;
   onCancelGeneration?: () => void;
+  onContinueStory?: () => void;
   isGenerating: boolean;
   isStorySaved?: boolean;
+  isContinuing?: boolean;
   title?: string;
   scenario?: Scenario;
   coverImage?: string;
@@ -29,8 +33,10 @@ export const StoryModal: React.FC<StoryModalProps> = ({
   onRegenerate,
   onSaveStory,
   onCancelGeneration,
+  onContinueStory,
   isGenerating,
   isStorySaved = false,
+  isContinuing = false,
   title = 'Generated Story',
   scenario,
   coverImage,
@@ -38,6 +44,8 @@ export const StoryModal: React.FC<StoryModalProps> = ({
   const [hasStartedGeneration, setHasStartedGeneration] = useState(false);
   const [displayStory, setDisplayStory] = useState<string>('');
   const [showThinking, setShowThinking] = useState(false);
+  const [showGenerationSettings, setShowGenerationSettings] = useState(false);
+  const [isRegenerateMode, setIsRegenerateMode] = useState(false);
 
   // Load thinking setting
   useEffect(() => {
@@ -99,6 +107,24 @@ export const StoryModal: React.FC<StoryModalProps> = ({
     }
   };
 
+  // Open settings modal for generate
+  const handleOpenGenerateSettings = () => {
+    setIsRegenerateMode(false);
+    setShowGenerationSettings(true);
+  };
+
+  // Open settings modal for regenerate
+  const handleOpenRegenerateSettings = () => {
+    setIsRegenerateMode(true);
+    setShowGenerationSettings(true);
+  };
+
+  // Handle generation from settings modal
+  const handleGenerateFromSettings = (settings: GenerationSettings) => {
+    setShowGenerationSettings(false);
+    onRegenerate(settings.maxTokens);
+  };
+
   // Prepare story content for AiStoryReader
   const storyDisplayText = isGenerating && !displayStory 
     ? 'Generating your story...' 
@@ -147,7 +173,7 @@ export const StoryModal: React.FC<StoryModalProps> = ({
             <Button
               variant="primary"
               size="sm"
-              onClick={onRegenerate}
+              onClick={handleOpenGenerateSettings}
               data-test-id="generateStoryButton"
               className='scenario-editor__generate-story-button'
               icon={<FaRedo />}
@@ -174,7 +200,7 @@ export const StoryModal: React.FC<StoryModalProps> = ({
             <Button
               variant="ghost"
               size="sm"
-              onClick={onRegenerate}
+              onClick={handleOpenRegenerateSettings}
               icon={<FaRedo />}
             >
               Regenerate
@@ -182,7 +208,7 @@ export const StoryModal: React.FC<StoryModalProps> = ({
           )}
           
           {/* Save button - only show when we have content and not generating */}
-          {story && !isGenerating && (
+          {story && !isGenerating && !isContinuing && (
             <Button
               variant="primary"
               size="sm"
@@ -194,8 +220,59 @@ export const StoryModal: React.FC<StoryModalProps> = ({
               {isStorySaved ? 'Saved' : 'Save story'}
             </Button>
           )}
+
+          {/* Continue button - only show when story is saved and not generating */}
+          {story && !isGenerating && isStorySaved && onContinueStory && (
+            <Button
+              variant="secondary"
+              size="sm"
+              data-test-id="continueStoryButton"
+              onClick={onContinueStory}
+              disabled={isContinuing}
+              icon={<FaArrowRight />}
+            >
+              {isContinuing ? 'Creating...' : 'Continue Story'}
+            </Button>
+          )}
         </div>
       </div>
+
+      {/* Continue Story Loading Overlay */}
+      {isContinuing && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.7)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1002
+        }}>
+          <div style={{
+            backgroundColor: 'var(--color-surface, #1a1a2e)',
+            borderRadius: '12px',
+            padding: '32px 48px',
+            textAlign: 'center',
+            maxWidth: '400px',
+            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)'
+          }}>
+            <div className="story-modal__generating-dots" style={{ margin: '0 auto 16px', justifyContent: 'center' }}>
+              <span></span>
+              <span></span>
+              <span></span>
+            </div>
+            <h3 style={{ color: 'var(--color-text-primary, #fff)', marginBottom: '8px' }}>
+              Creating Continuation...
+            </h3>
+            <p style={{ color: 'var(--color-text-secondary, #aaa)', margin: 0 }}>
+              Summarizing the story and generating the next chapter opening. This may take a moment.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Thinking Display */}
       {showThinking && thinking && (
@@ -243,15 +320,15 @@ export const StoryModal: React.FC<StoryModalProps> = ({
         author="AI Generated"
         readingTime={story ? Math.ceil(story.split(' ').length / 200) : 0}
         coverImage={
-          coverImage || 
-          scenario?.imageUrl || 
+          coverImage ||
+          scenario?.imageUrl ||
           'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1200&h=600&fit=crop'
         }
         characters={
           scenario?.characters?.filter(char => char.name).map(char => ({
             id: char.id,
             name: char.name!,
-            image: char.photoUrl || 
+            image: char.photoUrl ||
                    (char.photo_data ? `data:${char.photo_mime_type || 'image/jpeg'};base64,${char.photo_data}` : '') ||
                    'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face',
             alias: char.alias,
@@ -262,6 +339,7 @@ export const StoryModal: React.FC<StoryModalProps> = ({
             extraInfo: char.extraInfo
           })) || []
         }
+        isStreaming={isGenerating}
         enableTTS={!!story && !isGenerating}
         enableBookmark={!!story && !isGenerating}
         enableHighlight={!!story && !isGenerating}
@@ -273,6 +351,14 @@ export const StoryModal: React.FC<StoryModalProps> = ({
         onModeChange={(mode) => console.log('Mode changed:', mode)}
         onDownload={story ? handleDownloadStory : undefined}
         onClose={onClose}
+      />
+
+      {/* Generation Settings Modal */}
+      <GenerationSettingsModal
+        isOpen={showGenerationSettings}
+        onClose={() => setShowGenerationSettings(false)}
+        onGenerate={handleGenerateFromSettings}
+        isRegenerating={isRegenerateMode}
       />
     </div>,
     document.body

@@ -102,9 +102,9 @@ def generate_character_from_image(image_data: bytes, user_prompt: str, user_id: 
     try:
         # Import here to avoid circular imports
         from infrastructure.llm_services.llm_service import generate_character_from_image as llm_generate_character
-        logger.info(f"Calling LLM service with prompt: {user_prompt[:100]}...")
+        # logger.info(f"Calling LLM service with prompt: {user_prompt[:100]}...")
         result = llm_generate_character(image_data, user_prompt, user_id, byok_headers)
-        logger.info(f"LLM service returned: {result}")
+        # logger.info(f"LLM service returned: {result}")
         return result
     except Exception as e:
         logger.error(f"Error generating character from image: {e}")
@@ -130,10 +130,10 @@ async def create_character_from_photo(
 ):
     """Create a character from an uploaded photo."""
     try:
-        logger.info("Starting character photo upload process")
+        # logger.info("Starting character photo upload process")
         
         user_id = current_user['id']
-        logger.info(f"User ID: {user_id}")
+        # logger.info(f"User ID: {user_id}")
         
         if not prompt.strip():
             raise HTTPException(
@@ -153,11 +153,11 @@ async def create_character_from_photo(
                 detail='Invalid file type. Only PNG, JPG, and JPEG are allowed.'
             )
         
-        logger.info(f"Processing file: {photo.filename}")
+        # logger.info(f"Processing file: {photo.filename}")
         
         # Read file data
         file_data = await photo.read()
-        logger.info(f"File size: {len(file_data)} bytes")
+        # logger.info(f"File size: {len(file_data)} bytes")
         
         # Validate file size
         if not validate_image_size(file_data):
@@ -167,12 +167,12 @@ async def create_character_from_photo(
             )
         
         # Compress image if needed
-        logger.info("Compressing image...")
+        # logger.info("Compressing image...")
         compressed_data = compress_image_if_needed(file_data)
-        logger.info(f"Compressed size: {len(compressed_data)} bytes")
+        # logger.info(f"Compressed size: {len(compressed_data)} bytes")
         
         # Generate character from image using new proxy service
-        logger.info("Generating character from image...")
+        # logger.info("Generating character from image...")
         character_data = generate_character_from_image(
             compressed_data, 
             prompt, 
@@ -180,7 +180,7 @@ async def create_character_from_photo(
             byok_headers=None  # Character photo doesn't currently support BYOK
         )
         
-        logger.info(f"Generated character: {character_data.get('name', 'Unknown')}")
+        # logger.info(f"Generated character: {character_data.get('name', 'Unknown')}")
         
         # Generate unique IDs
         photo_id = str(uuid.uuid4())
@@ -188,7 +188,7 @@ async def create_character_from_photo(
         
         # Save the image file with photo_id as filename prefix
         file_path = save_uploaded_file(compressed_data, photo.filename, user_id, photo_id)
-        logger.info(f"Saved file to: {file_path}")
+        # logger.info(f"Saved file to: {file_path}")
         
         # Add character_id to character_data
         character_data['id'] = character_id
@@ -198,7 +198,7 @@ async def create_character_from_photo(
         character_data['photoUrl'] = f"/api/photos/{photo_id}"
         
         # Return the generated character data with photo info
-        logger.info("Sending success response")
+        # logger.info("Sending success response")
         
         return CharacterFromPhotoResponse(
             success=True,
@@ -243,7 +243,7 @@ async def delete_character_photo(
                 if os.path.exists(file_path):
                     os.remove(file_path)
                     file_deleted = True
-                    logger.info(f"Deleted photo file: {file_path}")
+                    # logger.info(f"Deleted photo file: {file_path}")
                     break
         
         if not file_deleted:
@@ -312,7 +312,7 @@ async def upload_character_photo(
 ):
     """Upload a photo for an existing character."""
     try:
-        logger.info("Starting character photo upload process")
+        # logger.info("Starting character photo upload process")
         
         user_id = current_user['id']
         
@@ -346,7 +346,7 @@ async def upload_character_photo(
         
         # Save the image file
         file_path = save_uploaded_file(compressed_data, photo.filename, user_id, photo_id)
-        logger.info(f"Saved file to: {file_path}")
+        # logger.info(f"Saved file to: {file_path}")
         
         return UploadPhotoResponse(
             photoId=photo_id,
@@ -373,7 +373,7 @@ async def generate_field_from_photo(
 ):
     """Generate a specific character field from a photo."""
     try:
-        logger.info(f"Generating field '{field_name}' from photo")
+        # logger.info(f"Generating field '{field_name}' from photo")
         
         if not photo.filename:
             raise HTTPException(

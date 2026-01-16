@@ -4,6 +4,7 @@ import re
 
 import requests
 from infrastructure.llm_services.llm_service import BaseLLMService  # type: ignore
+from domain.services.max_tokens_service import MaxTokensService, TokenContext
 
 
 class LMStudioService(BaseLLMService):
@@ -160,7 +161,7 @@ Example format:
                         ]
                     }
                 ],
-                "max_tokens": 300,
+                "max_tokens": MaxTokensService.get_max_tokens(TokenContext.VISION_ANALYSIS),
                 "temperature": 0.3,
                 "stream": False
             }

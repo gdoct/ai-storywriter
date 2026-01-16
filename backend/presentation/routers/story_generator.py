@@ -34,7 +34,6 @@ async def generate_story(
     """
     try:
         user_id = current_user.get('user_id')
-        logger.info(f"Story generation request from user {user_id}")
 
         # Initialize services
         credit_service = CreditService()
@@ -96,7 +95,6 @@ async def stream_story_generation(
     """
     try:
         user_id = current_user.get('user_id')
-        logger.info(f"Streaming story generation request from user {user_id}")
 
         # Initialize services
         credit_service = CreditService()

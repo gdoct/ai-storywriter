@@ -5,7 +5,7 @@ import { FaLocationDot } from 'react-icons/fa6';
 import { MdSchedule } from 'react-icons/md';
 import { useNavigate } from 'react-router-dom';
 import { useModals } from '@shared/hooks/useModals';
-import { createScenario, deleteScenario, updateScenario } from '@shared/services/scenario';
+import { createScenario, deleteScenario, updateScenario, createContinuationScenario } from '@shared/services/scenario';
 import { generateStory } from '@shared/services/storyGenerator';
 import { getStoriesByScenario, saveStory } from '@shared/services/storyService';
 import { Scenario } from '@shared/types/ScenarioTypes';
@@ -245,7 +245,7 @@ export const ScenarioEditor: React.FC<ScenarioEditorProps> = ({
     }
   }, [state.scenario.title, handleSave]);
 
-  const handleRegenerateStory = useCallback(async () => {
+  const handleRegenerateStory = useCallback(async (maxTokens?: number) => {
     dispatch({ type: 'SET_GENERATING', payload: true });
     dispatch({ type: 'CLEAR_ALL_ERRORS' });
     dispatch({ type: 'SET_GENERATED_STORY', payload: '' }); // Clear existing story
@@ -265,7 +265,8 @@ export const ScenarioEditor: React.FC<ScenarioEditorProps> = ({
           console.log('ScenarioEditor onThinking received:', thinking); // Debug log
           _thinkingText = thinking;
           dispatch({ type: 'SET_STORY_THINKING', payload: thinking });
-        }
+        },
+        max_tokens: maxTokens
       });
 
       // Store the cancel function
@@ -404,6 +405,55 @@ export const ScenarioEditor: React.FC<ScenarioEditorProps> = ({
       // The finally block in handleRegenerateStory will handle cleanup
     }
   }, []);
+
+  const handleContinueStory = useCallback(async () => {
+    if (!state.generatedStory || !state.scenario.id) {
+      return;
+    }
+
+    try {
+      dispatch({ type: 'SET_CONTINUING', payload: true });
+
+      let storyId: number;
+
+      // First, save the story if it's not saved yet
+      if (!state.isStorySaved) {
+        const savedStory = await saveStory(state.scenario, state.generatedStory);
+        dispatch({ type: 'SET_STORY_SAVED', payload: true });
+        storyId = parseInt(savedStory.id);
+      } else {
+        // Story is already saved, get the most recent story for this scenario
+        const stories = await getStoriesByScenario(state.scenario.id);
+        if (stories.length === 0) {
+          throw new Error('No saved story found for this scenario');
+        }
+        storyId = parseInt(stories[0].id);
+      }
+
+      // Call the backend to create continuation scenario
+      const continuationScenario = await createContinuationScenario(
+        storyId,
+        state.scenario.id
+      );
+
+      // Close the modal and navigate to the new scenario
+      dispatch({ type: 'SET_SHOW_STORY_MODAL', payload: false });
+      dispatch({ type: 'SET_CONTINUING', payload: false });
+
+      // Navigate to the editor with the new continuation scenario
+      navigate(`/app?scenario=${continuationScenario.id}`);
+
+    } catch (error) {
+      console.error('Failed to create continuation scenario:', error);
+      dispatch({ type: 'SET_CONTINUING', payload: false });
+
+      const errorMessage = error instanceof Error ? error.message : 'Failed to create continuation scenario';
+      dispatch({
+        type: 'SET_ERROR',
+        payload: { field: 'continue', message: errorMessage }
+      });
+    }
+  }, [state.generatedStory, state.scenario, state.isStorySaved, dispatch, navigate]);
 
   // Note: ActiveTabComponent is now handled within ExpandableTabs content
 
@@ -556,8 +606,10 @@ export const ScenarioEditor: React.FC<ScenarioEditorProps> = ({
         onRegenerate={handleRegenerateStory}
         onSaveStory={handleSaveStory}
         onCancelGeneration={handleCancelGeneration}
+        onContinueStory={handleContinueStory}
         isGenerating={state.isGenerating}
         isStorySaved={state.isStorySaved}
+        isContinuing={state.isContinuing}
         title={state.scenario.title}
         scenario={state.scenario}
         coverImage={state.scenario.imageUrl}

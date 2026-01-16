@@ -61,6 +61,7 @@ const Dashboard: React.FC<DashboardProps> = () => {
   const [totalScenariosToGenerate, setTotalScenariosToGenerate] = useState(1);
   const [isRetrying, setIsRetrying] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
+  const [completedScenarios, setCompletedScenarios] = useState<Scenario[]>([]);
   const [abortController, setAbortController] = useState<AbortController | null>(null);
   
   // Welcome wizard state
@@ -155,6 +156,7 @@ const Dashboard: React.FC<DashboardProps> = () => {
     setTotalScenariosToGenerate(1);
     setIsRetrying(false);
     setRetryCount(0);
+    setCompletedScenarios([]);
     setAbortController(null);
   };
 
@@ -163,6 +165,7 @@ const Dashboard: React.FC<DashboardProps> = () => {
     setTotalScenariosToGenerate(progress.totalCount);
     setIsRetrying(progress.isRetrying);
     setRetryCount(progress.retryCount);
+    setCompletedScenarios(progress.completedScenarios || []);
   };
 
   const handleGenerateSimilarConfirm = async (selections: ScenarioSelections) => {
@@ -174,7 +177,8 @@ const Dashboard: React.FC<DashboardProps> = () => {
       setTotalScenariosToGenerate(selections.count);
       setIsRetrying(false);
       setRetryCount(0);
-      
+      setCompletedScenarios([]);
+
       const fullScenario = fullScenarioForModal;
       
       // Convert ScenarioSelections to service format
@@ -226,6 +230,7 @@ const Dashboard: React.FC<DashboardProps> = () => {
       setTotalScenariosToGenerate(1);
       setIsRetrying(false);
       setRetryCount(0);
+      setCompletedScenarios([]);
     }
   };
 
@@ -384,6 +389,7 @@ const Dashboard: React.FC<DashboardProps> = () => {
           totalCount={totalScenariosToGenerate}
           isRetrying={isRetrying}
           retryCount={retryCount}
+          completedScenarios={completedScenarios}
           onAbort={handleAbortGeneration}
         />
 

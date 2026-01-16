@@ -31,6 +31,7 @@ export interface ScenarioEditorState {
   isLoading: boolean;
   isSaving: boolean;
   isGenerating: boolean;
+  isContinuing: boolean;
   errors: Record<string, string>;
   showStoryModal: boolean;
   generatedStory: string | null;
@@ -57,7 +58,8 @@ export type ScenarioEditorAction =
   | { type: 'SET_SHOW_STORY_MODAL'; payload: boolean }
   | { type: 'SET_GENERATED_STORY'; payload: string | null }
   | { type: 'SET_STORY_THINKING'; payload: string | null }
-  | { type: 'SET_STORY_SAVED'; payload: boolean };
+  | { type: 'SET_STORY_SAVED'; payload: boolean }
+  | { type: 'SET_CONTINUING'; payload: boolean };
 
 // Save options
 export interface SaveOptions {

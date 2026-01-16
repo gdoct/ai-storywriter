@@ -3,6 +3,7 @@ import { AI_STATUS } from '../contexts/AIStatusContext';
 import { streamSimpleChatCompletionWithStatus } from '../services/llmService';
 import { Character, Scenario } from '../types/ScenarioTypes';
 import { createCharacterFieldPrompt } from './llmPromptService';
+import { MaxTokensService, TokenContext } from './maxTokensService';
 import { getSelectedModel } from './modelSelection';
 
 /**
@@ -55,7 +56,7 @@ export async function generateCharacterField(
           {
             model: selectedModel || 'google/gemma-3-4b',
             temperature: options.temperature || 0.8,
-            max_tokens: 200
+            max_tokens: MaxTokensService.getMaxTokens(TokenContext.CHARACTER_FIELD)
           },
           options.setAiStatus || (() => {}),
           options.setShowAIBusyModal || (() => {})

@@ -76,6 +76,7 @@ export const AiStoryReader: React.FC<AiStoryReaderProps> = ({
   isModal = false,
   coverImage,
   characters,
+  isStreaming = false,
   enableTTS = false,
   enableBookmark = false,
   enableHighlight = false,
@@ -270,6 +271,55 @@ export const AiStoryReader: React.FC<AiStoryReaderProps> = ({
     setHoveredCharacter(null);
     setTooltipPosition(null);
   }, []);
+
+  // Track if user has scrolled up (to pause auto-scroll)
+  const [userScrolledUp, setUserScrolledUp] = useState(false);
+  const lastScrollTopRef = useRef(0);
+
+  // Reset userScrolledUp when streaming stops or starts fresh
+  useEffect(() => {
+    if (!isStreaming) {
+      setUserScrolledUp(false);
+    }
+  }, [isStreaming]);
+
+  // Detect user scrolling up to pause auto-scroll
+  useEffect(() => {
+    if (!isStreaming || !contentRef.current) return;
+
+    const element = contentRef.current;
+    const handleUserScroll = () => {
+      const currentScrollTop = element.scrollTop;
+      const maxScroll = element.scrollHeight - element.clientHeight;
+
+      // If user scrolled up (current position is less than last position)
+      // and they're not near the bottom, pause auto-scroll
+      if (currentScrollTop < lastScrollTopRef.current && currentScrollTop < maxScroll - 50) {
+        setUserScrolledUp(true);
+      }
+
+      // If user scrolled back to bottom, resume auto-scroll
+      if (currentScrollTop >= maxScroll - 50) {
+        setUserScrolledUp(false);
+      }
+
+      lastScrollTopRef.current = currentScrollTop;
+    };
+
+    element.addEventListener('scroll', handleUserScroll);
+    return () => element.removeEventListener('scroll', handleUserScroll);
+  }, [isStreaming]);
+
+  // Auto-scroll to bottom when streaming new content (unless user scrolled up)
+  useEffect(() => {
+    if (isStreaming && !userScrolledUp && contentRef.current) {
+      const element = contentRef.current;
+      element.scrollTo({
+        top: element.scrollHeight,
+        behavior: 'smooth'
+      });
+    }
+  }, [isStreaming, userScrolledUp, text]);
 
   // Update progress based on scroll position
   useEffect(() => {

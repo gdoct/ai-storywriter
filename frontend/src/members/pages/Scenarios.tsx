@@ -36,6 +36,7 @@ const Scenarios: React.FC = () => {
   const [totalScenariosToGenerate, setTotalScenariosToGenerate] = useState(1);
   const [isRetrying, setIsRetrying] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
+  const [completedScenarios, setCompletedScenarios] = useState<Scenario[]>([]);
   
   // Infinite scroll ref
   const loadMoreRef = useRef<HTMLDivElement>(null);
@@ -204,6 +205,7 @@ const Scenarios: React.FC = () => {
     setTotalScenariosToGenerate(1);
     setIsRetrying(false);
     setRetryCount(0);
+    setCompletedScenarios([]);
   };
 
   const handleProgressUpdate = (progress: GenerationProgress) => {
@@ -211,6 +213,7 @@ const Scenarios: React.FC = () => {
     setTotalScenariosToGenerate(progress.totalCount);
     setIsRetrying(progress.isRetrying);
     setRetryCount(progress.retryCount);
+    setCompletedScenarios(progress.completedScenarios || []);
   };
 
 
@@ -223,7 +226,8 @@ const Scenarios: React.FC = () => {
       setTotalScenariosToGenerate(selections.count);
       setIsRetrying(false);
       setRetryCount(0);
-      
+      setCompletedScenarios([]);
+
       const fullScenario = fullScenarioForModal;
       
       // Convert ScenarioSelections to service format
@@ -276,6 +280,7 @@ const Scenarios: React.FC = () => {
       setTotalScenariosToGenerate(1);
       setIsRetrying(false);
       setRetryCount(0);
+      setCompletedScenarios([]);
     }
   };
 
@@ -477,6 +482,7 @@ const Scenarios: React.FC = () => {
             totalCount={totalScenariosToGenerate}
             isRetrying={isRetrying}
             retryCount={retryCount}
+            completedScenarios={completedScenarios}
             onAbort={handleAbortGeneration}
           />
 

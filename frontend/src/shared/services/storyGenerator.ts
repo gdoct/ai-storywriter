@@ -4,6 +4,7 @@ import { GeneratedStory, Scenario } from '../types/ScenarioTypes';
 import * as llmPromptService from './llmPromptService';
 import { createRewriteStoryArcPrompt, createStoryArcPrompt, createSummaryPrompt } from './llmPromptService';
 import { streamSimpleChatCompletionWithStatus, streamChatCompletionWithStatus, streamChatCompletionWithThinking } from './llmService';
+import { MaxTokensService, TokenContext } from './maxTokensService';
 import { getSelectedModel } from './modelSelection';
 import { getShowThinkingSetting } from './settings';
 // Import the new agent service for main story generation
@@ -96,7 +97,7 @@ export async function generateChapter(
     {
       model: getSelectedModel() || undefined,
       temperature: options.temperature,
-      max_tokens: 2000
+      max_tokens: MaxTokensService.getMaxTokens(TokenContext.CHAPTER_CONTENT)
     },
     setAiStatus,
     setShowAIBusyModal
@@ -128,7 +129,7 @@ export async function generateChapterSummary(scenario: Scenario,
     {
       model: getSelectedModel() || undefined,
       temperature: options.temperature,
-      max_tokens: 200
+      max_tokens: MaxTokensService.getMaxTokens(TokenContext.CHAPTER_SUMMARY)
     },
     setAiStatus,
     setShowAIBusyModal
@@ -147,13 +148,16 @@ export async function generateStory(
     onThinking?: (thinking: string) => void,
     temperature?: number,
     numberOfChapters?: number, // ignored, kept for compatibility
-    seed?: number | null
+    seed?: number | null,
+    /** Maximum tokens for story generation. Uses service default (2000) if not provided. */
+    max_tokens?: number
   } = {},
   setAiStatus = () => {},
   setShowAIBusyModal = () => {}
 ): Promise<{ result: Promise<GeneratedStory>; cancelGeneration: () => void }> {
 
   // Use the new backend story generator agent
+  // Note: target_length will default to max_tokens in the agent service
   return generateStoryWithAgent(
     scenario,
     {
@@ -161,7 +165,7 @@ export async function generateStory(
       onThinking: options.onThinking,
       temperature: options.temperature,
       seed: options.seed,
-      target_length: 2000 // Default target length
+      max_tokens: options.max_tokens // Pass through to agent service
     },
     setAiStatus,
     setShowAIBusyModal
@@ -209,10 +213,10 @@ export async function generateBackstory(
               if (options.onProgress) options.onProgress(text);
             }
           },
-          { 
+          {
             model: selectedModel || undefined,
-            temperature: options.temperature, 
-            max_tokens: 1000,
+            temperature: options.temperature,
+            max_tokens: MaxTokensService.getMaxTokens(TokenContext.STORY_BACKSTORY),
             signal: abortController.signal
           },
           setAiStatus,
@@ -261,10 +265,10 @@ export async function generateStoryTitle(scenario: Scenario,
               if (options.onProgress) options.onProgress(text);
             }
           },
-          { 
+          {
             model: selectedModel || undefined,
-            temperature: options.temperature, 
-            max_tokens: 100,
+            temperature: options.temperature,
+            max_tokens: MaxTokensService.getMaxTokens(TokenContext.STORY_TITLE),
             signal: abortController.signal
           },
           setAiStatus,
@@ -329,10 +333,10 @@ export async function generateScenarioSynopsis(scenario: Scenario,
               if (options.onProgress) options.onProgress(text);
             }
           },
-          { 
+          {
             model: selectedModel || undefined,
-            temperature: options.temperature, 
-            max_tokens: 300,
+            temperature: options.temperature,
+            max_tokens: MaxTokensService.getMaxTokens(TokenContext.STORY_SYNOPSIS),
             signal: abortController.signal
           },
           setAiStatus,
@@ -400,10 +404,10 @@ export async function rewriteBackstory(
             if (options.onProgress) options.onProgress(text);
           }
         },
-        { 
+        {
           model: selectedModel || undefined,
-          temperature: options.temperature, 
-          max_tokens: 1000,
+          temperature: options.temperature,
+          max_tokens: MaxTokensService.getMaxTokens(TokenContext.STORY_BACKSTORY),
           signal: abortController.signal
         },
         setAiStatus,
@@ -456,10 +460,10 @@ export async function rewriteStoryArc(
             if (options.onProgress) options.onProgress(text);
           }
         },
-        { 
+        {
           model: selectedModel || undefined,
-          temperature: options.temperature, 
-          max_tokens: 1000,
+          temperature: options.temperature,
+          max_tokens: MaxTokensService.getMaxTokens(TokenContext.STORY_ARC),
           signal: abortController.signal
         },
         setAiStatus,
@@ -510,16 +514,16 @@ export async function generateRandomWritingStyle(
             if (options.onProgress) options.onProgress(text);
           }
         },
-        { 
+        {
           model: selectedModel || undefined,
-          temperature: options.temperature, 
-          max_tokens: 1000,
+          temperature: options.temperature,
+          max_tokens: MaxTokensService.getMaxTokens(TokenContext.RANDOM_WRITING_STYLE),
           signal: abortController.signal
         },
         setAiStatus,
         setShowAIBusyModal
       );
-      // console.log(fullText); 
+      // console.log(fullText);
         resolve(fullText);
       } catch (error) {
         if (error instanceof Error && error.name === 'AbortError') {
@@ -570,10 +574,10 @@ export async function generateRandomCharacter(
             if (options.onProgress) options.onProgress(text);
           }
         },
-        { 
+        {
           model: selectedModel || undefined,
-          temperature: options.temperature, 
-          max_tokens: 1000,
+          temperature: options.temperature,
+          max_tokens: MaxTokensService.getMaxTokens(TokenContext.RANDOM_CHARACTER),
           signal: abortController.signal
         },
         setAiStatus,
@@ -650,10 +654,10 @@ export async function generateStoryArc(
             if (options.onProgress) options.onProgress(text);
           }
         },
-        { 
+        {
           model: selectedModel || undefined,
-          temperature: options.temperature, 
-          max_tokens: 1000,
+          temperature: options.temperature,
+          max_tokens: MaxTokensService.getMaxTokens(TokenContext.STORY_ARC),
           signal: abortController.signal
         },
         setAiStatus,
@@ -701,10 +705,10 @@ export async function generateNotes(
             if (options.onProgress) options.onProgress(text);
           }
         },
-        { 
+        {
           model: selectedModel || undefined,
           temperature: options.temperature || 0.8, // Slightly higher temperature for creative ideas
-          max_tokens: 1000,
+          max_tokens: MaxTokensService.getMaxTokens(TokenContext.STORY_NOTES),
           signal: abortController.signal
         },
         () => {}, // setAiStatus

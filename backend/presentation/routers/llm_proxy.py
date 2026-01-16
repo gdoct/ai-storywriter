@@ -105,9 +105,6 @@ async def frontend_ai_chat_completions(
     if completion_request.seed is None:
         completion_request.seed = random.randint(1, 2147483647)
     
-    logger.info(f"[FRONTEND AI] Request from user: {user_id}")
-    logger.info(f"[FRONTEND AI] Model: {completion_request.model}, Temp: {completion_request.temperature}, Max tokens: {completion_request.max_tokens}, Seed: {completion_request.seed}")
-    
     try:
         # Extract BYOK headers if present
         byok_headers = LLMProxyService.extract_byok_headers(dict(request.headers))
@@ -129,7 +126,6 @@ async def frontend_ai_chat_completions(
                 )
 
         async def generate():
-            logger.info(f"[FRONTEND AI] Starting {provider} request (mode: {mode})")
             
             try:
                 # Build payload for the selected service
@@ -151,7 +147,6 @@ async def frontend_ai_chat_completions(
                 if completion_request.seed is not None:
                     payload['seed'] = completion_request.seed
                 
-                logger.info(f"[FRONTEND AI] Using {provider} service for streaming")
                 
                 # Use the service's streaming method with immediate yielding to prevent buffering
                 import asyncio
@@ -161,7 +156,6 @@ async def frontend_ai_chat_completions(
                         # Yield control back to the event loop to prevent buffering
                         await asyncio.sleep(0)
                         
-                logger.info(f"[FRONTEND AI] Stream finished successfully")
                 
             except Exception as e:
                 logger.error(f"[FRONTEND AI] Stream error: {str(e)}")
@@ -265,8 +259,8 @@ async def proxy_chat_completions(
                     actual_completion_tokens = usage.get('completion_tokens', 0)
                     actual_total_tokens = usage.get('total_tokens', 0)
                     
-                    logger.info(f"Actual token usage - Prompt: {actual_prompt_tokens}, "
-                              f"Completion: {actual_completion_tokens}, Total: {actual_total_tokens}")
+                    # logger.info(f"Actual token usage - Prompt: {actual_prompt_tokens}, "
+                    #           f"Completion: {actual_completion_tokens}, Total: {actual_total_tokens}")
                 
                 # Check if user has enough credits before proceeding (for member mode)
                 if mode == 'member':

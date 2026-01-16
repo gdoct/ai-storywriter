@@ -87,7 +87,6 @@ async def stream_agent_direct(
                             except json.JSONDecodeError:
                                 continue  # Skip malformed JSON
         
-        logger.info(f"Streaming complete. Total chunks: {chunk_count}, Accumulated content length: {len(accumulated_content)}")
         
         # Post-process if needed (for scenarios updates, etc)
         await _post_process_response(agent_action, accumulated_content, scenario, user_id, byok_headers)

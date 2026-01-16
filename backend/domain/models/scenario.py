@@ -54,3 +54,6 @@ class SaveStoryResponse(BaseModel):
 
 class DeleteResponse(BaseModel):
     success: bool
+
+class ContinueStoryRequest(BaseModel):
+    originalScenarioId: str

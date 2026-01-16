@@ -114,7 +114,7 @@ class GenerationOptions(BaseModel):
 class Scenario(BaseModel):
     """Complete scenario model matching ScenarioEditor structure"""
     id: str
-    user_id: str = Field(alias="userId")
+    user_id: Optional[str] = Field(None, alias="userId")
     title: Optional[str] = None
     synopsis: Optional[str] = None
     writing_style: Optional[StyleSettings] = Field(None, alias="writingStyle")

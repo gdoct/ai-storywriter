@@ -7,9 +7,47 @@ import StoryPageCard from '../components/Story/StoryPageCard';
 import { AiStoryReader } from '@drdata/ai-styles';
 import { useModals } from '@shared/hooks/useModals';
 import { fetchRecentStories, formatRelativeTime, RecentStory } from '@shared/services/dashboardService';
-import { deleteDBStory, fetchSingleDBStory, fetchScenarioById } from '@shared/services/scenario';
+import { deleteDBStory, fetchSingleDBStory, fetchScenarioById, createContinuationScenario } from '@shared/services/scenario';
 import { Scenario } from '@shared/types/ScenarioTypes';
 import './Stories.css';
+
+// Loading modal component for continue story operation
+const ContinueStoryModal: React.FC<{ isOpen: boolean; storyTitle: string }> = ({ isOpen, storyTitle }) => {
+  if (!isOpen) return null;
+
+  return createPortal(
+    <div style={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: 'rgba(0, 0, 0, 0.7)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: 2000
+    }}>
+      <div style={{
+        backgroundColor: 'var(--color-surface, #1a1a2e)',
+        borderRadius: '12px',
+        padding: '32px 48px',
+        textAlign: 'center',
+        maxWidth: '400px',
+        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)'
+      }}>
+        <div className="loading-spinner" style={{ margin: '0 auto 16px' }}></div>
+        <h3 style={{ color: 'var(--color-text-primary, #fff)', marginBottom: '8px' }}>
+          Creating Continuation...
+        </h3>
+        <p style={{ color: 'var(--color-text-secondary, #aaa)', margin: 0 }}>
+          Summarizing "{storyTitle}" and generating the next chapter opening. This may take a moment.
+        </p>
+      </div>
+    </div>,
+    document.body
+  );
+};
 
 // Extended story interface for character data
 interface StoryWithScenario extends RecentStory {
@@ -39,7 +77,11 @@ const Stories: React.FC = () => {
   // Publish modal state
   const [showPublishModal, setShowPublishModal] = useState(false);
   const [storyToPublish, setStoryToPublish] = useState<RecentStory | null>(null);
-  
+
+  // Continue story state
+  const [showContinueModal, setShowContinueModal] = useState(false);
+  const [continuingStoryTitle, setContinuingStoryTitle] = useState('');
+
   const storiesPerPage = 12;
 
   // Load stories for current page
@@ -177,8 +219,29 @@ const Stories: React.FC = () => {
   };
 
   const handleContinueStory = async (story: RecentStory) => {
-    // Navigate to scenario editor with continue story mode
-    navigate(`/app?continueStory=${story.id}&scenario=${story.scenarioId}`);
+    try {
+      // Show loading modal
+      setContinuingStoryTitle(story.scenarioTitle);
+      setShowContinueModal(true);
+
+      // Call the backend to create continuation scenario
+      const continuationScenario = await createContinuationScenario(story.id, story.scenarioId);
+
+      // Hide loading modal
+      setShowContinueModal(false);
+
+      // Navigate to the editor with the new continuation scenario
+      // Keep the story modal state - it will close when we navigate away
+      navigate(`/app?scenario=${continuationScenario.id}`);
+
+    } catch (error) {
+      console.error('Error creating continuation scenario:', error);
+      setShowContinueModal(false);
+
+      // Show error message
+      const errorMessage = error instanceof Error ? error.message : 'Failed to create continuation scenario';
+      customAlert(errorMessage, 'Error');
+    }
   };
 
   const handlePublishStory = (story: RecentStory) => {
@@ -439,6 +502,12 @@ const Stories: React.FC = () => {
         />
       )}
 
+      {/* Continue Story Loading Modal */}
+      <ContinueStoryModal
+        isOpen={showContinueModal}
+        storyTitle={continuingStoryTitle}
+      />
+
       {/* Custom Modal Components */}
       <AlertModal
         isOpen={alertState.isOpen}
@@ -446,7 +515,7 @@ const Stories: React.FC = () => {
         message={alertState.message}
         title={alertState.title}
       />
-      
+
       <ConfirmModal
         isOpen={confirmState.isOpen}
         onClose={hideConfirm}

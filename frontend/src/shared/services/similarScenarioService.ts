@@ -22,6 +22,7 @@ export interface GenerationProgress {
   totalCount: number;
   isRetrying: boolean;
   retryCount: number;
+  completedScenarios: Scenario[];
   onProgress?: (progress: GenerationProgress) => void;
   onAbort?: () => void;
 }
@@ -298,6 +299,7 @@ export const generateSimilarScenarios = async (
         totalCount: selections.count,
         isRetrying: false,
         retryCount: 0,
+        completedScenarios: [...createdScenarios],
         onProgress,
         onAbort: () => {
           controller.abort();
@@ -307,6 +309,14 @@ export const generateSimilarScenarios = async (
 
       const createdScenario = await generateSingleScenario(fullScenario, selections, controller, progress);
       createdScenarios.push(createdScenario);
+
+      // Report progress with newly completed scenario
+      if (onProgress) {
+        onProgress({
+          ...progress,
+          completedScenarios: [...createdScenarios]
+        });
+      }
     }
 
     return createdScenarios;

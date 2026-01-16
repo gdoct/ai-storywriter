@@ -153,8 +153,9 @@ class StoryGeneratorGraph:
             "fillin_processing": "processed_fillin"
         }
 
-        # Check if already processed
-        if processed_keys.get(node) in state:
+        # Check if already processed (key exists AND has a non-None value)
+        processed_key = processed_keys.get(node)
+        if processed_key and state.get(processed_key) is not None:
             return False
 
         # Check if should be processed based on analysis
@@ -253,7 +254,6 @@ class StoryGeneratorGraph:
 
                     # Check if story_generation node is ready for streaming
                     if node_output.get("ready_for_streaming"):
-                        logger.info("Story generation node ready - starting LLM streaming")
 
                         # Get LLM config from state
                         llm_config = node_output.get("llm_config", {})
@@ -291,7 +291,6 @@ class StoryGeneratorGraph:
                             total_tokens = input_tokens + output_tokens
                             credits_used = total_tokens
 
-                            logger.info(f"LLM streaming complete. Story: {len(accumulated_story)} chars, {total_tokens} tokens")
 
                             # We've completed streaming - emit complete event and return
                             # Skip remaining graph nodes since we handled streaming directly

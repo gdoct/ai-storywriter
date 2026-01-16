@@ -174,7 +174,6 @@ def _extract_and_send_scenario(content: str, user_id: str):
                 }
                 yield f'data: {json.dumps(tool_call_msg)}\n\n'.encode('utf-8')
                 
-                logger.info(f"Successfully extracted and sent scenario: {scenario_data.get('title', 'Untitled')}")
                 
             except json.JSONDecodeError as e:
                 logger.warning(f"Failed to parse scenario JSON: {str(e)}")

@@ -2,11 +2,14 @@ import json
 import logging
 from typing import List, Dict, Any
 from fastapi import APIRouter, HTTPException, status, Depends
+from fastapi import Request
 from domain.models.scenario import (
-    ScenarioCreate, ScenarioUpdate, ScenarioListItem, 
+    ScenarioCreate, ScenarioUpdate, ScenarioListItem,
     ScenarioResponse, StoryPreview, StoryDetail, DeleteResponse,
-    SaveStoryRequest, SaveStoryResponse
+    SaveStoryRequest, SaveStoryResponse, ContinueStoryRequest
 )
+from domain.services.story_continuation_service import StoryContinuationService
+from domain.services.llm_proxy_service import LLMProxyService
 from infrastructure.database.db import get_db_connection
 from infrastructure.database.repositories import GeneratedTextRepository, ScenarioRepository, UserRepository
 from api.middleware.fastapi_auth import get_current_user
@@ -298,3 +301,58 @@ async def delete_story(
     
     GeneratedTextRepository.delete_story(story_id)
     return DeleteResponse(success=True)
+
+
+# --- STORY CONTINUATION ENDPOINT ---
+
+@router.post("/story/continue/{story_id}", response_model=Dict[str, Any])
+async def continue_story(
+    story_id: str,
+    request_body: ContinueStoryRequest,
+    request: Request,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Create a continuation scenario for an existing story.
+
+    This endpoint:
+    1. Fetches the original story and scenario
+    2. Uses LLM to summarize the story (deducts credits)
+    3. Uses LLM to generate the story continuation opening (deducts credits)
+    4. Creates a new scenario with:
+       - Same characters, locations, writing style, notes
+       - Synopsis set to the story summary
+       - Fill-in beginning set to the story continuation opening
+       - Title: "{Original Title} - Continued"
+    5. Returns the new scenario for editing/generation
+    """
+    try:
+        user_id = current_user.get('user_id') or current_user.get('id')
+
+        # Extract BYOK headers if present
+        byok_headers = LLMProxyService.extract_byok_headers(dict(request.headers))
+
+        # Create continuation scenario
+        continuation_service = StoryContinuationService()
+        new_scenario = await continuation_service.create_continuation_scenario(
+            original_story_id=story_id,
+            original_scenario_id=request_body.originalScenarioId,
+            user_id=user_id,
+            byok_headers=byok_headers
+        )
+
+        return new_scenario
+
+    except ValueError as e:
+        # Handle validation errors (insufficient credits, not found, etc.)
+        logging.error(f"Continue story validation error: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+    except Exception as e:
+        logging.error(f"Continue story error: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to create continuation scenario"
+        )

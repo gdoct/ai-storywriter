@@ -141,8 +141,8 @@ async def image_generations(
     start_time = time.time()
     user_id = current_user.get('user_id') or current_user.get('id') or current_user.get('username')
     
-    logger.info(f"[IMAGE AI] Request from user: {user_id}")
-    logger.info(f"[IMAGE AI] Model: {completion_request.model}")
+    # logger.info(f"[IMAGE AI] Request from user: {user_id}")
+    # logger.info(f"[IMAGE AI] Model: {completion_request.model}")
     
     try:
         # Get user's image LLM configuration
@@ -225,7 +225,7 @@ async def image_generations(
                 )
 
         async def generate():
-            logger.info(f"[IMAGE AI] Starting {provider} request (mode: {mode})")
+            # logger.info(f"[IMAGE AI] Starting {provider} request (mode: {mode})")
             
             try:
                 # Get image generation service
@@ -240,7 +240,7 @@ async def image_generations(
                     'stream': True  # Use streaming for progress updates
                 }
                 
-                logger.info(f"[IMAGE AI] Using {provider} service for image generation")
+                # logger.info(f"[IMAGE AI] Using {provider} service for image generation")
                 
                 # Use the service's streaming method for status updates
                 import asyncio
@@ -249,7 +249,7 @@ async def image_generations(
                         yield chunk
                         await asyncio.sleep(0)
                         
-                logger.info(f"[IMAGE AI] Generation finished successfully")
+                # logger.info(f"[IMAGE AI] Generation finished successfully")
                 
                 # TODO: Implement proper credit deduction based on actual image generation cost
                 

@@ -1,5 +1,6 @@
 // frontend/src/services/multimodalService.ts
 import { LLMMessage } from '../types/LLMTypes';
+import { MaxTokensService, TokenContext } from './maxTokensService';
 import { getToken } from './security';
 import { getBYOKHeaders, isUserInBYOKMode } from './settings';
 
@@ -108,7 +109,7 @@ export async function streamMultimodalChatCompletion(
       model: options.model || 'gpt-4-vision-preview',
       messages,
       temperature: options.temperature ?? 0.7,
-      max_tokens: options.max_tokens ?? 1000,
+      max_tokens: MaxTokensService.getMaxTokens(TokenContext.VISION_DETAILED, options.max_tokens),
     };
     
     if (!options.model || options.model.trim() === '') {

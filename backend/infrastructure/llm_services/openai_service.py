@@ -4,6 +4,7 @@ import re
 
 import requests
 from infrastructure.llm_services.llm_service import BaseLLMService
+from domain.services.max_tokens_service import MaxTokensService, TokenContext
 
 
 class OpenAIService(BaseLLMService):
@@ -153,9 +154,9 @@ class OpenAIService(BaseLLMService):
                         ]
                     }
                 ],
-                "max_tokens": 1000
+                "max_tokens": MaxTokensService.get_max_tokens(TokenContext.VISION_DETAILED)
             }
-            
+
             # Send vision request to OpenAI
             response = requests.post(
                 f"{self.base_url}/chat/completions",

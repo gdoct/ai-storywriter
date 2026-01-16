@@ -1161,13 +1161,13 @@ export function createSimilarScenarioPrompt(
 
   var modifiedScenario = { ...existingScenario };
   // remove all characters that are not in the selectedCharacters. selectedCharacters could be undefined.
-  if (selections.selectedCharacters) {
+  if (selections.selectedCharacters && modifiedScenario.characters) {
     modifiedScenario.characters = modifiedScenario.characters.filter(char => selections.selectedCharacters.includes(char.name));
   } else {
     modifiedScenario.characters = [];
   }
 
-  if (selections.selectedLocations) {
+  if (selections.selectedLocations && modifiedScenario.locations) {
     modifiedScenario.locations = modifiedScenario.locations.filter(loc => selections.selectedLocations.includes(loc.name));
   } else {
     modifiedScenario.locations = [];

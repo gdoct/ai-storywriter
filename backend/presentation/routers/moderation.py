@@ -33,7 +33,7 @@ async def remove_story(
         
         if success:
             # Log the moderation action
-            logger.info(f"Story {story_id} removed by moderator {current_user['username']}: {request_data.reason}")
+            # logger.info(f"Story {story_id} removed by moderator {current_user['username']}: {request_data.reason}")
             
             # TODO: Add moderation log entry to database
             
@@ -76,7 +76,7 @@ async def flag_story(
         
         # TODO: Implement story flagging in database
         # For now, just log the action
-        logger.info(f"Story {story_id} flagged by moderator {current_user['username']}: {request_data.reason}")
+        # logger.info(f"Story {story_id} flagged by moderator {current_user['username']}: {request_data.reason}")
         
         return FlagStoryResponse(
             message="Story flagged successfully",
@@ -125,7 +125,7 @@ async def suspend_user(
         
         # TODO: Implement user suspension in database
         # For now, just log the action
-        logger.info(f"User {user_id} suspended for {request_data.duration_hours} hours by moderator {current_user['username']}: {request_data.reason}")
+        # logger.info(f"User {user_id} suspended for {request_data.duration_hours} hours by moderator {current_user['username']}: {request_data.reason}")
         
         return SuspendUserResponse(
             message="User suspended successfully",
@@ -171,7 +171,7 @@ async def toggle_staff_pick(
         
         if success:
             action = 'added to' if is_staff_pick else 'removed from'
-            logger.info(f"Story {story_id} {action} staff picks by {current_user['username']}")
+            # logger.info(f"Story {story_id} {action} staff picks by {current_user['username']}")
             
             return ToggleStaffPickResponse(
                 message=f"Story {action} staff picks successfully",

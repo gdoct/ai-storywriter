@@ -24,8 +24,12 @@ class TemplateEngine:
             template = self.env.from_string(template_str)
             return template.render(**context)
         except Exception as e:
-            # Fallback to basic string formatting if Jinja2 fails
-            return template_str.format(**context)
+            # Log the error and re-raise - don't try fallback as it will fail on Jinja2 syntax
+            import logging
+            logging.getLogger(__name__).error(f"Template rendering failed: {e}")
+            logging.getLogger(__name__).error(f"Context keys: {list(context.keys())}")
+            logging.getLogger(__name__).error(f"fill_in value: {context.get('fill_in')}")
+            raise
 
     def _format_character_list(self, characters: List[Dict[str, Any]]) -> str:
         """Format characters for prompt injection"""
@@ -109,6 +113,10 @@ class TemplateEngine:
         """Clean and normalize text content"""
         if not text:
             return ""
+
+        # Handle non-string types
+        if not isinstance(text, str):
+            text = str(text)
 
         # Remove extra whitespace
         text = re.sub(r'\s+', ' ', text.strip())

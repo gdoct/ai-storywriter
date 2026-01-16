@@ -32,6 +32,9 @@ async def scenario_analysis_node(state: Dict[str, Any]) -> Dict[str, Any]:
         ))
 
         # Analyze available components
+        fill_in_data = scenario.get("fill_in") or {}
+        has_fill_in = bool(fill_in_data.get("beginning") or fill_in_data.get("ending"))
+
         analysis = {
             "has_title": bool(scenario.get("title")),
             "has_synopsis": bool(scenario.get("synopsis")),
@@ -43,8 +46,7 @@ async def scenario_analysis_node(state: Dict[str, Any]) -> Dict[str, Any]:
             "timeline_event_count": len(scenario.get("timeline", [])),
             "has_notes": bool(scenario.get("notes")),
             "has_custom_prompts": bool(scenario.get("prompt_settings")),
-            "has_fill_in": bool((scenario.get("fill_in") or {}).get("beginning") or
-                                (scenario.get("fill_in") or {}).get("ending")),
+            "has_fill_in": has_fill_in,
             "multimodal_content": _detect_multimodal_content(scenario)
         }
 
@@ -74,9 +76,6 @@ async def scenario_analysis_node(state: Dict[str, Any]) -> Dict[str, Any]:
 
         # Calculate total steps for progress tracking
         total_steps = len(nodes_to_process)
-
-        # Log analysis results
-        logger.info(f"Scenario analysis complete. Processing {total_steps} nodes: {nodes_to_process}")
 
         # Validate minimum requirements
         if not (analysis["has_title"] or analysis["has_synopsis"] or

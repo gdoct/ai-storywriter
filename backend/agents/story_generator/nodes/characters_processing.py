@@ -56,9 +56,6 @@ async def characters_processing_node(state: Dict[str, Any]) -> Dict[str, Any]:
             "has_photos": any(char.get("has_photo") for char in processed_characters)
         }
 
-        logger.info(f"Characters processing complete. {len(processed_characters)} total, "
-                   f"{len(main_characters)} main characters")
-
         # Update processing summary
         processing_summary = state.get("processing_summary", {})
         processing_summary["nodes_processed"] = processing_summary.get("nodes_processed", 0) + 1

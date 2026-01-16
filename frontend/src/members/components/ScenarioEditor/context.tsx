@@ -22,6 +22,7 @@ const initialState: ScenarioEditorState = {
   isLoading: false,
   isSaving: false,
   isGenerating: false,
+  isContinuing: false,
   errors: {},
   showStoryModal: false,
   generatedStory: null,
@@ -173,6 +174,12 @@ function scenarioEditorReducer(
       return {
         ...state,
         isStorySaved: action.payload,
+      };
+
+    case 'SET_CONTINUING':
+      return {
+        ...state,
+        isContinuing: action.payload,
       };
 
     default:

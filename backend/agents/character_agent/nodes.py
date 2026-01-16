@@ -2,6 +2,7 @@ import asyncio
 import logging
 from typing import Dict, Any, List
 from domain.services.llm_proxy_service import LLMProxyService
+from domain.services.max_tokens_service import MaxTokensService, TokenContext
 from infrastructure.database.user_preferences_repository import UserPreferencesRepository
 
 logger = logging.getLogger(__name__)
@@ -38,7 +39,6 @@ async def validation_node(state: Dict[str, Any]) -> Dict[str, Any]:
                 return state
 
         state["current_step"] = "validation_complete"
-        logger.info("Character agent validation completed successfully")
 
     except Exception as e:
         logger.error(f"Validation error: {str(e)}")
@@ -89,7 +89,7 @@ Provide a detailed but concise description focusing on elements that would be us
         payload = {
             "messages": messages,
             "temperature": 0.7,
-            "max_tokens": 500,
+            "max_tokens": MaxTokensService.get_max_tokens(TokenContext.CHARACTER_MULTIMODAL_ANALYSIS),
             "stream": True
         }
         analysis_result = llm_service.chat_completion_stream(payload)
@@ -115,7 +115,6 @@ Provide a detailed but concise description focusing on elements that would be us
 
         state["multimodal_analysis"] = result_text.strip()
         state["current_step"] = "multimodal_analysis_complete"
-        logger.info("Multimodal analysis completed successfully")
 
     except Exception as e:
         logger.error(f"Multimodal analysis error: {str(e)}")
@@ -150,7 +149,7 @@ async def character_generation_node(state: Dict[str, Any]) -> Dict[str, Any]:
                 payload = {
                     "messages": messages,
                     "temperature": 0.7,
-                    "max_tokens": 200,
+                    "max_tokens": MaxTokensService.get_max_tokens(TokenContext.CHARACTER_FIELD),
                     "stream": True
                 }
                 completion_result = llm_service.chat_completion_stream(payload)
@@ -205,7 +204,6 @@ async def character_generation_node(state: Dict[str, Any]) -> Dict[str, Any]:
                 }
                 state["streaming_events"].append(streaming_event)
 
-                logger.info(f"Generated character field: {field_name}")
 
             except Exception as e:
                 logger.error(f"Failed to generate field {field_name}: {str(e)}")
@@ -225,7 +223,6 @@ async def character_generation_node(state: Dict[str, Any]) -> Dict[str, Any]:
                 state["streaming_events"].append(streaming_event)
 
         state["current_step"] = "character_generation_complete"
-        logger.info("Character generation completed")
 
     except Exception as e:
         logger.error(f"Character generation error: {str(e)}")
@@ -257,7 +254,7 @@ async def character_modification_node(state: Dict[str, Any]) -> Dict[str, Any]:
                 payload = {
                     "messages": messages,
                     "temperature": 0.7,
-                    "max_tokens": 200,
+                    "max_tokens": MaxTokensService.get_max_tokens(TokenContext.CHARACTER_FIELD),
                     "stream": True
                 }
                 completion_result = llm_service.chat_completion_stream(payload)
@@ -312,7 +309,6 @@ async def character_modification_node(state: Dict[str, Any]) -> Dict[str, Any]:
                 }
                 state["streaming_events"].append(streaming_event)
 
-                logger.info(f"Modified character field: {field_name}")
 
             except Exception as e:
                 logger.error(f"Failed to modify field {field_name}: {str(e)}")
@@ -332,7 +328,6 @@ async def character_modification_node(state: Dict[str, Any]) -> Dict[str, Any]:
                 state["streaming_events"].append(streaming_event)
 
         state["current_step"] = "character_modification_complete"
-        logger.info("Character modification completed")
 
     except Exception as e:
         logger.error(f"Character modification error: {str(e)}")
@@ -364,7 +359,6 @@ async def image_generation_node(state: Dict[str, Any]) -> Dict[str, Any]:
         state["streaming_events"].append(streaming_event)
 
         state["current_step"] = "image_generation_complete"
-        logger.info("Character image generation completed (placeholder)")
 
     except Exception as e:
         logger.error(f"Image generation error: {str(e)}")
