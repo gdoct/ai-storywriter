@@ -23,6 +23,7 @@ import Stories from './members/pages/Stories';
 import StoryDetail from './shared/pages/StoryDetail';
 import Templates from './members/pages/Templates';
 import Test from './shared/pages/Test';
+import RollingStories from './members/pages/RollingStories';
 
 // Component to handle the root route logic
 // eslint-disable-next-line react-refresh/only-export-components
@@ -74,15 +75,23 @@ const getRoutes = (): RouteObject[] => {
         </ProtectedRoute>
       )
     },
-    { 
-      path: '/templates', 
+    {
+      path: '/templates',
       element: (
         <ProtectedRoute>
           <Templates />
         </ProtectedRoute>
       )
     },
-    { 
+    {
+      path: '/rolling-stories',
+      element: (
+        <ProtectedRoute>
+          <RollingStories />
+        </ProtectedRoute>
+      )
+    },
+    {
       path: '/buy-credits', 
       element: (
         <ProtectedRoute>

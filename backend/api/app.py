@@ -51,7 +51,7 @@ async def health_check():
 from presentation.routers import (
     auth, scenario, llm_proxy, multimodal_proxy, image_proxy, settings, dashboard, marketplace,
     image, character_photo, scenario_image, payment, moderation, role, user_settings, character_agent,
-    story_generator
+    story_generator, rolling_story
 )
 from agents.scenario_agent import streaming_agent
 app.include_router(auth.router, prefix="/api", tags=["auth"])
@@ -71,6 +71,7 @@ app.include_router(role.router, prefix="/api", tags=["roles"])
 app.include_router(user_settings.router, prefix="/api", tags=["user_settings"])
 app.include_router(character_agent.router, prefix="/api/agent/character", tags=["character_agent"])
 app.include_router(story_generator.router, prefix="/api", tags=["story_generator"])
+app.include_router(rolling_story.router, prefix="/api", tags=["rolling_stories"])
 app.include_router(streaming_agent.router, prefix="/api/streaming_agent", tags=["streaming_agent"])
 
 # Serve React frontend static files (after API routes are registered)

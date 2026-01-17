@@ -122,11 +122,11 @@ class OllamaService(BaseLLMService):
             if 'presence_penalty' in payload and payload['presence_penalty'] is not None:
                 ollama_payload['options']['presence_penalty'] = float(payload['presence_penalty'])
                 
-            # Use /api/chat endpoint for chat completions
-            with requests.post(f"{self.base_url}/api/chat", 
-                             json=ollama_payload, 
-                             stream=True, 
-                             timeout=60) as resp:
+            # Use /api/chat endpoint for chat completions - use longer timeout for story generation
+            with requests.post(f"{self.base_url}/api/chat",
+                             json=ollama_payload,
+                             stream=True,
+                             timeout=300) as resp:  # 5 minute timeout for long generations
                 resp.raise_for_status()
                 
                 # Process streaming response and convert to OpenAI format

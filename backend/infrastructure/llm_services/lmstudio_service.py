@@ -73,24 +73,24 @@ class LMStudioService(BaseLLMService):
             if 'model' in payload and payload['model'] is not None:
                 completion_params['model'] = payload['model']
                 
-            # Stream the response
-            with requests.post(f"{self.base_url}/v1/chat/completions", 
-                             json=completion_params, 
-                             stream=True, 
-                             timeout=60) as resp:
+            # Stream the response - use longer timeout for story generation
+            with requests.post(f"{self.base_url}/v1/chat/completions",
+                             json=completion_params,
+                             stream=True,
+                             timeout=300) as resp:  # 5 minute timeout for long generations
                 resp.raise_for_status()
-                # Use minimal buffering for real-time streaming  
+                # Use minimal buffering for real-time streaming
                 # Process Server-Sent Events line by line for real-time streaming
                 for line in resp.iter_lines(decode_unicode=False, chunk_size=1):
                     if line:
                         # Decode the line to check its content
-                        line_str = line.decode('utf-8', errors='ignore')
+                        line_str = line.decode('utf-8', errors='ignore').strip()
                         # LM Studio returns SSE format: "data: {...}"
-                        if line_str.startswith('data: '):
-                            yield f"{line_str}\n\n".encode('utf-8')
-                        elif line_str == 'data: [DONE]':
-                            yield f"{line_str}\n\n".encode('utf-8')
+                        if line_str.startswith('data: [DONE]'):
+                            yield f"data: [DONE]\n\n".encode('utf-8')
                             break
+                        elif line_str.startswith('data: '):
+                            yield f"{line_str}\n\n".encode('utf-8')
         except Exception as e:
             import traceback
 

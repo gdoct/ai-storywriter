@@ -706,3 +706,358 @@ class AppActivePolicyRepository:
 # with get_db_session() as db:
 #     # db operations
 #     pass
+
+
+class RollingStoryRepository:
+    """Repository for Rolling Stories feature."""
+
+    @staticmethod
+    def create_rolling_story(user_id: str, scenario_id: str, title: str) -> dict:
+        """Create a new rolling story."""
+        conn = get_db_connection()
+        now = datetime.now(timezone.utc).isoformat()
+        cursor = conn.cursor()
+        cursor.execute('''
+            INSERT INTO rolling_stories (user_id, scenario_id, title, status, created_at, updated_at)
+            VALUES (?, ?, ?, 'draft', ?, ?)
+        ''', (user_id, scenario_id, title, now, now))
+        conn.commit()
+        story_id = cursor.lastrowid
+        story = conn.execute('SELECT * FROM rolling_stories WHERE id = ?', (story_id,)).fetchone()
+        conn.close()
+        return dict(story) if story else None
+
+    @staticmethod
+    def get_rolling_story_by_id(story_id: int, user_id: str = None) -> dict:
+        """Get a rolling story by ID, optionally filtered by user."""
+        conn = get_db_connection()
+        if user_id:
+            story = conn.execute(
+                'SELECT * FROM rolling_stories WHERE id = ? AND user_id = ?',
+                (story_id, user_id)
+            ).fetchone()
+        else:
+            story = conn.execute(
+                'SELECT * FROM rolling_stories WHERE id = ?',
+                (story_id,)
+            ).fetchone()
+        conn.close()
+        return dict(story) if story else None
+
+    @staticmethod
+    def get_rolling_stories_by_user(user_id: str) -> list:
+        """Get all rolling stories for a user."""
+        conn = get_db_connection()
+        stories = conn.execute('''
+            SELECT rs.*, COUNT(sp.id) as paragraph_count
+            FROM rolling_stories rs
+            LEFT JOIN story_paragraphs sp ON rs.id = sp.rolling_story_id
+            WHERE rs.user_id = ?
+            GROUP BY rs.id
+            ORDER BY rs.updated_at DESC
+        ''', (user_id,)).fetchall()
+        conn.close()
+        return [dict(s) for s in stories]
+
+    @staticmethod
+    def update_rolling_story(story_id: int, user_id: str, title: str = None, status: str = None) -> dict:
+        """Update a rolling story."""
+        conn = get_db_connection()
+        now = datetime.now(timezone.utc).isoformat()
+
+        updates = ['updated_at = ?']
+        params = [now]
+
+        if title:
+            updates.append('title = ?')
+            params.append(title)
+        if status:
+            updates.append('status = ?')
+            params.append(status)
+
+        params.extend([story_id, user_id])
+
+        conn.execute(
+            f'UPDATE rolling_stories SET {", ".join(updates)} WHERE id = ? AND user_id = ?',
+            params
+        )
+        conn.commit()
+        story = conn.execute('SELECT * FROM rolling_stories WHERE id = ?', (story_id,)).fetchone()
+        conn.close()
+        return dict(story) if story else None
+
+    @staticmethod
+    def delete_rolling_story(story_id: int, user_id: str) -> bool:
+        """Delete a rolling story and all related data (cascades)."""
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute('DELETE FROM rolling_stories WHERE id = ? AND user_id = ?', (story_id, user_id))
+        conn.commit()
+        deleted = cursor.rowcount > 0
+        conn.close()
+        return deleted
+
+    # Story Paragraphs
+    @staticmethod
+    def add_paragraph(rolling_story_id: int, sequence: int, content: str) -> dict:
+        """Add a paragraph to a rolling story."""
+        conn = get_db_connection()
+        now = datetime.now(timezone.utc).isoformat()
+        cursor = conn.cursor()
+        cursor.execute('''
+            INSERT INTO story_paragraphs (rolling_story_id, sequence, content, created_at)
+            VALUES (?, ?, ?, ?)
+        ''', (rolling_story_id, sequence, content, now))
+        conn.commit()
+        paragraph_id = cursor.lastrowid
+        paragraph = conn.execute('SELECT * FROM story_paragraphs WHERE id = ?', (paragraph_id,)).fetchone()
+
+        # Update rolling story timestamp and status
+        conn.execute(
+            'UPDATE rolling_stories SET updated_at = ?, status = ? WHERE id = ?',
+            (now, 'in_progress', rolling_story_id)
+        )
+        conn.commit()
+        conn.close()
+        return dict(paragraph) if paragraph else None
+
+    @staticmethod
+    def get_paragraphs(rolling_story_id: int) -> list:
+        """Get all paragraphs for a rolling story."""
+        conn = get_db_connection()
+        paragraphs = conn.execute('''
+            SELECT * FROM story_paragraphs
+            WHERE rolling_story_id = ?
+            ORDER BY sequence ASC
+        ''', (rolling_story_id,)).fetchall()
+        conn.close()
+        return [dict(p) for p in paragraphs]
+
+    @staticmethod
+    def get_last_paragraph(rolling_story_id: int) -> dict:
+        """Get the last paragraph of a rolling story."""
+        conn = get_db_connection()
+        paragraph = conn.execute('''
+            SELECT * FROM story_paragraphs
+            WHERE rolling_story_id = ?
+            ORDER BY sequence DESC
+            LIMIT 1
+        ''', (rolling_story_id,)).fetchone()
+        conn.close()
+        return dict(paragraph) if paragraph else None
+
+    @staticmethod
+    def get_last_paragraphs(rolling_story_id: int, count: int = 2) -> list:
+        """Get the last N paragraphs of a rolling story for context."""
+        conn = get_db_connection()
+        paragraphs = conn.execute('''
+            SELECT * FROM story_paragraphs
+            WHERE rolling_story_id = ?
+            ORDER BY sequence DESC
+            LIMIT ?
+        ''', (rolling_story_id, count)).fetchall()
+        conn.close()
+        # Reverse to get chronological order
+        return [dict(p) for p in reversed(paragraphs)]
+
+    @staticmethod
+    def get_next_sequence(rolling_story_id: int) -> int:
+        """Get the next paragraph sequence number."""
+        conn = get_db_connection()
+        result = conn.execute('''
+            SELECT MAX(sequence) FROM story_paragraphs WHERE rolling_story_id = ?
+        ''', (rolling_story_id,)).fetchone()
+        conn.close()
+        return (result[0] or 0) + 1
+
+    # Story Bible (Tier 1)
+    @staticmethod
+    def add_bible_entry(rolling_story_id: int, category: str, name: str, details: dict, introduced_at: int) -> dict:
+        """Add a story bible entry."""
+        conn = get_db_connection()
+        now = datetime.now(timezone.utc).isoformat()
+        cursor = conn.cursor()
+        cursor.execute('''
+            INSERT INTO story_bible (rolling_story_id, category, name, details, introduced_at, created_at)
+            VALUES (?, ?, ?, ?, ?, ?)
+        ''', (rolling_story_id, category, name, json.dumps(details), introduced_at, now))
+        conn.commit()
+        entry_id = cursor.lastrowid
+        entry = conn.execute('SELECT * FROM story_bible WHERE id = ?', (entry_id,)).fetchone()
+        conn.close()
+        if entry:
+            result = dict(entry)
+            result['details'] = json.loads(result['details'])
+            return result
+        return None
+
+    @staticmethod
+    def update_bible_entry(entry_id: int, rolling_story_id: int, name: str = None, details: dict = None) -> dict:
+        """Update a story bible entry."""
+        conn = get_db_connection()
+
+        updates = []
+        params = []
+
+        if name:
+            updates.append('name = ?')
+            params.append(name)
+        if details is not None:
+            updates.append('details = ?')
+            params.append(json.dumps(details))
+
+        if updates:
+            params.extend([entry_id, rolling_story_id])
+            conn.execute(
+                f'UPDATE story_bible SET {", ".join(updates)} WHERE id = ? AND rolling_story_id = ?',
+                params
+            )
+            conn.commit()
+
+        entry = conn.execute('SELECT * FROM story_bible WHERE id = ?', (entry_id,)).fetchone()
+        conn.close()
+        if entry:
+            result = dict(entry)
+            result['details'] = json.loads(result['details'])
+            return result
+        return None
+
+    @staticmethod
+    def get_bible_entries(rolling_story_id: int, category: str = None) -> list:
+        """Get all bible entries for a rolling story, optionally filtered by category."""
+        conn = get_db_connection()
+        if category:
+            entries = conn.execute('''
+                SELECT * FROM story_bible
+                WHERE rolling_story_id = ? AND category = ?
+                ORDER BY introduced_at ASC
+            ''', (rolling_story_id, category)).fetchall()
+        else:
+            entries = conn.execute('''
+                SELECT * FROM story_bible
+                WHERE rolling_story_id = ?
+                ORDER BY introduced_at ASC
+            ''', (rolling_story_id,)).fetchall()
+        conn.close()
+        results = []
+        for e in entries:
+            entry = dict(e)
+            entry['details'] = json.loads(entry['details'])
+            results.append(entry)
+        return results
+
+    # Story Events (Tier 2)
+    @staticmethod
+    def add_event(rolling_story_id: int, paragraph_sequence: int, event_type: str, summary: str, resolved: bool = False) -> dict:
+        """Add a story event."""
+        conn = get_db_connection()
+        now = datetime.now(timezone.utc).isoformat()
+        cursor = conn.cursor()
+        cursor.execute('''
+            INSERT INTO story_events (rolling_story_id, paragraph_sequence, event_type, summary, resolved, created_at)
+            VALUES (?, ?, ?, ?, ?, ?)
+        ''', (rolling_story_id, paragraph_sequence, event_type, summary, 1 if resolved else 0, now))
+        conn.commit()
+        event_id = cursor.lastrowid
+        event = conn.execute('SELECT * FROM story_events WHERE id = ?', (event_id,)).fetchone()
+        conn.close()
+        if event:
+            result = dict(event)
+            result['resolved'] = bool(result['resolved'])
+            return result
+        return None
+
+    @staticmethod
+    def get_events(rolling_story_id: int, event_type: str = None, limit: int = None) -> list:
+        """Get story events, optionally filtered by type."""
+        conn = get_db_connection()
+        query = 'SELECT * FROM story_events WHERE rolling_story_id = ?'
+        params = [rolling_story_id]
+
+        if event_type:
+            query += ' AND event_type = ?'
+            params.append(event_type)
+
+        query += ' ORDER BY paragraph_sequence DESC'
+
+        if limit:
+            query += ' LIMIT ?'
+            params.append(limit)
+
+        events = conn.execute(query, params).fetchall()
+        conn.close()
+        results = []
+        for e in events:
+            event = dict(e)
+            event['resolved'] = bool(event['resolved'])
+            results.append(event)
+        return results
+
+    @staticmethod
+    def resolve_event(event_id: int, rolling_story_id: int) -> dict:
+        """Mark an event as resolved."""
+        conn = get_db_connection()
+        conn.execute(
+            'UPDATE story_events SET resolved = 1 WHERE id = ? AND rolling_story_id = ?',
+            (event_id, rolling_story_id)
+        )
+        conn.commit()
+        event = conn.execute('SELECT * FROM story_events WHERE id = ?', (event_id,)).fetchone()
+        conn.close()
+        if event:
+            result = dict(event)
+            result['resolved'] = bool(result['resolved'])
+            return result
+        return None
+
+    @staticmethod
+    def get_rolling_story_full(story_id: int, user_id: str) -> dict:
+        """Get a rolling story with all related data."""
+        conn = get_db_connection()
+
+        # Get the story
+        story = conn.execute(
+            'SELECT * FROM rolling_stories WHERE id = ? AND user_id = ?',
+            (story_id, user_id)
+        ).fetchone()
+
+        if not story:
+            conn.close()
+            return None
+
+        result = dict(story)
+
+        # Get paragraphs
+        paragraphs = conn.execute('''
+            SELECT * FROM story_paragraphs
+            WHERE rolling_story_id = ?
+            ORDER BY sequence ASC
+        ''', (story_id,)).fetchall()
+        result['paragraphs'] = [dict(p) for p in paragraphs]
+
+        # Get bible entries
+        bible = conn.execute('''
+            SELECT * FROM story_bible
+            WHERE rolling_story_id = ?
+            ORDER BY introduced_at ASC
+        ''', (story_id,)).fetchall()
+        result['bible'] = []
+        for b in bible:
+            entry = dict(b)
+            entry['details'] = json.loads(entry['details'])
+            result['bible'].append(entry)
+
+        # Get events
+        events = conn.execute('''
+            SELECT * FROM story_events
+            WHERE rolling_story_id = ?
+            ORDER BY paragraph_sequence ASC
+        ''', (story_id,)).fetchall()
+        result['events'] = []
+        for e in events:
+            event = dict(e)
+            event['resolved'] = bool(event['resolved'])
+            result['events'].append(event)
+
+        conn.close()
+        return result

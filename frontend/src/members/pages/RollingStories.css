@@ -1,0 +1,241 @@
+/* Rolling Stories Page Styles */
+
+.rolling-stories-page {
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Header */
+.rolling-stories-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--color-border, #e0e0e0);
+}
+
+.header-content h1 {
+  margin: 0;
+  font-size: 2rem;
+  color: var(--color-text-primary, #1a1a1a);
+}
+
+.header-subtitle {
+  margin: 0.5rem 0 0;
+  color: var(--color-text-secondary, #666);
+  font-size: 1rem;
+}
+
+/* Loading State */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  color: var(--color-text-secondary, #666);
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--color-border, #e0e0e0);
+  border-top-color: var(--color-primary, #007bff);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Empty State */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  text-align: center;
+  padding: 2rem;
+}
+
+.empty-icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+}
+
+.empty-state h2 {
+  margin: 0 0 0.5rem;
+  color: var(--color-text-primary, #1a1a1a);
+}
+
+.empty-state p {
+  margin: 0 0 1.5rem;
+  color: var(--color-text-secondary, #666);
+}
+
+/* Stories Grid */
+.stories-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+/* Story Card */
+.story-card {
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem;
+  background: var(--color-surface, #fff);
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: box-shadow 0.2s ease;
+}
+
+.story-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.story-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+}
+
+.story-title {
+  margin: 0;
+  font-size: 1.25rem;
+  color: var(--color-text-primary, #1a1a1a);
+  flex: 1;
+  margin-right: 0.5rem;
+}
+
+/* Status Badges */
+.status-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.status-draft {
+  background: var(--color-warning-light, #fff3cd);
+  color: var(--color-warning, #856404);
+}
+
+.status-in-progress {
+  background: var(--color-info-light, #cce5ff);
+  color: var(--color-info, #004085);
+}
+
+.status-completed {
+  background: var(--color-success-light, #d4edda);
+  color: var(--color-success, #155724);
+}
+
+.status-abandoned {
+  background: var(--color-error-light, #f8d7da);
+  color: var(--color-error, #721c24);
+}
+
+.story-card-meta {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  font-size: 0.875rem;
+  color: var(--color-text-secondary, #666);
+}
+
+.meta-item {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.story-card-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: auto;
+}
+
+/* New Story Modal */
+.new-story-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 1rem 0;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.form-group label {
+  font-weight: 600;
+  color: var(--color-text-primary, #1a1a1a);
+}
+
+.form-input,
+.form-select {
+  padding: 0.75rem;
+  border: 1px solid var(--color-border, #e0e0e0);
+  border-radius: 6px;
+  font-size: 1rem;
+  background: var(--color-surface, #fff);
+  color: var(--color-text-primary, #1a1a1a);
+  transition: border-color 0.2s ease;
+}
+
+.form-input:focus,
+.form-select:focus {
+  outline: none;
+  border-color: var(--color-primary, #007bff);
+}
+
+.no-scenarios {
+  color: var(--color-text-secondary, #666);
+  font-style: italic;
+}
+
+.no-scenarios a {
+  color: var(--color-primary, #007bff);
+  text-decoration: none;
+}
+
+.no-scenarios a:hover {
+  text-decoration: underline;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .rolling-stories-page {
+    padding: 1rem;
+  }
+
+  .rolling-stories-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .stories-grid {
+    grid-template-columns: 1fr;
+  }
+}
