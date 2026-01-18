@@ -177,10 +177,12 @@ async def character_generation_node(state: Dict[str, Any]) -> Dict[str, Any]:
                                             "value": field_value,
                                             "status": "streaming"
                                         }
+                                        # Use character_id from state, or generate a fallback if None
+                                        char_id = state.get("character_id") or f"generated_{len(state['character_fields'])}"
                                         incremental_streaming_event = {
                                             "event_type": "field_update",
                                             "field": incremental_field_data,
-                                            "character_id": state.get("character_id", f"generated_{len(state['character_fields'])}")
+                                            "character_id": char_id
                                         }
                                         state["streaming_events"].append(incremental_streaming_event)
 
@@ -196,11 +198,12 @@ async def character_generation_node(state: Dict[str, Any]) -> Dict[str, Any]:
                 state["character_fields"].append(field_data)
                 state["completed_fields"].append(field_name)
 
-                # Add streaming event
+                # Add streaming event - use character_id from state, or generate a fallback if None
+                char_id = state.get("character_id") or f"generated_{len(state['character_fields'])}"
                 streaming_event = {
                     "event_type": "field_update",
                     "field": field_data,
-                    "character_id": state.get("character_id", f"generated_{len(state['character_fields'])}")
+                    "character_id": char_id
                 }
                 state["streaming_events"].append(streaming_event)
 
@@ -215,10 +218,12 @@ async def character_generation_node(state: Dict[str, Any]) -> Dict[str, Any]:
                 }
                 state["character_fields"].append(field_data)
 
+                # Use character_id from state, or generate a fallback if None
+                char_id = state.get("character_id") or f"generated_{len(state['character_fields'])}"
                 streaming_event = {
                     "event_type": "field_update",
                     "field": field_data,
-                    "character_id": state.get("character_id", f"generated_{len(state['character_fields'])}")
+                    "character_id": char_id
                 }
                 state["streaming_events"].append(streaming_event)
 
@@ -350,11 +355,12 @@ async def image_generation_node(state: Dict[str, Any]) -> Dict[str, Any]:
 
         state["generated_image_uri"] = placeholder_image_uri
 
-        # Add streaming event
+        # Add streaming event - use character_id from state, or generate a fallback if None
+        char_id = state.get("character_id") or "generated_image"
         streaming_event = {
             "event_type": "image_generated",
             "image_uri": placeholder_image_uri,
-            "character_id": state.get("character_id")
+            "character_id": char_id
         }
         state["streaming_events"].append(streaming_event)
 

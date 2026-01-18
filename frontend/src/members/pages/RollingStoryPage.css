@@ -1,21 +1,138 @@
-/* Rolling Story Modal Styles */
+/* Rolling Story Page Styles */
 
-.rolling-story__modal-backdrop {
+.rolling-story__page {
   position: fixed;
-  top: 0;
+  top: 60px; /* Account for main navigation bar */
   left: 0;
   right: 0;
   bottom: 0;
   width: 100vw;
-  height: 100vh;
-  z-index: 1000;
+  height: calc(100vh - 60px);
   background-color: var(--color-background-primary, #111827);
+}
+
+.rolling-story__page--loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.rolling-story__loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  color: var(--color-text-secondary, #e5e7eb);
+}
+
+/* Back Button - positioned within the page content area */
+.rolling-story__back-button-container {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  z-index: 1002;
+}
+
+.rolling-story__back-button {
+  background: rgba(0, 0, 0, 0.75) !important;
+  backdrop-filter: blur(8px);
+  border-radius: 8px !important;
+  border: 1px solid rgba(255, 255, 255, 0.25) !important;
+  color: white !important;
+  font-weight: 500 !important;
+}
+
+.rolling-story__back-button:hover {
+  background: rgba(0, 0, 0, 0.9) !important;
+  border-color: rgba(255, 255, 255, 0.4) !important;
+}
+
+/* Adjust AiStoryReader hero section content to make room for back button */
+.rolling-story__page .hero-section__content {
+  padding-left: 180px; /* Make room for back button on the left */
+}
+
+/* Hide the bottom progress panel and its triggers - not needed for rolling stories */
+.rolling-story__page .slide-panel--bottom,
+.rolling-story__page .ui-trigger--bottom,
+.rolling-story__page .edge-trigger--bottom {
+  display: none !important;
+}
+
+/* Tabs */
+.rolling-story__tabs {
+  position: fixed;
+  top: 60px; /* Below main navigation */
+  left: 200px;
+  right: 200px;
+  height: 40px;
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  padding: 0 20px;
+  z-index: 1003;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.rolling-story__tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.rolling-story__tab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: var(--color-surface-secondary, rgba(31, 41, 55, 0.8));
+  border: 1px solid var(--color-border-primary, #374151);
+  border-bottom: none;
+  border-radius: 8px 8px 0 0;
+  color: var(--color-text-secondary, #9ca3af);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  backdrop-filter: blur(8px);
+}
+
+.rolling-story__tab:hover {
+  background: var(--color-surface-primary, rgba(31, 41, 55, 0.95));
+  color: var(--color-text-primary, #f9fafb);
+}
+
+.rolling-story__tab--active {
+  background: var(--color-surface-primary, #1f2937);
+  color: var(--color-text-primary, #f9fafb);
+  border-color: var(--color-brand-primary, #007bff);
+  border-bottom: 1px solid var(--color-surface-primary, #1f2937);
+}
+
+.rolling-story__tab-name {
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rolling-story__tab-close {
+  background: none;
+  border: none;
+  color: var(--color-text-tertiary, #6b7280);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 2px;
+  transition: color 0.2s ease;
+}
+
+.rolling-story__tab-close:hover {
+  color: var(--color-semantic-error, #ef4444);
 }
 
 /* Status Strip */
 .rolling-story__status-strip {
   position: fixed;
-  top: 0;
+  top: 60px; /* Below main navigation */
   left: 0;
   right: 0;
   height: 40px;
@@ -24,6 +141,10 @@
   align-items: center;
   justify-content: center;
   z-index: 1001;
+}
+
+.rolling-story__status-strip--with-tabs {
+  top: 100px; /* 60px nav + 40px tabs */
 }
 
 .rolling-story__status {
@@ -60,12 +181,12 @@
   40% { opacity: 1; transform: scale(1); }
 }
 
-/* Controls Overlay */
+/* Controls Overlay - positioned within the page content area */
 .rolling-story__controls-overlay {
-  position: fixed;
-  top: 60px;
-  right: 20px;
-  z-index: 1001;
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 1002;
 }
 
 .rolling-story__controls {
@@ -74,9 +195,25 @@
   flex-wrap: wrap;
 }
 
+/* Control buttons styling - make them highly visible */
+.rolling-story__controls button {
+  background: rgba(0, 0, 0, 0.75) !important;
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.25) !important;
+  color: white !important;
+  font-weight: 500 !important;
+  border-radius: 8px !important;
+}
+
+.rolling-story__controls button:hover {
+  background: rgba(0, 0, 0, 0.9) !important;
+  border-color: rgba(255, 255, 255, 0.4) !important;
+}
+
 .rolling-story__control--active {
   background: var(--color-brand-primary, #007bff) !important;
   color: white !important;
+  border-color: var(--color-brand-primary, #007bff) !important;
 }
 
 /* Error Display */
@@ -108,10 +245,10 @@
 
 /* Side Panels */
 .rolling-story__panel {
-  position: fixed;
-  top: 100px;
+  position: absolute;
+  top: 80px; /* Below the control buttons */
   width: 320px;
-  max-height: calc(100vh - 200px);
+  max-height: calc(100% - 180px);
   background: var(--color-surface-primary, #1f2937);
   border-radius: 12px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
@@ -131,7 +268,7 @@
 
 .rolling-story__settings-panel {
   right: 20px;
-  top: 150px;
+  top: 130px; /* Below events panel button */
   width: 280px;
 }
 
@@ -307,6 +444,11 @@
 
 /* Responsive */
 @media (max-width: 768px) {
+  .rolling-story__back-button-container {
+    top: 8px;
+    left: 10px;
+  }
+
   .rolling-story__panel {
     position: fixed;
     top: auto;
@@ -333,4 +475,3 @@
     border-radius: 12px 12px 0 0;
   }
 }
-

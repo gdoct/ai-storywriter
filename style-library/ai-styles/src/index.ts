@@ -26,7 +26,7 @@ export type { DialogProps } from './components/Dialog';
 import './styles/index.css';
 
 export { AiStoryReader } from './components/AiStoryReader';
-export type { AiStoryReaderProps } from './components/AiStoryReader/types';
+export type { AiStoryReaderProps, ParagraphData, ChoiceOption, InlineChoicePanel } from './components/AiStoryReader/types';
 
 export { Toggle } from './components/Toggle';
 export type { ToggleProps } from './components/Toggle/Toggle';

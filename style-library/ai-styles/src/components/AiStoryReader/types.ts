@@ -33,6 +33,25 @@ export interface CharacterData {
   extraInfo?: string;
 }
 
+export interface ChoiceOption {
+  label: string;
+  description: string;
+}
+
+export interface InlineChoicePanel {
+  choices: ChoiceOption[];
+  selectedChoice?: ChoiceOption | null;  // The choice that was selected (for historical panels)
+  isActive?: boolean;  // True if this is the current active choice panel
+  userDirection?: string;  // Optional user direction text that was submitted
+}
+
+export interface ParagraphData {
+  id: string | number;
+  content: string;
+  isChoice?: boolean;  // For choice paragraphs (e.g., "[CHOICE: ...]")
+  choicePanel?: InlineChoicePanel;  // Inline choice panel to show after this paragraph
+}
+
 export interface AiStoryReaderProps {
   // Core content props
   text: string;
@@ -74,4 +93,20 @@ export interface AiStoryReaderProps {
   // Accessibility
   ariaLabel?: string;
   ariaDescribedBy?: string;
+
+  // Paragraph-level control (for interactive paragraph actions)
+  paragraphs?: ParagraphData[];  // Structured paragraph data (alternative to text)
+  enableParagraphActions?: boolean;  // Show hover actions on paragraphs
+  onParagraphCopy?: (index: number, paragraph: ParagraphData) => void;
+  onParagraphRegenerate?: (index: number, paragraph: ParagraphData) => void;
+  onParagraphFork?: (index: number, paragraph: ParagraphData) => void;  // Fork story from this paragraph
+  streamingContent?: string;  // Content being streamed for new paragraph
+
+  // Inline choice panel - active choices shown at end of content
+  activeChoices?: ChoiceOption[];  // Current choices to display (renders panel at end of content)
+  onChoiceSelect?: (choice: ChoiceOption) => void;  // When user clicks a choice
+  onChoiceConfirm?: (choice: ChoiceOption, userDirection?: string) => void;  // When user confirms their choice
+  selectedChoice?: ChoiceOption | null;  // Currently selected (but not confirmed) choice
+  choiceUserDirection?: string;  // Current value of user direction input
+  onUserDirectionChange?: (direction: string) => void;  // When user types in direction input
 }

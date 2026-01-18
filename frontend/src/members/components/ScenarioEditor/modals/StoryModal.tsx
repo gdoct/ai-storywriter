@@ -2,11 +2,10 @@ import { Button, AiStoryReader } from '@drdata/ai-styles';
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { FaRedo, FaSave, FaTimes } from 'react-icons/fa';
-import { FaArrowRight, FaDice } from 'react-icons/fa6';
+import { FaArrowRight } from 'react-icons/fa6';
 import { Scenario } from '@shared/types/ScenarioTypes';
 import { getShowThinkingSetting } from '@shared/services/settings';
 import { GenerationSettingsModal, GenerationSettings } from './GenerationSettingsModal';
-import { RollingStoryModal } from './RollingStoryModal';
 import './StoryModal.css';
 
 export interface StoryModalProps {
@@ -47,7 +46,6 @@ export const StoryModal: React.FC<StoryModalProps> = ({
   const [showThinking, setShowThinking] = useState(false);
   const [showGenerationSettings, setShowGenerationSettings] = useState(false);
   const [isRegenerateMode, setIsRegenerateMode] = useState(false);
-  const [showRollingStoryModal, setShowRollingStoryModal] = useState(false);
 
   // Load thinking setting
   useEffect(() => {
@@ -172,29 +170,16 @@ export const StoryModal: React.FC<StoryModalProps> = ({
         <div className="story-modal__generation-controls">
           {/* Show Generate buttons only if no story and not generating */}
           {!story && !isGenerating && !hasStartedGeneration && (
-            <>
-              <Button
-                variant="primary"
-                size="sm"
-                onClick={handleOpenGenerateSettings}
-                data-test-id="generateStoryButton"
-                className='scenario-editor__generate-story-button'
-                icon={<FaRedo />}
-              >
-                Generate Full Story
-              </Button>
-              {scenario?.id && (
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => setShowRollingStoryModal(true)}
-                  data-test-id="rollingStoryButton"
-                  icon={<FaDice />}
-                >
-                  Interactive Story
-                </Button>
-              )}
-            </>
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={handleOpenGenerateSettings}
+              data-test-id="generateStoryButton"
+              className='scenario-editor__generate-story-button'
+              icon={<FaRedo />}
+            >
+              Generate Full Story
+            </Button>
           )}
           
           {/* Show Cancel button during generation */}
@@ -212,27 +197,14 @@ export const StoryModal: React.FC<StoryModalProps> = ({
           
           {/* Show Regenerate button when story exists and not generating */}
           {(story || hasStartedGeneration) && !isGenerating && (
-            <>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleOpenRegenerateSettings}
-                icon={<FaRedo />}
-              >
-                Regenerate
-              </Button>
-              {scenario?.id && (
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => setShowRollingStoryModal(true)}
-                  data-test-id="rollingStoryFromExistingButton"
-                  icon={<FaDice />}
-                >
-                  Interactive Story
-                </Button>
-              )}
-            </>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleOpenRegenerateSettings}
+              icon={<FaRedo />}
+            >
+              Regenerate
+            </Button>
           )}
           
           {/* Save button - only show when we have content and not generating */}
@@ -388,15 +360,6 @@ export const StoryModal: React.FC<StoryModalProps> = ({
         onGenerate={handleGenerateFromSettings}
         isRegenerating={isRegenerateMode}
       />
-
-      {/* Rolling Story Modal */}
-      {scenario && (
-        <RollingStoryModal
-          isOpen={showRollingStoryModal}
-          onClose={() => setShowRollingStoryModal(false)}
-          scenario={scenario}
-        />
-      )}
     </div>,
     document.body
   );

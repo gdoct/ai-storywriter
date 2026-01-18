@@ -93,6 +93,7 @@ class CharacterAgentService:
                 operation_type="generate",
                 scenario=request.scenario,
                 user_id=user_id,
+                character_id=character_id,  # Pass the generated character_id
                 image_data=filtered_image_file,
                 image_uri=filtered_image_uri,
                 generate_image=filtered_generate_image,

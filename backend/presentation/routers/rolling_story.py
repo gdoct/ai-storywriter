@@ -207,6 +207,37 @@ async def get_story_events(
     return events
 
 
+# ============= Paragraph Management =============
+
+@router.delete("/rolling-stories/{story_id}/paragraphs/{from_sequence}")
+async def delete_paragraphs_from(
+    story_id: int,
+    from_sequence: int,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Delete paragraphs from a given sequence onwards (inclusive).
+    Also deletes associated bible entries and events.
+    Used when regenerating from a specific paragraph.
+    """
+    user_id = current_user['id']
+
+    # Verify story exists and belongs to user
+    story = RollingStoryRepository.get_rolling_story_by_id(story_id, user_id)
+    if not story:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Rolling story not found"
+        )
+
+    deleted_count = RollingStoryRepository.delete_paragraphs_from_sequence(story_id, from_sequence)
+
+    return {
+        "deleted_paragraphs": deleted_count,
+        "from_sequence": from_sequence
+    }
+
+
 # ============= Paragraph Generation =============
 
 @router.post("/rolling-stories/{story_id}/generate")
@@ -257,6 +288,7 @@ async def generate_paragraphs(
             events=request.events,
             chosen_action=request.chosen_action,
             chosen_action_description=request.chosen_action_description,
+            advances_arc=request.advances_arc,
             user_storyline_influence=request.storyline_influence,
             paragraph_count=request.paragraph_count,
             choice_count=request.choice_count
@@ -320,6 +352,7 @@ async def stream_generate_paragraphs(
                 events=request.events,
                 chosen_action=request.chosen_action,
                 chosen_action_description=request.chosen_action_description,
+                advances_arc=request.advances_arc,
                 user_storyline_influence=request.storyline_influence,
                 paragraph_count=request.paragraph_count,
                 choice_count=request.choice_count

@@ -15,6 +15,7 @@ WRITING GUIDELINES:
 - Each paragraph should focus on ONE small moment or beat
 - Continue directly from where the last paragraph ended - do not skip ahead
 - If there's a Running Storyline, follow its guidance on pacing and next beats
+- If there's a USER DIRECTION in the storyline, you MUST incorporate it into this paragraph
 
 TENSION AND PACING:
 - Gradually build tension throughout the paragraphs in this cycle
@@ -95,12 +96,16 @@ IMPORTANT: The choices must be relevant to the specific situation. For example:
 - If they're at a crossroads: "Take the left path", "Turn back", "Wait and observe"
 - If confronted by someone: "Attack first", "Try to negotiate", "Attempt to flee"
 
+STORY ARC PROGRESSION:
+{arc_instruction}
+
 Return a JSON object with exactly {choice_count} choices:
 {{
     "choices": [
         {{
             "label": "Short action label",
-            "description": "What happens if this choice is made"
+            "description": "What happens if this choice is made",
+            "advances_arc": true|false
         }}
     ]
 }}"""
@@ -117,7 +122,10 @@ CHOICES_USER = """## Story Summary
 ## Last Paragraph (ends in a cliffhanger)
 {last_paragraph}
 
-Generate exactly {choice_count} distinct choices for what the protagonist should do at this critical moment. Each choice must directly address the situation in the last paragraph. Return valid JSON only."""
+## Story Arc Context
+{arc_context}
+
+Generate exactly {choice_count} distinct choices for what the protagonist should do at this critical moment. Each choice must directly address the situation in the last paragraph. If the story is ready to advance to the next arc step, include at least one choice that would naturally progress the story arc. Return valid JSON only."""
 
 
 def format_bible_for_prompt(bible: list) -> str:
@@ -161,8 +169,13 @@ def format_events_for_prompt(events: list, limit: int = 10) -> str:
     return "\n".join(lines)
 
 
-def format_scenario_for_prompt(scenario: dict) -> str:
-    """Format scenario for inclusion in prompts."""
+def format_scenario_for_prompt(scenario: dict, current_arc_step: int = 1) -> str:
+    """Format scenario for inclusion in prompts.
+
+    Args:
+        scenario: The scenario dict containing jsondata
+        current_arc_step: The current step in the story arc (1-based)
+    """
     jsondata = scenario.get("jsondata", "{}")
     if isinstance(jsondata, str):
         import json
@@ -181,6 +194,13 @@ def format_scenario_for_prompt(scenario: dict) -> str:
     if jsondata.get("genre"):
         parts.append(f"**Genre:** {jsondata['genre']}")
 
+    # Include story arc with current step indicator
+    if jsondata.get("storyarc"):
+        storyarc = jsondata["storyarc"]
+        parts.append(f"\n**Story Arc (Currently at Step {current_arc_step}):**")
+        parts.append(storyarc)
+        parts.append(f"\n*Note: The story is currently at step {current_arc_step} of the arc. Progress through the arc naturally based on story events.*")
+
     return "\n".join(parts) if parts else "An interactive story."
 
 
@@ -195,6 +215,13 @@ You will analyze the story so far and produce a structured storyline update that
 3. Active threads - Plot points currently in play
 4. Next beat - What should happen in the next few paragraphs
 5. Pacing notes - Whether to slow down, speed up, or maintain pace
+6. Arc progression readiness - Whether the story is ready to advance to the next step of the story arc
+
+STORY ARC AWARENESS:
+- If a story arc is provided, track which step the story is currently at
+- Consider whether story events have completed the current arc step
+- Indicate if the story is ready to progress to the next arc step
+- The arc_ready field should be true only when the current step's events have been sufficiently explored
 
 This running storyline ensures paragraphs flow into each other and the story maintains proper pacing."""
 
@@ -216,13 +243,18 @@ STORYLINE_USER = """## Scenario
 ## User's Storyline Influence (if any)
 {user_influence}
 
+## Story Arc Progression
+{arc_context}
+
 Analyze the story state and provide the running storyline as JSON:
 {{
     "current_situation": "A 1-2 sentence summary of where we are right now",
     "tension_level": "low|building|high|climax|resolving",
     "active_threads": ["thread1", "thread2"],
     "next_beat": "What should happen in the next 2-3 paragraphs",
-    "pacing_notes": "Guidance on pacing for the upcoming paragraphs"
+    "pacing_notes": "Guidance on pacing for the upcoming paragraphs",
+    "arc_ready": true|false,
+    "arc_notes": "Brief note on story arc progress - what has been accomplished and what remains in the current step"
 }}
 
 Return ONLY the JSON, no other text."""
@@ -234,6 +266,12 @@ def format_storyline_for_prompt(storyline: dict) -> str:
         return "No running storyline yet - this is the beginning of the story."
 
     parts = []
+
+    # Put user direction FIRST and make it prominent - this is what the user specifically asked for
+    if storyline.get("user_influence"):
+        parts.append(f"**IMPORTANT - USER DIRECTION (must incorporate this):** {storyline['user_influence']}")
+        parts.append("")  # Add blank line for emphasis
+
     if storyline.get("current_situation"):
         parts.append(f"**Current Situation:** {storyline['current_situation']}")
     if storyline.get("tension_level"):
@@ -245,7 +283,9 @@ def format_storyline_for_prompt(storyline: dict) -> str:
         parts.append(f"**Next Beat:** {storyline['next_beat']}")
     if storyline.get("pacing_notes"):
         parts.append(f"**Pacing:** {storyline['pacing_notes']}")
-    if storyline.get("user_influence"):
-        parts.append(f"**User Direction:** {storyline['user_influence']}")
+
+    # Include story arc progression notes
+    if storyline.get("arc_notes"):
+        parts.append(f"**Story Arc Progress:** {storyline['arc_notes']}")
 
     return "\n".join(parts) if parts else "Story is just beginning."

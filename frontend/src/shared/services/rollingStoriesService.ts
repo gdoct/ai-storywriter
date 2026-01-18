@@ -52,6 +52,7 @@ export interface StoryEvent {
 export interface Choice {
   label: string;  // Short action label (2-5 words), e.g., "Pull the trigger"
   description: string;  // Longer description of the action
+  advances_arc?: boolean;  // Whether this choice advances to the next story arc step
 }
 
 export interface GenerateRequest {
@@ -59,6 +60,7 @@ export interface GenerateRequest {
   events: StoryEvent[];
   chosen_action: string | null;  // The label of the chosen action
   chosen_action_description?: string;
+  advances_arc?: boolean;  // Whether the chosen action advances the story arc
   storyline_influence?: string;  // User's input to influence story direction
   paragraph_count?: number;  // Number of paragraphs to generate (default 3)
   choice_count?: number;  // Number of choices to generate (default 3, range 2-5)
@@ -69,6 +71,8 @@ export interface GenerateResponse {
   bible_updates: StoryBibleEntry[];
   event_updates: StoryEvent[];
   choices: Choice[];
+  current_arc_step?: number;  // Current step in the story arc
+  arc_ready?: boolean;  // Whether the story is ready to advance to the next arc step
 }
 
 // API Functions
@@ -179,6 +183,20 @@ export const generateParagraphs = async (
   return response.data;
 };
 
+/**
+ * Delete paragraphs from a given sequence onwards (inclusive)
+ * Also deletes associated bible entries and events
+ */
+export const deleteParagraphsFrom = async (
+  storyId: number,
+  fromSequence: number
+): Promise<{ deleted_paragraphs: number; from_sequence: number }> => {
+  const response = await axios.delete(
+    `/api/rolling-stories/${storyId}/paragraphs/${fromSequence}`
+  );
+  return response.data;
+};
+
 export interface Storyline {
   current_situation: string;
   tension_level: string;
@@ -186,6 +204,8 @@ export interface Storyline {
   next_beat: string;
   pacing_notes: string;
   user_influence?: string;
+  arc_ready?: boolean;  // Whether the story is ready to advance to the next arc step
+  arc_notes?: string;  // Notes on story arc progress
 }
 
 /**
@@ -205,6 +225,7 @@ export const streamGenerateParagraphs = async function* (
   choices?: Choice[];
   storyline?: Storyline;
   error?: string;
+  paragraph?: StoryParagraph;  // Single paragraph for choice_made event
   paragraphs?: StoryParagraph[];
   bible_updates?: StoryBibleEntry[];
   event_updates?: StoryEvent[];

@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import {
     DashboardHeader,
     RecentGeneratedStories,
+    RecentRollingStories,
     RecentScenarios,
     WritingStats
 } from '../components/Dashboard';
@@ -26,6 +27,7 @@ import {
 import { isUserInBYOKMode } from '@shared/services/settings';
 import { fetchScenarioById } from '@shared/services/scenario';
 import { generateSimilarScenarios, ScenarioSelections as ServiceScenarioSelections, GenerationProgress } from '@shared/services/similarScenarioService';
+import { fetchRollingStories, RollingStory } from '@shared/services/rollingStoriesService';
 import { Scenario } from '@shared/types/ScenarioTypes';
 
 interface DashboardProps {
@@ -43,6 +45,7 @@ const Dashboard: React.FC<DashboardProps> = () => {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [recentScenarios, setRecentScenarios] = useState<RecentScenario[]>([]);
   const [recentStories, setRecentStories] = useState<RecentStory[]>([]);
+  const [recentRollingStories, setRecentRollingStories] = useState<RollingStory[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
@@ -74,15 +77,18 @@ const Dashboard: React.FC<DashboardProps> = () => {
         setLoading(true);
         
         // Fetch all dashboard data in parallel
-        const [statsData, scenariosData, storiesData] = await Promise.all([
+        const [statsData, scenariosData, storiesData, rollingStoriesData] = await Promise.all([
           fetchDashboardStats(),
           fetchRecentScenarios(5, 0),
-          fetchRecentStories(4, 0)
+          fetchRecentStories(4, 0),
+          fetchRollingStories()
         ]);
-        
+
         setStats(statsData);
         setRecentScenarios(scenariosData.scenarios);
         setRecentStories(storiesData.stories);
+        // Show only the 4 most recent rolling stories
+        setRecentRollingStories(rollingStoriesData.slice(0, 4));
         setError(null);
         
         // Show welcome wizard if user has 0 credits, doesn't use BYOK, and has 0 scenarios
@@ -107,6 +113,11 @@ const Dashboard: React.FC<DashboardProps> = () => {
   const handleEditScenario = (scenarioId: string) => {
     // Navigate to the scenario editor with the specific scenario ID
     navigate(`/app?scenario=${scenarioId}`);
+  };
+
+  const handleContinueRollingStory = (story: RollingStory) => {
+    // Navigate to the rolling story page
+    navigate(`/rolling-story/${story.id}`);
   };
 
   const handleReadStory = async (story: RecentStory) => {
@@ -345,15 +356,19 @@ const Dashboard: React.FC<DashboardProps> = () => {
         gap: 'var(--spacing-xl)',
         marginTop: 'var(--spacing-2xl)'
           }}>
-        <RecentScenarios 
-          recentScenarios={recentScenarios} 
-          handleEditScenario={handleEditScenario} 
+        <RecentScenarios
+          recentScenarios={recentScenarios}
+          handleEditScenario={handleEditScenario}
           handleGenerateSimilar={handleGenerateSimilar}
         />
-        <RecentGeneratedStories 
-          recentStories={recentStories} 
-          handlePublishStory={handlePublishStory} 
-          handleReadStory={handleReadStory} 
+        <RecentGeneratedStories
+          recentStories={recentStories}
+          handlePublishStory={handlePublishStory}
+          handleReadStory={handleReadStory}
+        />
+        <RecentRollingStories
+          recentRollingStories={recentRollingStories}
+          handleContinueStory={handleContinueRollingStory}
         />
           </div>
         </div>

@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTheme } from '../../providers/ThemeProvider';
 import { IconButton } from '../IconButton/IconButton';
-import type { AiStoryReaderProps, BookmarkData, TextSelection, ThemeSettings, CharacterData } from './types';
+import type { AiStoryReaderProps, BookmarkData, TextSelection, ThemeSettings, CharacterData, ParagraphData } from './types';
 import './AiStoryReader.css';
 
 const DEFAULT_SETTINGS: ThemeSettings = {
@@ -38,27 +38,32 @@ const saveSettingsToStorage = (settings: ThemeSettings): void => {
   }
 };
 
-// Helper function to format text with proper line breaks and paragraphs
+// Helper function to format text content with proper line breaks
+const formatTextContent = (text: string): React.ReactNode => {
+  if (!text) return null;
+
+  // Replace single line breaks with <br> tags
+  return text
+    .split('\n')
+    .map((line, lineIndex) => {
+      if (lineIndex === 0) return line.trim();
+      return line.trim() ? <React.Fragment key={lineIndex}><br />{line.trim()}</React.Fragment> : <br key={lineIndex} />;
+    });
+};
+
+// Helper function to format text with proper line breaks and paragraphs (for text prop)
 const formatStoryText = (text: string): React.ReactNode => {
   if (!text) return null;
-  
+
   // Split by double line breaks to create paragraphs
-  const paragraphs = text.split(/\n\s*\n/);
-  
-  return paragraphs.map((paragraph, index) => {
-    // Replace single line breaks within paragraphs with <br> tags
-    const formattedParagraph = paragraph
-      .split('\n')
-      .map((line, lineIndex) => {
-        if (lineIndex === 0) return line.trim();
-        return line.trim() ? <><br />{line.trim()}</> : <br />;
-      });
-    
+  const paragraphTexts = text.split(/\n\s*\n/);
+
+  return paragraphTexts.map((paragraph, index) => {
     // Return as paragraph if content exists
     if (paragraph.trim()) {
       return (
         <p key={index} className="story-paragraph">
-          {formattedParagraph}
+          {formatTextContent(paragraph)}
         </p>
       );
     }
@@ -92,6 +97,20 @@ export const AiStoryReader: React.FC<AiStoryReaderProps> = ({
   onClose,
   ariaLabel,
   ariaDescribedBy,
+  // Paragraph-level control
+  paragraphs,
+  enableParagraphActions = false,
+  onParagraphCopy,
+  onParagraphRegenerate,
+  onParagraphFork,
+  streamingContent,
+  // Inline choice panel
+  activeChoices,
+  onChoiceSelect,
+  onChoiceConfirm,
+  selectedChoice,
+  choiceUserDirection,
+  onUserDirectionChange,
 }) => {
   const { theme } = useTheme();
   const contentRef = useRef<HTMLDivElement>(null);
@@ -564,12 +583,12 @@ export const AiStoryReader: React.FC<AiStoryReaderProps> = ({
   const renderEdgeTriggers = () => (
     edgeTriggersVisible && (
       <>
-        <div 
+        <div
           className="edge-trigger edge-trigger--top"
           onMouseEnter={showTopPanel}
           onMouseLeave={hideAllPanels}
         />
-        <div 
+        <div
           className="edge-trigger edge-trigger--bottom"
           onMouseEnter={showBottomPanel}
           onMouseLeave={hideAllPanels}
@@ -577,6 +596,220 @@ export const AiStoryReader: React.FC<AiStoryReaderProps> = ({
       </>
     )
   );
+
+  // Render an inline choice panel
+  const renderInlineChoicePanel = (
+    choicePanel: NonNullable<ParagraphData['choicePanel']>,
+    paragraphId: string | number
+  ) => {
+    const { choices, selectedChoice: historicalChoice, isActive, userDirection: historicalDirection } = choicePanel;
+
+    // Historical panel (choice already made)
+    if (!isActive && historicalChoice) {
+      return (
+        <div key={`choice-panel-${paragraphId}`} className="inline-choice-panel inline-choice-panel--historical">
+          <div className="inline-choice-panel__header">
+            <span className="inline-choice-panel__title">Choice made:</span>
+          </div>
+          <div className="inline-choice-panel__selected">
+            <span className="inline-choice-panel__selected-label">{historicalChoice.label}</span>
+            <span className="inline-choice-panel__selected-description">{historicalChoice.description}</span>
+          </div>
+          {historicalDirection && (
+            <div className="inline-choice-panel__direction-display">
+              <span className="inline-choice-panel__direction-label">Direction:</span>
+              <span className="inline-choice-panel__direction-text">{historicalDirection}</span>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // Active choice panel
+    if (isActive) {
+      return (
+        <div key={`choice-panel-${paragraphId}`} className="inline-choice-panel inline-choice-panel--active">
+          <div className="inline-choice-panel__header">
+            <h3 className="inline-choice-panel__title">What will you do?</h3>
+            <p className="inline-choice-panel__subtitle">Choose an action to shape the next part of your story</p>
+          </div>
+          <div className="inline-choice-panel__choices">
+            {choices.map((choice, choiceIndex) => (
+              <button
+                key={choiceIndex}
+                className={`inline-choice-panel__choice ${
+                  selectedChoice?.label === choice.label ? 'inline-choice-panel__choice--selected' : ''
+                }`}
+                onClick={() => onChoiceSelect?.(choice)}
+              >
+                <span className="inline-choice-panel__choice-label">{choice.label}</span>
+                <span className="inline-choice-panel__choice-description">{choice.description}</span>
+              </button>
+            ))}
+          </div>
+          <div className="inline-choice-panel__direction-input">
+            <input
+              type="text"
+              placeholder="Optional: Add direction (e.g., 'focus on the mystery', 'add more tension')"
+              value={choiceUserDirection || ''}
+              onChange={(e) => onUserDirectionChange?.(e.target.value)}
+              maxLength={150}
+            />
+          </div>
+          {selectedChoice && (
+            <button
+              className="inline-choice-panel__continue-button"
+              onClick={() => onChoiceConfirm?.(selectedChoice, choiceUserDirection)}
+            >
+              Continue with this choice
+            </button>
+          )}
+        </div>
+      );
+    }
+
+    return null;
+  };
+
+  // Render structured paragraphs with optional action buttons
+  const renderStructuredParagraphs = (paragraphsData: ParagraphData[]) => {
+    const elements: React.ReactNode[] = [];
+
+    paragraphsData.forEach((paragraph, index) => {
+      const wrapperClasses = [
+        'story-paragraph-wrapper',
+        paragraph.isChoice ? 'story-paragraph-wrapper--choice' : '',
+        enableParagraphActions && !paragraph.isChoice ? 'story-paragraph-wrapper--interactive' : '',
+      ].filter(Boolean).join(' ');
+
+      elements.push(
+        <div key={paragraph.id} className={wrapperClasses}>
+          <p className="story-paragraph">
+            {formatTextContent(paragraph.content)}
+          </p>
+          {enableParagraphActions && !paragraph.isChoice && (
+            <div className="story-paragraph__actions">
+              <button
+                className="story-paragraph__action"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onParagraphRegenerate?.(index, paragraph);
+                }}
+                title="Regenerate from here"
+              >
+                ↺
+              </button>
+              <button
+                className="story-paragraph__action"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onParagraphCopy?.(index, paragraph);
+                }}
+                title="Copy paragraph"
+              >
+                ⎘
+              </button>
+              {onParagraphFork && (
+                <button
+                  className="story-paragraph__action story-paragraph__action--fork"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onParagraphFork(index, paragraph);
+                  }}
+                  title="Fork story from here"
+                >
+                  ⑂
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      );
+
+      // Render inline choice panel after this paragraph if it has one
+      if (paragraph.choicePanel) {
+        elements.push(renderInlineChoicePanel(paragraph.choicePanel, paragraph.id));
+      }
+    });
+
+    // Add streaming content as a new paragraph if present
+    if (streamingContent) {
+      elements.push(
+        <div key="streaming" className="story-paragraph-wrapper story-paragraph-wrapper--streaming">
+          <p className="story-paragraph">
+            {formatTextContent(streamingContent)}
+          </p>
+        </div>
+      );
+    }
+
+    return elements;
+  };
+
+  // Render the active choice panel (from activeChoices prop)
+  const renderActiveChoicePanel = () => {
+    if (!activeChoices || activeChoices.length === 0) return null;
+
+    return (
+      <div className="inline-choice-panel inline-choice-panel--active">
+        <div className="inline-choice-panel__header">
+          <h3 className="inline-choice-panel__title">What will you do?</h3>
+          <p className="inline-choice-panel__subtitle">Choose an action to shape the next part of your story</p>
+        </div>
+        <div className="inline-choice-panel__choices">
+          {activeChoices.map((choice, choiceIndex) => (
+            <button
+              key={choiceIndex}
+              className={`inline-choice-panel__choice ${
+                selectedChoice?.label === choice.label ? 'inline-choice-panel__choice--selected' : ''
+              }`}
+              onClick={() => onChoiceSelect?.(choice)}
+            >
+              <span className="inline-choice-panel__choice-label">{choice.label}</span>
+              <span className="inline-choice-panel__choice-description">{choice.description}</span>
+            </button>
+          ))}
+        </div>
+        <div className="inline-choice-panel__direction-input">
+          <input
+            type="text"
+            placeholder="Optional: Add direction (e.g., 'focus on the mystery', 'add more tension')"
+            value={choiceUserDirection || ''}
+            onChange={(e) => onUserDirectionChange?.(e.target.value)}
+            maxLength={150}
+          />
+        </div>
+        {selectedChoice && (
+          <button
+            className="inline-choice-panel__continue-button"
+            onClick={() => onChoiceConfirm?.(selectedChoice, choiceUserDirection)}
+          >
+            Continue with this choice
+          </button>
+        )}
+      </div>
+    );
+  };
+
+  // Determine content to render
+  const renderContent = () => {
+    const content: React.ReactNode[] = [];
+
+    if (paragraphs && paragraphs.length > 0) {
+      content.push(<React.Fragment key="paragraphs">{renderStructuredParagraphs(paragraphs)}</React.Fragment>);
+    } else {
+      // Fallback to text-based rendering
+      content.push(<React.Fragment key="text">{formatStoryText(text)}</React.Fragment>);
+    }
+
+    // Add active choice panel at the end (after streaming content which is already in renderStructuredParagraphs)
+    const activePanel = renderActiveChoicePanel();
+    if (activePanel) {
+      content.push(<React.Fragment key="active-choices">{activePanel}</React.Fragment>);
+    }
+
+    return content;
+  };
 
   return (
     <div 
@@ -610,7 +843,7 @@ export const AiStoryReader: React.FC<AiStoryReaderProps> = ({
         onClick={() => !isFullScreen && (showTopPanel(), showBottomPanel())}
         role="article"
       >
-        {formatStoryText(text)}
+        {renderContent()}
       </div>
 
       {/* Non-fullscreen UI triggers */}

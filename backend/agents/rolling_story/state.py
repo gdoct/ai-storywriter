@@ -26,6 +26,10 @@ class RollingStoryState(TypedDict, total=False):
     chosen_action: Optional[str]  # 'positive', 'negative', 'neutral', or None
     chosen_action_description: Optional[str]  # Description of chosen action
 
+    # Story arc tracking
+    current_arc_step: int  # Current step in the story arc (1-based)
+    should_advance_arc: bool  # Whether to advance to the next arc step this cycle
+
     # Running storyline - tracks narrative arc across paragraphs
     storyline: Optional[RunningStoryline]
 

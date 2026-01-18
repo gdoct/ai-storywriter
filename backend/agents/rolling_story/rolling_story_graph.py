@@ -140,6 +140,21 @@ class RollingStoryAgent:
         recent = paragraphs[-2:] if len(paragraphs) >= 2 else paragraphs
         return "\n\n".join(recent)
 
+    def _build_arc_context(self, scenario: dict, current_arc_step: int) -> str:
+        """Build story arc context for prompts."""
+        jsondata = scenario.get("jsondata", "{}")
+        if isinstance(jsondata, str):
+            try:
+                jsondata = json.loads(jsondata)
+            except:
+                jsondata = {}
+
+        storyarc = jsondata.get("storyarc", "")
+        if not storyarc:
+            return "No story arc defined for this scenario."
+
+        return f"Currently at step {current_arc_step} of the story arc. The story arc is:\n{storyarc}"
+
     async def _generate_storyline(
         self,
         user_id: str,
@@ -149,20 +164,23 @@ class RollingStoryAgent:
         recent_paragraphs: List[str],
         chosen_action: str = None,
         chosen_description: str = None,
-        user_influence: str = None
+        user_influence: str = None,
+        current_arc_step: int = 1
     ) -> Dict[str, Any]:
         """Generate or update the running storyline."""
         llm_service, provider, mode = self._get_llm_service(user_id)
 
         choice_context = self._build_choice_context(chosen_action, chosen_description, True)
+        arc_context = self._build_arc_context(scenario, current_arc_step)
 
         prompt = STORYLINE_USER.format(
-            scenario_text=format_scenario_for_prompt(scenario),
+            scenario_text=format_scenario_for_prompt(scenario, current_arc_step),
             bible_text=format_bible_for_prompt(bible),
             events_text=format_events_for_prompt(events),
             recent_paragraphs=self._format_recent_paragraphs(recent_paragraphs),
             choice_context=choice_context,
-            user_influence=user_influence or "None"
+            user_influence=user_influence or "None",
+            arc_context=arc_context
         )
 
         payload = {
@@ -188,16 +206,22 @@ class RollingStoryAgent:
         # Parse JSON using robust parser
         parsed = self._parse_json_response(response_text)
         if parsed:
+            # Add user influence to storyline so it's included in paragraph prompts
+            if user_influence:
+                parsed["user_influence"] = user_influence
             return parsed
 
         # Default storyline
-        return {
+        storyline = {
             "current_situation": "The story is unfolding",
             "tension_level": "building",
             "active_threads": [],
             "next_beat": "Continue developing the narrative",
             "pacing_notes": "Maintain steady pace"
         }
+        if user_influence:
+            storyline["user_influence"] = user_influence
+        return storyline
 
     async def _stream_paragraph(
         self,
@@ -210,7 +234,8 @@ class RollingStoryAgent:
         paragraph_number: int,
         total_paragraphs: int,
         chosen_action: str = None,
-        chosen_description: str = None
+        chosen_description: str = None,
+        current_arc_step: int = 1
     ) -> AsyncGenerator[str, None]:
         """Stream a single paragraph token by token."""
         llm_service, provider, mode = self._get_llm_service(user_id)
@@ -232,7 +257,7 @@ End at the moment of decision, NOT after it is made."""
             final_paragraph_instruction = ""
 
         prompt = PARAGRAPH_GENERATION_USER.format(
-            scenario_text=format_scenario_for_prompt(scenario),
+            scenario_text=format_scenario_for_prompt(scenario, current_arc_step),
             bible_text=format_bible_for_prompt(bible),
             storyline_text=format_storyline_for_prompt(storyline),
             events_text=format_events_for_prompt(events),
@@ -356,12 +381,14 @@ End at the moment of decision, NOT after it is made."""
         bible: List[Dict[str, Any]],
         events: List[Dict[str, Any]],
         last_paragraph: str,
-        choice_count: int = 3
+        choice_count: int = 3,
+        current_arc_step: int = 1,
+        arc_ready: bool = False
     ) -> List[Dict[str, Any]]:
         """Generate choices for the next cycle."""
         llm_service, provider, mode = self._get_llm_service(user_id)
 
-        # Get scenario title
+        # Get scenario title and story arc
         jsondata = scenario.get("jsondata", "{}")
         if isinstance(jsondata, str):
             try:
@@ -369,15 +396,34 @@ End at the moment of decision, NOT after it is made."""
             except:
                 jsondata = {}
         scenario_title = jsondata.get("title", "Untitled Story")
+        storyarc = jsondata.get("storyarc", "")
 
-        # Format prompts with choice_count
-        system_prompt = CHOICES_SYSTEM.format(choice_count=choice_count)
+        # Build arc instruction for the system prompt
+        if storyarc and arc_ready:
+            arc_instruction = f"""The story is currently at step {current_arc_step} of the story arc and is READY to progress.
+Include at least one choice that would naturally advance to the next step of the arc.
+Mark this choice with "advances_arc": true."""
+        elif storyarc:
+            arc_instruction = f"""The story is at step {current_arc_step} of the story arc but is NOT yet ready to progress.
+All choices should stay within the current arc step. Set "advances_arc": false for all choices."""
+        else:
+            arc_instruction = "No story arc defined. Set \"advances_arc\": false for all choices."
+
+        # Build arc context for the user prompt
+        if storyarc:
+            arc_context = f"Currently at step {current_arc_step}. Story arc: {storyarc}\nReady to advance: {'Yes' if arc_ready else 'No'}"
+        else:
+            arc_context = "No story arc defined for this scenario."
+
+        # Format prompts with choice_count and arc info
+        system_prompt = CHOICES_SYSTEM.format(choice_count=choice_count, arc_instruction=arc_instruction)
         user_prompt = CHOICES_USER.format(
             scenario_title=scenario_title,
             bible_text=format_bible_for_prompt(bible),
             events_text=format_events_for_prompt(events),
             last_paragraph=last_paragraph,
-            choice_count=choice_count
+            choice_count=choice_count,
+            arc_context=arc_context
         )
 
         payload = {
@@ -423,6 +469,7 @@ End at the moment of decision, NOT after it is made."""
         events: List[Dict[str, Any]],
         chosen_action: str = None,
         chosen_action_description: str = None,
+        advances_arc: bool = False,
         user_storyline_influence: str = None,
         paragraph_count: int = 3,
         choice_count: int = 3
@@ -430,6 +477,13 @@ End at the moment of decision, NOT after it is made."""
         """Generate paragraphs + choices (non-streaming)."""
         current_sequence = RollingStoryRepository.get_next_sequence(story_id)
         target_paragraphs = paragraph_count
+
+        # Get current arc step from database
+        current_arc_step = RollingStoryRepository.get_current_arc_step(story_id)
+
+        # Advance arc if the chosen action was marked to advance it
+        if advances_arc and chosen_action:
+            current_arc_step = RollingStoryRepository.advance_arc_step(story_id, user_id)
 
         generated_paragraphs = []
         all_bible_updates = []
@@ -444,8 +498,12 @@ End at the moment of decision, NOT after it is made."""
         # Generate storyline at the start
         storyline = await self._generate_storyline(
             user_id, scenario, bible, events, recent_paragraph_texts,
-            chosen_action, chosen_action_description, user_storyline_influence
+            chosen_action, chosen_action_description, user_storyline_influence,
+            current_arc_step
         )
+
+        # Check if story is ready to advance arc based on storyline analysis
+        arc_ready = storyline.get("arc_ready", False)
 
         for i in range(target_paragraphs):
             paragraph_number = i + 1
@@ -455,7 +513,7 @@ End at the moment of decision, NOT after it is made."""
             async for token in self._stream_paragraph(
                 user_id, scenario, bible, events, storyline,
                 recent_paragraph_texts, paragraph_number, target_paragraphs,
-                chosen_action, chosen_action_description
+                chosen_action, chosen_action_description, current_arc_step
             ):
                 paragraph_text += token
 
@@ -507,9 +565,10 @@ End at the moment of decision, NOT after it is made."""
             if len(recent_paragraph_texts) > 2:
                 recent_paragraph_texts = recent_paragraph_texts[-2:]
 
-        # Generate choices
+        # Generate choices with arc awareness
         choices = await self._generate_choices(
-            user_id, scenario, bible, events, recent_paragraph_texts[-1], choice_count
+            user_id, scenario, bible, events, recent_paragraph_texts[-1], choice_count,
+            current_arc_step, arc_ready
         )
 
         return {
@@ -517,7 +576,9 @@ End at the moment of decision, NOT after it is made."""
             "bible_updates": all_bible_updates,
             "event_updates": all_event_updates,
             "choices": choices,
-            "storyline": storyline
+            "storyline": storyline,
+            "current_arc_step": current_arc_step,
+            "arc_ready": arc_ready
         }
 
     async def stream_generate(
@@ -529,6 +590,7 @@ End at the moment of decision, NOT after it is made."""
         events: List[Dict[str, Any]],
         chosen_action: str = None,
         chosen_action_description: str = None,
+        advances_arc: bool = False,
         user_storyline_influence: str = None,
         paragraph_count: int = 3,
         choice_count: int = 3
@@ -536,6 +598,12 @@ End at the moment of decision, NOT after it is made."""
         """Stream paragraph generation with real-time token delivery."""
         current_sequence = RollingStoryRepository.get_next_sequence(story_id)
         target_paragraphs = paragraph_count
+
+        # Get current arc step from database
+        current_arc_step = RollingStoryRepository.get_current_arc_step(story_id)
+
+        # Use the explicit advances_arc flag from the frontend
+        should_advance_arc = advances_arc and chosen_action is not None
 
         generated_paragraphs = []
         all_bible_updates = []
@@ -547,13 +615,53 @@ End at the moment of decision, NOT after it is made."""
         for p in existing:
             recent_paragraph_texts.append(p.get("content", ""))
 
+        # If user made a choice, insert it as a special "choice" paragraph
+        if chosen_action:
+            choice_text = f"[CHOICE: {chosen_action}]"
+            choice_paragraph = RollingStoryRepository.add_paragraph(
+                rolling_story_id=story_id,
+                sequence=current_sequence,
+                content=choice_text
+            )
+            generated_paragraphs.append(choice_paragraph)
+            current_sequence += 1
+
+            # Also record it as a user_choice event
+            choice_event = RollingStoryRepository.add_event(
+                rolling_story_id=story_id,
+                paragraph_sequence=current_sequence - 1,
+                event_type="user_choice",
+                summary=f"Reader chose: {chosen_action}",
+                resolved=True
+            )
+            if choice_event:
+                all_event_updates.append(choice_event)
+
+            # Yield the choice paragraph to the frontend
+            yield {"type": "choice_made", "content": choice_text, "paragraph": choice_paragraph}
+
+            # If advancing arc, do it now and record it
+            if should_advance_arc:
+                current_arc_step = RollingStoryRepository.advance_arc_step(story_id, user_id)
+                arc_event = RollingStoryRepository.add_event(
+                    rolling_story_id=story_id,
+                    paragraph_sequence=current_sequence - 1,
+                    event_type="key_event",
+                    summary=f"Story arc advanced to step {current_arc_step}",
+                    resolved=False
+                )
+                if arc_event:
+                    all_event_updates.append(arc_event)
+                yield {"type": "arc_advanced", "new_step": current_arc_step}
+
         # Generate storyline at the start
         yield {"type": "status", "message": "Planning story direction..."}
 
         try:
             storyline = await self._generate_storyline(
                 user_id, scenario, bible, events, recent_paragraph_texts,
-                chosen_action, chosen_action_description, user_storyline_influence
+                chosen_action, chosen_action_description, user_storyline_influence,
+                current_arc_step
             )
 
             yield {"type": "storyline", "storyline": storyline}
@@ -564,8 +672,14 @@ End at the moment of decision, NOT after it is made."""
                 "tension_level": "building",
                 "active_threads": [],
                 "next_beat": "Continue the narrative",
-                "pacing_notes": "Maintain pace"
+                "pacing_notes": "Maintain pace",
+                "arc_ready": False
             }
+            if user_storyline_influence:
+                storyline["user_influence"] = user_storyline_influence
+
+        # Check if story is ready to advance arc based on storyline analysis
+        arc_ready = storyline.get("arc_ready", False)
 
         for i in range(target_paragraphs):
             paragraph_number = i + 1
@@ -581,7 +695,7 @@ End at the moment of decision, NOT after it is made."""
                 async for token in self._stream_paragraph(
                     user_id, scenario, bible, events, storyline,
                     recent_paragraph_texts, paragraph_number, target_paragraphs,
-                    chosen_action, chosen_action_description
+                    chosen_action, chosen_action_description, current_arc_step
                 ):
                     paragraph_text += token
                     # Yield each token as it arrives
@@ -648,11 +762,12 @@ End at the moment of decision, NOT after it is made."""
                 yield {"type": "error", "error": f"Failed to save paragraph: {str(e)}"}
                 return
 
-        # Generate choices
+        # Generate choices with arc awareness
         yield {"type": "status", "message": "Generating story choices..."}
 
         choices = await self._generate_choices(
-            user_id, scenario, bible, events, recent_paragraph_texts[-1], choice_count
+            user_id, scenario, bible, events, recent_paragraph_texts[-1], choice_count,
+            current_arc_step, arc_ready
         )
 
         yield {"type": "choices", "choices": choices}
@@ -664,7 +779,9 @@ End at the moment of decision, NOT after it is made."""
             "bible_updates": all_bible_updates,
             "event_updates": all_event_updates,
             "choices": choices,
-            "storyline": storyline
+            "storyline": storyline,
+            "current_arc_step": current_arc_step,
+            "arc_ready": arc_ready
         }
 
 

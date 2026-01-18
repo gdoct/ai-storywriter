@@ -45,9 +45,9 @@ export const PhotoUploadModal: React.FC<PhotoUploadModalProps> = ({
   }>({ stage: '', elapsedTime: 0 });
   const progressIntervalRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Character agent state
-  const [characterFields, setCharacterFields] = useState<CharacterField[]>([]);
-  const [currentCharacterId, setCurrentCharacterId] = useState<string | null>(null);
+  // Character agent state (values unused but setters called for potential future UI display)
+  const [, setCharacterFields] = useState<CharacterField[]>([]);
+  const [, setCurrentCharacterId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Helper function to start progress tracking
@@ -276,9 +276,11 @@ export const PhotoUploadModal: React.FC<PhotoUploadModalProps> = ({
         }
       };
 
-      // Track generated fields for progress
+      // Track generated fields for progress - use local variables instead of state
+      // to avoid stale closure issues
       const receivedFields = new Set<string>();
-      let finalCharacter: Character | null = null;
+      const localFields: CharacterField[] = [];
+      let localCharacterId: string | null = null;
       let generatedImageUri: string | null = null;
 
       // Use character agent to generate character
@@ -296,22 +298,20 @@ export const PhotoUploadModal: React.FC<PhotoUploadModalProps> = ({
           console.log('Character agent event:', event);
 
           if (event.event_type === 'field_update' && event.field) {
-            // Update character fields
-            setCharacterFields(prev => {
-              const updated = [...prev];
-              const existingIndex = updated.findIndex(f => f.field_name === event.field!.field_name);
+            // Update local fields array
+            const existingIndex = localFields.findIndex(f => f.field_name === event.field!.field_name);
+            if (existingIndex >= 0) {
+              localFields[existingIndex] = event.field!;
+            } else {
+              localFields.push(event.field!);
+            }
 
-              if (existingIndex >= 0) {
-                updated[existingIndex] = event.field!;
-              } else {
-                updated.push(event.field!);
-              }
+            // Also update React state for UI display
+            setCharacterFields([...localFields]);
 
-              return updated;
-            });
-
-            // Track character ID
-            if (event.character_id && !currentCharacterId) {
+            // Track character ID locally
+            if (event.character_id && !localCharacterId) {
+              localCharacterId = event.character_id;
               setCurrentCharacterId(event.character_id);
             }
 
@@ -333,9 +333,9 @@ export const PhotoUploadModal: React.FC<PhotoUploadModalProps> = ({
         }
       );
 
-      // Build final character from generated fields
-      if (currentCharacterId && characterFields.length > 0) {
-        finalCharacter = buildCharacterFromFields(currentCharacterId, characterFields);
+      // Build final character from locally tracked fields (not React state)
+      if (localCharacterId && localFields.length > 0) {
+        const finalCharacter = buildCharacterFromFields(localCharacterId, localFields);
 
         // Add any user-provided hints that weren't generated
         if (characterName.trim() && !finalCharacter.name) {
@@ -381,7 +381,7 @@ export const PhotoUploadModal: React.FC<PhotoUploadModalProps> = ({
       setIsUploading(false);
       stopProgressTracking();
     }
-  }, [selectedFile, isUsingRandomPhoto, previewUrl, scenario, characterName, characterRole, additionalPrompt, selectedGender, onCharacterCreated, onClose, startProgressTracking, updateProgressStage, stopProgressTracking, characterFields, currentCharacterId]);
+  }, [selectedFile, isUsingRandomPhoto, previewUrl, scenario, characterName, characterRole, additionalPrompt, selectedGender, onCharacterCreated, onClose, startProgressTracking, updateProgressStage, stopProgressTracking]);
 
   const handleDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault();

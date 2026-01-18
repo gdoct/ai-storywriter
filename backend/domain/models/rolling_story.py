@@ -120,6 +120,7 @@ class Choice(BaseModel):
     """Model for a story choice with dynamic label."""
     label: str  # Short action label (2-5 words), e.g., "Pull the trigger"
     description: str  # Longer description of the action
+    advances_arc: bool = False  # Whether this choice advances to the next story arc step
 
 
 # ============= Rolling Story Models =============
@@ -158,6 +159,7 @@ class RollingStoryDetailResponse(RollingStoryResponse):
     paragraphs: List[StoryParagraphResponse] = []
     bible: List[StoryBibleEntryResponse] = []
     events: List[StoryEventResponse] = []
+    current_arc_step: int = 1  # Current step in the story arc
 
 
 class RollingStoryListItem(BaseModel):
@@ -179,6 +181,10 @@ class GenerateRequest(BaseModel):
     events: List[Dict[str, Any]] = Field(default_factory=list)
     chosen_action: Optional[str] = None  # The label of the chosen action
     chosen_action_description: Optional[str] = None
+    advances_arc: bool = Field(
+        default=False,
+        description="Whether the chosen action advances to the next story arc step"
+    )
     storyline_influence: Optional[str] = Field(
         default=None,
         description="User's input to influence the story direction (e.g., 'focus on the mystery', 'add more action')"
@@ -203,3 +209,5 @@ class GenerateResponse(BaseModel):
     bible_updates: List[StoryBibleEntryResponse]
     event_updates: List[StoryEventResponse]
     choices: List[Choice]
+    current_arc_step: int = 1  # Current step in the story arc
+    arc_ready: bool = False  # Whether the story is ready to advance to the next arc step

@@ -1,7 +1,7 @@
 import { ExpandableTabs } from '@drdata/ai-styles';
 import React, { useCallback, useEffect, useRef } from 'react';
 import { FaBook, FaCog, FaEye, FaRedo, FaSave, FaStickyNote, FaTrash, FaUser, FaUsers, FaCopy } from 'react-icons/fa';
-import { FaLocationDot } from 'react-icons/fa6';
+import { FaLocationDot, FaDice } from 'react-icons/fa6';
 import { MdSchedule } from 'react-icons/md';
 import { useNavigate } from 'react-router-dom';
 import { useModals } from '@shared/hooks/useModals';
@@ -468,6 +468,15 @@ export const ScenarioEditor: React.FC<ScenarioEditorProps> = ({
       className: 'scenario-editor__generate-story-button',
       title: state.isLoading ? 'Scenario is loading' : state.scenario.id === '' ? 'Please save the scenario first' : 'View or generate scenario',
       'data-testid': 'showStoryButton'
+    },
+    {
+      id: 'interactive-story',
+      label: 'Interactive Story',
+      icon: <FaDice />,
+      onClick: () => navigate(`/rolling-story/new?scenarioId=${state.scenario.id}`),
+      disabled: state.isLoading || state.scenario.id === '',
+      title: state.isLoading ? 'Scenario is loading' : state.scenario.id === '' ? 'Please save the scenario first' : 'Start an interactive story',
+      'data-testid': 'interactiveStoryButton'
     },
     {
       id: 'reload',

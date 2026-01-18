@@ -1,11 +1,11 @@
 /**
  * RollingStoryModal - Interactive paragraph-by-paragraph story generation with choices
  */
-import { Button, AiStoryReader } from '@drdata/ai-styles';
+import { Button, AiStoryReader, ChoiceOption, ParagraphData, InlineChoicePanel } from '@drdata/ai-styles';
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { FaTimes, FaBook, FaUsers, FaCog } from 'react-icons/fa';
-import { FaPlay, FaLocationDot, FaCube, FaClockRotateLeft, FaStop, FaChevronUp, FaChevronDown } from 'react-icons/fa6';
+import { FaPlay, FaLocationDot, FaCube, FaClockRotateLeft, FaStop } from 'react-icons/fa6';
 import { Scenario } from '@shared/types/ScenarioTypes';
 import {
   RollingStory,
@@ -16,6 +16,7 @@ import {
   createRollingStory,
   fetchRollingStoryDetail,
   streamGenerateParagraphs,
+  deleteParagraphsFrom,
 } from '@shared/services/rollingStoriesService';
 import './RollingStoryModal.css';
 
@@ -45,13 +46,15 @@ export const RollingStoryModal: React.FC<RollingStoryModalProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [showBiblePanel, setShowBiblePanel] = useState(false);
   const [showEventsPanel, setShowEventsPanel] = useState(false);
-  const [selectedChoice, setSelectedChoice] = useState<Choice | null>(null);
+  const [selectedChoice, setSelectedChoice] = useState<ChoiceOption | null>(null);
   const [streamingText, setStreamingText] = useState('');
-  const [choicesPanelCollapsed, setChoicesPanelCollapsed] = useState(false);
   const [userDirection, setUserDirection] = useState('');
   const [showSettings, setShowSettings] = useState(false);
   const [paragraphCount, setParagraphCount] = useState(3);
   const [choiceCount, setChoiceCount] = useState(3);
+
+  // Historical choice panels - maps paragraph ID to the choice panel shown after it
+  const [historicalChoicePanels, setHistoricalChoicePanels] = useState<Map<number, InlineChoicePanel>>(new Map());
 
   // Abort controller for canceling generation
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -139,7 +142,12 @@ export const RollingStoryModal: React.FC<RollingStoryModalProps> = ({
       let accumulatedText = '';
 
       for await (const event of streamGenerateParagraphs(rollingStory.id, request, signal)) {
-        if (event.type === 'status') {
+        if (event.type === 'choice_made') {
+          // User's choice was inserted as a paragraph - add it immediately
+          if (event.paragraph) {
+            setParagraphs((prev) => [...prev, event.paragraph!]);
+          }
+        } else if (event.type === 'status') {
           // Status updates - could show in UI
           console.log('Status:', event.message);
         } else if (event.type === 'token') {
@@ -193,19 +201,117 @@ export const RollingStoryModal: React.FC<RollingStoryModalProps> = ({
     }
   }, [rollingStory, bible, events, userDirection, paragraphCount, choiceCount]);
 
-  const handleChoiceSelect = (choice: Choice) => {
+  // Handle choice selection (for inline choice panel)
+  const handleChoiceSelect = useCallback((choice: ChoiceOption) => {
     setSelectedChoice(choice);
-  };
+  }, []);
 
-  const handleContinueWithChoice = () => {
-    if (selectedChoice) {
-      handleGenerateParagraphs(selectedChoice);
+  // Handle confirming a choice and continuing the story
+  const handleChoiceConfirm = useCallback((choice: ChoiceOption, direction?: string) => {
+    if (!choice) return;
+
+    // Get the last paragraph ID to attach historical choice panel to
+    const lastParagraph = paragraphs[paragraphs.length - 1];
+    if (lastParagraph) {
+      // Store the historical choice panel
+      setHistoricalChoicePanels(prev => {
+        const newMap = new Map(prev);
+        newMap.set(lastParagraph.id, {
+          choices: choices.map(c => ({ label: c.label, description: c.description })),
+          selectedChoice: choice,
+          isActive: false,
+          userDirection: direction,
+        });
+        return newMap;
+      });
     }
+
+    // Set user direction if provided
+    if (direction) {
+      setUserDirection(direction);
+    }
+
+    // Generate with the choice (convert to backend Choice type)
+    const backendChoice: Choice = {
+      label: choice.label,
+      description: choice.description,
+    };
+    handleGenerateParagraphs(backendChoice);
+  }, [paragraphs, choices, handleGenerateParagraphs]);
+
+  // Handle user direction input changes
+  const handleUserDirectionChange = useCallback((direction: string) => {
+    setUserDirection(direction);
+  }, []);
+
+  const handleCopyParagraph = useCallback(async (paragraphIndex: number) => {
+    const paragraph = paragraphs[paragraphIndex];
+    if (paragraph) {
+      try {
+        await navigator.clipboard.writeText(paragraph.content);
+        // Could add a toast notification here
+      } catch (err) {
+        console.error('Failed to copy paragraph:', err);
+      }
+    }
+  }, [paragraphs]);
+
+  const handleRegenerateParagraph = useCallback(async (paragraphIndex: number) => {
+    if (!rollingStory || isGenerating) return;
+
+    // Get the paragraph to regenerate from
+    const paragraphToRegenerate = paragraphs[paragraphIndex];
+    const sequenceThreshold = paragraphToRegenerate.sequence;
+
+    try {
+      // Call backend to delete paragraphs from this sequence onwards
+      await deleteParagraphsFrom(rollingStory.id, sequenceThreshold);
+
+      // Update local state to reflect the deletion
+      const keptParagraphs = paragraphs.slice(0, paragraphIndex);
+      setParagraphs(keptParagraphs);
+
+      // Also update bible entries and events in local state
+      setBible(prev => prev.filter(entry => entry.introduced_at < sequenceThreshold));
+      setEvents(prev => prev.filter(event => event.paragraph_sequence < sequenceThreshold));
+
+      // Clear choices since we're regenerating
+      setChoices([]);
+      setSelectedChoice(null);
+
+      // Clear historical choice panels for deleted paragraphs
+      const keptParagraphIds = new Set(keptParagraphs.map(p => p.id));
+      setHistoricalChoicePanels(prev => {
+        const newMap = new Map<number, InlineChoicePanel>();
+        prev.forEach((panel, paragraphId) => {
+          if (keptParagraphIds.has(paragraphId)) {
+            newMap.set(paragraphId, panel);
+          }
+        });
+        return newMap;
+      });
+
+      // Now generate new paragraphs starting from this point
+      handleGenerateParagraphs();
+    } catch (err) {
+      console.error('Failed to regenerate paragraph:', err);
+      setError('Failed to regenerate. Please try again.');
+    }
+  }, [rollingStory, isGenerating, paragraphs, handleGenerateParagraphs]);
+
+  // Check if a paragraph is a choice paragraph
+  const isChoiceParagraph = (content: string) => content.startsWith('[CHOICE:');
+
+  // Format choice paragraph for display
+  const formatChoiceText = (content: string) => {
+    const match = content.match(/\[CHOICE:\s*(.+?)\]$/);
+    return match ? `» ${match[1]}` : content;
   };
 
   // Combine paragraphs into display text
-  const storyText = paragraphs.map((p) => p.content).join('\n\n') +
-    (streamingText ? '\n\n' + streamingText : '');
+  const storyText = paragraphs.map((p) =>
+    isChoiceParagraph(p.content) ? formatChoiceText(p.content) : p.content
+  ).join('\n\n') + (streamingText ? '\n\n' + streamingText : '');
 
   // Get display text for the reader
   const getDisplayText = () => {
@@ -345,75 +451,24 @@ export const RollingStoryModal: React.FC<RollingStoryModalProps> = ({
     </div>
   );
 
-  // Choice selection UI - collapsible panel
-  const renderChoices = () => {
-    if (choices.length === 0 || isGenerating) return null;
+  // Build paragraphs with historical choice panels (active choices handled separately via activeChoices prop)
+  const buildParagraphsWithChoicePanels = useCallback((): ParagraphData[] => {
+    return paragraphs.map((p) => {
+      const paragraphData: ParagraphData = {
+        id: p.id,
+        content: isChoiceParagraph(p.content) ? formatChoiceText(p.content) : p.content,
+        isChoice: isChoiceParagraph(p.content),
+      };
 
-    return (
-      <div className={`rolling-story__choices-container ${choicesPanelCollapsed ? 'rolling-story__choices-container--collapsed' : ''}`}>
-        <div
-          className="rolling-story__choices-header"
-          onClick={() => setChoicesPanelCollapsed(!choicesPanelCollapsed)}
-        >
-          <h3>
-            {selectedChoice ? `Selected: ${selectedChoice.label}` : 'What will you do?'}
-          </h3>
-          <button className="rolling-story__choices-toggle">
-            {choicesPanelCollapsed ? (
-              <>
-                <span>Show choices</span>
-                <FaChevronUp />
-              </>
-            ) : (
-              <>
-                <span>Hide</span>
-                <FaChevronDown />
-              </>
-            )}
-          </button>
-        </div>
-        {!choicesPanelCollapsed && (
-          <div className="rolling-story__choices-body">
-            <p className="rolling-story__choices-subtitle">
-              Choose an action to shape the next part of your story
-            </p>
-            <div className="rolling-story__choices">
-              {choices.map((choice, index) => (
-                <button
-                  key={index}
-                  className={`rolling-story__choice ${
-                    selectedChoice?.label === choice.label ? 'rolling-story__choice--selected' : ''
-                  }`}
-                  onClick={() => handleChoiceSelect(choice)}
-                >
-                  <span className="rolling-story__choice-label">{choice.label}</span>
-                  <span className="rolling-story__choice-description">{choice.description}</span>
-                </button>
-              ))}
-            </div>
-            <div className="rolling-story__direction-input">
-              <input
-                type="text"
-                placeholder="Optional: Add direction (e.g., 'focus on the mystery', 'add more tension')"
-                value={userDirection}
-                onChange={(e) => setUserDirection(e.target.value)}
-                maxLength={150}
-              />
-            </div>
-            {selectedChoice && (
-              <Button
-                variant="primary"
-                onClick={handleContinueWithChoice}
-                className="rolling-story__continue-button"
-              >
-                Continue with this choice
-              </Button>
-            )}
-          </div>
-        )}
-      </div>
-    );
-  };
+      // Check if there's a historical choice panel after this paragraph
+      const historicalPanel = historicalChoicePanels.get(p.id);
+      if (historicalPanel) {
+        paragraphData.choicePanel = historicalPanel;
+      }
+
+      return paragraphData;
+    });
+  }, [paragraphs, historicalChoicePanels, isChoiceParagraph, formatChoiceText]);
 
   if (!isOpen) return null;
 
@@ -517,9 +572,6 @@ export const RollingStoryModal: React.FC<RollingStoryModalProps> = ({
       {showEventsPanel && renderEventsPanel()}
       {showSettings && renderSettingsPanel()}
 
-      {/* Choice overlay */}
-      {choices.length > 0 && !isGenerating && renderChoices()}
-
       {/* Story reader */}
       <AiStoryReader
         text={getDisplayText()}
@@ -547,6 +599,19 @@ export const RollingStoryModal: React.FC<RollingStoryModalProps> = ({
         enableFullScreen={true}
         displayMode="scroll"
         onClose={onClose}
+        // Paragraph-level control with inline choice panels
+        paragraphs={buildParagraphsWithChoicePanels()}
+        enableParagraphActions={paragraphs.length > 0 && !isGenerating}
+        onParagraphCopy={(index) => handleCopyParagraph(index)}
+        onParagraphRegenerate={(index) => handleRegenerateParagraph(index)}
+        streamingContent={streamingText || undefined}
+        // Inline choice panel - active choices shown at end of content
+        activeChoices={!isGenerating && choices.length > 0 ? choices.map(c => ({ label: c.label, description: c.description })) : undefined}
+        onChoiceSelect={handleChoiceSelect}
+        onChoiceConfirm={handleChoiceConfirm}
+        selectedChoice={selectedChoice}
+        choiceUserDirection={userDirection}
+        onUserDirectionChange={handleUserDirectionChange}
       />
     </div>,
     document.body

@@ -24,6 +24,7 @@ import StoryDetail from './shared/pages/StoryDetail';
 import Templates from './members/pages/Templates';
 import Test from './shared/pages/Test';
 import RollingStories from './members/pages/RollingStories';
+import RollingStoryPage from './members/pages/RollingStoryPage';
 
 // Component to handle the root route logic
 // eslint-disable-next-line react-refresh/only-export-components
@@ -88,6 +89,14 @@ const getRoutes = (): RouteObject[] => {
       element: (
         <ProtectedRoute>
           <RollingStories />
+        </ProtectedRoute>
+      )
+    },
+    {
+      path: '/rolling-story/:storyId',
+      element: (
+        <ProtectedRoute>
+          <RollingStoryPage />
         </ProtectedRoute>
       )
     },

@@ -760,7 +760,7 @@ class RollingStoryRepository:
         return [dict(s) for s in stories]
 
     @staticmethod
-    def update_rolling_story(story_id: int, user_id: str, title: str = None, status: str = None) -> dict:
+    def update_rolling_story(story_id: int, user_id: str, title: str = None, status: str = None, current_arc_step: int = None) -> dict:
         """Update a rolling story."""
         conn = get_db_connection()
         now = datetime.now(timezone.utc).isoformat()
@@ -774,6 +774,9 @@ class RollingStoryRepository:
         if status:
             updates.append('status = ?')
             params.append(status)
+        if current_arc_step is not None:
+            updates.append('current_arc_step = ?')
+            params.append(current_arc_step)
 
         params.extend([story_id, user_id])
 
@@ -785,6 +788,34 @@ class RollingStoryRepository:
         story = conn.execute('SELECT * FROM rolling_stories WHERE id = ?', (story_id,)).fetchone()
         conn.close()
         return dict(story) if story else None
+
+    @staticmethod
+    def get_current_arc_step(story_id: int) -> int:
+        """Get the current arc step for a rolling story."""
+        conn = get_db_connection()
+        result = conn.execute(
+            'SELECT current_arc_step FROM rolling_stories WHERE id = ?',
+            (story_id,)
+        ).fetchone()
+        conn.close()
+        return result[0] if result else 1
+
+    @staticmethod
+    def advance_arc_step(story_id: int, user_id: str) -> int:
+        """Increment the current arc step for a rolling story. Returns new step number."""
+        conn = get_db_connection()
+        now = datetime.now(timezone.utc).isoformat()
+        conn.execute(
+            'UPDATE rolling_stories SET current_arc_step = current_arc_step + 1, updated_at = ? WHERE id = ? AND user_id = ?',
+            (now, story_id, user_id)
+        )
+        conn.commit()
+        result = conn.execute(
+            'SELECT current_arc_step FROM rolling_stories WHERE id = ?',
+            (story_id,)
+        ).fetchone()
+        conn.close()
+        return result[0] if result else 1
 
     @staticmethod
     def delete_rolling_story(story_id: int, user_id: str) -> bool:
@@ -832,6 +863,44 @@ class RollingStoryRepository:
         ''', (rolling_story_id,)).fetchall()
         conn.close()
         return [dict(p) for p in paragraphs]
+
+    @staticmethod
+    def delete_paragraphs_from_sequence(rolling_story_id: int, from_sequence: int) -> int:
+        """Delete all paragraphs from a given sequence onwards (inclusive).
+        Also deletes associated bible entries and events.
+        Returns the number of paragraphs deleted."""
+        conn = get_db_connection()
+
+        # Delete associated events
+        conn.execute('''
+            DELETE FROM story_events
+            WHERE rolling_story_id = ? AND paragraph_sequence >= ?
+        ''', (rolling_story_id, from_sequence))
+
+        # Delete associated bible entries
+        conn.execute('''
+            DELETE FROM story_bible
+            WHERE rolling_story_id = ? AND introduced_at >= ?
+        ''', (rolling_story_id, from_sequence))
+
+        # Delete paragraphs
+        cursor = conn.cursor()
+        cursor.execute('''
+            DELETE FROM story_paragraphs
+            WHERE rolling_story_id = ? AND sequence >= ?
+        ''', (rolling_story_id, from_sequence))
+        deleted_count = cursor.rowcount
+
+        # Update rolling story timestamp
+        now = datetime.now(timezone.utc).isoformat()
+        conn.execute(
+            'UPDATE rolling_stories SET updated_at = ? WHERE id = ?',
+            (now, rolling_story_id)
+        )
+
+        conn.commit()
+        conn.close()
+        return deleted_count
 
     @staticmethod
     def get_last_paragraph(rolling_story_id: int) -> dict:
