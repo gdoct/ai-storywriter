@@ -33,6 +33,7 @@ interface StoryBranch {
   choices: Choice[];
   isGenerating: boolean;
   isInitializing: boolean;
+  generationStatus: string; // Current status message from backend (e.g., "Parsing story arc...", "Writing paragraph...")
   streamingText: string;
   selectedChoice: ChoiceOption | null;
   userDirection: string;
@@ -62,11 +63,15 @@ const RollingStoryPage: React.FC = () => {
   const [showBiblePanel, setShowBiblePanel] = useState(false);
   const [showEventsPanel, setShowEventsPanel] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
-  const [paragraphCount, setParagraphCount] = useState(3);
+  const [paragraphWordCount, setParagraphWordCount] = useState(250);
   const [choiceCount, setChoiceCount] = useState(3);
+  const [autoCountdown, setAutoCountdown] = useState<number | null>(null); // Countdown for auto-continue
 
   // Abort controller for canceling generation
   const abortControllerRef = useRef<AbortController | null>(null);
+
+  // Timer ref for auto-continue
+  const autoTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Track if we've already initialized a new story to prevent duplicates
   const hasInitializedRef = useRef(false);
@@ -90,6 +95,7 @@ const RollingStoryPage: React.FC = () => {
     choices: [],
     isGenerating: false,
     isInitializing: false,
+    generationStatus: '',
     streamingText: '',
     selectedChoice: null,
     userDirection: '',
@@ -124,6 +130,7 @@ const RollingStoryPage: React.FC = () => {
             choices: [],
             isGenerating: false,
             isInitializing: false,
+            generationStatus: '',
             streamingText: '',
             selectedChoice: null,
             userDirection: '',
@@ -209,6 +216,7 @@ const RollingStoryPage: React.FC = () => {
 
     updateBranch(activeBranchId, {
       isGenerating: true,
+      generationStatus: 'Starting generation...',
       streamingText: '',
       choices: [],
       selectedChoice: null,
@@ -223,7 +231,7 @@ const RollingStoryPage: React.FC = () => {
         chosen_action_description: chosenAction?.description,
         advances_arc: chosenAction?.advances_arc || false,  // Pass the arc advancement flag
         storyline_influence: activeBranch.userDirection.trim() || undefined,
-        paragraph_count: paragraphCount,
+        paragraph_word_count: paragraphWordCount,
         choice_count: choiceCount,
       };
 
@@ -269,6 +277,10 @@ const RollingStoryPage: React.FC = () => {
             choices: event.choices || [],
             streamingText: '',
           });
+        } else if (event.type === 'status') {
+          // Update the generation status message
+          console.log('[RollingStory] Status update:', event.message);
+          updateBranch(activeBranchId, { generationStatus: event.message || '' });
         } else if (event.type === 'error') {
           setError(event.error || 'Generation failed');
         }
@@ -281,10 +293,10 @@ const RollingStoryPage: React.FC = () => {
         setError('Failed to generate story. Please try again.');
       }
     } finally {
-      updateBranch(activeBranchId, { isGenerating: false });
+      updateBranch(activeBranchId, { isGenerating: false, generationStatus: '' });
       abortControllerRef.current = null;
     }
-  }, [activeBranch, activeBranchId, paragraphCount, choiceCount, updateBranch]);
+  }, [activeBranch, activeBranchId, paragraphWordCount, choiceCount, updateBranch]);
 
   // Handle choice selection (for inline choice panel)
   const handleChoiceSelect = useCallback((choice: ChoiceOption) => {
@@ -327,6 +339,74 @@ const RollingStoryPage: React.FC = () => {
   const handleUserDirectionChange = useCallback((value: string) => {
     updateBranch(activeBranchId, { userDirection: value });
   }, [activeBranchId, updateBranch]);
+
+  // Cancel auto-continue
+  const cancelAutoContinue = useCallback(() => {
+    if (autoTimerRef.current) {
+      clearInterval(autoTimerRef.current);
+      autoTimerRef.current = null;
+    }
+    setAutoCountdown(null);
+  }, []);
+
+  // Auto-continue effect for auto mode
+  useEffect(() => {
+    // Only trigger auto-continue when:
+    // 1. In auto mode (choiceCount === 0)
+    // 2. Branch has paragraphs
+    // 3. Not currently generating
+    // 4. Not initializing
+    // 5. No countdown already running
+    if (
+      choiceCount === 0 &&
+      activeBranch &&
+      activeBranch.paragraphs.length > 0 &&
+      !activeBranch.isGenerating &&
+      !activeBranch.isInitializing &&
+      autoCountdown === null
+    ) {
+      // Start 3 second countdown
+      setAutoCountdown(3);
+
+      autoTimerRef.current = setInterval(() => {
+        setAutoCountdown(prev => {
+          if (prev === null || prev <= 1) {
+            // Time's up - trigger generation
+            if (autoTimerRef.current) {
+              clearInterval(autoTimerRef.current);
+              autoTimerRef.current = null;
+            }
+            // Trigger generation (will be done via effect below)
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+
+    // Cleanup on unmount or when dependencies change
+    return () => {
+      if (autoTimerRef.current) {
+        clearInterval(autoTimerRef.current);
+        autoTimerRef.current = null;
+      }
+    };
+  }, [choiceCount, activeBranch?.paragraphs.length, activeBranch?.isGenerating, activeBranch?.isInitializing]);
+
+  // Trigger generation when countdown reaches 0
+  useEffect(() => {
+    if (autoCountdown === 0 && choiceCount === 0 && activeBranch && !activeBranch.isGenerating) {
+      setAutoCountdown(null);
+      handleGenerateParagraphs();
+    }
+  }, [autoCountdown, choiceCount, activeBranch?.isGenerating, handleGenerateParagraphs]);
+
+  // Cancel auto-continue when switching out of auto mode
+  useEffect(() => {
+    if (choiceCount !== 0) {
+      cancelAutoContinue();
+    }
+  }, [choiceCount, cancelAutoContinue]);
 
   const handleCopyParagraph = useCallback(async (paragraphIndex: number) => {
     const paragraph = activeBranch?.paragraphs[paragraphIndex];
@@ -405,6 +485,7 @@ const RollingStoryPage: React.FC = () => {
       choices: [],
       isGenerating: false,
       isInitializing: false,
+      generationStatus: '',
       streamingText: '',
       selectedChoice: null,
       userDirection: '',
@@ -535,13 +616,13 @@ const RollingStoryPage: React.FC = () => {
       </div>
       <div className="rolling-story__panel-content">
         <div className="rolling-story__setting">
-          <label>Paragraphs per turn</label>
+          <label>Paragraph length (words)</label>
           <div className="rolling-story__setting-options">
-            {[2, 3, 4, 5].map((num) => (
+            {[150, 250, 350, 450, 550].map((num) => (
               <button
                 key={num}
-                className={`rolling-story__setting-btn ${paragraphCount === num ? 'rolling-story__setting-btn--active' : ''}`}
-                onClick={() => setParagraphCount(num)}
+                className={`rolling-story__setting-btn ${paragraphWordCount === num ? 'rolling-story__setting-btn--active' : ''}`}
+                onClick={() => setParagraphWordCount(num)}
               >
                 {num}
               </button>
@@ -551,6 +632,13 @@ const RollingStoryPage: React.FC = () => {
         <div className="rolling-story__setting">
           <label>Number of choices</label>
           <div className="rolling-story__setting-options">
+            <button
+              className={`rolling-story__setting-btn ${choiceCount === 0 ? 'rolling-story__setting-btn--active' : ''}`}
+              onClick={() => setChoiceCount(0)}
+              title="Auto mode - story continues without choices"
+            >
+              Auto
+            </button>
             {[2, 3, 4, 5].map((num) => (
               <button
                 key={num}
@@ -698,31 +786,6 @@ const RollingStoryPage: React.FC = () => {
       {/* Tabs - only show when there are multiple branches */}
       {branches.length > 1 && renderTabs()}
 
-      {/* Status Strip */}
-      <div className={`rolling-story__status-strip ${branches.length > 1 ? 'rolling-story__status-strip--with-tabs' : ''}`}>
-        {activeBranch?.isInitializing && (
-          <div className="rolling-story__status">
-            <div className="rolling-story__generating-dots">
-              <span></span><span></span><span></span>
-            </div>
-            <span>Preparing story...</span>
-          </div>
-        )}
-        {activeBranch?.isGenerating && (
-          <div className="rolling-story__status">
-            <div className="rolling-story__generating-dots">
-              <span></span><span></span><span></span>
-            </div>
-            <span>Generating paragraphs...</span>
-          </div>
-        )}
-        {activeBranch && !activeBranch.isInitializing && !activeBranch.isGenerating && activeBranch.paragraphs.length > 0 && (
-          <div className="rolling-story__status rolling-story__status--complete">
-            <span>📖 {activeBranch.paragraphs.length} paragraphs • {activeBranch.name}</span>
-          </div>
-        )}
-      </div>
-
       {/* Control overlay */}
       <div className="rolling-story__controls-overlay">
         <div className="rolling-story__controls">
@@ -839,6 +902,55 @@ const RollingStoryPage: React.FC = () => {
           choiceUserDirection={activeBranch.userDirection}
           onUserDirectionChange={handleUserDirectionChange}
         />
+      )}
+
+      {/* Status Strip at bottom - show when generating, initializing, or in auto mode */}
+      {(activeBranch?.isInitializing || activeBranch?.isGenerating || (choiceCount === 0 && activeBranch?.paragraphs.length > 0 && !activeBranch?.isGenerating)) && (
+        <div className="rolling-story__status-strip rolling-story__status-strip--bottom">
+          {activeBranch?.isInitializing && (
+            <div className="rolling-story__status">
+              <div className="rolling-story__generating-dots">
+                <span></span><span></span><span></span>
+              </div>
+              <span>Preparing story...</span>
+            </div>
+          )}
+          {activeBranch?.isGenerating && (
+            <div className="rolling-story__status">
+              <div className="rolling-story__generating-dots">
+                <span></span><span></span><span></span>
+              </div>
+              <span>{activeBranch.generationStatus || 'Generating...'}</span>
+            </div>
+          )}
+          {/* Auto mode: Show countdown or pause button when not generating */}
+          {choiceCount === 0 && activeBranch?.paragraphs.length > 0 && !activeBranch?.isGenerating && !activeBranch?.isInitializing && (
+            <div className="rolling-story__auto-mode">
+              <span className="rolling-story__auto-label">Auto Mode</span>
+              {autoCountdown !== null && autoCountdown > 0 ? (
+                <Button
+                  variant="secondary"
+                  size="m"
+                  onClick={cancelAutoContinue}
+                  title="Click to pause auto-continue"
+                >
+                  <FaStop /> Pause ({autoCountdown}s)
+                </Button>
+              ) : (
+                <Button
+                  variant="primary"
+                  size="m"
+                  onClick={() => {
+                    setAutoCountdown(3); // Restart countdown
+                  }}
+                  title="Click to resume auto-continue"
+                >
+                  <FaPlay /> Continue
+                </Button>
+              )}
+            </div>
+          )}
+        </div>
       )}
     </div>
   );

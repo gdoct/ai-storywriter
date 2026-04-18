@@ -7,11 +7,7 @@ import { useModals } from '@shared/hooks/useModals';
 import { deleteScenario, fetchRecentScenarios, formatRelativeTime, RecentScenario } from '@shared/services/dashboardService';
 import './Scenarios.css';
 import { Button } from '@drdata/ai-styles';
-import GenerateSimilarModal, { ScenarioSelections } from '../components/Dashboard/GenerateSimilarModal';
-import { Scenario } from '@shared/types/ScenarioTypes';
-import { fetchScenarioById } from '@shared/services/scenario';
-import GeneratingModal from '../components/Dashboard/GeneratingModal';
-import { generateSimilarScenarios, ScenarioSelections as ServiceScenarioSelections, GenerationProgress } from '@shared/services/similarScenarioService';
+import GenerateSimilarModal from '../components/Dashboard/GenerateSimilarModal';
 
 const Scenarios: React.FC = () => {
   const navigate = useNavigate();
@@ -27,16 +23,7 @@ const Scenarios: React.FC = () => {
 
   // Generate similar scenario state
   const [showGenerateSimilarModal, setShowGenerateSimilarModal] = useState(false);
-  const [showGeneratingModal, setShowGeneratingModal] = useState(false);
-  const [scenarioToSimilar, setScenarioToSimilar] = useState<RecentScenario | null>(null);
-  const [fullScenarioForModal, setFullScenarioForModal] = useState<Scenario | null>(null);
-  
-  // Progress tracking for multiple scenario generation
-  const [currentScenarioIndex, setCurrentScenarioIndex] = useState(1);
-  const [totalScenariosToGenerate, setTotalScenariosToGenerate] = useState(1);
-  const [isRetrying, setIsRetrying] = useState(false);
-  const [retryCount, setRetryCount] = useState(0);
-  const [completedScenarios, setCompletedScenarios] = useState<Scenario[]>([]);
+  const [sourceScenarioForSimilar, setSourceScenarioForSimilar] = useState<RecentScenario | null>(null);
   
   // Infinite scroll ref
   const loadMoreRef = useRef<HTMLDivElement>(null);
@@ -179,116 +166,25 @@ const Scenarios: React.FC = () => {
     }
   };
 
-  const handleGenerateSimilar = async (scenarioId: string) => {
+  const handleGenerateSimilar = (scenarioId: string) => {
     const scenario = scenarios.find(s => s.id === scenarioId);
     if (!scenario) {
       customAlert('Scenario not found. Please try again.', 'Error');
       return;
     }
-
-    try {
-      // Fetch the full scenario data for the modal
-      const fullScenario = await fetchScenarioById(scenarioId);
-
-      setScenarioToSimilar(scenario);
-      setFullScenarioForModal(fullScenario);
-      setShowGenerateSimilarModal(true);
-    } catch (error) {
-      console.error('Error fetching full scenario:', error);
-      customAlert('Failed to load scenario details. Please try again.', 'Error');
-    }
+    setSourceScenarioForSimilar(scenario);
+    setShowGenerateSimilarModal(true);
   };
 
-  const handleAbortGeneration = () => {
-    setShowGeneratingModal(false);
-    setCurrentScenarioIndex(1);
-    setTotalScenariosToGenerate(1);
-    setIsRetrying(false);
-    setRetryCount(0);
-    setCompletedScenarios([]);
+  const handleSimilarScenarioCreated = (newScenarioId: string) => {
+    setShowGenerateSimilarModal(false);
+    setSourceScenarioForSimilar(null);
+    navigate(`/app?scenario=${newScenarioId}`);
   };
-
-  const handleProgressUpdate = (progress: GenerationProgress) => {
-    setCurrentScenarioIndex(progress.currentIndex);
-    setTotalScenariosToGenerate(progress.totalCount);
-    setIsRetrying(progress.isRetrying);
-    setRetryCount(progress.retryCount);
-    setCompletedScenarios(progress.completedScenarios || []);
-  };
-
-
-  const handleGenerateSimilarConfirm = async (selections: ScenarioSelections) => {
-    if (!scenarioToSimilar || !fullScenarioForModal) return;
-    
-    try {
-      setShowGeneratingModal(true);
-      setCurrentScenarioIndex(1);
-      setTotalScenariosToGenerate(selections.count);
-      setIsRetrying(false);
-      setRetryCount(0);
-      setCompletedScenarios([]);
-
-      const fullScenario = fullScenarioForModal;
-      
-      // Convert ScenarioSelections to service format
-      const serviceSelections: ServiceScenarioSelections = {
-        retainCharacters: selections.retainCharacters,
-        retainLocations: selections.retainLocations,
-        retainNotes: selections.retainNotes,
-        selectedCharacters: selections.selectedCharacters,
-        selectedLocations: selections.selectedLocations,
-        count: selections.count
-      };
-      
-      // Generate scenarios using the service
-      const createdScenarios = await generateSimilarScenarios(
-        fullScenario,
-        serviceSelections,
-        handleProgressUpdate,
-        handleAbortGeneration
-      );
-      
-      setShowGeneratingModal(false);
-      
-      // Navigate based on the number of scenarios generated
-      if (selections.count === 1) {
-        // Single scenario: open in editor
-        navigate(`/app?scenario=${createdScenarios[0].id}`);
-      } else {
-        // Multiple scenarios: reload scenarios list to show new ones
-        const response = await fetchRecentScenarios(scenariosPerPage, 0);
-        setScenarios(response.scenarios);
-        setTotalScenarios(response.pagination.total);
-        setHasMore(response.scenarios.length >= scenariosPerPage);
-      }
-      
-    } catch (error) {
-      console.error('Error generating similar scenario:', error);
-      setShowGeneratingModal(false);
-      
-      if (error instanceof Error && error.message === 'Generation was aborted') {
-        // Don't show error for aborted operations
-        return;
-      }
-      
-      customAlert(
-        error instanceof Error ? error.message : 'Failed to generate similar scenario. Please try again.',
-        'Error'
-      );
-    } finally {
-      setCurrentScenarioIndex(1);
-      setTotalScenariosToGenerate(1);
-      setIsRetrying(false);
-      setRetryCount(0);
-      setCompletedScenarios([]);
-    }
-  };
-
 
   const handleCloseSimilarModal = () => {
     setShowGenerateSimilarModal(false);
-    setScenarioToSimilar(null);
-    setFullScenarioForModal(null);
+    setSourceScenarioForSimilar(null);
   };
 
   // Show loading state
@@ -467,24 +363,15 @@ const Scenarios: React.FC = () => {
 
           {/* Custom Modal Components */}
 
-          <GenerateSimilarModal
-            isOpen={showGenerateSimilarModal}
-            onClose={handleCloseSimilarModal}
-            onGenerate={handleGenerateSimilarConfirm}
-            scenarioTitle={scenarioToSimilar?.title || ''}
-            characters={fullScenarioForModal?.characters?.map(c => ({ name: c.name || 'Unnamed', id: c.id })) || []}
-            locations={fullScenarioForModal?.locations?.map(l => ({ name: l.name || 'Unnamed', id: l.id || '' })) || []}
-          />
-
-          <GeneratingModal
-            isOpen={showGeneratingModal}
-            currentIndex={currentScenarioIndex}
-            totalCount={totalScenariosToGenerate}
-            isRetrying={isRetrying}
-            retryCount={retryCount}
-            completedScenarios={completedScenarios}
-            onAbort={handleAbortGeneration}
-          />
+          {sourceScenarioForSimilar && (
+            <GenerateSimilarModal
+              isOpen={showGenerateSimilarModal}
+              onClose={handleCloseSimilarModal}
+              onScenarioCreated={handleSimilarScenarioCreated}
+              sourceScenarioId={sourceScenarioForSimilar.id}
+              sourceScenarioTitle={sourceScenarioForSimilar.title}
+            />
+          )}
 
           <ConfirmModal
             isOpen={confirmState.isOpen}

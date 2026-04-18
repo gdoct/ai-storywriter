@@ -173,6 +173,14 @@ class RollingStoryListItem(BaseModel):
     updated_at: datetime
 
 
+# ============= Action Type Enum =============
+
+class ActionType(str, Enum):
+    """Type of generation action for the two-node architecture."""
+    EXTEND_SCENE = "extend_scene"  # Add depth/detail to current moment
+    PROGRESS_STORY = "progress_story"  # Move to next beat of narrative
+
+
 # ============= Generation Request/Response Models =============
 
 class GenerateRequest(BaseModel):
@@ -189,17 +197,25 @@ class GenerateRequest(BaseModel):
         default=None,
         description="User's input to influence the story direction (e.g., 'focus on the mystery', 'add more action')"
     )
-    paragraph_count: int = Field(
-        default=3,
-        ge=1,
-        le=10,
-        description="Number of paragraphs to generate (1-10)"
+    paragraph_word_count: int = Field(
+        default=250,
+        ge=50,
+        le=600,
+        description="Target word count for the paragraph (50-600)"
     )
     choice_count: int = Field(
         default=3,
-        ge=2,
+        ge=0,
         le=5,
-        description="Number of choices to generate (2-5)"
+        description="Number of choices to generate (0 for auto mode, 2-5 for interactive)"
+    )
+    action_type: ActionType = Field(
+        default=ActionType.PROGRESS_STORY,
+        description="Type of action: 'extend_scene' adds detail to current moment, 'progress_story' advances the narrative"
+    )
+    use_v2: bool = Field(
+        default=True,
+        description="Use the new two-node Scenarist/Writer architecture (v2)"
     )
 
 

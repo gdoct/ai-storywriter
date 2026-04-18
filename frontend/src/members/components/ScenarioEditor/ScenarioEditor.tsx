@@ -471,11 +471,11 @@ export const ScenarioEditor: React.FC<ScenarioEditorProps> = ({
     },
     {
       id: 'interactive-story',
-      label: 'Interactive Story',
+      label: 'Long Story',
       icon: <FaDice />,
-      onClick: () => navigate(`/rolling-story/new?scenarioId=${state.scenario.id}`),
+      onClick: () => navigate(`/long-story/new?scenarioId=${state.scenario.id}`),
       disabled: state.isLoading || state.scenario.id === '',
-      title: state.isLoading ? 'Scenario is loading' : state.scenario.id === '' ? 'Please save the scenario first' : 'Start an interactive story',
+      title: state.isLoading ? 'Scenario is loading' : state.scenario.id === '' ? 'Please save the scenario first' : 'Generate a complete chapter-based long story',
       'data-testid': 'interactiveStoryButton'
     },
     {

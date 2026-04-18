@@ -1,7 +1,7 @@
 import { AiTextBox, Button } from '@drdata/ai-styles';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { FaPlus, FaRandom, FaTimes, FaUser } from 'react-icons/fa';
-import { getRandomCharacterPhoto } from '@shared/services/characterPhotoService';
+import { getRandomCharacterPhoto, uploadCharacterPhoto } from '@shared/services/characterPhotoService';
 import { generateRandomCharacter } from '@shared/services/storyGenerator';
 import { Character, Scenario } from '@shared/types/ScenarioTypes';
 import { showUserFriendlyError } from '@shared/utils/errorHandling';
@@ -345,9 +345,22 @@ export const PhotoUploadModal: React.FC<PhotoUploadModalProps> = ({
           finalCharacter.role = characterRole.trim();
         }
 
-        // Add generated image if available
+        // Add generated image if available from AI image generation
         if (generatedImageUri) {
           finalCharacter.photoUrl = generatedImageUri;
+        }
+
+        // If we have an input photo (uploaded or random), upload it as the character's photo
+        if (imageFile && !generatedImageUri) {
+          try {
+            updateProgressStage('Saving character photo...');
+            const { photoId, photoUrl } = await uploadCharacterPhoto(finalCharacter.id, imageFile);
+            finalCharacter.photoId = photoId;
+            finalCharacter.photoUrl = photoUrl;
+          } catch (photoError) {
+            console.error('Failed to upload character photo:', photoError);
+            // Continue without the photo - character was still created successfully
+          }
         }
 
         updateProgressStage('Character created successfully!');

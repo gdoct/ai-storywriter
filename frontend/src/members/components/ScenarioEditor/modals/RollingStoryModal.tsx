@@ -50,7 +50,7 @@ export const RollingStoryModal: React.FC<RollingStoryModalProps> = ({
   const [streamingText, setStreamingText] = useState('');
   const [userDirection, setUserDirection] = useState('');
   const [showSettings, setShowSettings] = useState(false);
-  const [paragraphCount, setParagraphCount] = useState(3);
+  const [paragraphWordCount, setParagraphWordCount] = useState(250);
   const [choiceCount, setChoiceCount] = useState(3);
 
   // Historical choice panels - maps paragraph ID to the choice panel shown after it
@@ -131,8 +131,9 @@ export const RollingStoryModal: React.FC<RollingStoryModalProps> = ({
         events: events,
         chosen_action: chosenAction?.label || null,
         chosen_action_description: chosenAction?.description,
+        advances_arc: chosenAction?.advances_arc || false,
         storyline_influence: userDirection.trim() || undefined,
-        paragraph_count: paragraphCount,
+        paragraph_word_count: paragraphWordCount,
         choice_count: choiceCount,
       };
 
@@ -165,6 +166,12 @@ export const RollingStoryModal: React.FC<RollingStoryModalProps> = ({
         } else if (event.type === 'storyline') {
           // Running storyline update - could display in UI
           console.log('Storyline:', event.storyline);
+        } else if (event.type === 'directive') {
+          // Scenarist directive (v2 architecture) - could display in debug UI
+          console.log('Scenarist directive:', event.directive);
+        } else if (event.type === 'arc_advanced') {
+          // Story arc advanced - could show notification
+          console.log('Story arc advanced to step:', event.new_step);
         } else if (event.type === 'choices') {
           // Choices received
           setChoices(event.choices || []);
@@ -199,7 +206,7 @@ export const RollingStoryModal: React.FC<RollingStoryModalProps> = ({
       setIsGenerating(false);
       abortControllerRef.current = null;
     }
-  }, [rollingStory, bible, events, userDirection, paragraphCount, choiceCount]);
+  }, [rollingStory, bible, events, userDirection, paragraphWordCount, choiceCount]);
 
   // Handle choice selection (for inline choice panel)
   const handleChoiceSelect = useCallback((choice: ChoiceOption) => {
@@ -393,13 +400,13 @@ export const RollingStoryModal: React.FC<RollingStoryModalProps> = ({
       </div>
       <div className="rolling-story__panel-content">
         <div className="rolling-story__setting">
-          <label>Paragraphs per turn</label>
+          <label>Paragraph length (words)</label>
           <div className="rolling-story__setting-options">
-            {[2, 3, 4, 5].map((num) => (
+            {[150, 250, 350, 450, 550].map((num) => (
               <button
                 key={num}
-                className={`rolling-story__setting-btn ${paragraphCount === num ? 'rolling-story__setting-btn--active' : ''}`}
-                onClick={() => setParagraphCount(num)}
+                className={`rolling-story__setting-btn ${paragraphWordCount === num ? 'rolling-story__setting-btn--active' : ''}`}
+                onClick={() => setParagraphWordCount(num)}
               >
                 {num}
               </button>

@@ -25,10 +25,20 @@ async def validation_node(state: Dict[str, Any]) -> Dict[str, Any]:
             return state
 
         # Check multimodal service if image input provided
+        # For LM Studio with vision models, we can use the regular text LLM service
+        # since it supports the same OpenAI-compatible multimodal API
         if state["image_data"] or state["image_uri"]:
-            multimodal_config = user_prefs.get('multimodal_backend', {}) if user_prefs else {}
-            if not multimodal_config.get('enabled', False):
-                state["validation_error"] = "Multimodal service is required but not configured"
+            # Get the LLM service to check if it supports vision
+            try:
+                llm_service, provider, mode = LLMProxyService.get_llm_service_for_user(state["user_id"])
+                # LM Studio and OpenAI-compatible backends support vision through the same API
+                # so we allow them for multimodal operations
+                if provider not in ['lmstudio', 'openai', 'chatgpt', 'github']:
+                    state["validation_error"] = f"Multimodal service not supported for provider: {provider}"
+                    return state
+            except Exception as e:
+                logger.error(f"Failed to get LLM service for multimodal validation: {e}")
+                state["validation_error"] = "Failed to validate multimodal service availability"
                 return state
 
         # Check image generation service if requested
@@ -380,11 +390,19 @@ def _build_field_prompt(
 ) -> str:
     """Build context-aware prompt for character field generation/modification"""
 
+    # Get character hints from the scenario (provided by user in the UI)
+    character_hints = scenario.get('characterHints', {})
+    hint_gender = character_hints.get('gender', '')
+    hint_name = character_hints.get('name', '')
+    hint_role = character_hints.get('role', '')
+    hint_additional = character_hints.get('additionalPrompt', '')
+
+    # Build field-specific prompts that incorporate hints
     field_prompts = {
-        "name": "Generate an appropriate character name that fits the scenario context and genre.",
+        "name": f"Generate an appropriate character name that fits the scenario context and genre.{f' The character should have a {hint_gender} name.' if hint_gender else ''}",
         "age": "Determine a suitable age for this character based on the scenario context.",
-        "gender": "Specify the character's gender identity.",
-        "appearance": "Describe the character's physical appearance in vivid detail.",
+        "gender": f"Specify the character's gender identity.{f' The character is {hint_gender}.' if hint_gender else ''}",
+        "appearance": f"Describe the character's physical appearance in vivid detail.{f' The character is {hint_gender}.' if hint_gender else ''}",
         "personality": "Define the character's personality traits, quirks, and behavioral characteristics.",
         "background": "Create a compelling background story that explains the character's history and motivations."
     }
@@ -405,12 +423,27 @@ def _build_field_prompt(
     # Add image analysis if available
     image_context = f"\nImage analysis: {image_analysis}\n" if image_analysis else ""
 
+    # Build character hints context
+    hints_parts = []
+    if hint_gender:
+        hints_parts.append(f"Gender: {hint_gender}")
+    if hint_name:
+        hints_parts.append(f"Suggested name: {hint_name}")
+    if hint_role:
+        hints_parts.append(f"Role: {hint_role}")
+    if hint_additional:
+        hints_parts.append(f"Additional context: {hint_additional}")
+
+    hints_context = ""
+    if hints_parts:
+        hints_context = "\n\nUser-provided character details (MUST be respected):\n" + "\n".join(hints_parts) + "\n"
+
     # Choose action verb
     action = "Modify the existing" if not is_generation else "Create a new"
 
     prompt = f"""{action} {field_name} for a character in this scenario.
 
-{scenario_context}{image_context}
+{scenario_context}{image_context}{hints_context}
 
 {field_prompts.get(field_name, f'Generate the {field_name} for this character.')}
 

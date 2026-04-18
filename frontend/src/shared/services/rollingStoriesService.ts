@@ -62,8 +62,10 @@ export interface GenerateRequest {
   chosen_action_description?: string;
   advances_arc?: boolean;  // Whether the chosen action advances the story arc
   storyline_influence?: string;  // User's input to influence story direction
-  paragraph_count?: number;  // Number of paragraphs to generate (default 3)
+  paragraph_word_count?: number;  // Target word count for the paragraph (default 250, range 50-600)
   choice_count?: number;  // Number of choices to generate (default 3, range 2-5)
+  action_type?: 'extend_scene' | 'progress_story';  // Type of action for two-node architecture
+  use_v2?: boolean;  // Use the new two-node Scenarist/Writer architecture (default true)
 }
 
 export interface GenerateResponse {
@@ -214,6 +216,13 @@ export interface Storyline {
  * @param request - The generation request
  * @param abortSignal - Optional AbortSignal to cancel the request
  */
+export interface ScenaristDirective {
+  instruction: string;
+  focus_elements: string[];
+  tension_direction: 'increase' | 'maintain' | 'decrease';
+  arc_relevance: string;
+}
+
 export const streamGenerateParagraphs = async function* (
   storyId: number,
   request: GenerateRequest,
@@ -224,11 +233,14 @@ export const streamGenerateParagraphs = async function* (
   message?: string;
   choices?: Choice[];
   storyline?: Storyline;
+  directive?: ScenaristDirective;  // Scenarist directive (v2 architecture)
+  new_step?: number;  // New arc step after advancement
   error?: string;
   paragraph?: StoryParagraph;  // Single paragraph for choice_made event
   paragraphs?: StoryParagraph[];
   bible_updates?: StoryBibleEntry[];
   event_updates?: StoryEvent[];
+  story_summary?: string;  // Condensed story summary (v2)
 }> {
   const token = localStorage.getItem('token');
 

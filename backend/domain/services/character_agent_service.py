@@ -29,24 +29,29 @@ class CharacterAgentService:
 
     async def validate_services(self, user_id: str, needs_multimodal: bool = False, needs_image_gen: bool = False) -> None:
         """Validate required services are available for user"""
-        user_prefs = self.user_preferences_repository.get_user_preferences(user_id)
+        from domain.services.llm_proxy_service import LLMProxyService
 
         if needs_multimodal:
-            # Check if multimodal service is configured
-            multimodal_config = user_prefs.get('multimodal_llm_config', '{}') if user_prefs else '{}'
-            if isinstance(multimodal_config, str):
-                multimodal_config = json.loads(multimodal_config) if multimodal_config else {}
-            if not multimodal_config.get('enabled', False):
-                logger.warning(f"User {user_id} attempted multimodal operation without enabled backend - ignoring multimodal features")
+            # Check if the current LLM provider supports vision/multimodal
+            # LM Studio and OpenAI-compatible backends support vision through the same API
+            try:
+                llm_service, provider, mode = LLMProxyService.get_llm_service_for_user(user_id)
+                if provider not in ['lmstudio', 'openai', 'chatgpt', 'github']:
+                    logger.warning(f"User {user_id} attempted multimodal operation with unsupported provider {provider}")
+                    return False
+            except Exception as e:
+                logger.warning(f"User {user_id} - failed to validate multimodal service: {e}")
                 return False
 
         if needs_image_gen:
-            # Check if image generation service is configured
+            # Image generation requires a dedicated image generation backend
+            # For now, this feature is not available unless explicitly configured
+            user_prefs = self.user_preferences_repository.get_user_preferences(user_id)
             image_config = user_prefs.get('image_llm_config', '{}') if user_prefs else '{}'
             if isinstance(image_config, str):
                 image_config = json.loads(image_config) if image_config else {}
             if not image_config.get('enabled', False):
-                logger.warning(f"User {user_id} attempted image generation without enabled backend - ignoring image generation request")
+                logger.info(f"User {user_id} requested image generation but no image backend configured - skipping")
                 return False
 
         return True

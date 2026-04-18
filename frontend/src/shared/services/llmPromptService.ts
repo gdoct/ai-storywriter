@@ -1248,3 +1248,86 @@ export function createSimilarScenarioPrompt(
     userMessage: prompt
   };
 }
+
+export function createSimilarSynopsisPrompt(
+  existingScenario: Scenario,
+  userInstructions: string
+): llmCompletionRequestMessage {
+  const writingStyle = existingScenario.writingStyle || { genre: 'General Fiction' };
+  const genre = writingStyle.genre || 'General Fiction';
+
+  let prompt = `Based on the existing scenario below, create a NEW similar scenario title and synopsis.\n\n`;
+  prompt += `====== EXISTING SCENARIO ======\n`;
+  prompt += `Title: ${existingScenario.title}\n`;
+  prompt += `Synopsis: ${existingScenario.synopsis}\n`;
+  prompt += `Genre: ${genre}\n`;
+  if (writingStyle.tone) prompt += `Tone: ${writingStyle.tone}\n`;
+  if (writingStyle.theme) prompt += `Theme: ${writingStyle.theme}\n`;
+
+  if (userInstructions && userInstructions.trim()) {
+    prompt += `\n====== USER INSTRUCTIONS ======\n${userInstructions.trim()}\n`;
+  }
+
+  prompt += `\n====== REQUIREMENTS ======\n`;
+  prompt += `• Create a completely NEW title (do not copy the existing one)\n`;
+  prompt += `• Write an engaging synopsis of 2-4 sentences\n`;
+  prompt += `• Maintain the same ${genre} genre and writing style\n`;
+  prompt += `• Make the scenario feel related but clearly distinct from the original\n`;
+  if (userInstructions?.trim()) {
+    prompt += `• Follow the user instructions above\n`;
+  }
+
+  prompt += `\nOUTPUT FORMAT: Respond with ONLY this JSON object:\n`;
+  prompt += `{\n  "title": "(new creative title)",\n  "synopsis": "(new engaging synopsis)"\n}\n`;
+  prompt += `\nIMPORTANT: Provide ONLY the JSON object - no explanations or additional text.`;
+
+  return {
+    systemMessage: `You are an expert storyteller specializing in ${genre} fiction. You excel at creating fresh, engaging story concepts.`,
+    userMessage: prompt
+  };
+}
+
+export function createFullScenarioFromSynopsisPrompt(
+  existingScenario: Scenario,
+  acceptedTitle: string,
+  acceptedSynopsis: string
+): llmCompletionRequestMessage {
+  const writingStyle = existingScenario.writingStyle || { genre: 'General Fiction' };
+  const genre = writingStyle.genre || 'General Fiction';
+
+  let prompt = `Generate a complete scenario using the provided title and synopsis. Use the existing scenario only as a writing style reference.\n\n`;
+
+  prompt += `====== STYLE REFERENCE ======\n`;
+  prompt += JSON.stringify({ writingStyle: existingScenario.writingStyle }, null, 2) + '\n\n';
+
+  prompt += `====== SCENARIO TO DEVELOP ======\n`;
+  prompt += `Title: ${acceptedTitle}\n`;
+  prompt += `Synopsis: ${acceptedSynopsis}\n\n`;
+
+  prompt += `====== REQUIREMENTS ======\n`;
+  prompt += `• Use EXACTLY this title: "${acceptedTitle}"\n`;
+  prompt += `• Use EXACTLY this synopsis: "${acceptedSynopsis}"\n`;
+  prompt += `• Create NEW characters appropriate to the story\n`;
+  prompt += `• Create NEW locations appropriate to the story\n`;
+  prompt += `• Write a detailed backstory (2-3 paragraphs)\n`;
+  prompt += `• Develop a story arc with clear plot progression\n`;
+  prompt += `• Maintain the ${genre} genre and writing style from the reference\n`;
+
+  prompt += `\nOUTPUT FORMAT: Respond with a complete scenario as a JSON object:\n`;
+  prompt += `{\n`;
+  prompt += `  "title": "(must match exactly: ${acceptedTitle})",\n`;
+  prompt += `  "synopsis": "(must match exactly: ${acceptedSynopsis})",\n`;
+  prompt += `  "writingStyle": { "genre": "...", "tone": "...", "style": "...", "language": "...", "theme": "...", "other": "..." },\n`;
+  prompt += `  "characters": [{ "name": "...", "alias": "...", "role": "...", "gender": "...", "appearance": "...", "backstory": "...", "extraInfo": "..." }],\n`;
+  prompt += `  "locations": [{ "name": "...", "description": "..." }],\n`;
+  prompt += `  "backstory": "(detailed backstory 2-3 paragraphs)",\n`;
+  prompt += `  "storyarc": "(story arc as bullet points)",\n`;
+  prompt += `  "notes": "(creative notes and ideas)"\n`;
+  prompt += `}\n\n`;
+  prompt += `IMPORTANT: Provide ONLY the JSON object - no explanations or additional text. Ensure the JSON is valid and properly formatted.`;
+
+  return {
+    systemMessage: `You are an expert storyteller specializing in ${genre} fiction. You excel at developing rich, detailed story worlds.`,
+    userMessage: prompt
+  };
+}

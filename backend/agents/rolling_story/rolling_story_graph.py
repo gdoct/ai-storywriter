@@ -1,9 +1,18 @@
 """
-Rolling Story Agent - LangGraph implementation for interactive story generation.
+Rolling Story Agent - Two-Node Architecture for interactive story generation.
 
-This agent generates 8 paragraphs per cycle, extracts bible/event updates,
-and generates choices for the next cycle. Features token-by-token streaming
-and a running storyline for narrative coherence.
+Architecture:
+- SCENARIST NODE: High-level narrative director (decides WHAT happens)
+- WRITER NODE: Prose generator (decides HOW it's written)
+
+The Scenarist receives the full story context (summary, all choices, scenario)
+and outputs an authoritative directive. The Writer expands this into prose.
+
+Features:
+- Condensed story summary maintained across paragraphs
+- All user choices tracked for narrative coherence
+- Token-by-token streaming for Writer output
+- Action types: "extend_scene" vs "progress_story"
 """
 import asyncio
 import json
@@ -13,8 +22,25 @@ from typing import Dict, Any, List, AsyncGenerator, Optional
 
 from langgraph.graph import StateGraph, END
 
-from .state import RollingStoryState
+from .state import RollingStoryState, ScenaristDirective, UserChoice
+from .debug_logger import RollingStoryDebugLogger
 from .prompts import (
+    # New two-node prompts
+    SCENARIST_SYSTEM,
+    SCENARIST_USER,
+    WRITER_SYSTEM,
+    WRITER_USER,
+    SUMMARY_CONDENSE_SYSTEM,
+    SUMMARY_CONDENSE_USER,
+    # Arc evaluator prompts
+    ARC_EVALUATOR_SYSTEM,
+    ARC_EVALUATOR_USER,
+    # Arc parser and generator prompts
+    ARC_PARSER_SYSTEM,
+    ARC_PARSER_USER,
+    ARC_GENERATOR_SYSTEM,
+    ARC_GENERATOR_USER,
+    # Legacy prompts (still used for extraction and choices)
     PARAGRAPH_GENERATION_SYSTEM,
     PARAGRAPH_GENERATION_USER,
     EXTRACTION_SYSTEM,
@@ -23,10 +49,19 @@ from .prompts import (
     CHOICES_USER,
     STORYLINE_SYSTEM,
     STORYLINE_USER,
+    # Formatting helpers
     format_bible_for_prompt,
     format_events_for_prompt,
     format_scenario_for_prompt,
     format_storyline_for_prompt,
+    format_all_choices_for_prompt,
+    extract_writing_style,
+    extract_arc_text,
+    # Arc parsing helpers
+    parse_story_arc,
+    normalize_structured_arc,
+    get_arc_step_info,
+    get_next_arc_step_info,
 )
 from infrastructure.database.repositories import RollingStoryRepository
 
@@ -154,6 +189,587 @@ class RollingStoryAgent:
             return "No story arc defined for this scenario."
 
         return f"Currently at step {current_arc_step} of the story arc. The story arc is:\n{storyarc}"
+
+    # ============= ARC EVALUATION =============
+
+    async def _evaluate_choice_against_arc(
+        self,
+        user_id: str,
+        scenario: dict,
+        chosen_action: str,
+        chosen_action_description: str,
+        current_arc_step: int,
+        story_summary: str,
+        structured_arc: list = None
+    ) -> Dict[str, Any]:
+        """Evaluate user's choice and determine if it advances the story arc.
+
+        This is the Arc Guardian - it ensures the story follows its defined narrative arc
+        by evaluating each user choice against the current and next arc steps.
+
+        Args:
+            structured_arc: Optional pre-loaded structured arc (1-indexed steps)
+
+        Returns:
+            {
+                "stays_in_step": True/False,
+                "new_arc_step": int,  # same as current or current+1
+                "rationale": "Why this choice stays or advances",
+                "modified_action": "How to interpret the choice within arc context"
+            }
+        """
+        llm_service, provider, mode = self._get_llm_service(user_id)
+
+        # Get arc step info (use structured_arc if provided)
+        current_step_info = get_arc_step_info(scenario, current_arc_step, structured_arc)
+        next_step_info = get_next_arc_step_info(scenario, current_arc_step, structured_arc)
+
+        # If no arc defined or at last step, default to staying
+        if current_step_info["name"] == "No Arc" or current_step_info.get("is_last", False):
+            return {
+                "stays_in_step": True,
+                "new_arc_step": current_arc_step,
+                "rationale": "No arc defined or at final arc step",
+                "modified_action": chosen_action
+            }
+
+        # Build the evaluation prompt
+        prompt = ARC_EVALUATOR_USER.format(
+            current_step=current_arc_step,
+            current_step_name=current_step_info["name"],
+            current_step_description=current_step_info["description"],
+            next_step=current_arc_step + 1,
+            next_step_name=next_step_info["name"] if next_step_info["exists"] else "N/A",
+            next_step_description=next_step_info["description"] if next_step_info["exists"] else "Story arc complete",
+            story_summary=story_summary or "Story is just beginning.",
+            choice_label=chosen_action,
+            choice_description=chosen_action_description or ""
+        )
+
+        payload = {
+            "messages": [
+                {"role": "system", "content": ARC_EVALUATOR_SYSTEM},
+                {"role": "user", "content": prompt}
+            ],
+            "temperature": 0.3,  # Low temperature for consistent evaluation
+            "max_tokens": 400
+        }
+
+        try:
+            response = llm_service.chat_completion(payload)
+
+            response_text = ""
+            if isinstance(response, dict):
+                choices = response.get("choices", [])
+                if choices:
+                    response_text = choices[0].get("message", {}).get("content", "")
+            elif isinstance(response, str):
+                response_text = response
+
+            parsed = self._parse_json_response(response_text)
+            if parsed and "stays_in_step" in parsed:
+                # Ensure proper types
+                result = {
+                    "stays_in_step": bool(parsed.get("stays_in_step", True)),
+                    "new_arc_step": int(parsed.get("new_arc_step", current_arc_step)),
+                    "rationale": str(parsed.get("rationale", "")),
+                    "modified_action": str(parsed.get("modified_action", chosen_action))
+                }
+                logger.info(f"Arc evaluation: stays={result['stays_in_step']}, step={result['new_arc_step']}, rationale={result['rationale'][:50]}...")
+                return result
+
+        except Exception as e:
+            logger.error(f"Arc evaluation failed: {e}", exc_info=True)
+
+        # Default: stay in current step
+        logger.warning("Arc evaluation fallback: staying in current step")
+        return {
+            "stays_in_step": True,
+            "new_arc_step": current_arc_step,
+            "rationale": "Evaluation failed, defaulting to current step",
+            "modified_action": chosen_action
+        }
+
+    async def _initialize_structured_arc(
+        self,
+        story_id: int,
+        user_id: str,
+        scenario: dict,
+        debug_logger=None
+    ) -> list:
+        """Initialize the structured arc for a rolling story.
+
+        This is called once when generation starts. It:
+        1. Checks if a structured arc already exists in the database
+        2. If not, uses LLM to parse the scenario's story arc text into JSON
+        3. If no arc text exists, generates one via LLM
+
+        Args:
+            story_id: The rolling story ID
+            user_id: The user ID
+            scenario: The scenario dict containing jsondata
+            debug_logger: Optional debug logger for arc logging
+
+        Returns:
+            List of structured arc steps (1-indexed)
+        """
+        # Check if structured arc already exists
+        existing_arc = RollingStoryRepository.get_structured_arc(story_id)
+        if existing_arc and len(existing_arc) > 0:
+            logger.info(f"Using existing structured arc with {len(existing_arc)} steps")
+            if debug_logger:
+                debug_logger.log_structured_arc(existing_arc, source="existing (from database)")
+            return existing_arc
+
+        # Get arc text from scenario
+        arc_text = extract_arc_text(scenario)
+
+        if arc_text and arc_text != "No story arc defined for this scenario.":
+            # Use LLM to parse the arc text into structured JSON
+            logger.info("Parsing story arc via LLM")
+            parsed_arc, raw_response = await self._parse_arc_with_llm(user_id, arc_text)
+            if debug_logger:
+                debug_logger.log_arc_parsing(
+                    raw_text=raw_response or arc_text,
+                    parsed_result=parsed_arc if parsed_arc else None,
+                    error="Parsing returned None or too few steps" if not parsed_arc or len(parsed_arc) < 3 else None
+                )
+            if parsed_arc and len(parsed_arc) >= 3:
+                normalized = normalize_structured_arc(parsed_arc)
+                RollingStoryRepository.set_structured_arc(story_id, user_id, normalized)
+                logger.info(f"LLM parsed and saved structured arc with {len(normalized)} steps")
+                if debug_logger:
+                    debug_logger.log_structured_arc(normalized, source="parsed via LLM")
+                return normalized
+            else:
+                logger.warning(f"LLM parsed arc has only {len(parsed_arc) if parsed_arc else 0} steps")
+
+        # No arc text or parsing failed - generate new arc via LLM
+        logger.info("Generating new structured arc via LLM")
+        generated_arc, raw_response = await self._generate_story_arc(user_id, scenario)
+        if debug_logger and raw_response:
+            debug_logger.log_arc_parsing(
+                raw_text=raw_response,
+                parsed_result=generated_arc if generated_arc else None,
+                error="Generation returned None" if not generated_arc else None
+            )
+        if generated_arc:
+            RollingStoryRepository.set_structured_arc(story_id, user_id, generated_arc)
+            logger.info(f"Generated and saved structured arc with {len(generated_arc)} steps")
+            if debug_logger:
+                debug_logger.log_structured_arc(generated_arc, source="generated via LLM")
+            return generated_arc
+
+        # Fallback: create a minimal default arc
+        logger.warning("Using fallback default arc")
+        default_arc = [
+            {"step": 1, "name": "Beginning", "description": "Story introduction and setup", "locked": False},
+            {"step": 2, "name": "Rising Action", "description": "Conflict develops and stakes increase", "locked": False},
+            {"step": 3, "name": "Climax", "description": "Main confrontation or turning point", "locked": False},
+            {"step": 4, "name": "Resolution", "description": "Story conclusion", "locked": False}
+        ]
+        RollingStoryRepository.set_structured_arc(story_id, user_id, default_arc)
+        if debug_logger:
+            debug_logger.log_structured_arc(default_arc, source="fallback default")
+        return default_arc
+
+    async def _parse_arc_with_llm(
+        self,
+        user_id: str,
+        arc_text: str
+    ) -> tuple:
+        """Use LLM to parse story arc text into structured JSON.
+
+        This handles any format: Roman numerals, numbers, bullets, etc.
+
+        Args:
+            user_id: The user ID for LLM service selection
+            arc_text: The raw story arc text to parse
+
+        Returns:
+            Tuple of (List of structured arc steps or None, raw response text)
+        """
+        llm_service, provider, mode = self._get_llm_service(user_id)
+
+        prompt = ARC_PARSER_USER.format(arc_text=arc_text)
+
+        payload = {
+            "messages": [
+                {"role": "system", "content": ARC_PARSER_SYSTEM},
+                {"role": "user", "content": prompt}
+            ],
+            "temperature": 0.2,  # Low temperature for accurate parsing
+            "max_tokens": 2000
+        }
+
+        response_text = ""
+        try:
+            response = llm_service.chat_completion(payload)
+
+            if isinstance(response, dict):
+                choices = response.get("choices", [])
+                if choices:
+                    response_text = choices[0].get("message", {}).get("content", "")
+            elif isinstance(response, str):
+                response_text = response
+
+            parsed = self._parse_json_response(response_text)
+            if parsed and isinstance(parsed, list) and len(parsed) > 0:
+                logger.info(f"LLM successfully parsed arc into {len(parsed)} steps")
+                return (parsed, response_text)
+            else:
+                logger.warning(f"LLM arc parsing failed, response: {response_text[:200]}")
+
+        except Exception as e:
+            logger.error(f"Arc parsing with LLM failed: {e}", exc_info=True)
+
+        return (None, response_text)
+
+    async def _generate_story_arc(
+        self,
+        user_id: str,
+        scenario: dict
+    ) -> tuple:
+        """Generate a story arc using LLM based on scenario details.
+
+        Args:
+            user_id: The user ID for LLM service selection
+            scenario: The scenario dict containing jsondata
+
+        Returns:
+            Tuple of (List of structured arc steps or None, raw response text)
+        """
+        llm_service, provider, mode = self._get_llm_service(user_id)
+
+        # Extract scenario details
+        jsondata = scenario.get("jsondata", "{}")
+        if isinstance(jsondata, str):
+            try:
+                jsondata = json.loads(jsondata)
+            except:
+                jsondata = {}
+
+        title = jsondata.get("title", "Untitled Story")
+        synopsis = jsondata.get("synopsis", "An interactive story")
+        genre = jsondata.get("genre", "")
+        if isinstance(jsondata.get("writingStyle"), dict):
+            genre = jsondata["writingStyle"].get("genre", genre)
+
+        # Format characters
+        characters = jsondata.get("characters", [])
+        char_text = ""
+        for char in characters[:5]:  # Limit to 5 main characters
+            if char.get("name"):
+                char_text += f"- {char['name']}"
+                if char.get("role"):
+                    char_text += f" ({char['role']})"
+                char_text += "\n"
+        if not char_text:
+            char_text = "No specific characters defined"
+
+        # Check for existing arc text to improve upon
+        existing_arc = jsondata.get("storyarc", "")
+        if existing_arc:
+            task = f"""Improve and structure this existing story arc into proper steps:
+
+{existing_arc}
+
+Make sure each step is clear, distinct, and achievable in 2-5 paragraphs."""
+        else:
+            task = """Create a compelling story arc with 5-7 steps that fits this scenario.
+Each step should be a major narrative beat that can be explored in 2-5 paragraphs."""
+
+        prompt = ARC_GENERATOR_USER.format(
+            title=title,
+            synopsis=synopsis,
+            genre=genre or "General fiction",
+            characters=char_text,
+            existing_arc=existing_arc or "None provided",
+            task=task
+        )
+
+        payload = {
+            "messages": [
+                {"role": "system", "content": ARC_GENERATOR_SYSTEM},
+                {"role": "user", "content": prompt}
+            ],
+            "temperature": 0.7,
+            "max_tokens": 1500
+        }
+
+        response_text = ""
+        try:
+            response = llm_service.chat_completion(payload)
+
+            if isinstance(response, dict):
+                choices = response.get("choices", [])
+                if choices:
+                    response_text = choices[0].get("message", {}).get("content", "")
+            elif isinstance(response, str):
+                response_text = response
+
+            parsed = self._parse_json_response(response_text)
+            if parsed and isinstance(parsed, list) and len(parsed) >= 3:
+                # Normalize the generated arc
+                return (normalize_structured_arc(parsed), response_text)
+            else:
+                logger.warning(f"Failed to parse generated arc: {response_text[:200]}")
+
+        except Exception as e:
+            logger.error(f"Arc generation failed: {e}", exc_info=True)
+
+        return (None, response_text)
+
+    # ============= NEW: Two-Node Architecture Methods =============
+
+    async def _generate_scenarist_directive(
+        self,
+        user_id: str,
+        scenario: dict,
+        story_summary: str,
+        all_user_choices: List[Dict[str, Any]],
+        bible: List[Dict[str, Any]],
+        events: List[Dict[str, Any]],
+        last_paragraph: str,
+        user_influence: str,
+        action_type: str,
+        current_arc_step: int,
+        current_choice: Dict[str, Any] = None,
+        structured_arc: list = None
+    ) -> tuple:
+        """Generate the Scenarist's authoritative directive for the next paragraph.
+
+        The Scenarist is the high-level narrative director that decides WHAT happens,
+        considering the full story context, all user choices, and the scenario arc.
+
+        Args:
+            structured_arc: Optional pre-loaded structured arc (1-indexed steps)
+
+        Returns:
+            tuple: (directive dict, raw_response str, parse_success bool, user_prompt str)
+        """
+        prompt = ""  # Initialize for error handling
+        try:
+            llm_service, provider, mode = self._get_llm_service(user_id)
+
+            # Extract scenario data
+            jsondata = scenario.get("jsondata", {})
+            if isinstance(jsondata, str):
+                import json
+                try:
+                    jsondata = json.loads(jsondata)
+                except Exception as parse_err:
+                    logger.warning(f"Failed to parse jsondata: {parse_err}")
+                    jsondata = {}
+
+            title = jsondata.get("title", "Untitled Story")
+            synopsis = jsondata.get("synopsis", "No synopsis provided.")
+
+            # Format characters simply
+            characters = jsondata.get("characters", [])
+            characters_text = "No characters defined."
+            if characters:
+                char_lines = []
+                for char in characters:
+                    if char.get("name"):
+                        line = f"- {char['name']}"
+                        if char.get("role"):
+                            line += f" ({char['role']})"
+                        if char.get("gender"):
+                            line += f" - {char['gender']}"
+                        char_lines.append(line)
+                if char_lines:
+                    characters_text = "\n".join(char_lines)
+
+            # Get current and next arc step info (use structured_arc if provided)
+            current_step_info = get_arc_step_info(scenario, current_arc_step, structured_arc)
+            next_step_info = get_next_arc_step_info(scenario, current_arc_step, structured_arc)
+
+            # Format user's last choice
+            user_choice_text = "No choice made yet - this is the beginning."
+            if current_choice:
+                user_choice_text = f"Choice: {current_choice.get('label', '')} - {current_choice.get('description', '')}"
+
+            prompt = SCENARIST_USER.format(
+                synopsis=synopsis,
+                characters=characters_text,
+                current_step_name=current_step_info['name'],
+                current_step_description=current_step_info['description'],
+                story_summary=story_summary or "Story has not started yet.",
+                last_paragraph=last_paragraph or "This is the first paragraph.",
+                user_choice=user_choice_text
+            )
+        except Exception as e:
+            error_msg = f"Error building scenarist prompt: {e}"
+            logger.error(error_msg, exc_info=True)
+            raise RuntimeError(error_msg) from e
+
+        payload = {
+            "messages": [
+                {"role": "system", "content": SCENARIST_SYSTEM},
+                {"role": "user", "content": prompt}
+            ],
+            "temperature": 0.5,  # Slightly higher for more creative narrative decisions
+            "max_tokens": 600  # Increased for richer directive with all new fields
+        }
+
+        response = llm_service.chat_completion(payload)
+
+        # Extract text from response
+        response_text = ""
+        if isinstance(response, dict):
+            choices = response.get("choices", [])
+            if choices:
+                response_text = choices[0].get("message", {}).get("content", "")
+        elif isinstance(response, str):
+            response_text = response
+
+        # Parse JSON response
+        parsed = self._parse_json_response(response_text)
+        if parsed and parsed.get("instruction"):
+            logger.info(f"Scenarist directive: {parsed.get('instruction', '')[:100]}...")
+            return (parsed, response_text, True, prompt)
+
+        # Default directive if parsing fails
+        logger.warning(f"Scenarist parse failed, using default. Response: {response_text[:200]}")
+        default_directive = {
+            "instruction": "Continue following the current arc step, showing the protagonist's actions.",
+            "focus_elements": [],
+            "sensory_focus": "The immediate environment"
+        }
+        return (default_directive, response_text, False, prompt)
+
+    async def _stream_writer_paragraph(
+        self,
+        user_id: str,
+        scenario: dict,
+        scenarist_directive: Dict[str, Any],
+        bible: List[Dict[str, Any]],
+        last_paragraph: str,
+        word_count: int = 190
+    ) -> AsyncGenerator[str, None]:
+        """Stream the Writer's prose based on the Scenarist's directive.
+
+        The Writer transforms the Scenarist's directive into rich, engaging prose,
+        matching the established writing style and maintaining continuity.
+
+        Args:
+            word_count: Target word count for the paragraph (50-300)
+        """
+        from .prompts import get_writer_system_prompt
+        llm_service, provider, mode = self._get_llm_service(user_id)
+
+        # Extract writing style from scenario
+        writing_style = extract_writing_style(scenario)
+
+        # Format focus elements
+        focus_elements = scenarist_directive.get("focus_elements", [])
+        focus_text = ", ".join(focus_elements) if focus_elements else "None specified"
+
+        prompt = WRITER_USER.format(
+            writing_style=writing_style,
+            scenarist_instruction=scenarist_directive.get("instruction", "Continue the story"),
+            sensory_focus=scenarist_directive.get("sensory_focus", "The immediate environment"),
+            focus_elements=focus_text,
+            last_paragraph=last_paragraph or "Story is beginning.",
+            bible_text=format_bible_for_prompt(bible),
+            word_count=word_count
+        )
+
+        # Get dynamic system prompt with word count
+        writer_system = get_writer_system_prompt(word_count)
+
+        payload = {
+            "messages": [
+                {"role": "system", "content": writer_system},
+                {"role": "user", "content": prompt}
+            ],
+            "temperature": 0.7,  # Moderate temperature for creative prose
+            "max_tokens": 2048
+        }
+
+        # Stream the response
+        try:
+            for chunk in llm_service.chat_completion_stream(payload):
+                contents = parse_sse_chunks(chunk)
+                for content in contents:
+                    yield content
+                await asyncio.sleep(0)
+        except Exception as e:
+            logger.error(f"Writer streaming failed: {e}")
+            raise
+
+    async def _condense_summary(
+        self,
+        user_id: str,
+        current_summary: str,
+        new_paragraph: str
+    ) -> str:
+        """Update the running story summary by incorporating a new paragraph.
+
+        Maintains a structured summary with plot, emotional, and unresolved thread tracking.
+        Keeps the summary under 800 words to maintain context without unbounded growth.
+        """
+        llm_service, provider, mode = self._get_llm_service(user_id)
+
+        prompt = SUMMARY_CONDENSE_USER.format(
+            current_summary=current_summary or "Story is just beginning.",
+            new_paragraph=new_paragraph
+        )
+
+        payload = {
+            "messages": [
+                {"role": "system", "content": SUMMARY_CONDENSE_SYSTEM},
+                {"role": "user", "content": prompt}
+            ],
+            "temperature": 0.3,  # Low temperature for accurate summarization
+            "max_tokens": 1000  # Increased to support richer structured summaries
+        }
+
+        response = llm_service.chat_completion(payload)
+
+        # Extract text from response
+        response_text = ""
+        if isinstance(response, dict):
+            choices = response.get("choices", [])
+            if choices:
+                response_text = choices[0].get("message", {}).get("content", "")
+        elif isinstance(response, str):
+            response_text = response
+
+        return response_text.strip() if response_text else current_summary
+
+    def _load_story_summary(self, story_id: int) -> str:
+        """Load the story summary from database."""
+        summary_data = RollingStoryRepository.get_story_summary(story_id)
+        if summary_data:
+            return summary_data.get("summary_text", "")
+        return ""
+
+    def _save_story_summary(self, story_id: int, summary_text: str, paragraph_count: int) -> None:
+        """Save the story summary to database."""
+        RollingStoryRepository.save_story_summary(story_id, summary_text, paragraph_count)
+
+    def _load_all_user_choices(self, story_id: int) -> List[Dict[str, Any]]:
+        """Load all user choices from database."""
+        return RollingStoryRepository.get_all_user_choices(story_id)
+
+    def _save_user_choice(
+        self,
+        story_id: int,
+        sequence: int,
+        label: str,
+        description: str,
+        advances_arc: bool
+    ) -> None:
+        """Save a user choice to database."""
+        RollingStoryRepository.add_user_choice(
+            story_id, sequence, label, description, advances_arc
+        )
+
+    # ============= END: Two-Node Architecture Methods =============
+
+    # ============= LEGACY: Original Storyline Method (kept for compatibility) =============
 
     async def _generate_storyline(
         self,
@@ -290,32 +906,80 @@ End at the moment of decision, NOT after it is made."""
             logger.error(f"Streaming failed: {e}")
             raise
 
+    def _repair_json(self, json_str: str) -> str:
+        """Attempt to repair common JSON malformations from LLMs."""
+        # Fix missing quotes for string values after colon
+        # Pattern: "key": SomeText... -> "key": "SomeText..."
+        # The LLM often forgets the opening quote for string values
+
+        # First, try a regex approach that handles the whole string
+        # Match pattern: "key": followed by unquoted text until comma or closing brace
+        def fix_unquoted_value(match):
+            key_part = match.group(1)  # "key":
+            value = match.group(2).strip()
+            end_char = match.group(3)  # , or } or ]
+
+            # Escape quotes in value
+            value = value.replace('\\', '\\\\').replace('"', '\\"')
+            return f'{key_part}"{value}"{end_char}'
+
+        # Pattern: "key": <unquoted text starting with letter> followed by , or } or ]
+        # This handles: "description": Some text here,
+        repaired = re.sub(
+            r'("(?:label|description|summary|name|details)":\s*)([A-Za-z][^,}\]"]*?)(\s*[,}\]])',
+            fix_unquoted_value,
+            json_str
+        )
+
+        return repaired
+
     def _parse_json_response(self, response_text: str) -> Optional[Dict[str, Any]]:
         """Parse JSON from LLM response, handling various formats."""
         if not response_text:
+            logger.warning("Empty response text in _parse_json_response")
             return None
+
+        # Clean up the response text
+        cleaned = response_text.strip()
+
+        # Remove double braces if present (common LLM mistake)
+        cleaned = cleaned.replace('{{', '{').replace('}}', '}')
 
         # Try direct parse first
         try:
-            return json.loads(response_text.strip())
-        except json.JSONDecodeError:
-            pass
+            return json.loads(cleaned)
+        except json.JSONDecodeError as e:
+            logger.debug(f"Direct JSON parse failed: {e}")
 
-        # Try extracting from markdown code block
-        code_block_match = re.search(r'```(?:json)?\s*(\{.*?\})\s*```', response_text, re.DOTALL)
+        # Try extracting from markdown code block (handle multiline)
+        code_block_match = re.search(r'```(?:json)?\s*(\{[\s\S]*?\})\s*```', cleaned)
         if code_block_match:
             try:
                 return json.loads(code_block_match.group(1))
-            except json.JSONDecodeError:
-                pass
+            except json.JSONDecodeError as e:
+                logger.debug(f"Markdown code block JSON parse failed: {e}")
 
-        # Try finding JSON object (non-greedy to get first complete object)
-        # Look for balanced braces
-        start_idx = response_text.find('{')
+        # Try finding JSON object with balanced braces
+        start_idx = cleaned.find('{')
         if start_idx >= 0:
             brace_count = 0
             end_idx = start_idx
-            for i, char in enumerate(response_text[start_idx:], start_idx):
+            in_string = False
+            escape_next = False
+
+            for i, char in enumerate(cleaned[start_idx:], start_idx):
+                if escape_next:
+                    escape_next = False
+                    continue
+                if char == '\\':
+                    escape_next = True
+                    continue
+                if char == '"' and not escape_next:
+                    in_string = not in_string
+                    continue
+                if in_string:
+                    continue
+
                 if char == '{':
                     brace_count += 1
                 elif char == '}':
@@ -325,11 +989,21 @@ End at the moment of decision, NOT after it is made."""
                         break
 
             if end_idx > start_idx:
+                json_str = cleaned[start_idx:end_idx]
                 try:
-                    return json.loads(response_text[start_idx:end_idx])
-                except json.JSONDecodeError:
-                    pass
+                    return json.loads(json_str)
+                except json.JSONDecodeError as e:
+                    logger.debug(f"Balanced brace extraction failed to parse: {e}")
+                    # Try repairing the JSON
+                    try:
+                        repaired = self._repair_json(json_str)
+                        logger.debug(f"Attempting repaired JSON: {repaired[:200]}...")
+                        return json.loads(repaired)
+                    except json.JSONDecodeError as e2:
+                        logger.warning(f"Repaired JSON also failed to parse: {e2}")
+                        logger.debug(f"Attempted to parse: {json_str[:200]}...")
 
+        logger.warning(f"All JSON parsing methods failed for response: {cleaned[:200]}...")
         return None
 
     async def _extract_updates(
@@ -383,9 +1057,14 @@ End at the moment of decision, NOT after it is made."""
         last_paragraph: str,
         choice_count: int = 3,
         current_arc_step: int = 1,
-        arc_ready: bool = False
+        arc_ready: bool = False,
+        structured_arc: list = None
     ) -> List[Dict[str, Any]]:
-        """Generate choices for the next cycle."""
+        """Generate arc-categorized choices for the next cycle.
+
+        Args:
+            structured_arc: Optional pre-loaded structured arc (1-indexed steps)
+        """
         llm_service, provider, mode = self._get_llm_service(user_id)
 
         # Get scenario title and story arc
@@ -398,41 +1077,31 @@ End at the moment of decision, NOT after it is made."""
         scenario_title = jsondata.get("title", "Untitled Story")
         storyarc = jsondata.get("storyarc", "")
 
-        # Build arc instruction for the system prompt
-        if storyarc and arc_ready:
-            arc_instruction = f"""The story is currently at step {current_arc_step} of the story arc and is READY to progress.
-Include at least one choice that would naturally advance to the next step of the arc.
-Mark this choice with "advances_arc": true."""
-        elif storyarc:
-            arc_instruction = f"""The story is at step {current_arc_step} of the story arc but is NOT yet ready to progress.
-All choices should stay within the current arc step. Set "advances_arc": false for all choices."""
-        else:
-            arc_instruction = "No story arc defined. Set \"advances_arc\": false for all choices."
+        # Get current and next arc step info (use structured_arc if provided)
+        current_step_info = get_arc_step_info(scenario, current_arc_step, structured_arc)
+        next_step_info = get_next_arc_step_info(scenario, current_arc_step, structured_arc)
 
-        # Build arc context for the user prompt
-        if storyarc:
-            arc_context = f"Currently at step {current_arc_step}. Story arc: {storyarc}\nReady to advance: {'Yes' if arc_ready else 'No'}"
-        else:
-            arc_context = "No story arc defined for this scenario."
-
-        # Format prompts with choice_count and arc info
-        system_prompt = CHOICES_SYSTEM.format(choice_count=choice_count, arc_instruction=arc_instruction)
+        # Format prompts
         user_prompt = CHOICES_USER.format(
             scenario_title=scenario_title,
             bible_text=format_bible_for_prompt(bible),
-            events_text=format_events_for_prompt(events),
             last_paragraph=last_paragraph,
             choice_count=choice_count,
-            arc_context=arc_context
+            current_arc_step=current_arc_step,
+            current_step_name=current_step_info['name'],
+            current_step_description=current_step_info['description'],
+            next_arc_step=current_arc_step + 1,
+            next_step_name=next_step_info['name'],
+            next_step_description=next_step_info['description']
         )
 
         payload = {
             "messages": [
-                {"role": "system", "content": system_prompt},
+                {"role": "system", "content": CHOICES_SYSTEM},
                 {"role": "user", "content": user_prompt}
             ],
             "temperature": 0.7,
-            "max_tokens": 500
+            "max_tokens": 1000  # Increased to ensure full JSON response
         }
 
         try:
@@ -446,17 +1115,29 @@ All choices should stay within the current arc step. Set "advances_arc": false f
             elif isinstance(response, str):
                 response_text = response
 
+
             parsed = self._parse_json_response(response_text)
             if parsed and "choices" in parsed:
-                return parsed["choices"]
+                generated_choices = parsed["choices"]
+                # Ensure each choice has required fields with proper defaults
+                for choice in generated_choices:
+                    if "advances_arc" not in choice:
+                        choice["advances_arc"] = False
+                    if "choice_category" not in choice:
+                        # Infer category from advances_arc if not provided
+                        choice["choice_category"] = "advance_arc" if choice.get("advances_arc") else "stay_in_step"
+                return generated_choices
+            else:
+                logger.warning(f"Failed to parse choices from response. Parsed result: {parsed}")
         except Exception as e:
-            logger.error(f"Choice generation failed: {e}")
+            logger.error(f"Choice generation failed: {e}", exc_info=True)
 
-        # Fallback choices with dynamic labels
+        # Fallback choices with arc categories
+        logger.warning("Using fallback choices due to parsing failure")
         fallback_choices = [
-            {"label": "Take action", "description": "Take decisive action to address the situation"},
-            {"label": "Wait and observe", "description": "Hold back and assess the situation before acting"},
-            {"label": "Find another way", "description": "Look for an alternative approach to the problem"}
+            {"label": "Explore further", "description": "Take time to understand the current situation more deeply", "advances_arc": False, "choice_category": "stay_in_step"},
+            {"label": "Take decisive action", "description": "Move forward boldly toward the next challenge", "advances_arc": True, "choice_category": "advance_arc"},
+            {"label": "Find another approach", "description": "Look for an alternative way to handle this moment", "advances_arc": False, "choice_category": "flavor_stay"}
         ]
         return fallback_choices[:choice_count]
 
@@ -471,12 +1152,12 @@ All choices should stay within the current arc step. Set "advances_arc": false f
         chosen_action_description: str = None,
         advances_arc: bool = False,
         user_storyline_influence: str = None,
-        paragraph_count: int = 3,
+        paragraph_word_count: int = 190,
         choice_count: int = 3
     ) -> Dict[str, Any]:
-        """Generate paragraphs + choices (non-streaming)."""
+        """Generate single paragraph + choices (non-streaming)."""
         current_sequence = RollingStoryRepository.get_next_sequence(story_id)
-        target_paragraphs = paragraph_count
+        target_paragraphs = 1  # Always 1 paragraph per turn now
 
         # Get current arc step from database
         current_arc_step = RollingStoryRepository.get_current_arc_step(story_id)
@@ -592,12 +1273,12 @@ All choices should stay within the current arc step. Set "advances_arc": false f
         chosen_action_description: str = None,
         advances_arc: bool = False,
         user_storyline_influence: str = None,
-        paragraph_count: int = 3,
+        paragraph_word_count: int = 190,
         choice_count: int = 3
     ) -> AsyncGenerator[Dict[str, Any], None]:
-        """Stream paragraph generation with real-time token delivery."""
+        """Stream paragraph generation with real-time token delivery (legacy, generates 1 paragraph)."""
         current_sequence = RollingStoryRepository.get_next_sequence(story_id)
-        target_paragraphs = paragraph_count
+        target_paragraphs = 1  # Always 1 paragraph per turn now
 
         # Get current arc step from database
         current_arc_step = RollingStoryRepository.get_current_arc_step(story_id)
@@ -782,6 +1463,382 @@ All choices should stay within the current arc step. Set "advances_arc": false f
             "storyline": storyline,
             "current_arc_step": current_arc_step,
             "arc_ready": arc_ready
+        }
+
+    # ============= NEW: Two-Node Architecture Generation =============
+
+    async def stream_generate_v2(
+        self,
+        story_id: int,
+        user_id: str,
+        scenario: dict,
+        bible: List[Dict[str, Any]],
+        events: List[Dict[str, Any]],
+        chosen_action: str = None,
+        chosen_action_description: str = None,
+        advances_arc: bool = False,
+        user_storyline_influence: str = None,
+        paragraph_word_count: int = 190,
+        choice_count: int = 3,
+        action_type: str = "progress_story"
+    ) -> AsyncGenerator[Dict[str, Any], None]:
+        """Stream paragraph generation using the two-node Scenarist/Writer architecture.
+
+        This method separates concerns:
+        - SCENARIST: Decides WHAT happens (high-level narrative direction)
+        - WRITER: Decides HOW it's written (prose generation)
+
+        Args:
+            story_id: The rolling story ID
+            user_id: The user ID
+            scenario: The source scenario with jsondata
+            bible: Story bible entries
+            events: Story events
+            chosen_action: Label of user's choice (if any)
+            chosen_action_description: Description of user's choice
+            advances_arc: Whether the choice advances the story arc
+            user_storyline_influence: User's direction for the story
+            paragraph_word_count: Target word count for the paragraph (50-300)
+            choice_count: Number of choices to generate
+            action_type: "extend_scene" or "progress_story"
+
+        Yields:
+            Dict events: status, directive, token, paragraph_end, choices, complete, error
+        """
+        import time
+        session_start = time.time()
+
+        # Initialize debug logger (only writes if ROLLING_STORY_DEBUG=true)
+        debug_logger = RollingStoryDebugLogger(story_id)
+
+        current_sequence = RollingStoryRepository.get_next_sequence(story_id)
+        current_arc_step = RollingStoryRepository.get_current_arc_step(story_id)
+
+        # Initialize structured arc (once per story, at first generation)
+        yield {"type": "status", "message": "Parsing story arc structure..."}
+        structured_arc = await self._initialize_structured_arc(story_id, user_id, scenario, debug_logger)
+        logger.info(f"Structured arc has {len(structured_arc)} steps, currently at step {current_arc_step}")
+
+        # Brief status update about arc
+        if structured_arc:
+            current_step_name = structured_arc[min(current_arc_step - 1, len(structured_arc) - 1)].get("name", f"Step {current_arc_step}")
+            yield {"type": "status", "message": f"Story arc ready: currently at '{current_step_name}'"}
+
+        generated_paragraphs = []
+        all_bible_updates = []
+        all_event_updates = []
+
+        # Load story summary and user choices history
+        story_summary = self._load_story_summary(story_id)
+        all_user_choices = self._load_all_user_choices(story_id)
+
+        # Get last paragraph for context
+        last_paragraphs = RollingStoryRepository.get_last_paragraphs(story_id, 1)
+        last_paragraph = last_paragraphs[0].get("content", "") if last_paragraphs else ""
+
+        # Log inputs and initial state
+        debug_logger.log_generation_inputs(
+            scenario=scenario,
+            bible=bible,
+            events=events,
+            chosen_action=chosen_action,
+            chosen_action_description=chosen_action_description,
+            advances_arc=advances_arc,
+            user_influence=user_storyline_influence,
+            paragraph_count=1,  # Always 1 paragraph per turn now
+            choice_count=choice_count,
+            action_type=action_type
+        )
+        debug_logger.log_state(
+            story_summary=story_summary,
+            all_user_choices=all_user_choices,
+            current_arc_step=current_arc_step,
+            last_paragraph=last_paragraph
+        )
+
+        # Handle user choice if made
+        if chosen_action:
+            # Record the choice in our tracking table
+            self._save_user_choice(
+                story_id, current_sequence,
+                chosen_action, chosen_action_description, advances_arc
+            )
+
+            # Add to local list for immediate use
+            all_user_choices.append({
+                "label": chosen_action,
+                "description": chosen_action_description,
+                "advances_arc": advances_arc,
+                "sequence": current_sequence
+            })
+
+            # Insert choice as a special paragraph (for display)
+            choice_text = f"[CHOICE: {chosen_action}]"
+            choice_paragraph = RollingStoryRepository.add_paragraph(
+                rolling_story_id=story_id,
+                sequence=current_sequence,
+                content=choice_text
+            )
+            generated_paragraphs.append(choice_paragraph)
+            current_sequence += 1
+
+            # Record as event
+            choice_event = RollingStoryRepository.add_event(
+                rolling_story_id=story_id,
+                paragraph_sequence=current_sequence - 1,
+                event_type="user_choice",
+                summary=f"Reader chose: {chosen_action}",
+                resolved=True
+            )
+            if choice_event:
+                all_event_updates.append(choice_event)
+
+            yield {"type": "choice_made", "content": choice_text, "paragraph": choice_paragraph}
+
+            # Evaluate the choice against the story arc to determine if it advances
+            yield {"type": "status", "message": "Analyzing your choice against the story arc..."}
+
+            arc_evaluation = await self._evaluate_choice_against_arc(
+                user_id=user_id,
+                scenario=scenario,
+                chosen_action=chosen_action,
+                chosen_action_description=chosen_action_description or "",
+                current_arc_step=current_arc_step,
+                story_summary=story_summary or "Story is just beginning.",
+                structured_arc=structured_arc
+            )
+
+            # Log the arc evaluation result
+            logger.info(f"Arc evaluation result: stays_in_step={arc_evaluation['stays_in_step']}, "
+                       f"new_arc_step={arc_evaluation['new_arc_step']}, "
+                       f"rationale={arc_evaluation['rationale'][:100]}...")
+
+            # Update arc step based on evaluation (not the frontend's advances_arc flag)
+            if not arc_evaluation["stays_in_step"]:
+                # Arc evaluation determined the choice advances the story
+                old_step = current_arc_step
+                new_step = arc_evaluation["new_arc_step"]
+                current_arc_step = RollingStoryRepository.set_arc_step(story_id, user_id, new_step)
+
+                # Lock the previous step (it's been played through)
+                RollingStoryRepository.lock_arc_step(story_id, user_id, old_step)
+                logger.info(f"Locked arc step {old_step}, advanced to step {current_arc_step}")
+
+                arc_event = RollingStoryRepository.add_event(
+                    rolling_story_id=story_id,
+                    paragraph_sequence=current_sequence - 1,
+                    event_type="key_event",
+                    summary=f"Story arc advanced to step {current_arc_step}: {arc_evaluation['rationale'][:100]}",
+                    resolved=False
+                )
+                if arc_event:
+                    all_event_updates.append(arc_event)
+
+                # Get the new step name for the status message
+                new_step_name = "next phase"
+                if structured_arc and current_arc_step <= len(structured_arc):
+                    new_step_name = structured_arc[current_arc_step - 1].get("name", f"Step {current_arc_step}")
+
+                yield {"type": "arc_advanced", "new_step": current_arc_step, "rationale": arc_evaluation["rationale"]}
+                yield {"type": "status", "message": f"Story advancing to: {new_step_name}"}
+
+            # Store the modified action interpretation for use by the Scenarist
+            effective_action = arc_evaluation.get("modified_action", chosen_action)
+            effective_action_description = arc_evaluation.get("rationale", chosen_action_description)
+        else:
+            # No choice made, no effective action
+            effective_action = None
+            effective_action_description = None
+
+        # Get paragraph count for summary tracking
+        summary_data = RollingStoryRepository.get_story_summary(story_id)
+        paragraph_count_in_summary = summary_data.get("paragraph_count", 0) if summary_data else 0
+
+        # Generate single paragraph using two-node architecture
+        # === SCENARIST NODE ===
+        yield {"type": "status", "message": "Creating narrative directive..."}
+
+        # Build current_choice dict if user just made a choice
+        # Use the effective action (modified by arc evaluation) if available
+        current_choice = None
+        if chosen_action:
+            current_choice = {
+                "label": effective_action or chosen_action,
+                "description": effective_action_description or chosen_action_description,
+                "original_label": chosen_action,
+                "original_description": chosen_action_description
+            }
+
+        try:
+            scenarist_directive, raw_response, parse_success, scenarist_prompt = await self._generate_scenarist_directive(
+                user_id=user_id,
+                scenario=scenario,
+                story_summary=story_summary,
+                all_user_choices=all_user_choices,
+                bible=bible,
+                events=events,
+                last_paragraph=last_paragraph,
+                user_influence=user_storyline_influence,
+                action_type=action_type,
+                current_arc_step=current_arc_step,
+                current_choice=current_choice,
+                structured_arc=structured_arc
+            )
+
+            # Log prompts and response for debugging
+            debug_logger.log_scenarist_prompt(SCENARIST_SYSTEM, scenarist_prompt, 1)
+            debug_logger.log_scenarist_raw_response(raw_response, 1, parse_success)
+            debug_logger.log_scenarist_response(scenarist_directive, 1)
+            yield {"type": "directive", "directive": scenarist_directive}
+
+        except Exception as e:
+            import traceback
+            error_details = traceback.format_exc()
+            logger.error(f"Scenarist failed: {e}\n{error_details}")
+            debug_logger.log_error(f"{str(e)}\n\nFull traceback:\n{error_details}", "Scenarist node")
+            yield {"type": "error", "error": f"Scenarist failed: {str(e)}"}
+            return
+
+        # === WRITER NODE ===
+        yield {"type": "status", "message": "Writing story paragraph..."}
+
+        # Build and log writer prompt
+        writing_style = extract_writing_style(scenario)
+        focus_elements = scenarist_directive.get("focus_elements", [])
+        focus_text = ", ".join(focus_elements) if focus_elements else "None specified"
+        writer_user_prompt = WRITER_USER.format(
+            writing_style=writing_style,
+            scenarist_instruction=scenarist_directive.get("instruction", "Continue the story"),
+            sensory_focus=scenarist_directive.get("sensory_focus", "The immediate environment"),
+            focus_elements=focus_text,
+            last_paragraph=last_paragraph or "Story is beginning.",
+            bible_text=format_bible_for_prompt(bible),
+            word_count=paragraph_word_count
+        )
+        debug_logger.log_writer_prompt(WRITER_SYSTEM, writer_user_prompt, 1)
+
+        paragraph_text = ""
+        try:
+            async for token in self._stream_writer_paragraph(
+                user_id=user_id,
+                scenario=scenario,
+                scenarist_directive=scenarist_directive,
+                bible=bible,
+                last_paragraph=last_paragraph,
+                word_count=paragraph_word_count
+            ):
+                paragraph_text += token
+                yield {"type": "token", "content": token}
+
+        except Exception as e:
+            logger.error(f"Writer streaming failed: {e}")
+            debug_logger.log_error(str(e), "Writer node")
+            yield {"type": "error", "error": f"Failed to generate paragraph: {str(e)}"}
+            return
+
+        paragraph_text = paragraph_text.strip()
+        debug_logger.log_writer_output(paragraph_text, 1)
+        yield {"type": "paragraph_end", "content": "\n\n"}
+
+        # === UPDATE SUMMARY ===
+        yield {"type": "status", "message": "Updating story memory..."}
+        try:
+            old_summary = story_summary
+            story_summary = await self._condense_summary(
+                user_id, story_summary, paragraph_text
+            )
+            paragraph_count_in_summary += 1
+            self._save_story_summary(story_id, story_summary, paragraph_count_in_summary)
+            debug_logger.log_summary_update(old_summary, story_summary, 1)
+        except Exception as e:
+            logger.warning(f"Summary condensation failed (non-fatal): {e}")
+
+        # === EXTRACT UPDATES ===
+        yield {"type": "status", "message": "Analyzing story elements..."}
+        updates = await self._extract_updates(user_id, paragraph_text, bible)
+        bible_updates = updates.get("bible_updates", [])
+        event_updates = updates.get("events", [])
+        debug_logger.log_extraction(bible_updates, event_updates, 1)
+
+        # === PERSIST ===
+        try:
+            saved_paragraph = RollingStoryRepository.add_paragraph(
+                rolling_story_id=story_id,
+                sequence=current_sequence,
+                content=paragraph_text
+            )
+
+            # Save bible entries
+            for entry in bible_updates:
+                if entry.get("is_new", True):
+                    saved = RollingStoryRepository.add_bible_entry(
+                        rolling_story_id=story_id,
+                        category=normalize_category(entry.get("category", "character")),
+                        name=entry.get("name", "Unknown"),
+                        details=entry.get("details", {}),
+                        introduced_at=current_sequence
+                    )
+                    if saved:
+                        all_bible_updates.append(saved)
+                        bible.append(saved)
+
+            # Save events
+            for event in event_updates:
+                saved = RollingStoryRepository.add_event(
+                    rolling_story_id=story_id,
+                    paragraph_sequence=current_sequence,
+                    event_type=normalize_event_type(event.get("event_type", "key_event")),
+                    summary=event.get("summary", ""),
+                    resolved=False
+                )
+                if saved:
+                    all_event_updates.append(saved)
+                    events.append(saved)
+
+            generated_paragraphs.append(saved_paragraph)
+
+        except Exception as e:
+            logger.error(f"Persist failed: {e}")
+            yield {"type": "error", "error": f"Failed to save paragraph: {str(e)}"}
+            return
+
+        # Update last_paragraph for choices generation
+        last_paragraph = paragraph_text
+
+        # === GENERATE CHOICES (only if choice_count > 0) ===
+        choices = []
+        arc_ready = (action_type == "progress_story")
+
+        if choice_count > 0:
+            yield {"type": "status", "message": "Creating choice options..."}
+
+            choices = await self._generate_choices(
+                user_id, scenario, bible, events, last_paragraph, choice_count,
+                current_arc_step, arc_ready, structured_arc
+            )
+
+            debug_logger.log_choices(choices)
+            yield {"type": "choices", "choices": choices}
+        else:
+            # Auto mode - no choices, story continues automatically
+            debug_logger.log_choices([])
+            yield {"type": "choices", "choices": [], "auto_mode": True}
+
+        # Log completion with timing
+        session_duration = time.time() - session_start
+        debug_logger.log_completion(len(generated_paragraphs), session_duration)
+
+        # === FINAL COMPLETION ===
+        yield {
+            "type": "complete",
+            "paragraphs": generated_paragraphs,
+            "bible_updates": all_bible_updates,
+            "event_updates": all_event_updates,
+            "choices": choices,
+            "story_summary": story_summary,
+            "current_arc_step": current_arc_step,
+            "arc_ready": arc_ready,
+            "auto_mode": choice_count == 0
         }
 
 

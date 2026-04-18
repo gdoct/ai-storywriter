@@ -25,6 +25,8 @@ import Templates from './members/pages/Templates';
 import Test from './shared/pages/Test';
 import RollingStories from './members/pages/RollingStories';
 import RollingStoryPage from './members/pages/RollingStoryPage';
+import LongStories from './members/pages/LongStories';
+import LongStoryPage from './members/pages/LongStoryPage';
 
 // Component to handle the root route logic
 // eslint-disable-next-line react-refresh/only-export-components
@@ -97,6 +99,22 @@ const getRoutes = (): RouteObject[] => {
       element: (
         <ProtectedRoute>
           <RollingStoryPage />
+        </ProtectedRoute>
+      )
+    },
+    {
+      path: '/long-stories',
+      element: (
+        <ProtectedRoute>
+          <LongStories />
+        </ProtectedRoute>
+      )
+    },
+    {
+      path: '/long-story/:storyId',
+      element: (
+        <ProtectedRoute>
+          <LongStoryPage />
         </ProtectedRoute>
       )
     },

@@ -78,6 +78,11 @@ class LMStudioService(BaseLLMService):
                              json=completion_params,
                              stream=True,
                              timeout=300) as resp:  # 5 minute timeout for long generations
+                if resp.status_code == 400:
+                    # Log the error details for debugging
+                    error_text = resp.text
+                    print(f"LMStudio 400 error - Request messages: {json.dumps(completion_params.get('messages', []), default=str)[:1000]}")
+                    print(f"LMStudio 400 error - Response: {error_text[:500]}")
                 resp.raise_for_status()
                 # Use minimal buffering for real-time streaming
                 # Process Server-Sent Events line by line for real-time streaming

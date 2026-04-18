@@ -328,3 +328,41 @@ export const generateSimilarScenarios = async (
     throw error;
   }
 };
+
+// ---- New backend-powered API functions ----
+
+export interface SynopsisResult {
+  title: string;
+  synopsis: string;
+}
+
+/**
+ * Ask the backend to generate a new title+synopsis similar to the given scenario.
+ */
+export const generateSimilarSynopsis = async (
+  scenarioId: string,
+  userInstructions: string
+): Promise<SynopsisResult> => {
+  const response = await axios.post<SynopsisResult>(
+    `/api/scenarios/${scenarioId}/generate-similar-synopsis`,
+    { user_instructions: userInstructions }
+  );
+  return response.data;
+};
+
+/**
+ * Ask the backend to generate a full scenario from an accepted title+synopsis,
+ * using the source scenario as style reference.
+ * Returns the newly created scenario.
+ */
+export const generateSimilarFullScenario = async (
+  scenarioId: string,
+  title: string,
+  synopsis: string
+): Promise<Scenario> => {
+  const response = await axios.post<Scenario>(
+    `/api/scenarios/${scenarioId}/generate-similar-full`,
+    { title, synopsis }
+  );
+  return response.data;
+};

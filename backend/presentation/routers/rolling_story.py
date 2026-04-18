@@ -1,6 +1,7 @@
 """
 API Router for Rolling Stories feature.
 """
+import json
 from typing import List, Dict, Any
 from fastapi import APIRouter, HTTPException, status, Depends
 from fastapi.responses import StreamingResponse
@@ -290,7 +291,7 @@ async def generate_paragraphs(
             chosen_action_description=request.chosen_action_description,
             advances_arc=request.advances_arc,
             user_storyline_influence=request.storyline_influence,
-            paragraph_count=request.paragraph_count,
+            paragraph_word_count=request.paragraph_word_count,
             choice_count=request.choice_count
         )
 
@@ -318,6 +319,14 @@ async def stream_generate_paragraphs(
     Stream the generation of paragraphs for a rolling story.
 
     Returns a Server-Sent Events stream with real-time paragraph generation.
+
+    When use_v2=True (default), uses the new two-node Scenarist/Writer architecture:
+    - Scenarist decides WHAT happens (high-level narrative direction)
+    - Writer decides HOW it's written (prose generation)
+
+    The action_type parameter controls narrative behavior:
+    - "extend_scene": Add depth/detail to the current moment without advancing plot
+    - "progress_story": Move forward to the next beat of the narrative arc
     """
     user_id = current_user['id']
 
@@ -342,28 +351,69 @@ async def stream_generate_paragraphs(
     async def event_generator():
         try:
             from agents.rolling_story.rolling_story_graph import rolling_story_agent
-            import json
+            import logging
+            logger = logging.getLogger(__name__)
 
-            async for event in rolling_story_agent.stream_generate(
-                story_id=story_id,
-                user_id=user_id,
-                scenario=scenario,
-                bible=request.bible,
-                events=request.events,
-                chosen_action=request.chosen_action,
-                chosen_action_description=request.chosen_action_description,
-                advances_arc=request.advances_arc,
-                user_storyline_influence=request.storyline_influence,
-                paragraph_count=request.paragraph_count,
-                choice_count=request.choice_count
-            ):
-                yield f"data: {json.dumps(event)}\n\n"
+            def serialize_event(event):
+                """Serialize event dict to JSON, handling datetime and other objects."""
+                def json_serializer(obj):
+                    if hasattr(obj, 'isoformat'):
+                        return obj.isoformat()
+                    if hasattr(obj, '__dict__'):
+                        return obj.__dict__
+                    return str(obj)
+                return json.dumps(event, default=json_serializer)
+
+            # Choose generation method based on use_v2 flag
+            if request.use_v2:
+                # New two-node architecture
+                async for event in rolling_story_agent.stream_generate_v2(
+                    story_id=story_id,
+                    user_id=user_id,
+                    scenario=scenario,
+                    bible=request.bible,
+                    events=request.events,
+                    chosen_action=request.chosen_action,
+                    chosen_action_description=request.chosen_action_description,
+                    advances_arc=request.advances_arc,
+                    user_storyline_influence=request.storyline_influence,
+                    paragraph_word_count=request.paragraph_word_count,
+                    choice_count=request.choice_count,
+                    action_type=request.action_type.value
+                ):
+                    try:
+                        yield f"data: {serialize_event(event)}\n\n"
+                    except Exception as serialize_error:
+                        logger.error(f"Failed to serialize event: {serialize_error}, event type: {event.get('type', 'unknown')}")
+                        yield f"data: {json.dumps({'type': 'error', 'error': f'Serialization error: {str(serialize_error)}'})}\n\n"
+            else:
+                # Legacy single-node architecture
+                async for event in rolling_story_agent.stream_generate(
+                    story_id=story_id,
+                    user_id=user_id,
+                    scenario=scenario,
+                    bible=request.bible,
+                    events=request.events,
+                    chosen_action=request.chosen_action,
+                    chosen_action_description=request.chosen_action_description,
+                    advances_arc=request.advances_arc,
+                    user_storyline_influence=request.storyline_influence,
+                    paragraph_word_count=request.paragraph_word_count,
+                    choice_count=request.choice_count
+                ):
+                    try:
+                        yield f"data: {serialize_event(event)}\n\n"
+                    except Exception as serialize_error:
+                        logger.error(f"Failed to serialize event: {serialize_error}")
+                        yield f"data: {json.dumps({'type': 'error', 'error': f'Serialization error: {str(serialize_error)}'})}\n\n"
 
             yield "data: [DONE]\n\n"
-        except ImportError:
-            yield f"data: {json.dumps({'error': 'Rolling story agent not yet implemented'})}\n\n"
+        except ImportError as ie:
+            logger.error(f"Import error: {ie}")
+            yield f"data: {json.dumps({'type': 'error', 'error': 'Rolling story agent not yet implemented'})}\n\n"
         except Exception as e:
-            yield f"data: {json.dumps({'error': str(e)})}\n\n"
+            logger.error(f"Generation error: {e}", exc_info=True)
+            yield f"data: {json.dumps({'type': 'error', 'error': str(e)})}\n\n"
 
     return StreamingResponse(
         event_generator(),

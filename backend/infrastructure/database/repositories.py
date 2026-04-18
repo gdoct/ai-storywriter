@@ -818,6 +818,138 @@ class RollingStoryRepository:
         return result[0] if result else 1
 
     @staticmethod
+    def set_arc_step(story_id: int, user_id: str, step: int) -> int:
+        """Set the current arc step to a specific value. Returns the new step number."""
+        conn = get_db_connection()
+        now = datetime.now(timezone.utc).isoformat()
+        conn.execute(
+            'UPDATE rolling_stories SET current_arc_step = ?, updated_at = ? WHERE id = ? AND user_id = ?',
+            (step, now, story_id, user_id)
+        )
+        conn.commit()
+        result = conn.execute(
+            'SELECT current_arc_step FROM rolling_stories WHERE id = ?',
+            (story_id,)
+        ).fetchone()
+        conn.close()
+        return result[0] if result else step
+
+    @staticmethod
+    def get_structured_arc(story_id: int) -> list:
+        """Get the structured arc for a rolling story.
+
+        Returns:
+            List of step dicts (1-indexed), or empty list if no arc set
+        """
+        conn = get_db_connection()
+        result = conn.execute(
+            'SELECT structured_arc FROM rolling_stories WHERE id = ?',
+            (story_id,)
+        ).fetchone()
+        conn.close()
+
+        if result and result[0]:
+            try:
+                import json
+                return json.loads(result[0])
+            except (json.JSONDecodeError, TypeError):
+                return []
+        return []
+
+    @staticmethod
+    def set_structured_arc(story_id: int, user_id: str, arc: list) -> bool:
+        """Set the structured arc for a rolling story.
+
+        Args:
+            story_id: The rolling story ID
+            user_id: The user ID (for authorization)
+            arc: List of step dicts (1-indexed) with step, name, description, locked
+
+        Returns:
+            True if updated successfully
+        """
+        import json
+        conn = get_db_connection()
+        now = datetime.now(timezone.utc).isoformat()
+        cursor = conn.cursor()
+        cursor.execute(
+            'UPDATE rolling_stories SET structured_arc = ?, updated_at = ? WHERE id = ? AND user_id = ?',
+            (json.dumps(arc), now, story_id, user_id)
+        )
+        conn.commit()
+        updated = cursor.rowcount > 0
+        conn.close()
+        return updated
+
+    @staticmethod
+    def lock_arc_step(story_id: int, user_id: str, step_number: int) -> bool:
+        """Lock a specific arc step (mark as played through).
+
+        Once locked, a step cannot be regenerated.
+
+        Args:
+            story_id: The rolling story ID
+            user_id: The user ID (for authorization)
+            step_number: The 1-based step number to lock
+
+        Returns:
+            True if updated successfully
+        """
+        import json
+        arc = RollingStoryRepository.get_structured_arc(story_id)
+        if not arc:
+            return False
+
+        # Find and lock the step (steps are 1-indexed, array is 0-indexed)
+        step_index = step_number - 1
+        if 0 <= step_index < len(arc):
+            arc[step_index]["locked"] = True
+            return RollingStoryRepository.set_structured_arc(story_id, user_id, arc)
+        return False
+
+    @staticmethod
+    def update_arc_from_step(story_id: int, user_id: str, from_step: int, new_steps: list) -> bool:
+        """Update the arc from a specific step onwards (for arc regeneration).
+
+        Preserves locked steps and replaces unlocked steps from from_step onwards.
+
+        Args:
+            story_id: The rolling story ID
+            user_id: The user ID (for authorization)
+            from_step: The 1-based step number to start replacing from
+            new_steps: New step dicts to replace existing steps
+
+        Returns:
+            True if updated successfully
+        """
+        import json
+        arc = RollingStoryRepository.get_structured_arc(story_id)
+        if not arc:
+            return False
+
+        # Keep steps before from_step, replace the rest
+        step_index = from_step - 1
+        preserved_steps = arc[:step_index]
+
+        # Verify none of the steps being replaced are locked
+        for step in arc[step_index:]:
+            if step.get("locked", False):
+                # Can't replace locked steps
+                return False
+
+        # Combine preserved steps with new steps, renumber new steps
+        combined_arc = preserved_steps[:]
+        for i, new_step in enumerate(new_steps):
+            combined_arc.append({
+                "step": step_index + i + 1,  # 1-indexed
+                "name": new_step.get("name", f"Step {step_index + i + 1}"),
+                "description": new_step.get("description", ""),
+                "locked": False
+            })
+
+        return RollingStoryRepository.set_structured_arc(story_id, user_id, combined_arc)
+
+    @staticmethod
     def delete_rolling_story(story_id: int, user_id: str) -> bool:
         """Delete a rolling story and all related data (cascades)."""
         conn = get_db_connection()
@@ -1130,3 +1262,357 @@ class RollingStoryRepository:
 
         conn.close()
         return result
+
+    # Story Summaries (for Scenarist node)
+    @staticmethod
+    def get_story_summary(rolling_story_id: int) -> dict:
+        """Get the condensed story summary for a rolling story."""
+        conn = get_db_connection()
+        summary = conn.execute('''
+            SELECT * FROM story_summaries
+            WHERE rolling_story_id = ?
+        ''', (rolling_story_id,)).fetchone()
+        conn.close()
+        return dict(summary) if summary else None
+
+    @staticmethod
+    def save_story_summary(rolling_story_id: int, summary_text: str, paragraph_count: int) -> dict:
+        """Save or update the story summary for a rolling story."""
+        conn = get_db_connection()
+        now = datetime.now(timezone.utc).isoformat()
+
+        # Check if summary exists
+        existing = conn.execute(
+            'SELECT id FROM story_summaries WHERE rolling_story_id = ?',
+            (rolling_story_id,)
+        ).fetchone()
+
+        if existing:
+            # Update existing
+            conn.execute('''
+                UPDATE story_summaries
+                SET summary_text = ?, paragraph_count = ?, updated_at = ?
+                WHERE rolling_story_id = ?
+            ''', (summary_text, paragraph_count, now, rolling_story_id))
+        else:
+            # Insert new
+            conn.execute('''
+                INSERT INTO story_summaries (rolling_story_id, summary_text, paragraph_count, updated_at)
+                VALUES (?, ?, ?, ?)
+            ''', (rolling_story_id, summary_text, paragraph_count, now))
+
+        conn.commit()
+        summary = conn.execute(
+            'SELECT * FROM story_summaries WHERE rolling_story_id = ?',
+            (rolling_story_id,)
+        ).fetchone()
+        conn.close()
+        return dict(summary) if summary else None
+
+    @staticmethod
+    def delete_story_summary(rolling_story_id: int) -> bool:
+        """Delete the story summary for a rolling story."""
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute('DELETE FROM story_summaries WHERE rolling_story_id = ?', (rolling_story_id,))
+        conn.commit()
+        deleted = cursor.rowcount > 0
+        conn.close()
+        return deleted
+
+    # Story User Choices (for Scenarist node - tracks all choices)
+    @staticmethod
+    def get_all_user_choices(rolling_story_id: int) -> list:
+        """Get all user choices made in a rolling story."""
+        conn = get_db_connection()
+        choices = conn.execute('''
+            SELECT * FROM story_user_choices
+            WHERE rolling_story_id = ?
+            ORDER BY sequence ASC
+        ''', (rolling_story_id,)).fetchall()
+        conn.close()
+        results = []
+        for c in choices:
+            choice = dict(c)
+            choice['advances_arc'] = bool(choice['advances_arc'])
+            results.append(choice)
+        return results
+
+    @staticmethod
+    def add_user_choice(rolling_story_id: int, sequence: int, label: str, description: str = None, advances_arc: bool = False) -> dict:
+        """Record a user choice in the story."""
+        conn = get_db_connection()
+        now = datetime.now(timezone.utc).isoformat()
+        cursor = conn.cursor()
+        cursor.execute('''
+            INSERT INTO story_user_choices (rolling_story_id, sequence, label, description, advances_arc, created_at)
+            VALUES (?, ?, ?, ?, ?, ?)
+        ''', (rolling_story_id, sequence, label, description, 1 if advances_arc else 0, now))
+        conn.commit()
+        choice_id = cursor.lastrowid
+        choice = conn.execute('SELECT * FROM story_user_choices WHERE id = ?', (choice_id,)).fetchone()
+        conn.close()
+        if choice:
+            result = dict(choice)
+            result['advances_arc'] = bool(result['advances_arc'])
+            return result
+        return None
+
+    @staticmethod
+    def delete_user_choices_from_sequence(rolling_story_id: int, from_sequence: int) -> int:
+        """Delete all user choices from a given sequence onwards (for story rewind)."""
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute('''
+            DELETE FROM story_user_choices
+            WHERE rolling_story_id = ? AND sequence >= ?
+        ''', (rolling_story_id, from_sequence))
+        conn.commit()
+        deleted = cursor.rowcount
+        conn.close()
+        return deleted
+
+
+class LongStoryRepository:
+    """Repository for Long Stories feature."""
+
+    @staticmethod
+    def create_long_story(user_id: str, scenario_id: str, title: str) -> dict:
+        """Create a new long story."""
+        conn = get_db_connection()
+        now = datetime.now(timezone.utc).isoformat()
+        cursor = conn.cursor()
+        cursor.execute('''
+            INSERT INTO long_stories (user_id, scenario_id, title, status, created_at, updated_at)
+            VALUES (?, ?, ?, 'draft', ?, ?)
+        ''', (user_id, scenario_id, title, now, now))
+        conn.commit()
+        story_id = cursor.lastrowid
+        story = conn.execute('SELECT * FROM long_stories WHERE id = ?', (story_id,)).fetchone()
+        conn.close()
+        return dict(story) if story else None
+
+    @staticmethod
+    def get_long_story_by_id(story_id: int, user_id: str = None) -> dict:
+        """Get a long story by ID, optionally filtered by user."""
+        conn = get_db_connection()
+        if user_id:
+            story = conn.execute(
+                'SELECT * FROM long_stories WHERE id = ? AND user_id = ?',
+                (story_id, user_id)
+            ).fetchone()
+        else:
+            story = conn.execute(
+                'SELECT * FROM long_stories WHERE id = ?',
+                (story_id,)
+            ).fetchone()
+        conn.close()
+        return dict(story) if story else None
+
+    @staticmethod
+    def get_long_stories_by_user(user_id: str) -> list:
+        """Get all long stories for a user."""
+        conn = get_db_connection()
+        stories = conn.execute('''
+            SELECT ls.*, COUNT(lsc.id) as chapter_count
+            FROM long_stories ls
+            LEFT JOIN long_story_chapters lsc ON ls.id = lsc.long_story_id
+            WHERE ls.user_id = ?
+            GROUP BY ls.id
+            ORDER BY ls.updated_at DESC
+        ''', (user_id,)).fetchall()
+        conn.close()
+        return [dict(s) for s in stories]
+
+    @staticmethod
+    def get_long_story_with_chapters(story_id: int, user_id: str) -> dict:
+        """Get a long story with all its chapters."""
+        conn = get_db_connection()
+        story = conn.execute(
+            'SELECT * FROM long_stories WHERE id = ? AND user_id = ?',
+            (story_id, user_id)
+        ).fetchone()
+        if not story:
+            conn.close()
+            return None
+        story_dict = dict(story)
+        chapters = conn.execute(
+            'SELECT * FROM long_story_chapters WHERE long_story_id = ? ORDER BY chapter_number',
+            (story_id,)
+        ).fetchall()
+        story_dict['chapters'] = [dict(c) for c in chapters]
+        conn.close()
+        return story_dict
+
+    @staticmethod
+    def update_long_story(story_id: int, user_id: str, title: str = None, status: str = None,
+                          synopsis: str = None, story_arc: str = None) -> dict:
+        """Update a long story's fields."""
+        conn = get_db_connection()
+        now = datetime.now(timezone.utc).isoformat()
+        updates = ['updated_at = ?']
+        params = [now]
+        if title is not None:
+            updates.append('title = ?')
+            params.append(title)
+        if status is not None:
+            updates.append('status = ?')
+            params.append(status)
+        if synopsis is not None:
+            updates.append('synopsis = ?')
+            params.append(synopsis)
+        if story_arc is not None:
+            updates.append('story_arc = ?')
+            params.append(story_arc)
+        params.extend([story_id, user_id])
+        conn.execute(
+            f'UPDATE long_stories SET {", ".join(updates)} WHERE id = ? AND user_id = ?',
+            params
+        )
+        conn.commit()
+        story = conn.execute('SELECT * FROM long_stories WHERE id = ?', (story_id,)).fetchone()
+        conn.close()
+        return dict(story) if story else None
+
+    @staticmethod
+    def delete_long_story(story_id: int, user_id: str) -> bool:
+        """Delete a long story and cascade to chapters."""
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            'DELETE FROM long_stories WHERE id = ? AND user_id = ?',
+            (story_id, user_id)
+        )
+        conn.commit()
+        deleted = cursor.rowcount > 0
+        conn.close()
+        return deleted
+
+    # ── Chapter methods ──────────────────────────────────────────────────────
+
+    @staticmethod
+    def create_chapters_from_arc(story_id: int, arc: list) -> list:
+        """Create chapter rows from the story arc list."""
+        conn = get_db_connection()
+        now = datetime.now(timezone.utc).isoformat()
+        cursor = conn.cursor()
+        for item in arc:
+            cursor.execute('''
+                INSERT INTO long_story_chapters
+                    (long_story_id, chapter_number, title, one_liner, status, created_at, updated_at)
+                VALUES (?, ?, ?, ?, 'pending', ?, ?)
+            ''', (story_id, item['chapter_number'], item['title'], item.get('one_liner', ''), now, now))
+        conn.commit()
+        chapters = conn.execute(
+            'SELECT * FROM long_story_chapters WHERE long_story_id = ? ORDER BY chapter_number',
+            (story_id,)
+        ).fetchall()
+        conn.close()
+        return [dict(c) for c in chapters]
+
+    @staticmethod
+    def reset_chapters_from_arc(story_id: int, arc: list) -> list:
+        """Delete all pending/generating chapters and recreate from updated arc.
+
+        Preserves any chapters that already have 'complete' status so completed
+        prose is not lost when the user edits other chapters in the arc.
+        """
+        conn = get_db_connection()
+        now = datetime.now(timezone.utc).isoformat()
+        cursor = conn.cursor()
+        # Remove non-complete chapters for this story
+        cursor.execute('''
+            DELETE FROM long_story_chapters
+            WHERE long_story_id = ? AND status != 'complete'
+        ''', (story_id,))
+        # Fetch existing complete chapters to avoid re-inserting them
+        existing = conn.execute(
+            'SELECT chapter_number FROM long_story_chapters WHERE long_story_id = ?',
+            (story_id,)
+        ).fetchall()
+        existing_numbers = {row[0] for row in existing}
+        # Insert pending rows for chapters not yet completed
+        for item in arc:
+            if item['chapter_number'] not in existing_numbers:
+                cursor.execute('''
+                    INSERT INTO long_story_chapters
+                        (long_story_id, chapter_number, title, one_liner, status, created_at, updated_at)
+                    VALUES (?, ?, ?, ?, 'pending', ?, ?)
+                ''', (story_id, item['chapter_number'], item['title'], item.get('one_liner', ''), now, now))
+            else:
+                # Update title/one_liner of completed chapters in case they were edited
+                cursor.execute('''
+                    UPDATE long_story_chapters
+                    SET title = ?, one_liner = ?, updated_at = ?
+                    WHERE long_story_id = ? AND chapter_number = ?
+                ''', (item['title'], item.get('one_liner', ''), now, story_id, item['chapter_number']))
+        conn.commit()
+        chapters = conn.execute(
+            'SELECT * FROM long_story_chapters WHERE long_story_id = ? ORDER BY chapter_number',
+            (story_id,)
+        ).fetchall()
+        conn.close()
+        return [dict(c) for c in chapters]
+
+    @staticmethod
+    def get_chapters(story_id: int) -> list:
+        """Get all chapters for a long story."""
+        conn = get_db_connection()
+        chapters = conn.execute(
+            'SELECT * FROM long_story_chapters WHERE long_story_id = ? ORDER BY chapter_number',
+            (story_id,)
+        ).fetchall()
+        conn.close()
+        return [dict(c) for c in chapters]
+
+    @staticmethod
+    def update_chapter(chapter_id: int, story_id: int, storyline: str = None,
+                       content: str = None, status: str = None) -> dict:
+        """Update a chapter's storyline, content, or status."""
+        conn = get_db_connection()
+        now = datetime.now(timezone.utc).isoformat()
+        updates = ['updated_at = ?']
+        params = [now]
+        if storyline is not None:
+            updates.append('storyline = ?')
+            params.append(storyline)
+        if content is not None:
+            updates.append('content = ?')
+            params.append(content)
+        if status is not None:
+            updates.append('status = ?')
+            params.append(status)
+        params.extend([chapter_id, story_id])
+        conn.execute(
+            f'UPDATE long_story_chapters SET {", ".join(updates)} WHERE id = ? AND long_story_id = ?',
+            params
+        )
+        conn.commit()
+        chapter = conn.execute('SELECT * FROM long_story_chapters WHERE id = ?', (chapter_id,)).fetchone()
+        conn.close()
+        return dict(chapter) if chapter else None
+
+    @staticmethod
+    def get_chapter_by_number(story_id: int, chapter_number: int) -> dict:
+        """Get a specific chapter by its number."""
+        conn = get_db_connection()
+        chapter = conn.execute(
+            'SELECT * FROM long_story_chapters WHERE long_story_id = ? AND chapter_number = ?',
+            (story_id, chapter_number)
+        ).fetchone()
+        conn.close()
+        return dict(chapter) if chapter else None
+
+    @staticmethod
+    def reset_chapter(chapter_id: int, story_id: int) -> dict:
+        """Reset a chapter to pending state, clearing content and storyline."""
+        conn = get_db_connection()
+        now = datetime.now(timezone.utc).isoformat()
+        conn.execute(
+            'UPDATE long_story_chapters SET content = NULL, storyline = NULL, status = ?, updated_at = ? WHERE id = ? AND long_story_id = ?',
+            ('pending', now, chapter_id, story_id)
+        )
+        conn.commit()
+        chapter = conn.execute('SELECT * FROM long_story_chapters WHERE id = ?', (chapter_id,)).fetchone()
+        conn.close()
+        return dict(chapter) if chapter else None
