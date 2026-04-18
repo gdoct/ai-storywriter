@@ -1,3 +1,5 @@
+<img width="1205" height="996" alt="image" src="https://github.com/user-attachments/assets/9fb9f8df-2ab1-47fb-8d76-d9f3de8a92ea" />
+
 # StoryWriter
 
 > **v2 — rebuilt from the ground up.** The previous form-based scenario editor has been replaced by a visual canvas workflow, a slimmer FastAPI + LangGraph backend, and a file-based data store. Nothing from v1 carries over; this is a fresh codebase around a new interaction model.
@@ -6,7 +8,6 @@ StoryWriter is a visual writing tool built around a **canvas board**: instead of
 
 The app talks to any OpenAI-compatible endpoint (LM Studio, Ollama, vLLM, …). No API keys or accounts are required for local models.
 
-<img width="1205" height="996" alt="image" src="https://github.com/user-attachments/assets/9fb9f8df-2ab1-47fb-8d76-d9f3de8a92ea" />
 
 ## The workflow
 
