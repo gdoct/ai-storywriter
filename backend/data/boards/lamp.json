@@ -1,0 +1,177 @@
+{
+  "id": "lamp",
+  "title": "The Lamp That Waits",
+  "personaName": "Mira",
+  "palette": "warm",
+  "nodes": [
+    {
+      "id": "n1",
+      "kind": "character",
+      "x": 220.0,
+      "y": 120.0,
+      "name": "Wren Calder",
+      "title": null,
+      "role": "protagonist · lighthouse keeper",
+      "age": 47,
+      "body": "Sees phantom ships she believes are warnings she can't decode yet.",
+      "tags": [
+        "haunted",
+        "dutiful",
+        "solitary"
+      ]
+    },
+    {
+      "id": "n2",
+      "kind": "character",
+      "x": 460.0,
+      "y": 150.0,
+      "name": "Isaac Calder",
+      "title": null,
+      "role": "foil · brother, estranged",
+      "age": 42,
+      "body": "Returns with news that threatens Wren's chosen exile.",
+      "tags": [
+        "pragmatic",
+        "tender",
+        "weary"
+      ]
+    },
+    {
+      "id": "n3",
+      "kind": "character",
+      "x": 700.0,
+      "y": 140.0,
+      "name": "The Harbormaster",
+      "title": null,
+      "role": "npc · watcher",
+      "age": 68,
+      "body": "Knows something he hasn't said in thirty years.",
+      "tags": [
+        "guarded",
+        "lonely"
+      ]
+    },
+    {
+      "id": "n4",
+      "kind": "world",
+      "x": 250.0,
+      "y": 420.0,
+      "name": null,
+      "title": "Setting",
+      "role": null,
+      "age": null,
+      "body": "North Atlantic cliffs, 1953. One road in, mostly flooded in winter. A lighthouse called Third Light.",
+      "tags": null
+    },
+    {
+      "id": "n5",
+      "kind": "world",
+      "x": 500.0,
+      "y": 430.0,
+      "name": null,
+      "title": "Rule of the world",
+      "role": null,
+      "age": null,
+      "body": "The phantom ships are visible only to Wren — never on the horizon, always in the middle distance.",
+      "tags": null
+    },
+    {
+      "id": "n6",
+      "kind": "tone",
+      "x": 755.0,
+      "y": 440.0,
+      "name": null,
+      "title": "Tone",
+      "role": null,
+      "age": null,
+      "body": "Gothic, patient, a little unkind. Sentences that hold their breath.",
+      "tags": null
+    },
+    {
+      "id": "b1",
+      "kind": "beat",
+      "x": 220.0,
+      "y": 720.0,
+      "name": null,
+      "title": "A storm. The first ship.",
+      "role": null,
+      "age": null,
+      "body": "Wren sees something impossible during the Tuesday watch.",
+      "tags": null
+    },
+    {
+      "id": "b2",
+      "kind": "beat",
+      "x": 410.0,
+      "y": 730.0,
+      "name": null,
+      "title": "Isaac arrives.",
+      "role": null,
+      "age": null,
+      "body": "News from the mainland Wren has been postponing.",
+      "tags": null
+    },
+    {
+      "id": "b3",
+      "kind": "beat",
+      "x": 600.0,
+      "y": 720.0,
+      "name": null,
+      "title": "She reads the pattern.",
+      "role": null,
+      "age": null,
+      "body": "The ships aren't random. They make a name.",
+      "tags": null
+    },
+    {
+      "id": "b4",
+      "kind": "beat",
+      "x": 790.0,
+      "y": 730.0,
+      "name": null,
+      "title": "A choice on the stairs.",
+      "role": null,
+      "age": null,
+      "body": "To descend. To stay. To light the lamp a different way.",
+      "tags": null
+    }
+  ],
+  "connections": [
+    {
+      "from": "n1",
+      "to": "n2",
+      "label": "estranged sibling"
+    },
+    {
+      "from": "n1",
+      "to": "n3",
+      "label": "keeper & watcher"
+    },
+    {
+      "from": "n1",
+      "to": "n4",
+      "label": "lives at"
+    },
+    {
+      "from": "n1",
+      "to": "n5",
+      "label": "only one who sees"
+    },
+    {
+      "from": "b1",
+      "to": "b2",
+      "label": null
+    },
+    {
+      "from": "b2",
+      "to": "b3",
+      "label": null
+    },
+    {
+      "from": "b3",
+      "to": "b4",
+      "label": null
+    }
+  ],
+  "updatedAt": "2026-04-18T06:50:20.512784+00:00"
+}

@@ -1,1 +1,0 @@
-export { NotesTab } from './NotesTab';

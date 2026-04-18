@@ -1,46 +1,79 @@
-# Getting Started with Create React App
+# StoryWriter — frontend
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+The React + Vite client for StoryWriter. It renders the canvas board, the compiled scenario view, and the streamed story reader, and talks to the FastAPI backend over REST + Server-Sent Events.
 
-## Available Scripts
+For the product overview and backend setup, see the top-level [README](../README.md).
 
-In the project directory, you can run:
+## Stack
 
-### `npm start`
+- React 19 + TypeScript
+- Vite 8 (dev server + build)
+- No UI kit — the canvas, inspector, and board chrome are hand-rolled against plain CSS in [src/index.css](src/index.css) and [src/canvas.css](src/canvas.css)
+- No router — the app is a single `App` component switching between four screens (`landing` / `board` / `scenario` / `reader`)
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+## Source layout
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+- [src/App.tsx](src/App.tsx) — top-level screen router, debounced autosave, palette + save-state indicators
+- [src/main.tsx](src/main.tsx) — React entrypoint
+- [src/api/client.ts](src/api/client.ts) — REST + SSE client (`listBoards`, `saveBoard`, `streamGeneration`, `streamPersona`, …)
+- [src/components/](src/components/)
+  - [Landing.tsx](src/components/Landing.tsx) — board list + "new board" entry point
+  - [CanvasBoard.tsx](src/components/CanvasBoard.tsx) — the draggable canvas
+  - [NodeCard.tsx](src/components/NodeCard.tsx) — individual node rendering
+  - [Connections.tsx](src/components/Connections.tsx) — SVG edges between nodes
+  - [Inspector.tsx](src/components/Inspector.tsx) — side panel for editing the selected node
+  - [Persona.tsx](src/components/Persona.tsx) — Mira, the on-board assistant
+  - [ScenarioPage.tsx](src/components/ScenarioPage.tsx) — compiled scenario preview
+  - [ReaderPage.tsx](src/components/ReaderPage.tsx) — streamed story view
+- [src/types/board.ts](src/types/board.ts) — shared types (`Board`, `BoardNode`, `Connection`, `Scenario`, `PaletteName`)
+- [src/data/palettes.ts](src/data/palettes.ts) — palette tokens + `applyPalette()` helper
+- [src/data/sampleBoard.ts](src/data/sampleBoard.ts) — fallback board used before the backend responds
 
-### `npm test`
+## How it connects to the backend
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+The API base URL defaults to `http://localhost:8000` and can be overridden with `VITE_API_BASE`:
 
-### `npm run build`
+```bash
+VITE_API_BASE=https://my-backend.example yarn dev
+```
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+Endpoints consumed (see [src/api/client.ts](src/api/client.ts)):
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+| Method | Path | Purpose |
+| --- | --- | --- |
+| `GET` | `/boards` | list boards on the landing screen |
+| `POST` | `/boards` | create a new board |
+| `GET` | `/boards/{id}` | load a board when opening it |
+| `PUT` | `/boards/{id}` | persist edits (debounced autosave) |
+| `GET` | `/boards/{id}/scenario` | compile the board for the scenario screen |
+| `POST` | `/boards/{id}/generate` | SSE stream for story generation |
+| `POST` | `/boards/{id}/persona` | SSE stream for Mira's replies |
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+SSE framing is `data: {json}\n\n`; `streamGeneration` / `streamPersona` yield typed `StreamEvent`s (`token`, `tool_start`, `tool_end`, `chapter_start`, `chapter_end`, `board_updated`, `done`).
 
-### `npm run eject`
+## Autosave
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+[src/App.tsx](src/App.tsx) owns the autosave loop:
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+1. Every board mutation flips the save state to `pending` and arms a 500 ms debounce timer.
+2. On fire, the latest board is `PUT` to the backend; in-flight saves are tracked so a newer edit queues behind the current save rather than racing it.
+3. Switching screens flushes the timer and awaits any in-flight save before navigating.
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+The status pill in the header surfaces `pending` / `saving` / `saved` / `error`.
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+## Scripts
 
-## Learn More
+```bash
+yarn dev       # start the dev server (port 5173)
+yarn build     # type-check with tsc -b, then produce a production bundle in dist/
+yarn preview   # serve the built bundle
+yarn lint      # ESLint over the project
+```
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+## Dev loop
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+1. Start the backend (see the [root README](../README.md)).
+2. `yarn install` once, then `yarn dev`.
+3. Open <http://localhost:5173>.
+
+If the landing screen shows `Backend error: … Is the backend running on port 8000?`, the client couldn't reach the API — check `VITE_API_BASE` and that the backend's `SW_CORS_ORIGINS` includes the dev origin.

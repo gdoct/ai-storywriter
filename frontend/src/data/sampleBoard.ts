@@ -1,0 +1,39 @@
+import type { Board, Connection, BoardNode } from '../types/board'
+
+export const LANES = [
+  { id: 'characters', label: 'Characters', num: '01', y: 70, height: 280 },
+  { id: 'world', label: 'World & tone', num: '02', y: 370, height: 210 },
+  { id: 'plot', label: 'Plot beats', num: '03', y: 680, height: 180 },
+] as const
+
+export const INITIAL_NODES: BoardNode[] = [
+  { id: 'n1', kind: 'character', x: 220, y: 120, name: 'Wren Calder', role: 'protagonist · lighthouse keeper', age: 47, body: "Sees phantom ships she believes are warnings she can't decode yet.", tags: ['haunted', 'dutiful', 'solitary'] },
+  { id: 'n2', kind: 'character', x: 460, y: 150, name: 'Isaac Calder', role: 'foil · brother, estranged', age: 42, body: "Returns with news that threatens Wren's chosen exile.", tags: ['pragmatic', 'tender', 'weary'] },
+  { id: 'n3', kind: 'character', x: 700, y: 140, name: 'The Harbormaster', role: 'npc · watcher', age: 68, body: "Knows something he hasn't said in thirty years.", tags: ['guarded', 'lonely'] },
+  { id: 'n4', kind: 'world', x: 250, y: 420, title: 'Setting', body: 'North Atlantic cliffs, 1953. One road in, mostly flooded in winter. A lighthouse called Third Light.' },
+  { id: 'n5', kind: 'world', x: 500, y: 430, title: 'Rule of the world', body: 'The phantom ships are visible only to Wren — never on the horizon, always in the middle distance.' },
+  { id: 'n6', kind: 'tone', x: 755, y: 440, title: 'Tone', body: 'Gothic, patient, a little unkind. Sentences that hold their breath.' },
+  { id: 'b1', kind: 'beat', x: 220, y: 720, title: 'A storm. The first ship.', body: 'Wren sees something impossible during the Tuesday watch.' },
+  { id: 'b2', kind: 'beat', x: 410, y: 730, title: 'Isaac arrives.', body: 'News from the mainland Wren has been postponing.' },
+  { id: 'b3', kind: 'beat', x: 600, y: 720, title: 'She reads the pattern.', body: "The ships aren't random. They make a name." },
+  { id: 'b4', kind: 'beat', x: 790, y: 730, title: 'A choice on the stairs.', body: 'To descend. To stay. To light the lamp a different way.' },
+]
+
+export const INITIAL_CONNECTIONS: Connection[] = [
+  { from: 'n1', to: 'n2', label: 'estranged sibling' },
+  { from: 'n1', to: 'n3', label: 'keeper & watcher' },
+  { from: 'n1', to: 'n4', label: 'lives at' },
+  { from: 'n1', to: 'n5', label: 'only one who sees' },
+  { from: 'b1', to: 'b2' },
+  { from: 'b2', to: 'b3' },
+  { from: 'b3', to: 'b4' },
+]
+
+export const SAMPLE_BOARD: Board = {
+  id: 'lamp',
+  title: 'The Lamp That Waits',
+  personaName: 'Mira',
+  palette: 'warm',
+  nodes: INITIAL_NODES,
+  connections: INITIAL_CONNECTIONS,
+}

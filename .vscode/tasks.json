@@ -1,0 +1,29 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "npm",
+			"script": "build",
+			"path": "style-library/ai-styles",
+			"group": "build",
+			"problemMatcher": [],
+			"label": "npm: build - style-library/ai-styles",
+			"detail": "tsc && vite build"
+		},
+		{
+			"type": "npm",
+			"script": "dev",
+			"path": "frontend",
+			"problemMatcher": [],
+			"label": "npm: dev - frontend",
+			"detail": "vite"
+		},
+		{
+			"type": "npm",
+			"script": "dev:backend",
+			"problemMatcher": [],
+			"label": "npm: dev:backend",
+			"detail": "source venv/bin/activate && cd backend && python app.py"
+		}
+	]
+}

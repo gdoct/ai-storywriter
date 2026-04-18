@@ -1,1 +1,0 @@
-# Pydantic models for FastAPI request/response validation

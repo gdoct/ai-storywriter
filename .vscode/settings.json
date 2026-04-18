@@ -1,0 +1,11 @@
+{
+    "sqltools.useNodeRuntime": true,
+    "sqltools.connections": [
+        {
+            "previewLimit": 50,
+            "driver": "SQLite",
+            "database": "\\\\wsl.localhost\\Ubuntu-24.04\\home\\guido\\storywriter\\backend",
+            "name": "swriter"
+        }
+    ]
+}

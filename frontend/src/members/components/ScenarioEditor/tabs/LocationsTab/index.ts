@@ -1,1 +1,0 @@
-export { LocationsTab } from './LocationsTab';
